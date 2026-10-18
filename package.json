@@ -1,0 +1,38 @@
+{
+  "name": "hirfacare-foundation",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@11.3.0",
+  "engines": {
+    "node": ">=24 <25"
+  },
+  "scripts": {
+    "dev": "tsx scripts/dev.ts",
+    "build": "pnpm --filter @hirfacare/contracts build && pnpm --filter @hirfacare/api build && pnpm --filter @hirfacare/web build",
+    "lint": "biome lint apps packages tests scripts/*.ts playwright.config.ts",
+    "format": "biome format --write apps packages tests scripts/*.ts playwright.config.ts",
+    "typecheck": "pnpm --filter @hirfacare/contracts build && pnpm --filter @hirfacare/api typecheck && pnpm --filter @hirfacare/api typecheck:test && pnpm --filter @hirfacare/web typecheck",
+    "test": "pnpm --filter @hirfacare/contracts build && pnpm --filter @hirfacare/api test && pnpm --filter @hirfacare/web test",
+    "test:integration": "pnpm db:generate && pnpm --filter @hirfacare/contracts build && pnpm --filter @hirfacare/api test:integration",
+    "test:e2e": "pnpm db:generate && pnpm --filter @hirfacare/contracts build && playwright test",
+    "db:generate": "pnpm --filter @hirfacare/api db:generate",
+    "db:migrate": "pnpm --filter @hirfacare/api db:migrate",
+    "db:bootstrap-admin": "pnpm --filter @hirfacare/api bootstrap-admin",
+    "setup:local": "tsx scripts/setup-local.ts",
+    "services:up": "docker --context default compose -p hirfacare-foundation up -d --wait",
+    "services:stop": "docker --context default compose -p hirfacare-foundation stop",
+    "demo:setup": "tsx scripts/setup-demo.ts",
+    "demo:seed": "tsx --tsconfig apps/api/tsconfig.json --env-file=.local/demo.env scripts/seed-demo.ts",
+    "demo:api": "tsx --tsconfig apps/api/tsconfig.json --env-file=.local/demo.env apps/api/src/main.ts",
+    "demo:web": "tsx scripts/dev-demo-web.ts",
+    "db:recover-organization-manager": "tsx --tsconfig apps/api/tsconfig.json --env-file=.env scripts/recover-organization-manager.ts",
+    "db:seed": "tsx --tsconfig apps/api/tsconfig.json --env-file=.env scripts/seed-local.ts"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "2.5.13",
+    "@playwright/test": "1.63.0",
+    "@types/node": "24.13.3",
+    "tsx": "4.23.13",
+    "typescript": "5.9.3"
+  }
+}

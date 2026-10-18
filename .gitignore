@@ -1,0 +1,23 @@
+node_modules/
+.env
+.env.*
+!.env.example
+.next/
+dist/
+*.tsbuildinfo
+coverage/
+test-results/
+playwright-report/
+.local/
+__pycache__/
+
+.next-e2e/
+
+.next-demo/
+
+# Editor and local secret artifacts
+.vscode/
+.idea/
+.DS_Store
+*.pem
+*.key
