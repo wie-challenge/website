@@ -19,7 +19,7 @@ import {
   type OrganizationView,
   type MembershipView,
   type InvitationView,
-} from '@hirfacare/contracts';
+} from '@nasj/contracts';
 import { PrismaService } from '../../database/prisma.service.js';
 import { APP_CONFIG, type AppConfig } from '../../config/env.js';
 import type { Actor } from '../../common/identity.js';
@@ -363,8 +363,8 @@ export class OrganizationsService {
     url.hash = `token=${token}`;
     this.mail.send(
       invitation.email,
-      'HirfaCare organization invitation',
-      `You have been invited to join ${organizationName} on HirfaCare. Sign in with this email address and accept the invitation:\n${url.toString()}\nThis invitation expires on ${invitation.expiresAt.toISOString()}.`,
+      'NASJ organization invitation',
+      `You have been invited to join ${organizationName} on NASJ. Sign in with this email address and accept the invitation:\n${url.toString()}\nThis invitation expires on ${invitation.expiresAt.toISOString()}.`,
     );
     return { invitation: invitationView(invitation), delivery: 'QUEUED' as const };
   }

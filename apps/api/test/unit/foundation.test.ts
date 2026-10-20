@@ -7,7 +7,7 @@ import {
   registerSchema,
   accountUpdateSchema,
   pageSchema,
-} from '@hirfacare/contracts';
+} from '@nasj/contracts';
 import { validateEnvironment, trustedNetwork } from '../../src/config/env.js';
 import { csrfToken, verifyCsrf } from '../../src/common/csrf.js';
 import { errorResponse } from '../../src/common/http-exception.filter.js';

@@ -1,7 +1,7 @@
 import 'server-only';
 import { headers } from 'next/headers';
 import { cache } from 'react';
-import type { MeView } from '@hirfacare/contracts';
+import type { MeView } from '@nasj/contracts';
 export async function serverApi<T>(path: string): Promise<T | null> {
   if (!path.startsWith('/api/v1/')) throw new Error('Invalid server API destination.');
   const incoming = await headers();

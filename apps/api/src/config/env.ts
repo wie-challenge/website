@@ -75,7 +75,7 @@ export const envSchema = z.object({
   SMTP_REQUIRE_TLS: bool.default(false),
   SMTP_USER: z.preprocess(optional, z.string().optional()),
   SMTP_PASSWORD: z.preprocess(optional, z.string().optional()),
-  EMAIL_FROM: z.string().min(3).default('HirfaCare <noreply@hirfacare.local>'),
+  EMAIL_FROM: z.string().min(3).default('NASJ <noreply@nasj.local>'),
   LOG_LEVEL: z.enum(['silent', 'error', 'warn', 'info', 'debug']).default('info'),
 });
 export function validateEnvironment(values: Record<string, unknown>) {
@@ -89,11 +89,11 @@ export function validateEnvironment(values: Record<string, unknown>) {
     throw new Error('ARCJET_KEY is required when ARCJET_ENABLED=true.');
   if (
     config.DEMO_MODE &&
-    (new URL(config.DATABASE_URL).pathname !== '/hirfacare_demo' ||
+    (new URL(config.DATABASE_URL).pathname !== '/nasj_demo' ||
       config.NODE_ENV === 'production')
   )
     throw new Error(
-      'Demo mode requires the isolated hirfacare_demo database and nonproduction environment.',
+      'Demo mode requires the isolated nasj_demo database and nonproduction environment.',
     );
   if (config.NODE_ENV === 'production') {
     if (!config.REQUIRE_PRIVILEGED_MFA)

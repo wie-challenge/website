@@ -11,7 +11,7 @@ import type {
   Page,
   BusinessRole,
   MeView,
-} from '@hirfacare/contracts';
+} from '@nasj/contracts';
 import { apiFetch } from '@/lib/api';
 import { Pagination } from './governance';
 import {

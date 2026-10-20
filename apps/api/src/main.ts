@@ -5,7 +5,7 @@ try {
   const config = loadConfig();
   const app = await createApp({ config });
   await app.listen(config.API_PORT, config.API_HOST);
-  logger.info({ port: config.API_PORT }, 'HirfaCare API ready');
+  logger.info({ port: config.API_PORT }, 'NASJ API ready');
 } catch (error) {
   logger.error(
     { errorType: error instanceof Error ? error.name : 'Unknown' },

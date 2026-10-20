@@ -133,6 +133,7 @@ test('buyer onboarding, approval, invitation and scoped membership revocation wo
       })
     ).ok(),
   ).toBeTruthy();
+  await staff.getByRole('button', { name: 'Account menu' }).click();
   await staff.getByRole('button', { name: 'Sign out', exact: true }).click();
   await staff.goto(`/invitations/accept#token=${invitation}`);
   await staff.getByLabel('Email address', { exact: true }).fill(staffEmail);
@@ -353,6 +354,7 @@ test('authenticator enrollment and recovery-code sign-in work without persisting
   ).toBeVisible();
   await expect(page.locator('.recovery-codes')).toHaveCount(0);
   expect(await page.evaluate(() => localStorage.length)).toBe(0);
+  await page.getByRole('button', { name: 'Account menu' }).click();
   await page.getByRole('button', { name: 'Sign out', exact: true }).click();
   await page.getByLabel('Email address', { exact: true }).fill(email);
   await page.getByLabel('Password', { exact: true }).fill(password);

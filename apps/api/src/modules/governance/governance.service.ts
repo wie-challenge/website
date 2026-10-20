@@ -2,7 +2,7 @@ import { APP_CONFIG, type AppConfig } from '../../config/env.js';
 import { hasPrivilegedAccess } from '../foundation/mfa.js';
 import { Inject, Injectable } from '@nestjs/common';
 import type { Prisma, PrivacyRequest, SupportCase } from '@prisma/client';
-import { notificationCategorySchema, permissionsForMembership } from '@hirfacare/contracts';
+import { notificationCategorySchema, permissionsForMembership } from '@nasj/contracts';
 import type {
   PageInput,
   SettingsInput,
@@ -12,7 +12,7 @@ import type {
   SupportCreateInput,
   SupportUpdateInput,
   ConsentCreateInput,
-} from '@hirfacare/contracts';
+} from '@nasj/contracts';
 import { PrismaService } from '../../database/prisma.service.js';
 import type { Actor } from '../../common/identity.js';
 import { fail } from '../../common/errors.js';
@@ -544,12 +544,12 @@ export class GovernanceService {
     });
     const templates: Record<string, { subject: string; text: string }> = {
       en: {
-        subject: 'HirfaCare support update',
-        text: 'Your support case has been updated. Sign in to HirfaCare to review it.',
+        subject: 'NASJ support update',
+        text: 'Your support case has been updated. Sign in to NASJ to review it.',
       },
       fr: {
-        subject: 'Mise à jour du support HirfaCare',
-        text: 'Votre demande a été mise à jour. Connectez-vous à HirfaCare pour la consulter.',
+        subject: 'Mise à jour du support NASJ',
+        text: 'Votre demande a été mise à jour. Connectez-vous à NASJ pour la consulter.',
       },
       ar: {
         subject: 'تحديث دعم حرفاكير',

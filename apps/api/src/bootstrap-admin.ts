@@ -1,6 +1,6 @@
 import { PrismaClient } from '@prisma/client';
 import { PrismaPg } from '@prisma/adapter-pg';
-import { emailSchema } from '@hirfacare/contracts';
+import { emailSchema } from '@nasj/contracts';
 import { loadConfig } from './config/env.js';
 const args = process.argv.slice(2).filter((value) => value !== '--');
 const email = emailSchema.safeParse(args[0]);

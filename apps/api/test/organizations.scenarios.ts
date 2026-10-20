@@ -7,7 +7,7 @@ import type {
   OrganizationView,
   Page,
   OrganizationMemberView,
-} from '@hirfacare/contracts';
+} from '@nasj/contracts';
 import type { PrismaService } from '../src/database/prisma.service.js';
 
 type Reply = { status: number; body: unknown };

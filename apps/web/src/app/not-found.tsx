@@ -5,7 +5,7 @@ export default function NotFound() {
       <p className="eyebrow">404</p>
       <h1>This page isn’t here.</h1>
       <Link className="button" href="/">
-        Back to HirfaCare
+        Back to NASJ
       </Link>
     </main>
   );

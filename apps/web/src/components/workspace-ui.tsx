@@ -71,7 +71,7 @@ export function Workspace({
     <FeedbackContext.Provider value={setFeedback}>
       <div className="page-heading">
         <div>
-          <p className="eyebrow">HIRFACARE WORKSPACE</p>
+          <p className="eyebrow">NASJ WORKSPACE</p>
           <h1>{title}</h1>
           <p className="lead">{description}</p>
         </div>

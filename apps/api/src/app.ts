@@ -48,7 +48,7 @@ export async function createApp(options: { config?: AppConfig; arcjet?: ArcjetNe
     if (config.PUBLIC_APP_URL.startsWith('https://'))
       res.setHeader('Strict-Transport-Security', 'max-age=31536000');
     // Always overwrite the only IP header consumed by Better Auth.
-    req.headers['x-hirfacare-client-ip'] = req.ip ?? req.socket.remoteAddress ?? '';
+    req.headers['x-nasj-client-ip'] = req.ip ?? req.socket.remoteAddress ?? '';
     res.once('finish', () =>
       logger.info(
         {

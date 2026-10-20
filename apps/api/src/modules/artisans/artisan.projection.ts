@@ -4,7 +4,7 @@ import type {
   CapacityDeclarationView,
   DelegationGrantView,
   DelegationScope,
-} from '@hirfacare/contracts';
+} from '@nasj/contracts';
 export const profileSelect = {
   id: true,
   userId: true,

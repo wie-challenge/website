@@ -31,7 +31,7 @@ async function lock() {
       if (Number.isSafeInteger(pid) && pid > 0) {
         try {
           process.kill(pid, 0);
-          throw new Error('HirfaCare is already starting or running. Use http://localhost:3000.');
+          throw new Error('NASJ is already starting or running. Use http://localhost:3000.');
         } catch (probe) {
           if ((probe as NodeJS.ErrnoException).code !== 'ESRCH') throw probe;
         }
@@ -72,6 +72,9 @@ function start(command: string, args: string[], cwd = root) {
     env: environment,
     stdio: 'inherit',
     detached: process.platform !== 'win32',
+    // Windows exposes pnpm as a .cmd shim, which Node only launches through a shell.
+    // Arguments are fixed literals in this file, never user input.
+    shell: process.platform === 'win32' && command === 'pnpm',
   });
   children.add(child);
   if (child.pid) processGroups.add(child.pid);
@@ -180,7 +183,7 @@ try {
     SMTP_HOST: '127.0.0.1',
     SMTP_PORT: '1026',
   };
-  console.log('Preparing HirfaCare local services and accounts…');
+  console.log('Preparing NASJ local services and accounts…');
   const services = await localServices();
   const missing = [!services.postgres ? 'postgres' : '', !services.mailpit ? 'mailpit' : ''].filter(
     Boolean,
@@ -191,14 +194,14 @@ try {
       'default',
       'compose',
       '-p',
-      'hirfacare-foundation',
+      'nasj',
       'up',
       '-d',
       '--wait',
       ...missing,
     ]);
   else console.log('Reusing the healthy PostgreSQL and Mailpit services configured in .env.');
-  await run('pnpm', ['--filter', '@hirfacare/contracts', 'build']);
+  await run('pnpm', ['--filter', '@nasj/contracts', 'build']);
   await run('pnpm', ['db:generate']);
   await run('pnpm', ['db:migrate']);
   await run('pnpm', [
@@ -243,7 +246,7 @@ try {
   watchFailure(web);
   await ready('http://localhost:3000', web);
   console.log(
-    '\nHirfaCare ready: http://localhost:3000\nAccounts: .local/dev-credentials.json\nMail inbox: http://localhost:8026\nPress Ctrl+C to stop the API and web. Database records are preserved.\n',
+    '\nNASJ ready: http://localhost:3000\nAccounts: .local/dev-credentials.json\nMail inbox: http://localhost:8026\nPress Ctrl+C to stop the API and web. Database records are preserved.\n',
   );
   await new Promise<void>((resolve) => {
     finish = resolve;

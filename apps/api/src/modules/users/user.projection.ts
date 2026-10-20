@@ -1,5 +1,5 @@
 import type { User } from '@prisma/client';
-import type { UserView } from '@hirfacare/contracts';
+import type { UserView } from '@nasj/contracts';
 export const userSelect = {
   id: true,
   name: true,

@@ -5,7 +5,7 @@ export default function DemoPage() {
   return (
     <main className="workspace" id="main-content">
       <p className="eyebrow">SYNTHETIC DEMONSTRATION</p>
-      <h1>Explore HirfaCare.</h1>
+      <h1>Explore NASJ.</h1>
       <p className="lead">
         This demonstration uses a separate database and fictional identities. Use the demonstration
         credentials supplied by the presenter to explore buyer, artisan, association and staff

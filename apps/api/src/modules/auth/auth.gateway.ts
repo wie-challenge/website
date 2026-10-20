@@ -8,7 +8,7 @@ import {
   loginSchema,
   registerSchema,
   resetPasswordSchema,
-} from '@hirfacare/contracts';
+} from '@nasj/contracts';
 import type { AppConfig } from '../../config/env.js';
 import { fail } from '../../common/errors.js';
 import { publicUser } from '../users/user.projection.js';

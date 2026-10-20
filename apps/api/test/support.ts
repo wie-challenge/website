@@ -7,7 +7,7 @@ import { SMTPServer } from 'smtp-server';
 import { validateEnvironment } from '../src/config/env.js';
 const exec = promisify(execFile);
 export async function disposableDatabase(options: { foundationOnly?: boolean } = {}) {
-  const name = `hirfacare-test-${randomBytes(8).toString('hex')}`;
+  const name = `nasj-test-${randomBytes(8).toString('hex')}`;
   const password = randomBytes(24).toString('hex');
   await exec('docker', [
     '--context',

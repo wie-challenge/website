@@ -1,7 +1,7 @@
 'use client';
 import Link from 'next/link';
 import { useState } from 'react';
-import type { Page, OrganizationView, MeView } from '@hirfacare/contracts';
+import type { Page, OrganizationView, MeView } from '@nasj/contracts';
 import { apiFetch } from '@/lib/api';
 import {
   Workspace,
@@ -104,7 +104,7 @@ export function Privacy({ admin = false }: { admin?: boolean }) {
                 );
                 const link = document.createElement('a');
                 link.href = url;
-                link.download = 'hirfacare-personal-data.json';
+                link.download = 'nasj-personal-data.json';
                 link.click();
                 setTimeout(() => URL.revokeObjectURL(url), 1000);
               }}
@@ -473,13 +473,6 @@ export function AdminOrganizations({ pending = false, id }: { pending?: boolean;
       title={pending ? 'Organization approvals.' : 'Organization administration.'}
       description="Review organization profiles and record approval decisions with a reason."
     >
-      <nav className="workspace-tabs">
-        <Link href="/admin/organizations">All organizations</Link>
-        <Link href="/admin/approvals">Pending approval</Link>
-        <Link href="/admin/users">User accounts</Link>
-        <Link href="/admin/audit">Audit history</Link>
-        <Link href="/admin/privacy-requests">Privacy requests</Link>
-      </nav>
       <ResourceState {...resource} retry={resource.reload} />
       <ul className="record-list">
         {items?.map((org) => (

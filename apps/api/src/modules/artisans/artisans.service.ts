@@ -7,7 +7,7 @@ import type {
   AssociationLinkInput,
   DelegationGrantInput,
   DelegationScope,
-} from '@hirfacare/contracts';
+} from '@nasj/contracts';
 import type { Prisma } from '@prisma/client';
 import { PrismaService } from '../../database/prisma.service.js';
 import type { Actor } from '../../common/identity.js';

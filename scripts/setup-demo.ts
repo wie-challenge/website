@@ -19,8 +19,8 @@ try {
     'API_INTERNAL_URL=http://127.0.0.1:3201',
     'NEXT_DIST_DIR=.next-demo',
     `POSTGRES_PASSWORD=${password}`,
-    `DATABASE_URL=postgresql://hirfacare_demo:${password}@127.0.0.1:5542/hirfacare_demo`,
-    `MIGRATION_DATABASE_URL=postgresql://hirfacare_demo:${password}@127.0.0.1:5542/hirfacare_demo`,
+    `DATABASE_URL=postgresql://nasj_demo:${password}@127.0.0.1:5542/nasj_demo`,
+    `MIGRATION_DATABASE_URL=postgresql://nasj_demo:${password}@127.0.0.1:5542/nasj_demo`,
     `BETTER_AUTH_SECRET=${randomBytes(48).toString('hex')}`,
     'REQUIRE_PRIVILEGED_MFA=false',
     'ARCJET_ENABLED=false',
@@ -33,7 +33,7 @@ try {
     'SMTP_REQUIRE_TLS=false',
     'SMTP_USER=',
     'SMTP_PASSWORD=',
-    'EMAIL_FROM=HirfaCare Demo <noreply@hirfacare-demo.invalid>',
+    'EMAIL_FROM=NASJ Demo <noreply@nasj-demo.invalid>',
     'LOG_LEVEL=silent',
     '',
   ].join('\n');
@@ -50,10 +50,10 @@ try {
   if (
     values.DEMO_MODE !== 'true' ||
     values.NODE_ENV === 'production' ||
-    database.pathname !== '/hirfacare_demo' ||
+    database.pathname !== '/nasj_demo' ||
     database.hostname !== '127.0.0.1' ||
     database.port !== '5542' ||
-    database.username !== 'hirfacare_demo' ||
+    database.username !== 'nasj_demo' ||
     values.PUBLIC_APP_URL !== 'http://127.0.0.1:3200' ||
     values.API_PORT !== '3201' ||
     values.SMTP_PORT !== '1126' ||
@@ -73,7 +73,7 @@ try {
       '-f',
       'docker-compose.demo.yml',
       '-p',
-      'hirfacare-demo',
+      'nasj-demo',
       'up',
       '-d',
       '--wait',
@@ -81,8 +81,8 @@ try {
     { cwd: root, env, maxBuffer: 1024 * 1024 },
   );
   console.log('Separate demo PostgreSQL and mail capture are ready.');
-  await exec('pnpm', ['--filter', '@hirfacare/contracts', 'build'], { cwd: root, env });
-  await exec('pnpm', ['--filter', '@hirfacare/api', 'db:generate'], { cwd: root, env });
+  await exec('pnpm', ['--filter', '@nasj/contracts', 'build'], { cwd: root, env });
+  await exec('pnpm', ['--filter', '@nasj/api', 'db:generate'], { cwd: root, env });
   await exec('pnpm', ['exec', 'prisma', 'migrate', 'deploy'], {
     cwd: fileURLToPath(new URL('../apps/api/', import.meta.url)),
     env,

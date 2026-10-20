@@ -28,7 +28,7 @@ import {
   type InvitationCreateInput,
   type MembershipUpdateInput,
   type MembershipRolesInput,
-} from '@hirfacare/contracts';
+} from '@nasj/contracts';
 import { CurrentUser, AdminOnly, type Actor } from '../../common/identity.js';
 import { ZodValidationPipe } from '../../common/validation.pipe.js';
 import { OrganizationsService } from './organizations.service.js';

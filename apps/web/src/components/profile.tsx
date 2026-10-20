@@ -10,7 +10,7 @@ import {
   profileSchema,
   type MeView,
   type SessionView,
-} from '@hirfacare/contracts';
+} from '@nasj/contracts';
 import { apiFetch, ApiError } from '@/lib/api';
 import { Field } from './field';
 export function Profile({ initial }: { initial: MeView }) {
@@ -113,12 +113,6 @@ export function Profile({ initial }: { initial: MeView }) {
           {error}
         </p>
       )}
-      <nav className="workspace-tabs" aria-label="Account settings">
-        <Link href="/settings/security">Security and two-factor authentication</Link>
-        <Link href="/settings/organizations">Organizations</Link>
-        <Link href="/settings/notifications">Language and notifications</Link>
-        <Link href="/support/privacy">Your data and privacy</Link>
-      </nav>
       <div className="settings-grid">
         <section className="panel">
           <div className="panel-heading">

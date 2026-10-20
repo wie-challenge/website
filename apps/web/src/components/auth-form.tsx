@@ -8,7 +8,7 @@ import {
   loginSchema,
   registerSchema,
   resetPasswordSchema,
-} from '@hirfacare/contracts';
+} from '@nasj/contracts';
 import { ApiError, apiFetch } from '@/lib/api';
 import { Field } from './field';
 export type AuthMode = 'login' | 'register' | 'forgot-password' | 'reset-password' | 'verify-email';
@@ -20,7 +20,7 @@ const titles: Record<AuthMode, string> = {
   'verify-email': 'Verify your email.',
 };
 const descriptions: Record<AuthMode, string> = {
-  login: 'Sign in to your HirfaCare account.',
+  login: 'Sign in to your NASJ account.',
   register: 'Create an account and verify your email to get started.',
   'forgot-password': 'We’ll send a recovery link if an account matches this address.',
   'reset-password': 'Use at least 12 characters. Your other sessions will be signed out.',
@@ -142,7 +142,7 @@ export function AuthForm({
   }
   return (
     <section className="auth-card">
-      <p className="eyebrow">YOUR HIRFACARE ACCOUNT</p>
+      <p className="eyebrow">YOUR NASJ ACCOUNT</p>
       {embedded ? <h2>{titles[mode]}</h2> : <h1>{titles[mode]}</h1>}
       <p className="lead">{descriptions[mode]}</p>
       {message && (

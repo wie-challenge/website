@@ -113,7 +113,7 @@ try {
     async () => {
       assert.equal(alice.me.user.emailVerified, true);
       assert.equal(alice.me.user.role, 'USER');
-      const cookie = alice.client.jar.get('hirfacare.session_token');
+      const cookie = alice.client.jar.get('nasj.session_token');
       assert.ok(cookie);
       const login = await alice.client.request('/api/auth/sign-in/email', 'POST', {
         email: 'alice@example.com',
@@ -410,7 +410,7 @@ try {
         Array.from({ length: 6 }, (_, index) =>
           requests.request('/api/v1/me', 'GET', undefined, {
             'X-Forwarded-For': `203.0.113.${index + 1}`,
-            'X-HirfaCare-Client-IP': `203.0.113.${index + 1}`,
+            'X-NASJ-Client-IP': `203.0.113.${index + 1}`,
           }),
         ),
       );
@@ -453,7 +453,7 @@ try {
         (
           await requests.request('/api/v1/me', 'GET', undefined, {
             'X-Forwarded-For': '203.0.113.80',
-            'X-HirfaCare-Client-IP': '203.0.113.90',
+            'X-NASJ-Client-IP': '203.0.113.90',
           })
         ).status,
         401,
@@ -462,7 +462,7 @@ try {
         (
           await requests.request('/api/v1/me', 'GET', undefined, {
             'X-Forwarded-For': '203.0.113.80',
-            'X-HirfaCare-Client-IP': '203.0.113.91',
+            'X-NASJ-Client-IP': '203.0.113.91',
           })
         ).status,
         429,

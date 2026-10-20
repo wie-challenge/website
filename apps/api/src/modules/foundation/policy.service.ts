@@ -1,7 +1,7 @@
 import { APP_CONFIG, type AppConfig } from '../../config/env.js';
 import { requireMfa } from './mfa.js';
 import { Inject, Injectable } from '@nestjs/common';
-import { permissionsForMembership, type Permission } from '@hirfacare/contracts';
+import { permissionsForMembership, type Permission } from '@nasj/contracts';
 import { PrismaService } from '../../database/prisma.service.js';
 import type { Actor } from '../../common/identity.js';
 import { fail } from '../../common/errors.js';
