@@ -15,5 +15,5 @@ export default defineConfig({
         (existsSync('/usr/bin/chromium') ? '/usr/bin/chromium' : undefined),
     },
   },
-  reporter: 'list',
+  reporter: [['list'], ['json', { outputFile: '.local/e2e-report.json' }]],
 });

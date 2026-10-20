@@ -35,10 +35,11 @@ export async function createApp(options: { config?: AppConfig; arcjet?: ArcjetNe
     origin: config.PUBLIC_APP_URL,
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'X-CSRF-Token'],
+    allowedHeaders: ['Content-Type', 'X-CSRF-Token', 'Idempotency-Key'],
     exposedHeaders: ['X-Request-ID', 'Retry-After'],
   });
   app.use((req: AppRequest, res: Response, next: NextFunction) => {
+    const startedAt = performance.now();
     req.requestId = randomUUID();
     res.setHeader('X-Request-ID', req.requestId);
     res.setHeader('Cache-Control', 'no-store');
@@ -56,6 +57,7 @@ export async function createApp(options: { config?: AppConfig; arcjet?: ArcjetNe
           method: req.method,
           endpoint: routeLabel(req.path),
           status: res.statusCode,
+          durationMs: Math.round(performance.now() - startedAt),
         },
         'Request completed',
       ),

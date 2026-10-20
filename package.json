@@ -26,9 +26,12 @@
     "demo:api": "tsx --tsconfig apps/api/tsconfig.json --env-file=.local/demo.env apps/api/src/main.ts",
     "demo:web": "tsx scripts/dev-demo-web.ts",
     "db:recover-organization-manager": "tsx --tsconfig apps/api/tsconfig.json --env-file=.env scripts/recover-organization-manager.ts",
-    "db:seed": "tsx --tsconfig apps/api/tsconfig.json --env-file=.env scripts/seed-local.ts"
+    "db:seed": "tsx --tsconfig apps/api/tsconfig.json --env-file=.env scripts/seed-local.ts",
+    "worker": "tsx --tsconfig apps/api/tsconfig.json --env-file-if-exists=.env apps/api/src/jobs/main.ts",
+    "ops:check": "tsx --tsconfig apps/api/tsconfig.json --env-file-if-exists=.env scripts/check-operations.ts"
   },
   "devDependencies": {
+    "@axe-core/playwright": "4.14.0",
     "@biomejs/biome": "2.5.13",
     "@playwright/test": "1.63.0",
     "@types/node": "24.13.3",

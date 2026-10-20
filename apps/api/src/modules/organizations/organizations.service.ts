@@ -1,3 +1,4 @@
+import { canEditOrganization, canReviewOrganization } from '@hirfacare/contracts';
 import { createHash, randomBytes } from 'node:crypto';
 import { Inject, Injectable } from '@nestjs/common';
 import {
@@ -187,7 +188,7 @@ export class OrganizationsService {
   async update(actor: Actor, id: string, input: OrganizationUpdateInput) {
     return iamTransaction(this.db, actor, async (tx) => {
       const member = await this.policy.requireOrganization(actor, id, 'organization.update', tx);
-      if (!['DRAFT', 'REJECTED'].includes(member.organization.approvalStatus))
+      if (!canEditOrganization(member.organization.approvalStatus))
         fail(
           409,
           'ORGANIZATION_REVIEW_REQUIRED',
@@ -226,7 +227,7 @@ export class OrganizationsService {
         'organization.approval.request',
         tx,
       );
-      if (!['DRAFT', 'REJECTED'].includes(member.organization.approvalStatus))
+      if (!canEditOrganization(member.organization.approvalStatus))
         fail(
           409,
           'INVALID_TRANSITION',
@@ -290,11 +291,7 @@ export class OrganizationsService {
       await this.policy.requireAdmin(actor, tx);
       const org = await tx.organization.findUnique({ where: { id } });
       if (!org) fail(404, 'NOT_FOUND', 'Organization not found.');
-      if (
-        status === 'SUSPENDED'
-          ? org.approvalStatus !== 'APPROVED'
-          : !['PENDING_REVIEW', 'SUSPENDED'].includes(org.approvalStatus)
-      )
+      if (!canReviewOrganization(org.approvalStatus, status))
         fail(
           409,
           'INVALID_TRANSITION',

@@ -1,6 +1,6 @@
 'use client';
 import Link from 'next/link';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import type {
   ArtisanProfileView,
   CraftSkillView,
@@ -277,6 +277,7 @@ function Skills({ path, onChanged }: { path: string; onChanged: () => void }) {
   );
 }
 function Capacity({ path, canUpdate }: { path: string; canUpdate: boolean }) {
+  const pending = useRef<{ payload: string; key: string } | null>(null);
   const history = useResource<Items<CapacityDeclarationView>>(`${path}/capacity`);
   const skills = useResource<Items<ArtisanSkillView>>(`${path}/skills`);
   return (
@@ -293,18 +294,25 @@ function Capacity({ path, canUpdate }: { path: string; canUpdate: boolean }) {
           <ActionForm
             label="Declare capacity"
             onSuccess={history.reload}
-            action={(data) =>
-              apiFetch(`${path}/capacity`, {
+            action={async (data) => {
+              const body = {
+                craftSkillId: text(data, 'craftSkillId'),
+                unitType: text(data, 'unitType'),
+                quantity: Number(text(data, 'quantity')),
+                effectiveFrom: new Date(text(data, 'effectiveFrom')).toISOString(),
+                effectiveTo: new Date(text(data, 'effectiveTo')).toISOString(),
+              };
+              const payload = JSON.stringify({ path, body });
+              if (pending.current?.payload !== payload)
+                pending.current = { payload, key: crypto.randomUUID() };
+              const result = await apiFetch(`${path}/capacity`, {
                 method: 'POST',
-                body: {
-                  craftSkillId: text(data, 'craftSkillId'),
-                  unitType: text(data, 'unitType'),
-                  quantity: Number(text(data, 'quantity')),
-                  effectiveFrom: new Date(text(data, 'effectiveFrom')).toISOString(),
-                  effectiveTo: new Date(text(data, 'effectiveTo')).toISOString(),
-                },
-              })
-            }
+                body,
+                idempotencyKey: pending.current.key,
+              });
+              pending.current = null;
+              return result;
+            }}
           >
             <Select
               name="craftSkillId"

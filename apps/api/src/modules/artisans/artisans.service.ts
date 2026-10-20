@@ -1,3 +1,5 @@
+import { exactCapacityQuantity, isCapacityRevision } from '@hirfacare/contracts';
+import { replaySafe, validateIdempotencyKey } from '../foundation/idempotency.js';
 import { HttpException, Inject, Injectable } from '@nestjs/common';
 import type {
   ArtisanProfileInput,
@@ -281,7 +283,8 @@ export class ArtisansService {
       ).map(capacityView),
     };
   }
-  async declare(actor: Actor, input: CapacityDeclarationInput, id?: string) {
+  async declare(actor: Actor, input: CapacityDeclarationInput, id?: string, key?: string) {
+    validateIdempotencyKey(key);
     return iamTransaction(this.db, actor, async (tx) => {
       const { profile, delegation } = await this.target(actor, id, 'artisan.capacity.update', tx);
       await this.requireProfileConsent(profile.userId, tx);
@@ -296,34 +299,62 @@ export class ArtisansService {
       });
       if (!skill?.craftSkill.isActive)
         fail(400, 'INVALID_SKILL', 'Declare capacity for one of your active craft skills.');
-      const effectiveFrom=new Date(input.effectiveFrom),effectiveTo=new Date(input.effectiveTo);
-      const overlaps=await tx.capacityDeclaration.findMany({where:{artisanProfileId:profile.id,craftSkillId:input.craftSkillId,unitType:input.unitType,supersededAt:null,effectiveFrom:{lt:effectiveTo},effectiveTo:{gt:effectiveFrom}},select:{id:true,effectiveFrom:true,effectiveTo:true}});
-      if(overlaps.some(row=>row.effectiveFrom.getTime()!==effectiveFrom.getTime() || row.effectiveTo.getTime()!==effectiveTo.getTime())) fail(409,'CAPACITY_OVERLAP','This period overlaps an existing declaration. Revise the same exact period or choose a non-overlapping period.');
-      if(overlaps.length)await tx.capacityDeclaration.updateMany({where:{id:{in:overlaps.map(row=>row.id)}},data:{supersededAt:new Date()}});
-      const row = await tx.capacityDeclaration.create({
-        data: {
-          artisanProfileId: profile.id,
-          craftSkillId: input.craftSkillId,
-          unitType: input.unitType,
-          quantity: input.quantity,
-          effectiveFrom: new Date(input.effectiveFrom),
-          effectiveTo: new Date(input.effectiveTo),
-          declaredByUserId: actor.id,
+      return replaySafe(
+        tx,
+        { actorId: actor.id, resourceId: profile.id, operation: 'capacity.declare', key },
+        input,
+        async () => {
+          const quantity = exactCapacityQuantity(input.quantity);
+          const effectiveFrom = new Date(input.effectiveFrom),
+            effectiveTo = new Date(input.effectiveTo);
+          const overlaps = await tx.capacityDeclaration.findMany({
+            where: {
+              artisanProfileId: profile.id,
+              craftSkillId: input.craftSkillId,
+              unitType: input.unitType,
+              supersededAt: null,
+              effectiveFrom: { lt: effectiveTo },
+              effectiveTo: { gt: effectiveFrom },
+            },
+            select: { id: true, effectiveFrom: true, effectiveTo: true },
+          });
+          if (!isCapacityRevision({ effectiveFrom, effectiveTo }, overlaps))
+            fail(
+              409,
+              'CAPACITY_OVERLAP',
+              'This period overlaps an existing declaration. Revise the same exact period or choose a non-overlapping period.',
+            );
+          if (overlaps.length)
+            await tx.capacityDeclaration.updateMany({
+              where: { id: { in: overlaps.map((row) => row.id) } },
+              data: { supersededAt: new Date() },
+            });
+          const row = await tx.capacityDeclaration.create({
+            data: {
+              artisanProfileId: profile.id,
+              craftSkillId: input.craftSkillId,
+              unitType: input.unitType,
+              quantity,
+              effectiveFrom: new Date(input.effectiveFrom),
+              effectiveTo: new Date(input.effectiveTo),
+              declaredByUserId: actor.id,
+            },
+          });
+          await audit(tx, actor, {
+            action: 'artisan.capacity.update',
+            targetType: 'CapacityDeclaration',
+            targetId: row.id,
+            organizationId: delegation?.organizationId,
+            after: {
+              artisanProfileId: profile.id,
+              declaredByUserId: actor.id,
+              delegationId: delegation?.id ?? null,
+              source: 'VOLUNTARY_DECLARATION',
+            },
+          });
+          return capacityView(row);
         },
-      });
-      await audit(tx, actor, {
-        action: 'artisan.capacity.update',
-        targetType: 'CapacityDeclaration',
-        targetId: row.id,
-        organizationId: delegation?.organizationId,
-        after: {
-          artisanProfileId: profile.id,
-          declaredByUserId: actor.id,
-          delegationId: delegation?.id ?? null,
-          source: 'VOLUNTARY_DECLARATION',
-        },
-      });
-      return capacityView(row);
+      );
     });
   }
   async associationCatalog() {

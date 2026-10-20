@@ -1,0 +1,55 @@
+$ pnpm --filter @hirfacare/contracts build && pnpm --filter @hirfacare/api test && pnpm --filter @hirfacare/web test
+$ tsc -p tsconfig.json
+$ tsx --test test/unit/*.test.ts
+✔ all specified RFQ, offer, batch, order and payment transitions reject missing edges and roles (8.14482ms)
+✔ quantity reconciliation rejects excess allocation, production, QA, delivery and invalid numbers (0.726472ms)
+✔ settlements are exact, bounded and cannot overpay approved quantities (0.406425ms)
+✔ deterministic quantity/settlement properties hold across partitions and boundary mutations (12.872164ms)
+✔ expiry, explicit rework consent, evidence, funding and closure gates cannot be bypassed (0.831929ms)
+✔ TND has exact scale, bounded addition and canonical serialization (0.964915ms)
+✔ HALF_UP rational rounding and round-trip properties (1.611277ms)
+✔ capacity permits zero and exact cents; rejects loss and impossible quantities (0.462599ms)
+✔ capacity revisions require identical positive periods; adjacent periods are allowed by query (0.221066ms)
+✔ all implemented organization approval transitions are explicit (0.1518ms)
+✔ idempotency key is optional but bounded and cannot contain sensitive arbitrary text (0.306266ms)
+✔ configuration rejects unsafe production defaults and unrestricted proxy trust (8.003643ms)
+✔ strict contracts prevent public role/status mass assignment and bound pagination (1.406274ms)
+{"level":50,"time":1792492265913,"pid":270764,"hostname":"ashenix-crawlere40","requestId":"request-one","errorType":"Error","msg":"Request failed"}
+✔ CSRF proofs are session-bound and cannot be replayed for another session (7.024776ms)
+✔ public user projections exclude future fields and credentials (0.342645ms)
+✔ errors never echo malformed input, database messages or internal exception details (0.799936ms)
+✔ rate policies distinguish abuse flows and narrowly exempt health probes (0.457677ms)
+✔ local startup accepts only the canonical local development services (1.367914ms)
+✔ startup refusal never echoes a database credential (0.477615ms)
+✔ operational alert threshold reports failures and lag without payloads (0.922316ms)
+✔ database outage fails readiness with safe 503 while liveness remains healthy (0.517697ms)
+✔ membership permissions deny revoked access and separate management from financial authority (1.8944ms)
+✔ capacity schema rejects unknown health inputs and invalid date periods (3.888577ms)
+✔ demo configuration cannot point at ordinary database and production requires privileged MFA (4.033523ms)
+✔ legitimate Arcjet decisions pass without a second rate counter or credential forwarding (3.58115ms)
+✔ live rate decisions return 429 and bot decisions return 403 (1.071978ms)
+✔ dry-run deny remains observable without blocking normal authentication (0.281589ms)
+✔ operational failure is closed by default; explicit open mode uses only the local fallback counter (0.765513ms)
+✔ health probes never invoke bot/provider rules (0.207919ms)
+ℹ tests 29
+ℹ suites 0
+ℹ pass 29
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 609.703574
+$ tsx --test test/*.test.ts
+✔ login redirect allowlist rejects external, encoded and unsupported destinations (0.992022ms)
+✔ browser mutations obtain a session-bound CSRF proof and never store session credentials (13.675512ms)
+✔ API failures and network errors become safe user-facing errors (1.430355ms)
+✔ workspace redirects allow scoped destinations and discard invitation secrets (0.322699ms)
+✔ PUT mutations use the same CSRF and credential protections as other writes (0.479425ms)
+ℹ tests 5
+ℹ suites 0
+ℹ pass 5
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 102.736442

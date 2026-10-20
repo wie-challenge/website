@@ -1,3 +1,6 @@
+import { runCommerceScenarios } from './commerce.scenarios.js';
+import { runRestoreScenario } from './restore.scenarios.js';
+import { runE16Scenarios } from './e16.scenarios.js';
 import { runUpgradeScenario } from './upgrade.scenarios.js';
 import { runLifecycleScenarios } from './lifecycle.scenarios.js';
 import { runMfaScenarios } from './mfa.scenarios.js';
@@ -513,7 +516,10 @@ try {
   await runGovernanceScenarios({ db, register, mutate, check, mail });
   await runLifecycleScenarios({ db, client, register, mutate, check, config });
   await runMfaScenarios({ db, config, client, register, mutate, check, mail });
+  await runE16Scenarios({ db, register, mutate, check, config });
+  await runCommerceScenarios({ db, register, check });
   await runUpgradeScenario(check);
+  await runRestoreScenario(database, check);
   console.log(
     `Integration passed: ${assertions} scenarios against a newly created disposable PostgreSQL database and local SMTP capture.`,
   );

@@ -29,6 +29,9 @@ export function safeApiPath(path: string) {
 function isWorkspacePath(path: string) {
   return (
     [
+      '/commerce/buyer',
+      '/commerce/artisan',
+      '/commerce/operator',
       '/settings/profile',
       '/settings/account',
       '/settings/security',

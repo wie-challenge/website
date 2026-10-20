@@ -2,7 +2,7 @@
 
 A small full-stack starting point extracted and adapted from the IEEE Tunisia Partnership Hub. The reference project is unchanged. Product documents and the GitHub backlog importer belong to the separate `docs` repository. The optional sibling checkout at `../docs/` is not required to run this website.
 
-The foundation provides verified Better Auth accounts, password recovery/change, session management, verified email changes, TOTP MFA, organizations and approvals, multi-role memberships, secure staff invitations, artisan profiles/skills/capacity, optional associations, consent-bound delegation, privacy requests, support cases and append-only access audits. Commercial procurement, production and finance workflows remain backlog work.
+The foundation provides verified Better Auth accounts, password recovery/change, session management, verified email changes, TOTP MFA, organizations and approvals, multi-role memberships, secure staff invitations, artisan profiles/skills/capacity, optional associations, consent-bound delegation, privacy requests, support cases and append-only access audits. A bounded synthetic commerce workspace now supports buyer RFQs/quotes, voluntary artisan offers, cumulative production, reconciled QA, fulfillment and isolated simulated settlement. Real contracts, banking, comprehensive accounting, analytics ETL and firmware remain outside the implemented prototype.
 
 ## Architecture
 
@@ -17,7 +17,7 @@ Browser → Next.js App Router → same-origin /api rewrite → NestJS
 - `apps/web`: Next.js 16, React, TypeScript, responsive forms and protected profile/admin pages.
 - `apps/api`: ESM NestJS 11, Better Auth, Prisma 7 PostgreSQL adapter, official Arcjet Nest integration, structured logging.
 - `packages/contracts`: shared strict Zod inputs and safe response types; no server credentials or Prisma imports.
-- One API owns authentication and the database. No Redis, worker, microservices or Turbo dependency.
+- One API owns authentication and the database. A separate database-local worker consumes metadata events; no Redis, microservices or Turbo dependency.
 
 ## Repository layout
 
@@ -96,7 +96,7 @@ Production startup requires HTTPS `PUBLIC_APP_URL`, enabled/keyed Arcjet and aut
 
 ## Database changes
 
-The original authentication migration is preserved. Three additive migrations add organizations, memberships, invitations, artisan profiles, craft/skills/capacity, associations, delegation, consent, governance and provider MFA. `User` gains preferred language and MFA status; `Session` gains server-only MFA proof. Capacity revisions preserve values/history and reject contradictory overlapping periods. Foreign keys preserve referenced history. The IAM migration adds an append-only audit trigger, capacity checks, pending-invitation uniqueness and five reference craft entries. Prisma generates its client separately from schema deployment.
+The original authentication migration is preserved. Five additive migrations add identity/organization/artisan/governance features, provider MFA, durable command outcomes, audit outbox/receipts and isolated synthetic commerce. `User` gains preferred language and MFA status; `Session` gains server-only MFA proof. Capacity revisions preserve values/history and reject contradictory overlapping periods. Foreign keys preserve referenced history. The IAM migration adds an append-only audit trigger, capacity checks, pending-invitation uniqueness and five reference craft entries. Prisma generates its client separately from schema deployment.
 
 `pnpm db:migrate` uses **migrate deploy**, with no reset or `db push`. Review the SQL and point credentials at the intended dedicated database before running it elsewhere. If tables already conflict, stop and design a baseline/data-preserving migration rather than resetting. Keep migrations committed and deploy them once before starting the new API version. Use least-privilege runtime credentials and a separate migration owner in production.
 
@@ -173,3 +173,19 @@ pnpm demo:web
 Open `http://127.0.0.1:3200`. Six fictional persona credentials are stored privately in `.local/demo-credentials.json`; setup does not print them. These optional reviewer accounts belong to port3200, while the normal project entrypoint uses `.local/dev-credentials.json` at port3000. Demo setup preserves its own secrets and uses a separate database, volume and authentication cookie prefix. See [demo isolation](../docs/demo-identity.md).
 
 Detailed implementation and verification are tracked in [the implementation tracker](../docs/foundation-implementation-tracker.md). Actual endpoint policies are in [organization access](../docs/organization-access.md), [artisan access](../docs/artisan-access.md), [governance APIs](../docs/governance-api.md), and [lifecycle recovery](../docs/lifecycle-recovery.md).
+
+## E16 reliability and verification
+
+Capacity declarations now accept scoped replay keys, and IAM audits write metadata-only outbox events transactionally. Run `pnpm worker --watch` as a separate local database consumer, `pnpm worker --status` for diagnostics, and `pnpm ops:check` for local readiness/queue alerts. The built worker is `pnpm --filter @hirfacare/api worker --watch`. This is internal receipt delivery; commercial notifications/analytics and firmware remain upstream work.
+
+Self-contained guides in this repository: [architecture and exact TND rules](docs/architecture/README.md), [API/replay contract](docs/api/README.md), [development](docs/development/README.md), [deployment](docs/deployment/README.md), [security](docs/security/README.md), [testing](docs/testing/README.md), [firmware/privacy matrix](docs/firmware/README.md), [backup/recovery and alerts](docs/operations/README.md).
+
+The [engineering report](docs/engineering/E16_ENGINEERING_REPORT.md), [E16 audit](docs/engineering/E16_IMPLEMENTATION_AUDIT.md), [acceptance matrix](docs/engineering/E16_ACCEPTANCE_MATRIX.md), [test results](docs/engineering/E16_TEST_RESULTS.md), [security report](docs/engineering/E16_SECURITY_TEST_REPORT.md) and [release assessment](docs/engineering/E16_RELEASE_READINESS.md) distinguish implemented foundation and synthetic commerce from remaining hardware and production requirements. Synthetic fixtures are not live transactions or verified operational evidence. Do not reset production data; automated tests and restore drills use disposable databases.
+
+### Buyer, artisan and operator journeys (#32, #88, #195)
+
+Use `/commerce/buyer` for saved RFQs, submission and exact quote/receipt decisions; `/commerce/artisan` for immutable offer review, voluntary acceptance/decline and cumulative progress; `/commerce/operator` for assigned funding, allocation, production, QA, shipment and simulated settlement. Every screen labels synthetic data, and the API/DB reject live provenance. See the [commerce rules and architecture](docs/architecture/commerce.md), [API contracts](docs/api/README.md) and [three-issue completion evidence](docs/engineering/E16_TARGET_STORIES_REPORT.md).
+
+Local seeded personas retain their existing roles. The internal organization manager can explicitly assign QUALITY_INSPECTOR and INVENTORY_LOGISTICS_COORDINATOR to the appropriate synthetic staff through organization settings; global administrator status alone grants no commerce access. The artisan must declare PIECES for the same craft and a period covering the planned delivery deadline (future windows are supported). Existing demo capacity uses **DEMO — Traditional embroidery**, so choose that same craft when using that persona. Offers reserve one selected declaration conservatively; declined/expired offers release their tentative reservation.
+
+These stories are implemented for the synthetic prototype, with mobile/desktop/keyboard/axe and emulated slow-device evidence. This is not a complete accessibility certification, real payment implementation or firmware/hardware verification.

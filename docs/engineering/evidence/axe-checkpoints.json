@@ -1,0 +1,180 @@
+[
+  {
+    "checkpoint": "axe-mobile-buyer-form",
+    "url": "http://127.0.0.1:3100/commerce/buyer",
+    "violations": [],
+    "passes": [
+      "aria-allowed-attr",
+      "aria-conditional-attr",
+      "aria-prohibited-attr",
+      "aria-valid-attr-value",
+      "aria-valid-attr",
+      "button-name",
+      "color-contrast",
+      "duplicate-id-aria",
+      "form-field-multiple-labels",
+      "label",
+      "link-name",
+      "nested-interactive",
+      "select-name",
+      "summary-name",
+      "target-size"
+    ]
+  },
+  {
+    "checkpoint": "axe-mobile-artisan-decision",
+    "url": "http://127.0.0.1:3100/commerce/artisan",
+    "violations": [],
+    "passes": [
+      "aria-allowed-attr",
+      "aria-conditional-attr",
+      "aria-prohibited-attr",
+      "aria-valid-attr-value",
+      "aria-valid-attr",
+      "button-name",
+      "color-contrast",
+      "definition-list",
+      "dlitem",
+      "duplicate-id-aria",
+      "link-name",
+      "nested-interactive",
+      "target-size"
+    ]
+  },
+  {
+    "checkpoint": "axe-mobile-operator-review",
+    "url": "http://127.0.0.1:3100/commerce/operator",
+    "violations": [],
+    "passes": [
+      "aria-allowed-attr",
+      "aria-conditional-attr",
+      "aria-deprecated-role",
+      "aria-prohibited-attr",
+      "aria-required-attr",
+      "aria-roles",
+      "aria-valid-attr-value",
+      "aria-valid-attr",
+      "button-name",
+      "color-contrast",
+      "definition-list",
+      "dlitem",
+      "duplicate-id-aria",
+      "link-name",
+      "nested-interactive",
+      "summary-name",
+      "target-size"
+    ]
+  },
+  {
+    "checkpoint": "axe-mobile-buyer-fulfillment",
+    "url": "http://127.0.0.1:3100/commerce/buyer",
+    "violations": [],
+    "passes": [
+      "aria-allowed-attr",
+      "aria-conditional-attr",
+      "aria-deprecated-role",
+      "aria-prohibited-attr",
+      "aria-required-attr",
+      "aria-roles",
+      "aria-valid-attr-value",
+      "aria-valid-attr",
+      "color-contrast",
+      "definition-list",
+      "dlitem",
+      "duplicate-id-aria",
+      "link-name",
+      "nested-interactive",
+      "summary-name",
+      "target-size"
+    ]
+  },
+  {
+    "checkpoint": "axe-desktop-buyer-form",
+    "url": "http://127.0.0.1:3100/commerce/buyer",
+    "violations": [],
+    "passes": [
+      "aria-allowed-attr",
+      "aria-conditional-attr",
+      "aria-prohibited-attr",
+      "aria-valid-attr-value",
+      "aria-valid-attr",
+      "button-name",
+      "color-contrast",
+      "duplicate-id-aria",
+      "form-field-multiple-labels",
+      "label",
+      "link-name",
+      "nested-interactive",
+      "select-name",
+      "summary-name",
+      "target-size"
+    ]
+  },
+  {
+    "checkpoint": "axe-desktop-artisan-decision",
+    "url": "http://127.0.0.1:3100/commerce/artisan",
+    "violations": [],
+    "passes": [
+      "aria-allowed-attr",
+      "aria-conditional-attr",
+      "aria-prohibited-attr",
+      "aria-valid-attr-value",
+      "aria-valid-attr",
+      "button-name",
+      "color-contrast",
+      "definition-list",
+      "dlitem",
+      "duplicate-id-aria",
+      "link-name",
+      "nested-interactive",
+      "target-size"
+    ]
+  },
+  {
+    "checkpoint": "axe-desktop-operator-review",
+    "url": "http://127.0.0.1:3100/commerce/operator",
+    "violations": [],
+    "passes": [
+      "aria-allowed-attr",
+      "aria-conditional-attr",
+      "aria-deprecated-role",
+      "aria-prohibited-attr",
+      "aria-required-attr",
+      "aria-roles",
+      "aria-valid-attr-value",
+      "aria-valid-attr",
+      "button-name",
+      "color-contrast",
+      "definition-list",
+      "dlitem",
+      "duplicate-id-aria",
+      "link-name",
+      "nested-interactive",
+      "summary-name",
+      "target-size"
+    ]
+  },
+  {
+    "checkpoint": "axe-desktop-buyer-fulfillment",
+    "url": "http://127.0.0.1:3100/commerce/buyer",
+    "violations": [],
+    "passes": [
+      "aria-allowed-attr",
+      "aria-conditional-attr",
+      "aria-deprecated-role",
+      "aria-prohibited-attr",
+      "aria-required-attr",
+      "aria-roles",
+      "aria-valid-attr-value",
+      "aria-valid-attr",
+      "color-contrast",
+      "definition-list",
+      "dlitem",
+      "duplicate-id-aria",
+      "link-name",
+      "nested-interactive",
+      "summary-name",
+      "target-size"
+    ]
+  }
+]

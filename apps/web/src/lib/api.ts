@@ -10,13 +10,18 @@ export class ApiError extends Error {
 }
 export async function apiFetch<T>(
   path: string,
-  options: { method?: 'GET' | 'POST' | 'PATCH' | 'PUT' | 'DELETE'; body?: unknown } = {},
+  options: {
+    method?: 'GET' | 'POST' | 'PATCH' | 'PUT' | 'DELETE';
+    body?: unknown;
+    idempotencyKey?: string;
+  } = {},
 ): Promise<T> {
   if (!safeApiPath(path)) throw new Error('Invalid API destination.');
   const method = options.method ?? 'GET';
   const headers: Record<string, string> = { Accept: 'application/json' };
   if (method !== 'GET') {
     headers['Content-Type'] = 'application/json';
+    if (options.idempotencyKey) headers['Idempotency-Key'] = options.idempotencyKey;
     if (path.startsWith('/api/v1/'))
       headers['X-CSRF-Token'] = (await apiFetch<MeView>('/api/v1/me')).csrfToken;
   }

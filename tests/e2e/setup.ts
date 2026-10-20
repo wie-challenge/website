@@ -1,3 +1,4 @@
+import { seedBrowserCommerceFixture } from '../../apps/api/test/commerce.fixture';
 import { spawn, type ChildProcess } from 'node:child_process';
 import { createServer } from 'node:http';
 import { createServer as netServer } from 'node:net';
@@ -47,6 +48,13 @@ export default async function setup() {
       } else if (url.pathname.endsWith('/promote') && req.method === 'POST') {
         await promoteDisposableAdmin(database.url, email);
         res.end('{}');
+      } else if (url.pathname.endsWith('/commerce-fixture') && req.method === 'POST') {
+        const fixture = await seedBrowserCommerceFixture(
+          database.url,
+          url.searchParams.get('suffix') ?? '',
+        );
+        res.setHeader('Content-Type', 'application/json');
+        res.end(JSON.stringify(fixture));
       } else res.writeHead(404).end();
     } catch {
       res.writeHead(500).end('Test fixture failed.');

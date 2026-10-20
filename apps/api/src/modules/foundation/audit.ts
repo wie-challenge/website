@@ -16,7 +16,7 @@ export async function audit(
     after?: SafeSnapshot;
   },
 ) {
-  await db.auditEvent.create({
+  const record = await db.auditEvent.create({
     data: {
       actorId: actor.id,
       action: event.action,
@@ -27,6 +27,19 @@ export async function audit(
       correlationId: actor.requestId ?? randomUUID(),
       before: event.before as Prisma.InputJsonValue | undefined,
       after: event.after as Prisma.InputJsonValue | undefined,
+    },
+  });
+  await db.outboxEvent.create({
+    data: {
+      id: randomUUID(),
+      auditEventId: record.id,
+      eventType: record.action,
+      version: 1,
+      actorId: record.actorId,
+      organizationId: record.organizationId,
+      targetType: record.targetType,
+      targetId: record.targetId,
+      correlationId: record.correlationId,
     },
   });
 }
