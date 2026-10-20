@@ -1,5 +1,7 @@
 # Full E16 follow-up audit and execution inventory
 
+Historical execution inventory: intermediate counts and publication limits below describe their original stage. The final acceptance matrix and test report contain current results, including the explicitly authorized feature-branch pushes.
+
 Simulator ownership update: the user requested IoT ownership after this verification run. The simulator now lives in the independent `iot/simulator` project with its own tools/lockfile/tests/CI. Website commands no longer build/test/run it, and the cross-repository simulator integration scenario was removed. Current website totals are 42 unit and 58 integration tests; IoT separately retains 12 simulator tests. Earlier 54/59 logs below are historical pre-move evidence. Device/application communication remains deferred.
 
 Starting point: commit 9eb6d37, clean website worktree. The existing strict Next/Nest/Prisma foundation, synthetic commerce machines/UI, transactional command/audit/outbox, isolated integration/browser/restore suites and local guides are preserved. This audit follows the earlier baseline audit; it does not replace historical observations.
