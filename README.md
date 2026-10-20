@@ -2,7 +2,7 @@
 
 A small full-stack starting point extracted and adapted from the IEEE Tunisia Partnership Hub. The reference project is unchanged. Product documents and the GitHub backlog importer belong to the separate `docs` repository. The optional sibling checkout at `../docs/` is not required to run this website.
 
-The foundation provides verified Better Auth accounts, password recovery/change, session management, verified email changes, TOTP MFA, organizations and approvals, multi-role memberships, secure staff invitations, artisan profiles/skills/capacity, optional associations, consent-bound delegation, privacy requests, support cases and append-only access audits. A bounded synthetic commerce workspace now supports buyer RFQs/quotes, voluntary artisan offers, cumulative production, reconciled QA, fulfillment and isolated simulated settlement. Real contracts, banking, comprehensive accounting, analytics ETL and firmware remain outside the implemented prototype.
+The foundation provides verified Better Auth accounts, password recovery/change, session management, verified email changes, TOTP MFA, organizations and approvals, multi-role memberships, secure staff invitations, artisan profiles/skills/capacity, optional associations, consent-bound delegation, privacy requests, support cases and append-only access audits. A bounded synthetic commerce workspace now supports buyer RFQs/quotes, voluntary artisan offers, cumulative production, reconciled QA, fulfillment and isolated simulated settlement. Real contracts, banking, comprehensive accounting and physical firmware remain outside the implemented prototype. The local worker provides rebuildable synthetic analytics and scoped in-app notices.
 
 ## Architecture
 
@@ -32,7 +32,7 @@ This website repository owns:
 - `.github/workflows/`: website CI, running from this repository root.
 - `.env`, `.local/`, `node_modules/`: ignored environment, credentials and dependencies.
 
-The existing pnpm packages are internal to this website repository. Builds, tests and runtime do not load sibling repositories. AI and IoT currently contain planning placeholders.
+The existing pnpm packages are internal to this website repository. Builds, tests and runtime do not load sibling repositories. IoT owns an independent local wearable simulator; neither that checkout nor the separate AI service is required by website commands.
 
 Run commands below from the **website repository root**. Links to `../docs/` assume an optional sibling docs checkout.
 
@@ -96,7 +96,7 @@ Production startup requires HTTPS `PUBLIC_APP_URL`, enabled/keyed Arcjet and aut
 
 ## Database changes
 
-The original authentication migration is preserved. Five additive migrations add identity/organization/artisan/governance features, provider MFA, durable command outcomes, audit outbox/receipts and isolated synthetic commerce. `User` gains preferred language and MFA status; `Session` gains server-only MFA proof. Capacity revisions preserve values/history and reject contradictory overlapping periods. Foreign keys preserve referenced history. The IAM migration adds an append-only audit trigger, capacity checks, pending-invitation uniqueness and five reference craft entries. Prisma generates its client separately from schema deployment.
+The original authentication migration is preserved. Six additive migrations add identity/organization/artisan/governance features, provider MFA, capacity revisions, durable command outcomes, audit outbox/receipts, isolated synthetic commerce and derived projections/notices. `User` gains preferred language and MFA status; `Session` gains server-only MFA proof. Capacity revisions preserve values/history and reject contradictory overlapping periods. Foreign keys preserve referenced history. The IAM migration adds an append-only audit trigger, capacity checks, pending-invitation uniqueness and five reference craft entries. Prisma generates its client separately from schema deployment.
 
 `pnpm db:migrate` uses **migrate deploy**, with no reset or `db push`. Review the SQL and point credentials at the intended dedicated database before running it elsewhere. If tables already conflict, stop and design a baseline/data-preserving migration rather than resetting. Keep migrations committed and deploy them once before starting the new API version. Use least-privilege runtime credentials and a separate migration owner in production.
 
@@ -176,7 +176,7 @@ Detailed implementation and verification are tracked in [the implementation trac
 
 ## E16 reliability and verification
 
-Capacity declarations now accept scoped replay keys, and IAM audits write metadata-only outbox events transactionally. Run `pnpm worker --watch` as a separate local database consumer, `pnpm worker --status` for diagnostics, and `pnpm ops:check` for local readiness/queue alerts. The built worker is `pnpm --filter @hirfacare/api worker --watch`. This is internal receipt delivery; commercial notifications/analytics and firmware remain upstream work.
+Capacity declarations now accept scoped replay keys, and IAM audits write metadata-only outbox events transactionally. Run `pnpm worker --watch` as a separate local database consumer, `pnpm worker --status` for diagnostics, and `pnpm ops:check` for local readiness/queue alerts. The built worker is `pnpm --filter @hirfacare/api worker --watch`. The worker delivers durable scoped commerce notices and rebuilds synthetic reports; physical firmware and device communication remain deferred.
 
 Self-contained guides in this repository: [architecture and exact TND rules](docs/architecture/README.md), [API/replay contract](docs/api/README.md), [development](docs/development/README.md), [deployment](docs/deployment/README.md), [security](docs/security/README.md), [testing](docs/testing/README.md), [firmware/privacy matrix](docs/firmware/README.md), [backup/recovery and alerts](docs/operations/README.md).
 
