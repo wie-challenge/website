@@ -1,0 +1,15 @@
+Isolated source snapshot; identical dependency resolutions to passing baseline CI.
+Offline install trusts that lockfile because this host cannot refresh registry policy metadata.
+Scope: all 5 workspace projects
+Lockfile is up to date, resolution step is skipped
+Progress: resolved 1, reused 0, downloaded 0, added 0
+Packages: +350
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+Progress: resolved 350, reused 349, downloaded 0, added 62
+Progress: resolved 350, reused 349, downloaded 0, added 130
+Progress: resolved 350, reused 349, downloaded 0, added 194
+Progress: resolved 350, reused 349, downloaded 0, added 256
+Progress: resolved 350, reused 349, downloaded 0, added 314
+[ERR_PNPM_NO_OFFLINE_TARBALL] A package is missing from the store but cannot download it in offline mode. The missing package may be downloaded from https://registry.npmjs.org/next/-/next-16.4.1.tgz.
+
+EXIT 1

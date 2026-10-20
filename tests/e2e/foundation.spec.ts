@@ -229,3 +229,42 @@ test('pending authentication disables duplicate submissions and recovers after a
   await expect(page.locator('main').getByRole('alert')).toContainText('Sign-in unsuccessful');
   await expect(page.getByRole('button', { name: 'Sign in', exact: true })).toBeEnabled();
 });
+
+test('small-screen login supports keyboard focus, associated labels and direct API denials through the proxy', async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 320, height: 740 });
+  await page.goto('/auth/login');
+  await page.keyboard.press('Tab');
+  await expect(page.getByRole('link', { name: 'Skip to content' })).toBeFocused();
+  await page.keyboard.press('Enter');
+  const email = page.getByLabel('Email address', { exact: true });
+  await email.focus();
+  await page.keyboard.type('keyboard@example.com');
+  await page.keyboard.press('Tab');
+  const passwordInput = page.getByLabel('Password', { exact: true });
+  await expect(passwordInput).toBeFocused();
+  await page.keyboard.type(password);
+  await page.keyboard.press('Tab');
+  await expect(page.getByRole('button', { name: 'Show password', exact: true })).toBeFocused();
+  await page.keyboard.press('Enter');
+  await expect(passwordInput).toHaveAttribute('type', 'text');
+  await page.keyboard.press('Enter');
+  await expect(passwordInput).toHaveAttribute('type', 'password');
+  await page.keyboard.press('Tab');
+  await expect(page.getByRole('button', { name: 'Sign in', exact: true })).toBeFocused();
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+  for (const field of await page.locator('input:not([type="hidden"])').all()) {
+    const id = await field.getAttribute('id');
+    expect(id).toBeTruthy();
+    await expect(page.locator(`label[for="${id}"]`)).not.toBeEmpty();
+  }
+  const denied = await page.request.get('/api/v1/me');
+  expect(denied.status()).toBe(401);
+  expect((await denied.json()).requestId).toBe(denied.headers()['x-request-id']);
+  const malformed = await page.request.post('/api/auth/sign-in/email', {
+    headers: { Origin: 'http://127.0.0.1:3100' },
+    data: { email: 'bad', password: 'bad', wearableSummary: {} },
+  });
+  expect(malformed.status()).toBe(400);
+});

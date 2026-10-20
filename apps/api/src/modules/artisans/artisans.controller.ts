@@ -1,4 +1,15 @@
-import { Body, Controller, Delete, Get, Inject, Param, Patch, Post, Put } from '@nestjs/common';
+import {
+  Headers,
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Inject,
+  Param,
+  Patch,
+  Post,
+  Put,
+} from '@nestjs/common';
 import {
   artisanProfileSchema,
   artisanSkillsSchema,
@@ -54,8 +65,9 @@ export class ArtisansController {
   @Post('artisans/me/capacity') declare(
     @CurrentUser() actor: Actor,
     @Body(new ZodValidationPipe(capacityDeclarationSchema)) input: CapacityDeclarationInput,
+    @Headers('idempotency-key') key?: string,
   ) {
-    return this.artisans.declare(actor, input);
+    return this.artisans.declare(actor, input, undefined, key);
   }
   @Get('artisans/me/associations') associations(@CurrentUser() actor: Actor) {
     return this.artisans.associations(actor);
@@ -131,7 +143,8 @@ export class ArtisansController {
     @CurrentUser() actor: Actor,
     @Param('id', new ZodValidationPipe(resourceIdSchema)) id: string,
     @Body(new ZodValidationPipe(capacityDeclarationSchema)) input: CapacityDeclarationInput,
+    @Headers('idempotency-key') key?: string,
   ) {
-    return this.artisans.declare(actor, input, id);
+    return this.artisans.declare(actor, input, id, key);
   }
 }

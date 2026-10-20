@@ -213,6 +213,8 @@ test('independent artisan manages skills, capacity, association consent and limi
   browser,
 }) => {
   test.setTimeout(120000);
+  await page.setViewportSize({ width: 360, height: 800 });
+  await page.emulateMedia({ reducedMotion: 'reduce' });
   const artisanEmail = 'identity-artisan@example.com';
   const coordinatorEmail = 'identity-coordinator@example.com';
   await register(request, artisanEmail, 'Identity Artisan');
@@ -243,8 +245,33 @@ test('independent artisan manages skills, capacity, association consent and limi
   await capacity.getByLabel('Quantity per week', { exact: true }).fill('12');
   await capacity.getByLabel('Effective from', { exact: true }).fill('2027-01-01T08:00');
   await capacity.getByLabel('Effective until', { exact: true }).fill('2027-01-08T08:00');
+  const replayKeys: string[] = [];
+  let dropResponse = true;
+  await page.route('**/api/v1/artisans/me/capacity', async (route) => {
+    if (route.request().method() !== 'POST') return route.continue();
+    replayKeys.push(route.request().headers()['idempotency-key']);
+    if (dropResponse) {
+      dropResponse = false;
+      const committed = await route.fetch();
+      expect(committed.status()).toBe(201);
+      return route.abort('failed');
+    }
+    return route.continue();
+  });
+  await capacity.getByRole('button', { name: 'Declare capacity', exact: true }).click();
+  await expect(capacity.getByRole('alert')).toContainText('temporarily unavailable');
   await capacity.getByRole('button', { name: 'Declare capacity', exact: true }).click();
   await expect(capacity.getByText('12 hours per week', { exact: false })).toBeVisible();
+  expect(replayKeys).toHaveLength(2);
+  expect(replayKeys[0]).toBeTruthy();
+  expect(replayKeys[1]).toBe(replayKeys[0]);
+  const persisted = await (await page.request.get('/api/v1/artisans/me/capacity')).json();
+  expect(persisted.items).toHaveLength(1);
+  expect(persisted.items[0].quantity).toBe('12');
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(
+    true,
+  );
+  await page.unroute('**/api/v1/artisans/me/capacity');
   await page
     .getByLabel('Availability for new opportunities', { exact: true })
     .selectOption('PAUSED');

@@ -74,7 +74,7 @@ export async function disposableDatabase(options: { foundationOnly?: boolean } =
         migrationOptions,
       );
     } else await exec('pnpm', ['exec', 'prisma', 'migrate', 'deploy'], migrationOptions);
-    return { url, stop };
+    return { url, stop, containerName: name };
   } catch (error) {
     await stop();
     throw error;

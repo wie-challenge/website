@@ -190,6 +190,8 @@ enum CaseStatus {
 }
 
 model Organization {
+  buyerRfqs              CommercialRfq[]         @relation("RfqBuyer")
+  operatorRfqs           CommercialRfq[]         @relation("RfqOperator")
   id                     String                  @id @default(cuid())
   name                   String
   slug                   String                  @unique
@@ -271,6 +273,8 @@ model Invitation {
 }
 
 model ArtisanProfile {
+  commercialOffers      CommercialOffer[]
+  commercialBatches     CommercialBatch[]
   id                    String                  @id @default(cuid())
   userId                String                  @unique
   user                  User                    @relation(fields: [userId], references: [id], onDelete: Restrict)
@@ -291,6 +295,7 @@ model ArtisanProfile {
 }
 
 model CraftSkill {
+  rfqs        CommercialRfq[]
   id          String                @id @default(cuid())
   name        String                @unique
   category    String
@@ -314,19 +319,20 @@ model ArtisanSkill {
 }
 
 model CapacityDeclaration {
+  commercialOffers CommercialOffer[]
   supersededAt     DateTime?
-  id               String         @id @default(cuid())
+  id               String            @id @default(cuid())
   artisanProfileId String
-  artisanProfile   ArtisanProfile @relation(fields: [artisanProfileId], references: [id], onDelete: Restrict)
+  artisanProfile   ArtisanProfile    @relation(fields: [artisanProfileId], references: [id], onDelete: Restrict)
   craftSkillId     String
-  craftSkill       CraftSkill     @relation(fields: [craftSkillId], references: [id], onDelete: Restrict)
+  craftSkill       CraftSkill        @relation(fields: [craftSkillId], references: [id], onDelete: Restrict)
   unitType         String
-  quantity         Decimal        @db.Decimal(12, 2)
+  quantity         Decimal           @db.Decimal(12, 2)
   effectiveFrom    DateTime
   effectiveTo      DateTime
   declaredByUserId String
-  declaredBy       User           @relation(fields: [declaredByUserId], references: [id], onDelete: Restrict)
-  createdAt        DateTime       @default(now())
+  declaredBy       User              @relation(fields: [declaredByUserId], references: [id], onDelete: Restrict)
+  createdAt        DateTime          @default(now())
 
   @@index([artisanProfileId, effectiveFrom])
 }
@@ -465,4 +471,209 @@ model TwoFactor {
   lockedUntil             DateTime?
 
   @@index([secret])
+}
+
+// Outcome is committed atomically with the authorized capacity mutation.
+model CommandOutcome {
+  id          String   @id @default(cuid())
+  actorId     String
+  resourceId  String
+  operation   String
+  keyHash     String
+  payloadHash String
+  result      Json
+  createdAt   DateTime @default(now())
+
+  @@unique([actorId, resourceId, operation, keyHash])
+}
+
+enum OutboxStatus {
+  PENDING
+  RETRY
+  DELIVERED
+  FAILED
+}
+
+// Metadata only: never copy user-entered text, audit snapshots or wearable data.
+model OutboxEvent {
+  id             String           @id
+  auditEventId   String           @unique
+  eventType      String
+  version        Int              @default(1)
+  actorId        String
+  organizationId String?
+  targetType     String
+  targetId       String
+  correlationId  String
+  createdAt      DateTime         @default(now())
+  status         OutboxStatus     @default(PENDING)
+  attempts       Int              @default(0)
+  availableAt    DateTime         @default(now())
+  deliveredAt    DateTime?
+  lastErrorCode  String?
+  durationMs     Int?
+  notices        CommerceNotice[]
+  receipt        EventReceipt?
+
+  @@index([status, availableAt])
+}
+
+// Internal durable consumer; not evidence of external publication or commerce ETL.
+model EventReceipt {
+  eventId    String      @id
+  event      OutboxEvent @relation(fields: [eventId], references: [id], onDelete: Restrict)
+  receivedAt DateTime    @default(now())
+}
+
+model CommercialRfq {
+  id                     String           @id @default(cuid())
+  buyerOrganizationId    String
+  buyerOrganization      Organization     @relation("RfqBuyer", fields: [buyerOrganizationId], references: [id], onDelete: Restrict)
+  operatorOrganizationId String
+  operatorOrganization   Organization     @relation("RfqOperator", fields: [operatorOrganizationId], references: [id], onDelete: Restrict)
+  craftSkillId           String
+  craftSkill             CraftSkill       @relation(fields: [craftSkillId], references: [id], onDelete: Restrict)
+  title                  String
+  specification          String
+  designRequirements     String
+  quantity               Int
+  deliveryAt             DateTime
+  deliveryLocation       String
+  status                 String           @default("DRAFT")
+  version                Int              @default(1)
+  provenance             String           @default("SYNTHETIC")
+  quoteMillimes          BigInt?
+  quoteExpiresAt         DateTime?
+  createdAt              DateTime         @default(now())
+  updatedAt              DateTime         @updatedAt
+  order                  CommercialOrder?
+
+  @@index([buyerOrganizationId, createdAt])
+  @@index([operatorOrganizationId, status])
+}
+
+model CommercialOrder {
+  projection        CommerceProjection?
+  id                String              @id @default(cuid())
+  rfqId             String              @unique
+  rfq               CommercialRfq       @relation(fields: [rfqId], references: [id], onDelete: Restrict)
+  status            String              @default("APPROVED")
+  version           Int                 @default(1)
+  delivered         Int                 @default(0)
+  materialsResolved Boolean             @default(false)
+  dispositionNote   String?
+  provenance        String              @default("SYNTHETIC")
+  createdAt         DateTime            @default(now())
+  offers            CommercialOffer[]
+  batches           CommercialBatch[]
+  payments          SyntheticPayment[]
+}
+
+model CommercialOffer {
+  id                    String              @id @default(cuid())
+  orderId               String
+  order                 CommercialOrder     @relation(fields: [orderId], references: [id], onDelete: Restrict)
+  capacityDeclarationId String
+  capacityDeclaration   CapacityDeclaration @relation(fields: [capacityDeclarationId], references: [id], onDelete: Restrict)
+  artisanProfileId      String
+  artisanProfile        ArtisanProfile      @relation(fields: [artisanProfileId], references: [id], onDelete: Restrict)
+  quantity              Int
+  unitPayMillimes       BigInt
+  estimatedHours        String
+  expiresAt             DateTime
+  materials             String
+  reworkTerms           String
+  paymentConditions     String
+  status                String              @default("PLANNED")
+  version               Int                 @default(1)
+  provenance            String              @default("SYNTHETIC")
+  acceptedAt            DateTime?
+  decidedByUserId       String?
+  createdAt             DateTime            @default(now())
+  batch                 CommercialBatch?
+
+  @@index([orderId, status])
+  @@index([artisanProfileId, status])
+  @@index([capacityDeclarationId, status])
+}
+
+model CommercialBatch {
+  id               String                 @id @default(cuid())
+  orderId          String
+  order            CommercialOrder        @relation(fields: [orderId], references: [id], onDelete: Restrict)
+  offerId          String                 @unique
+  offer            CommercialOffer        @relation(fields: [offerId], references: [id], onDelete: Restrict)
+  artisanProfileId String
+  artisanProfile   ArtisanProfile         @relation(fields: [artisanProfileId], references: [id], onDelete: Restrict)
+  status           String                 @default("ACCEPTED")
+  version          Int                    @default(1)
+  produced         Int                    @default(0)
+  submitted        Int                    @default(0)
+  approved         Int                    @default(0)
+  rejected         Int                    @default(0)
+  pending          Int                    @default(0)
+  provenance       String                 @default("SYNTHETIC")
+  createdAt        DateTime               @default(now())
+  inspections      CommercialInspection[]
+  payments         SyntheticPayment[]
+
+  @@index([orderId])
+  @@index([artisanProfileId, status])
+}
+
+model CommercialInspection {
+  id           String          @id @default(cuid())
+  batchId      String
+  batch        CommercialBatch @relation(fields: [batchId], references: [id], onDelete: Restrict)
+  batchVersion Int
+  inspectorId  String
+  approved     Int
+  rejected     Int
+  pending      Int
+  submitted    Int
+  defectReason String
+  createdAt    DateTime        @default(now())
+
+  @@unique([batchId, batchVersion])
+}
+
+model SyntheticPayment {
+  id             String           @id @default(cuid())
+  orderId        String
+  order          CommercialOrder  @relation(fields: [orderId], references: [id], onDelete: Restrict)
+  batchId        String?
+  batch          CommercialBatch? @relation(fields: [batchId], references: [id], onDelete: Restrict)
+  kind           String
+  amountMillimes BigInt
+  status         String           @default("SCHEDULED")
+  version        Int              @default(1)
+  provenance     String           @default("SYNTHETIC")
+  evidenceType   String?
+  createdAt      DateTime         @default(now())
+
+  @@index([orderId, kind, status])
+  @@index([batchId, status])
+}
+
+// Rebuildable derived values only. No user-entered text or wearable data.
+model CommerceProjection {
+  orderId           String          @id
+  order             CommercialOrder @relation(fields: [orderId], references: [id], onDelete: Restrict)
+  definitionVersion Int             @default(1)
+  asOf              DateTime        @default(now())
+  metrics           Json
+}
+
+// Static event-code inbox. Scope is a buyer/internal organization or artisan account.
+model CommerceNotice {
+  id        String      @id @default(cuid())
+  eventId   String
+  event     OutboxEvent @relation(fields: [eventId], references: [id], onDelete: Restrict)
+  audience  String
+  scopeId   String
+  code      String
+  createdAt DateTime    @default(now())
+
+  @@unique([eventId, audience, scopeId])
+  @@index([audience, scopeId, createdAt])
 }

@@ -1,0 +1,18 @@
+Scope: all 4 workspace projects
+Lockfile is up to date, resolution step is skipped
+Progress: resolved 1, reused 0, downloaded 0, added 0
+Packages: +350
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+Progress: resolved 350, reused 350, downloaded 0, added 350, done
+.../node_modules/prisma preinstall$ node scripts/preinstall-entry.js
+.../node_modules/prisma preinstall: Done
+
+devDependencies:
++ @axe-core/playwright 4.14.0
++ @biomejs/biome 2.5.13
++ @playwright/test 1.63.0
++ @types/node 24.13.3
++ tsx 4.23.13
++ typescript 5.9.3
+
+Done in 1.5s using pnpm v11.3.0

@@ -1,3 +1,6 @@
+import { runCommerceScenarios } from './commerce.scenarios.js';
+import { runRestoreScenario } from './restore.scenarios.js';
+import { runE16Scenarios } from './e16.scenarios.js';
 import { runUpgradeScenario } from './upgrade.scenarios.js';
 import { runLifecycleScenarios } from './lifecycle.scenarios.js';
 import { runMfaScenarios } from './mfa.scenarios.js';
@@ -56,7 +59,13 @@ try {
           if (value) jar.set(name, value);
           else jar.delete(name);
         }
-        return { status: response.status, body: await response.json(), headers: response.headers };
+        return {
+          status: response.status,
+          body: response.headers.get('content-type')?.includes('application/json')
+            ? await response.json()
+            : await response.text(),
+          headers: response.headers,
+        };
       },
     };
   }
@@ -513,7 +522,10 @@ try {
   await runGovernanceScenarios({ db, register, mutate, check, mail });
   await runLifecycleScenarios({ db, client, register, mutate, check, config });
   await runMfaScenarios({ db, config, client, register, mutate, check, mail });
+  await runE16Scenarios({ db, register, mutate, check, config });
+  await runCommerceScenarios({ db, register, check, config });
   await runUpgradeScenario(check);
+  await runRestoreScenario(database, check);
   console.log(
     `Integration passed: ${assertions} scenarios against a newly created disposable PostgreSQL database and local SMTP capture.`,
   );

@@ -1,0 +1,18 @@
+{
+  "fixture": "commerce-v1",
+  "stats": {
+    "startTime": "2026-10-20T11:02:34.663Z",
+    "duration": 123251.806,
+    "expected": 15,
+    "skipped": 0,
+    "unexpected": 0,
+    "flaky": 0
+  },
+  "axeCheckpoints": 15,
+  "violations": 0,
+  "profiles": [
+    "360x800, 4x CPU and constrained network",
+    "768x1024",
+    "1280x900"
+  ]
+}

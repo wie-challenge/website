@@ -123,6 +123,8 @@ summary {
   text-decoration: none;
   font-size: 0.9rem;
   min-height: 46px;
+  min-inline-size: 0;
+  max-inline-size: 100%;
 }
 .button:hover {
   background: #244633;
@@ -287,6 +289,8 @@ select {
   color: var(--ink);
   width: 100%;
   min-height: 46px;
+  min-inline-size: 0;
+  max-inline-size: 100%;
 }
 input[aria-invalid="true"] {
   border-color: var(--error);
@@ -552,8 +556,10 @@ td select {
   *::before,
   *::after {
     scroll-behavior: auto;
-    transition: none;
-    animation: none;
+    /* biome-ignore lint/complexity/noImportantStyles: Accessibility preference must override inline transitions. */
+    transition: none !important;
+    /* biome-ignore lint/complexity/noImportantStyles: Accessibility preference must override inline animations. */
+    animation: none !important;
   }
 }
 
@@ -668,4 +674,53 @@ section[id] {
 .page-heading > div {
   min-inline-size: 0;
   overflow-wrap: anywhere;
+}
+
+/* Commerce keeps the existing card/form language with intrinsic sizing for narrow screens. */
+.commerce-card {
+  margin-block: 1rem;
+  overflow-wrap: anywhere;
+  min-inline-size: 0;
+}
+.commerce-card details {
+  margin-block: 1rem;
+}
+.commerce-facts {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 2fr);
+  gap: 0.5rem 1rem;
+}
+.commerce-facts dt {
+  font-weight: 700;
+}
+.commerce-facts dd {
+  margin: 0;
+  min-inline-size: 0;
+}
+textarea {
+  font: inherit;
+  color: var(--ink);
+  background: var(--white);
+  border: 1px solid var(--muted);
+  border-radius: 4px;
+  padding: 0.7rem;
+  max-inline-size: 100%;
+  inline-size: 100%;
+  resize: vertical;
+}
+textarea:focus-visible {
+  outline: 3px solid #a1692c;
+  outline-offset: 5px;
+}
+@media (max-width: 480px) {
+  .commerce-facts {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0.2rem;
+  }
+  .commerce-facts dd {
+    margin-block-end: 0.7rem;
+  }
+  .commerce-card.panel {
+    padding: 1rem;
+  }
 }

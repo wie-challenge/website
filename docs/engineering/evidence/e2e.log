@@ -1,0 +1,34 @@
+$ pnpm db:generate && pnpm --filter @hirfacare/contracts build && playwright test
+$ pnpm --filter @hirfacare/api db:generate
+$ prisma generate
+Loaded Prisma config from prisma.config.ts.
+
+Prisma schema loaded from prisma/schema.prisma.
+
+✔ Generated Prisma Client (v7.10.0) to ./../../node_modules/.pnpm/@prisma+client@7.10.0_prisma@7.10.0_@types+node@24.13.3_@types+react-dom@19.2.3_@types+_5598489cc1f5cf1be1d53099868dea5d/node_modules/@prisma/client in 228ms
+
+Start by importing your Prisma Client (See: https://pris.ly/d/importing-client)
+
+
+$ tsc -p tsconfig.json
+
+Running 14 tests using 1 worker
+
+(node:241659) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓   1 tests/e2e/commerce.spec.ts:75:3 › buyer RFQ, voluntary artisan decisions/progress and operator QA are accessible on mobile (34.0s)
+  ✓   2 tests/e2e/commerce.spec.ts:75:3 › buyer RFQ, voluntary artisan decisions/progress and operator QA are accessible on desktop (11.9s)
+  ✓   3 tests/e2e/foundation.spec.ts:33:1 › protected routes redirect and authentication errors are accessible (407ms)
+  ✓   4 tests/e2e/foundation.spec.ts:42:1 › signup, email verification, profile, sessions and password changes work in the browser (6.0s)
+  ✓   5 tests/e2e/foundation.spec.ts:97:1 › password recovery token stays out of URLs after hydration and revokes sessions (1.5s)
+  ✓   6 tests/e2e/foundation.spec.ts:117:1 › admin user search and status controls work; last admin cannot be removed (1.4s)
+  ✓   7 tests/e2e/foundation.spec.ts:153:1 › mobile forms, reduced motion and validation do not overflow (295ms)
+  ✓   8 tests/e2e/foundation.spec.ts:168:1 › network failures show a recoverable message without exposing upstream details (304ms)
+  ✓   9 tests/e2e/foundation.spec.ts:180:1 › forms remain disabled without JavaScript and cannot fall back to credential-bearing GET requests (152ms)
+  ✓  10 tests/e2e/foundation.spec.ts:198:1 › pending authentication disables duplicate submissions and recovers after a failed response (300ms)
+  ✓  11 tests/e2e/foundation.spec.ts:233:1 › small-screen login supports keyboard focus, associated labels and direct API denials through the proxy (375ms)
+  ✓  12 tests/e2e/identity.spec.ts:88:1 › buyer onboarding, approval, invitation and scoped membership revocation work across organizations (9.3s)
+  ✓  13 tests/e2e/identity.spec.ts:210:1 › independent artisan manages skills, capacity, association consent and limited delegation (7.4s)
+  ✓  14 tests/e2e/identity.spec.ts:364:1 › authenticator enrollment and recovery-code sign-in work without persisting secrets (2.4s)
+
+  14 passed (1.5m)

@@ -1,0 +1,68 @@
+{
+  "source": "CURRENT_WORKTREE_WITHOUT_IGNORED_FILES",
+  "ordinaryFrozenInstall": true,
+  "disposableDatabase": true,
+  "results": [
+    {
+      "command": "pnpm install --frozen-lockfile",
+      "exitCode": 0,
+      "durationMs": 1633,
+      "log": "01-install.log"
+    },
+    {
+      "command": "pnpm setup:local",
+      "exitCode": 0,
+      "durationMs": 429,
+      "log": "02-setup:local.log"
+    },
+    {
+      "command": "pnpm db:generate",
+      "exitCode": 0,
+      "durationMs": 1694,
+      "log": "03-db:generate.log"
+    },
+    {
+      "command": "pnpm lint",
+      "exitCode": 0,
+      "durationMs": 441,
+      "log": "04-lint.log"
+    },
+    {
+      "command": "pnpm typecheck",
+      "exitCode": 0,
+      "durationMs": 10894,
+      "log": "05-typecheck.log"
+    },
+    {
+      "command": "pnpm test",
+      "exitCode": 0,
+      "durationMs": 3084,
+      "log": "06-test.log"
+    },
+    {
+      "command": "pnpm test:integration",
+      "exitCode": 0,
+      "durationMs": 53853,
+      "log": "07-test:integration.log"
+    },
+    {
+      "command": "pnpm test:e2e",
+      "exitCode": 0,
+      "durationMs": 122640,
+      "log": "08-test:e2e.log"
+    },
+    {
+      "command": "pnpm audit --audit-level=high",
+      "exitCode": 0,
+      "durationMs": 907,
+      "log": "09-audit.log"
+    },
+    {
+      "command": "pnpm build",
+      "exitCode": 0,
+      "durationMs": 10528,
+      "log": "10-build.log"
+    }
+  ],
+  "passed": true
+}

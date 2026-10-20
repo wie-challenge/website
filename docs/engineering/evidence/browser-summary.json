@@ -1,0 +1,13 @@
+{
+  "fixture": "commerce-v1",
+  "stats": {
+    "startTime": "2026-10-20T10:17:31.183Z",
+    "duration": 92852.838,
+    "expected": 14,
+    "skipped": 0,
+    "unexpected": 0,
+    "flaky": 0
+  },
+  "axeCheckpoints": 8,
+  "violations": 0
+}
