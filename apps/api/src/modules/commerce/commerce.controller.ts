@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Headers, Inject, Param, Patch, Post } from '@nestjs/common';
+import { Body, Controller, Get, Header, Headers, Inject, Param, Patch, Post } from '@nestjs/common';
 import {
   resourceIdSchema,
   rfqCreateSchema,
@@ -32,6 +32,25 @@ export class CommerceController {
   constructor(@Inject(CommerceService) private readonly service: CommerceService) {}
   @Get('workspace') workspace(@CurrentUser() actor: Actor) {
     return this.service.workspace(actor);
+  }
+  @Get('inbox') inbox(@CurrentUser() actor: Actor) {
+    return this.service.inbox(actor);
+  }
+  @Get('orders/:id/report') report(
+    @CurrentUser() actor: Actor,
+    @Param('id', new ZodValidationPipe(resourceIdSchema)) id: string,
+  ) {
+    return this.service.report(actor, id);
+  }
+  @Get('orders/:id/report.csv')
+  @Header('Content-Type', 'text/csv; charset=utf-8')
+  @Header('Content-Disposition', 'attachment; filename="synthetic-commerce.csv"')
+  @Header('Cache-Control', 'no-store')
+  reportCsv(
+    @CurrentUser() actor: Actor,
+    @Param('id', new ZodValidationPipe(resourceIdSchema)) id: string,
+  ) {
+    return this.service.reportCsv(actor, id);
   }
   @Post('rfqs') create(
     @CurrentUser() actor: Actor,

@@ -1,6 +1,7 @@
 'use client';
 import { useRef } from 'react';
 import Link from 'next/link';
+import { CommerceReport } from './commerce-report';
 import type {
   CommerceWorkspaceView,
   CommercialRfqView,
@@ -51,6 +52,8 @@ function useCommand() {
 }
 export function CommerceWorkspace({ mode }: { mode: Mode }) {
   const resource = useResource<CommerceWorkspaceView>('/api/v1/commerce/workspace');
+  const inbox =
+    useResource<{ id: string; code: string; createdAt: string }[]>('/api/v1/commerce/inbox');
   const send = useCommand();
   const data = resource.data;
   const titles = {
@@ -176,6 +179,7 @@ export function CommerceWorkspace({ mode }: { mode: Mode }) {
             </>
           )}
         </dl>
+        <CommerceReport orderId={order.id} />
         {next[order.status]?.allow && (
           <ActionForm
             label={next[order.status].label}
@@ -477,6 +481,29 @@ export function CommerceWorkspace({ mode }: { mode: Mode }) {
           Operator review
         </Link>
       </nav>
+      <details>
+        <summary>Commerce notifications</summary>
+        <button className="btn-secondary" type="button" onClick={inbox.reload}>
+          Refresh notifications
+        </button>
+        <ResourceState {...inbox} retry={inbox.reload} />
+        {inbox.data &&
+          (inbox.data.length ? (
+            <ul>
+              {inbox.data.map((notice) => (
+                <li key={notice.id}>
+                  {humanize(notice.code.replace('commerce.', '').replaceAll('.', ' '))} ·{' '}
+                  <time dateTime={notice.createdAt}>
+                    {new Date(notice.createdAt).toLocaleString()}
+                  </time>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p>No processed commerce notifications yet.</p>
+          ))}
+        <p>Refresh to check for new commerce updates.</p>
+      </details>
       <ResourceState {...resource} retry={resource.reload} />
       {data && (
         <>

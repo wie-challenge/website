@@ -1,5 +1,7 @@
 # E16 execution plan
 
+Historical initial audit/plan. The current full-epic follow-up and final dispositions are in [E16_ACCEPTANCE_MATRIX.md](E16_ACCEPTANCE_MATRIX.md) and [E16_ENGINEERING_REPORT.md](E16_ENGINEERING_REPORT.md). Earlier missing-commerce/ETL/simulator statements describe the starting point, not the current code.
+
 1. Retrieve all 12 stories, parent and comments; preserve requirement snapshots. Audit foundation before edits.
 2. Keep existing toolchain; verify frozen install. Add additive persistence for command outcomes, outbox and receipts.
 3. Extract existing capacity and approval rules into pure shared domain functions; provide exact bounded TND primitives with boundary tests. Integrate actual rules only.

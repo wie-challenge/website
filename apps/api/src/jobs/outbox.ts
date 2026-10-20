@@ -1,5 +1,6 @@
 import type { Prisma, OutboxEvent } from '@prisma/client';
 import type { PrismaService } from '../database/prisma.service.js';
+import { consumeLocalEvent } from './commerce-consumer.js';
 import { logger } from '../common/logging.js';
 
 export const MAX_ATTEMPTS = 5;
@@ -17,7 +18,7 @@ export const recordReceipt: LocalConsumer = async (tx, event) => {
 export async function dispatchBatch(
   db: PrismaService,
   limit = 50,
-  consume: LocalConsumer = recordReceipt,
+  consume: LocalConsumer = consumeLocalEvent,
 ) {
   if (!Number.isInteger(limit) || limit < 1 || limit > 100)
     throw new RangeError('Batch limit must be 1..100.');
@@ -25,6 +26,8 @@ export async function dispatchBatch(
   for (; processed < limit; processed++) {
     const found = await db.$transaction(
       async (tx) => {
+        await tx.$executeRaw`SELECT pg_advisory_xact_lock(724631902)`;
+        await tx.$executeRaw`SELECT pg_advisory_xact_lock(724631903)`;
         const [event] = await tx.$queryRaw<OutboxEvent[]>`
         SELECT * FROM "OutboxEvent" WHERE "status" IN ('PENDING', 'RETRY')
         AND "availableAt" <= CURRENT_TIMESTAMP

@@ -27,3 +27,10 @@ test('database outage fails readiness with safe 503 while liveness remains healt
     return failure.getStatus() === 503 && !failure.message.includes('private');
   });
 });
+
+test('backup age alerts follow the approved 24-hour recovery point without exposing paths', () => {
+  const healthy = { ready: true, oldestPendingAgeMs: 0, failedCount: 0 };
+  assert.deepEqual(operationalAlerts({ ...healthy, backupAgeMs: 86400000 }), []);
+  assert.deepEqual(operationalAlerts({ ...healthy, backupAgeMs: 86400001 }), ['BACKUP_STALE']);
+  assert.deepEqual(operationalAlerts({ ...healthy, backupAgeMs: null }), ['BACKUP_MISSING']);
+});

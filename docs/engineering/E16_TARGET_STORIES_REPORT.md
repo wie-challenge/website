@@ -1,5 +1,7 @@
 # Completion report: #32, #88 and #195
 
+Historical #32/#88/#195 completion report at baseline 9eb6d37. Current expanded counts, simulator/ETL/operations and remaining full-epic limits are in [E16_ENGINEERING_REPORT.md](E16_ENGINEERING_REPORT.md) and [E16_TEST_RESULTS.md](E16_TEST_RESULTS.md).
+
 Scope: the user's three requested stories, implemented in the existing website architecture and validated on synthetic records. This supersedes their earlier partial statuses. Other E16 stories and the complete product/release are not automatically marked complete. GitHub issue status was not changed.
 
 ## #32 — Pure Domain State, Money and Quantity Invariants: COMPLETE

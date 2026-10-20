@@ -2,14 +2,15 @@ import 'reflect-metadata';
 import { PrismaService } from '../database/prisma.service.js';
 import { loadConfig } from '../config/env.js';
 import { dispatchBatch, outboxStatus } from './outbox.js';
+import { rebuildAnalyticsBatch } from './commerce-consumer.js';
 import { logger } from '../common/logging.js';
 const args = process.argv.slice(2);
 const mode = args[0] ?? '--once';
 if (
-  !['--once', '--watch', '--status', '--retry-failed'].includes(mode) ||
+  !['--once', '--watch', '--status', '--retry-failed', '--rebuild-analytics'].includes(mode) ||
   (mode === '--retry-failed' ? args.length !== 2 : args.length > 1)
 )
-  throw new Error('Use --once, --watch, --status or --retry-failed EVENT_ID.');
+  throw new Error('Use --once, --watch, --status or --retry-failed EVENT_ID, --rebuild-analytics.');
 const db = new PrismaService(loadConfig());
 let stopping = false;
 process.once('SIGTERM', () => {
@@ -20,7 +21,19 @@ process.once('SIGINT', () => {
 });
 try {
   await db.$connect();
-  if (mode === '--status') console.log(JSON.stringify(await outboxStatus(db)));
+  if (mode === '--rebuild-analytics') {
+    let cursor: string | undefined;
+    let batch: Awaited<ReturnType<typeof rebuildAnalyticsBatch>>;
+    do {
+      const started = performance.now();
+      batch = await rebuildAnalyticsBatch(db, cursor);
+      cursor = batch.cursor;
+      logger.info(
+        { count: batch.count, durationMs: Math.round(performance.now() - started) },
+        'Commerce analytics batch rebuilt',
+      );
+    } while (batch.count && !stopping);
+  } else if (mode === '--status') console.log(JSON.stringify(await outboxStatus(db)));
   else if (mode === '--retry-failed') {
     const result = await db.outboxEvent.updateMany({
       where: { id: args[1], status: 'FAILED' },

@@ -70,13 +70,14 @@ async function keyboardButton(page: Page, name: string) {
 
 for (const profile of [
   { name: 'mobile', width: 360, height: 800, slow: true },
+  { name: 'tablet', width: 768, height: 1024, slow: false },
   { name: 'desktop', width: 1280, height: 900, slow: false },
 ]) {
   test(`buyer RFQ, voluntary artisan decisions/progress and operator QA are accessible on ${profile.name}`, async ({
     browser,
     request,
   }) => {
-    test.setTimeout(180000);
+    test.setTimeout(240000);
     for (const role of ['buyer', 'operator', 'artisan', 'quality', 'outsider'])
       await register(request, `commerce-${role}-${profile.name}@example.com`);
     const seeded = await request.post(
@@ -265,6 +266,43 @@ for (const profile of [
       expect(state.orders[0].delivered).toBe(10);
       expect(state.orders[0].quoteTnd).toBe('100.001');
       expect(state.offers).toHaveLength(0);
+      await operator.reload();
+      // The same browser journey continues through the separate artisan ledger and closure.
+      await order.getByText('Schedule a simulated payment', { exact: true }).click();
+      await order.getByLabel('Payment ledger', { exact: true }).selectOption('ARTISAN_PAYOUT');
+      const artisanState = await workspace(artisan);
+      await order
+        .getByLabel('Artisan batch (payouts only)', { exact: true })
+        .selectOption(artisanState.batches[0].id);
+      await order.getByLabel('Simulated payment amount (TND)', { exact: true }).fill('23.450');
+      await keyboardButton(operator, 'Schedule simulated payment');
+      for (const stage of ['approved', 'initiated', 'settled'])
+        await keyboardButton(operator, `Mark simulated payment ${stage}`);
+      await keyboardButton(operator, 'Reconcile simulated settlement');
+      await operator.getByLabel('I confirm synthetic materials and returns are resolved').check();
+      await operator
+        .getByLabel('Material disposition note', { exact: true })
+        .fill('Synthetic materials and returns reconciled in browser fixture.');
+      await keyboardButton(operator, 'Close reconciled synthetic order');
+      expect((await workspace(operator)).orders[0].status).toBe('CLOSED');
+      for (let batch = 0; batch < 4; batch++)
+        expect((await request.post(`${process.env.E2E_CONTROL_URL}/run-worker`)).ok()).toBeTruthy();
+      await order.getByText('Synthetic fulfillment report', { exact: true }).click();
+      await order.getByRole('button', { name: 'Refresh report', exact: true }).click();
+      await expect(order.getByRole('status')).toContainText('Current');
+      await expect(order.getByText('23450 millimes (TND)', { exact: true })).toHaveCount(2);
+      const downloadPromise = operator.waitForEvent('download');
+      await order.getByRole('link', { name: 'Download synthetic CSV', exact: true }).click();
+      expect((await downloadPromise).suggestedFilename()).toBe('synthetic-commerce.csv');
+      await operator.getByText('Commerce notifications', { exact: true }).click();
+      await operator.getByRole('button', { name: 'Refresh notifications', exact: true }).click();
+      await expect(operator.getByRole('list').filter({ hasText: /order.closed/i })).toBeVisible();
+      await a11y(operator, `${profile.name}-report-inbox`);
+      await operator.screenshot({
+        path: `.local/commerce-${profile.name}-operator.png`,
+        fullPage: true,
+      });
+
       expect(
         await artisan.evaluate(() => matchMedia('(prefers-reduced-motion: reduce)').matches),
       ).toBe(true);

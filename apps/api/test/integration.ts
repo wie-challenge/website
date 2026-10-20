@@ -59,7 +59,13 @@ try {
           if (value) jar.set(name, value);
           else jar.delete(name);
         }
-        return { status: response.status, body: await response.json(), headers: response.headers };
+        return {
+          status: response.status,
+          body: response.headers.get('content-type')?.includes('application/json')
+            ? await response.json()
+            : await response.text(),
+          headers: response.headers,
+        };
       },
     };
   }
@@ -517,7 +523,7 @@ try {
   await runLifecycleScenarios({ db, client, register, mutate, check, config });
   await runMfaScenarios({ db, config, client, register, mutate, check, mail });
   await runE16Scenarios({ db, register, mutate, check, config });
-  await runCommerceScenarios({ db, register, check });
+  await runCommerceScenarios({ db, register, check, config });
   await runUpgradeScenario(check);
   await runRestoreScenario(database, check);
   console.log(

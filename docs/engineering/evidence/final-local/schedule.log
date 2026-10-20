@@ -1,0 +1,2 @@
+$ tsx scripts/setup-local-operations.ts --enable
+Local backup and health timers enabled. Status and alerts: .local/operations/.

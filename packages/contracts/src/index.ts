@@ -77,3 +77,4 @@ export * from './governance.js';
 export * from './domain.js';
 export * from './commerce/domain.js';
 export * from './commerce/contracts.js';
+export * from './commerce/metrics.js';

@@ -28,7 +28,11 @@
     "db:recover-organization-manager": "tsx --tsconfig apps/api/tsconfig.json --env-file=.env scripts/recover-organization-manager.ts",
     "db:seed": "tsx --tsconfig apps/api/tsconfig.json --env-file=.env scripts/seed-local.ts",
     "worker": "tsx --tsconfig apps/api/tsconfig.json --env-file-if-exists=.env apps/api/src/jobs/main.ts",
-    "ops:check": "tsx --tsconfig apps/api/tsconfig.json --env-file-if-exists=.env scripts/check-operations.ts"
+    "ops:check": "tsx --tsconfig apps/api/tsconfig.json --env-file-if-exists=.env scripts/check-operations.ts",
+    "ops:backup": "tsx scripts/backup-database.ts",
+    "ops:setup": "tsx scripts/setup-local-operations.ts",
+    "ops:run": "tsx --tsconfig apps/api/tsconfig.json --env-file-if-exists=.env --env-file=.local/operations/schedule.env scripts/run-local-operation.ts",
+    "verify:clean": "tsx scripts/verify-clean.ts"
   },
   "devDependencies": {
     "@axe-core/playwright": "4.14.0",

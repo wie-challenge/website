@@ -1,41 +1,66 @@
 # Operations, backup and recovery
 
-The API emits JSON request logs with random request IDs, normalized endpoint labels, status and duration in milliseconds. Request bodies, cookies, credentials and raw URLs are not logged. Error logs use error type rather than exception message. Worker logs carry event/correlation IDs, state, attempt and execution duration; failures use `LOCAL_CONSUMER_FAILED`. Protect log access: IDs are still personal metadata.
+API JSON logs contain random correlation IDs, normalized route labels, status and duration. Request bodies, raw URLs, credentials, cookies and wearable payloads are omitted/redacted. Actual Pino output is tested with sentinel secrets. IDs remain personal metadata: restrict log access. Worker logs expose event/correlation IDs, status, attempts, duration and fixed error codes, without exception text or free text from audits.
 
-`GET /api/health/live` checks the process. `GET /api/health/ready` executes PostgreSQL `SELECT 1`, returns 503 safely on dependency failure, and does not certify SMTP/Arcjet availability. Run `pnpm worker --status` under trusted operator credentials to see grouped states, oldest pending age and at most 20 failed event IDs. `pnpm ops:check` probes local API readiness and the configured database, emitting fixed alert codes and a nonzero exit on readiness failure, failed outbox work, pending age over five minutes or database unavailability. It is a local check, not a configured paging integration. A supervisor/scheduler must execute it and route the exit/JSON to the operator's alert system.
+`GET /api/health/live` checks the process; `GET /api/health/ready` checks PostgreSQL and safely returns 503 when unavailable. PostgreSQL connection acquisition is bounded to five seconds. Readiness does not certify SMTP/Arcjet or a backup. `pnpm ops:check` probes local readiness with a three-second HTTP timeout, database/queue status, failed deliveries and lag over five minutes. A configured `BACKUP_DIRECTORY` also enables missing/stale (>24-hour) backup alerts; invalid/inaccessible backup storage emits BACKUP_UNAVAILABLE. Fixed JSON codes and nonzero exit support a supervisor. Local user timers and a private alert log are available below. No external paging integration is configured.
 
-Start `pnpm worker --watch` for continuous internal receipt delivery. One-shot processing is `pnpm worker --once` (up to 50 events). `pnpm worker --retry-failed EVENT_ID` requeues only a FAILED event and resets its five-attempt budget; investigate first. No public replay/admin endpoint is exposed. Multiple workers use row locks with skip-locked selection. An interrupted DB transaction releases its lock; successful local consumer effects and acknowledgement are atomic. External consumers require their own durable idempotency and must not be inserted into this local transaction handler.
+## Approved local-demo policy
 
-## Backup policy requiring operator review
+On 2026-10-20 the user explicitly approved: **owner = project user; recovery point target = 24 hours; recovery time target = four hours; encrypted-backup retention = seven days**. These are reviewed targets for the local synthetic demo, not measured production guarantees. The local owner has enabled the daily backup and five-minute health timers described below; alerts stay in the private local log. Hosted/off-site storage, region, key escrow and production ownership remain outside the selected local-demo scope. A local disk alone does not protect against host loss.
 
-The following are **proposed**, not approved service guarantees: named deployment owner and backup custodian, nightly encrypted off-host PostgreSQL backups, seven daily/four weekly copies, RPO 24 hours and RTO four hours. Before pilot, the owner must approve targets/retention, access/revocation, encryption keys, storage region, deletion policy and alerts. No off-site storage or scheduled backup service is provisioned by this repository. No private-document storage currently exists; add it and secret-manager recovery to the inventory if deployed. Never store backup archives or secret configuration in Git or CI artifacts.
+The executable `pnpm ops:backup` runs PostgreSQL 17 `pg_dump -Fc` inside the selected Docker default-context container. Container authentication stays internal: no password or database URL in command arguments. The tool supports archives up to 64 MiB for this local demo and fails on larger dumps; use reviewed streaming/managed backups before larger deployment. It encrypts in memory using **AES-256-GCM**, random nonce and authenticated HCAB1 format, writes a new 0600 archive without overwrite/symlink following and requires a private owned directory and owned 0600, exactly 32-byte key file. Wrong keys/tampered envelopes fail authentication before any restore. No unencrypted archive or configuration copy is written by the backup command. Managed local backups include the private runtime `.env` (including authentication/encryption configuration) inside the authenticated encrypted payload; the backup encryption key itself remains separate. Old matching private archives are pruned only after a new backup succeeds; unrelated files are preserved. Root ignore rules exclude key/dump/encrypted archive artifacts.
 
-Use PostgreSQL 17 client tools and protected libpq service/password files (0600), managed separately from source. Example trusted-operator backup procedure; `PGSERVICE` selects the reviewed database and its password never appears in command arguments:
-
-```sh
-umask 077
-export PGSERVICE=hirfacare_backup
-backup_dir=$(mktemp -d /protected/backups/hirfacare.XXXXXXXX)
-pg_dump --format=custom --no-owner --no-acl --file="$backup_dir/database.dump"
-sha256sum "$backup_dir/database.dump" > "$backup_dir/database.sha256"
-```
-
-Use an existing private, access-controlled `/protected/backups` mount, then encrypt and copy the archive/checksum through your approved storage system. A local plaintext copy with mode0600 is not an encrypted off-site backup. Verify backup exit status, byte size and checksum; alert on missed schedule and perform periodic full restores.
-
-Restore **only into a new isolated database** using a separately reviewed libpq service. Stop any workers/API on the target and confirm the service points at the disposable/recovery target. Example:
+Prepare private directories and a key outside Git (example path under ignored `.local` for the local demo). Back up the key separately under owner-controlled access; loss of the key makes restoration impossible. Do not print the key or upload archives/environment files in CI.
 
 ```sh
-export PGSERVICE=hirfacare_isolated_restore
-sha256sum --check "$backup_dir/database.sha256"
-pg_restore --exit-on-error --no-owner --no-acl --dbname="service=$PGSERVICE" "$backup_dir/database.dump"
+install -d -m 700 .local/backups .local/backup-keys
+(umask 077; set -C; openssl rand 32 > .local/backup-keys/demo.key)
+export BACKUP_CONTAINER=hirfacare-foundation-postgres-1
+export BACKUP_DIRECTORY="$PWD/.local/backups"
+export BACKUP_KEY_FILE="$PWD/.local/backup-keys/demo.key"
+export BACKUP_DATABASE_USER=hirfacare
+export BACKUP_DATABASE_NAME=hirfacare
+export BACKUP_CONFIG_FILE="$PWD/.env"
+pnpm ops:backup
+pnpm ops:check
 ```
 
-This procedure expects an empty target. Never run `--clean`, schema resets or test helpers against production. Reconcile counts, stable ordered row hashes, migration history, capacity revisions, command outcomes, audit/outbox pairs and receipts. Use isolated SMTP, block external integrations, probe readiness, then test synthetic access and scoped denials. Review retained auth sessions before making restored data available: old sessions/tokens can be resurrected by restoring historical identity data. Rotate/revoke according to the incident plan. Record measured recovery time separately from target approval.
+Choose the actual container/user/database from the local compose configuration; the example is not automatically executed. Generate the key once and preserve it; do not overwrite an existing recovery key. Success emits BACKUP_CREATED, filename, encrypted byte count, configurationIncluded flag, duration and number of expired archives removed. Failure emits only BACKUP_FAILED and a nonzero exit. Backup-age checks inspect private archive metadata, not decryptability or source integrity; periodic restores remain mandatory.
 
-The executable integration drill in `apps/api/test/restore.scenarios.ts` accepts only a test-harness container name, dumps populated synthetic PostgreSQL, creates a second disposable target, restores with fail-fast checking, and compares every public table's row count and content hash (including migration, identity, audit, command/outbox/receipt data). Files use a private temp directory and 0600 archive, and containers/archive are removed in finally blocks. Timings in `../engineering/E16_TEST_RESULTS.md` are local observations, not production RTO/RPO evidence or commercial ledger reconciliation.
+The real integration drill invokes this exact backup CLI against a newly created synthetic test container, decrypts/authenticates the payload, verifies private configuration byte-for-byte into the isolated test context, extracts a 0600 temporary database archive and restores using `pg_restore --clean --if-exists --exit-on-error` into a second disposable container and compares every public table's row count/content hash. This includes RFQs, orders, offers, batches, inspections, exact payment amounts, command outcomes, audits, notices, projections and receipts. Both containers/private files are removed in finally blocks. The destructive restore helper accepts only test-harness container names. It cannot accept a production restore URL. See the measured observations in `../engineering/E16_TEST_RESULTS.md`.
 
-## Incident and rollback
+Production recovery requires an isolated target, protected decryption tooling/key access, disabled integrations and explicit cutover review. Do not restore over the working database. Check migration history, quantities, earned/paid/outstanding obligations and all row hashes. Historical identity backups can resurrect sessions/tokens: revoke/rotate before cutover. Preserve audit and deduplication history. A successful small local drill does not demonstrate hosted/off-site recovery or the approved four-hour target at production scale.
 
-For 503 or database alerts, check PostgreSQL availability/capacity and migration state before restarting apps. Use request/event IDs to correlate safe logs. For FAILED jobs inspect fixed code/version and consumer code, repair, then replay a selected event; verify exactly one receipt. Lag with no failures usually means a stopped or undersized worker. Do not clear the queue/outcome ledger to resolve an alert. Preserve audit history.
+## Worker, analytics and replay
 
-For application regression, stop the worker, return to the preceding compatible API/web build and preserve additive reliability tables. Migration failure: inspect `_prisma_migrations`, preserve a backup, repair the cause and use reviewed Prisma resolve/deploy procedures; never assume a failed migration is safe to rerun. Data loss requires isolated restore verification and explicit operator cutover. Alert routing, off-site recovery, real SMTP/Arcjet outages, kill-process recovery and production incident drills remain unverified.
+`pnpm worker --watch` runs committed local inbox delivery and synthetic analytics ETL. `--once` processes at most 50 events. `--status` reports counts, oldest pending age and up to 20 failed event IDs. Five failures enter FAILED with fixed LOCAL_CONSUMER_FAILED; retries use exponential delays. Investigate code/version/source first, then `pnpm worker --retry-failed EVENT_ID`. Queue access is trusted-server only; no public replay endpoint exists. Do not erase outcomes/receipts/queue rows as an operational remedy.
+
+The prototype uses the existing database outbox for these justified workloads, without a broker. API commands and consumers acquire the same IAM locks in a fixed order; this intentionally serializes short prototype transactions to preserve consistent source snapshots. Row locks are the running state; no stale lease is needed. A killed process rolls back and releases its claim. Projection, notice and receipt effects commit atomically. Both failure-after-effects and actual SIGKILL/restart recovery are tested. This is at-least-once processing with durable local deduplication, not exactly-once external delivery or a demonstrated growth-scale throughput claim.
+
+`pnpm worker --rebuild-analytics` recomputes order projections from authoritative synthetic rows and shipment/acceptance audit milestones, in cursor batches of 50 (maximum programmatic batch 100). It writes no commercial ledger or notices. Re-running is safe; metrics remain stable and asOf advances. Backfill failures exit nonzero; retry rebuild from the start safely. Normal event delivery carries persisted attempts/duration/failure/lag. Reports display stale/pending status for outstanding buyer-organization events. External email/invitation/support delivery remains separate from this database-local worker; do not call SMTP inside its transaction.
+
+For incidents: correlate safe request/event IDs, inspect readiness/DB availability and migration state, check worker health/lag, repair the cause and selectively replay. On regression stop the worker and roll back to the previous compatible API/web build while preserving additive tables. For failed migration inspect `_prisma_migrations`, back up, repair and use reviewed resolve/deploy procedures. Never reset shared data. Hosted routing, off-site storage and provider outages need separate deployment verification.
+
+
+## Local-demo schedule and alert destination
+
+`pnpm ops:setup --prepare` validates the canonical local development configuration, preserves an existing private recovery key/configuration, and prepares/verifies user systemd units under ignored `.local/operations/units`. `pnpm ops:setup --enable` installs only HirfaCare-managed units in the current user's systemd directory and enables the timers; it refuses unmanaged replacements. `pnpm ops:setup --disable` disables those timers while preserving backup archives and keys. No system-wide services, external alert messages or lingering user session are configured.
+
+The backup timer runs daily at midnight in the host timezone and catches missed runs when the user manager resumes. The health timer checks every five minutes while `.local/dev.lock` indicates the canonical `pnpm dev` session is active. It pauses while the application is intentionally stopped; stale locks after a crash still allow outage detection until the normal launcher cleans them up. The local host was configured and checked on 2026-10-20. The project's previously disconnected PostgreSQL container was reattached to its own existing Docker network; migrations were then applied without resetting its volume or credentials.
+
+`pnpm ops:run backup` / `pnpm ops:run health` invokes the actual underlying commands with bounded timeouts. Only allowlisted result codes reach `.local/operations/{backup,health}.json`, a private 0600 latest-status file, and failures append to private `alerts.ndjson` (bounded to approximately 1 MiB). Raw child output, exception details and secrets are never copied to alerts. systemd also records service exit state. User-timer execution requires the machine and user manager to be running; the reviewed RPO/RTO remain targets, not guarantees while the host is off. Reprepare units after changing the Node installation/project location; the local units reference the current explicit executable and source paths.
+
+```sh
+pnpm ops:setup --prepare
+pnpm ops:setup --enable
+systemctl --user list-timers 'hirfacare-local-*'
+pnpm ops:run backup
+pnpm ops:run health
+systemctl --user status hirfacare-local-backup.service hirfacare-local-health.service
+pnpm ops:setup --disable
+```
+
+A real scheduled-service backup succeeded. An intentionally stopped API produced API_NOT_READY; starting the existing compiled API made the actual operational command return OPERATION_OK. The temporary API process was then stopped, and health monitoring is paused until the next canonical dev session. Tests also exercise malformed/secret-bearing child output filtering, private alert/status permissions and symlink rejection. `scripts/check-operations.ts` now boots its API-owned entrypoint so strict pnpm resolution finds reflect-metadata in its declared package.
+
+
+Database-only legacy payloads remain readable. Current payload version 2 stores a bounded private configuration file together with the PostgreSQL custom dump, all authenticated/encrypted under HCAB1. Configuration inputs must be owned regular files with no symlink, private permissions and a maximum of 1 MiB; the total encrypted input remains limited to 64 MiB. `unpackDatabaseBackup(decryptBackup(...))` separates database and configuration for a reviewed isolated recovery. Never print recovered configuration or overwrite the active `.env`; stage it with 0600 permissions outside the live application and review target URLs/session rotation before cutover. No private-document/upload feature exists to back up; add any future required document store to the inventory. Preserve/recover the backup key separately.

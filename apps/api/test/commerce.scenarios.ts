@@ -1,7 +1,12 @@
 import assert from 'node:assert/strict';
+import { spawn } from 'node:child_process';
+import { fileURLToPath } from 'node:url';
+import type { AppConfig } from '../src/config/env.js';
 import { randomUUID } from 'node:crypto';
 import type { PrismaService } from '../src/database/prisma.service.js';
 import type { CommerceWorkspaceView } from '@hirfacare/contracts';
+import { dispatchBatch } from '../src/jobs/outbox.js';
+import { consumeLocalEvent, rebuildAnalyticsBatch } from '../src/jobs/commerce-consumer.js';
 import { seedCommerceFixture } from './commerce.fixture.js';
 type Result = { status: number; body: unknown };
 type Client = {
@@ -14,11 +19,12 @@ type Client = {
 };
 type Identity = { client: Client; me: { user: { id: string } } };
 type Harness = {
+  config: AppConfig;
   db: PrismaService;
   register(email: string, name: string): Promise<Identity>;
   check(name: string, fn: () => Promise<void>): Promise<void>;
 };
-export async function runCommerceScenarios({ db, register, check }: Harness) {
+export async function runCommerceScenarios({ db, register, check, config }: Harness) {
   const buyer = await register('commerce-buyer@example.com', 'Synthetic Commerce Buyer');
   const operator = await register('commerce-operator@example.com', 'Synthetic Commerce Operator');
   const artisan = await register('commerce-artisan@example.com', 'Synthetic Commerce Artisan');
@@ -508,6 +514,190 @@ export async function runCommerceScenarios({ db, register, check }: Harness) {
         await db.outboxEvent.count({ where: { auditEventId: { in: audits.map((a) => a.id) } } }),
         audits.length,
       );
+    },
+  );
+  const ledger = async () =>
+    JSON.stringify(
+      await db.commercialOrder.findUniqueOrThrow({
+        where: { id: orderId },
+        include: {
+          rfq: true,
+          offers: true,
+          batches: { include: { inspections: true } },
+          payments: true,
+        },
+      }),
+      (_, value) => (typeof value === 'bigint' ? value.toString() : value),
+    );
+  await check(
+    'E16 useful outbox consumer rebuilds metrics and inbox atomically without changing ledgers',
+    async () => {
+      const before = await ledger();
+      while (await dispatchBatch(db, 100)) {
+        /* Drain bounded batches of actual committed events. */
+      }
+      assert.equal(await ledger(), before);
+      const projected = await db.commerceProjection.findUniqueOrThrow({ where: { orderId } });
+      const metrics = projected.metrics as {
+        finance: { artisanEarned: string; artisanPaid: string; buyerReceived: string };
+        fulfillment: { accepted: { numerator: number } };
+      };
+      assert.equal(metrics.finance.artisanEarned, '23450');
+      assert.equal(metrics.finance.artisanPaid, '23450');
+      assert.equal(metrics.finance.buyerReceived, '100001');
+      assert.equal(metrics.fulfillment.accepted.numerator, 10);
+      const count = await db.commerceNotice.count();
+      const event = await db.outboxEvent.findFirstOrThrow({
+        where: { targetId: orderId, status: 'DELIVERED' },
+      });
+      await db.outboxEvent.update({
+        where: { id: event.id },
+        data: { status: 'RETRY', availableAt: new Date(0) },
+      });
+      await Promise.all([dispatchBatch(db), dispatchBatch(db)]);
+      assert.equal(await db.commerceNotice.count(), count);
+      const rebuilt = await rebuildAnalyticsBatch(db, undefined, 1);
+      assert.equal(rebuilt.count, 1);
+      assert.deepEqual(
+        (await db.commerceProjection.findUniqueOrThrow({ where: { orderId } })).metrics,
+        projected.metrics,
+      );
+      assert.equal(await ledger(), before);
+    },
+  );
+  await check(
+    'E16 analytics transient failure rolls back projection/inbox/receipt and replay recovers once',
+    async () => {
+      const before = await ledger();
+      const event = await db.outboxEvent.findFirstOrThrow({
+        where: { targetId: orderId, status: 'DELIVERED' },
+      });
+      await db.commerceNotice.deleteMany({ where: { eventId: event.id } });
+      await db.eventReceipt.delete({ where: { eventId: event.id } });
+      await db.commerceProjection.delete({ where: { orderId } });
+      await db.outboxEvent.update({
+        where: { id: event.id },
+        data: { status: 'PENDING', attempts: 0, availableAt: new Date(0) },
+      });
+      await dispatchBatch(db, 1, async (tx, row) => {
+        await consumeLocalEvent(tx, row);
+        throw Error('simulated crash after effects');
+      });
+      assert.equal(await db.commerceProjection.count({ where: { orderId } }), 0);
+      assert.equal(await db.commerceNotice.count({ where: { eventId: event.id } }), 0);
+      assert.equal(await db.eventReceipt.count({ where: { eventId: event.id } }), 0);
+      assert.equal(
+        (await db.outboxEvent.findUniqueOrThrow({ where: { id: event.id } })).status,
+        'RETRY',
+      );
+      await db.outboxEvent.update({ where: { id: event.id }, data: { availableAt: new Date(0) } });
+      await dispatchBatch(db, 1);
+      assert.equal(await db.commerceProjection.count({ where: { orderId } }), 1);
+      assert.equal(await db.eventReceipt.count({ where: { eventId: event.id } }), 1);
+      assert.equal(await ledger(), before);
+    },
+  );
+
+  await check(
+    'E16 killed worker rolls back its claim and effects; restarted worker recovers',
+    async () => {
+      const event = await db.outboxEvent.findFirstOrThrow({
+        where: { targetId: orderId, status: 'DELIVERED' },
+      });
+      await db.commerceNotice.deleteMany({ where: { eventId: event.id } });
+      await db.eventReceipt.delete({ where: { eventId: event.id } });
+      await db.commerceProjection.delete({ where: { orderId } });
+      await db.outboxEvent.update({
+        where: { id: event.id },
+        data: { status: 'PENDING', attempts: 0, availableAt: new Date(0) },
+      });
+      const environment = Object.fromEntries(
+        Object.entries(config).map(([key, value]) => [
+          key,
+          Array.isArray(value) ? value.join(',') : String(value ?? ''),
+        ]),
+      );
+      const child = spawn(process.execPath, ['--import', 'tsx', 'test/outbox-crash-child.ts'], {
+        cwd: fileURLToPath(new URL('../', import.meta.url)),
+        env: { ...process.env, ...environment },
+        stdio: ['ignore', 'pipe', 'pipe'],
+      });
+      const exited = new Promise<void>((resolve) => child.once('close', () => resolve()));
+      try {
+        await new Promise<void>((resolve, reject) => {
+          const timeout = setTimeout(
+            () => reject(Error('Crash fixture did not reach uncommitted effects.')),
+            10000,
+          );
+          child.once('error', (error) => {
+            clearTimeout(timeout);
+            reject(error);
+          });
+          child.stdout.on('data', (chunk) => {
+            if (chunk.toString().includes('CONSUMER_EFFECTS_UNCOMMITTED')) {
+              clearTimeout(timeout);
+              resolve();
+            }
+          });
+          child.once('exit', () => {
+            clearTimeout(timeout);
+            reject(Error('Crash fixture exited prematurely.'));
+          });
+        });
+      } finally {
+        child.kill('SIGKILL');
+        await exited;
+      }
+      assert.equal(await db.eventReceipt.count({ where: { eventId: event.id } }), 0);
+      assert.equal(await db.commerceProjection.count({ where: { orderId } }), 0);
+      assert.equal(await db.commerceNotice.count({ where: { eventId: event.id } }), 0);
+      await dispatchBatch(db, 1);
+      assert.equal(await db.eventReceipt.count({ where: { eventId: event.id } }), 1);
+      assert.equal(await db.commerceProjection.count({ where: { orderId } }), 1);
+    },
+  );
+  await check(
+    'E16 reports, downloadable CSV and inbox enforce tenant, role and current membership',
+    async () => {
+      const report = `/api/v1/commerce/orders/${orderId}/report`;
+      const read = await buyer.client.request(report);
+      assert.equal(read.status, 200);
+      const visible = JSON.stringify(read.body);
+      assert.ok(visible.includes('100001'));
+      assert.ok(!visible.includes('artisanPaid'));
+      assert.equal((await outsider.client.request(report)).status, 403);
+      assert.equal((await artisan.client.request(report)).status, 403);
+      const qa = await quality.client.request(report);
+      assert.equal((qa.body as { metrics: { finance: unknown } }).metrics.finance, null);
+      const csv = await buyer.client.request(`${report}.csv`);
+      assert.equal(csv.status, 200);
+      assert.ok(String(csv.body).includes('accepted,10,10,PIECES,SYNTHETIC'));
+      assert.ok(!String(csv.body).includes('artisanPaid'));
+      assert.equal((await outsider.client.request(`${report}.csv`)).status, 403);
+      assert.equal(
+        (
+          await outsider.client.request(
+            `/api/v1/commerce/orders/${orderId}/batches/${batchId}/report`,
+          )
+        ).status,
+        404,
+      );
+      const inbox = await buyer.client.request('/api/v1/commerce/inbox');
+      assert.ok((inbox.body as unknown[]).length > 0);
+      const foreign = await outsider.client.request('/api/v1/commerce/inbox');
+      assert.deepEqual(foreign.body, []);
+      await db.organizationMember.update({
+        where: {
+          organizationId_userId: {
+            organizationId: fixture.buyerOrganizationId,
+            userId: buyer.me.user.id,
+          },
+        },
+        data: { status: 'REVOKED' },
+      });
+      assert.equal((await buyer.client.request(report)).status, 403);
+      assert.equal((await buyer.client.request(`${report}.csv`)).status, 403);
+      assert.deepEqual((await buyer.client.request('/api/v1/commerce/inbox')).body, []);
     },
   );
 }

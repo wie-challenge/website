@@ -1,5 +1,7 @@
 # E16 implementation audit — 2026-10-20
 
+Historical initial audit/plan. The current full-epic follow-up and final dispositions are in [E16_ACCEPTANCE_MATRIX.md](E16_ACCEPTANCE_MATRIX.md) and [E16_ENGINEERING_REPORT.md](E16_ENGINEERING_REPORT.md). Earlier missing-commerce/ETL/simulator statements describe the starting point, not the current code.
+
 ## Baseline and scope
 
 The website is an independent Git repository with a clean initial worktree. pnpm 11.3.0 / Node 24, strict TypeScript, Next.js 16, NestJS 11, Better Auth, Prisma 7/PostgreSQL, Zod contracts, Biome and Playwright are already implemented. Four migrations preserve identity, organization, artisan and governance history. CI runs static checks, disposable PostgreSQL integration tests and browser tests. Sibling AI and IoT repositories are planning placeholders and are not runtime dependencies.

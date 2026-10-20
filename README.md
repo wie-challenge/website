@@ -189,3 +189,9 @@ Use `/commerce/buyer` for saved RFQs, submission and exact quote/receipt decisio
 Local seeded personas retain their existing roles. The internal organization manager can explicitly assign QUALITY_INSPECTOR and INVENTORY_LOGISTICS_COORDINATOR to the appropriate synthetic staff through organization settings; global administrator status alone grants no commerce access. The artisan must declare PIECES for the same craft and a period covering the planned delivery deadline (future windows are supported). Existing demo capacity uses **DEMO — Traditional embroidery**, so choose that same craft when using that persona. Offers reserve one selected declaration conservatively; declined/expired offers release their tentative reservation.
 
 These stories are implemented for the synthetic prototype, with mobile/desktop/keyboard/axe and emulated slow-device evidence. This is not a complete accessibility certification, real payment implementation or firmware/hardware verification.
+
+
+E16 follow-up adds durable scoped commerce notices, rebuildable synthetic reports/CSV, authenticated encrypted local backups and a standalone fixed wearable simulator. Run `pnpm worker --watch` for notices/reports and `pnpm worker --rebuild-analytics` for safe backfill. The local accelerated device fixture lives in the independent `iot/simulator` project. Device values remain SIMULATED until hardware arrives. Backup setup/approved local recovery targets are in [operations](docs/operations/README.md); current evidence and external blockers are in [E16 acceptance](docs/engineering/E16_ACCEPTANCE_MATRIX.md).
+
+
+Run `pnpm verify:clean` for the full fresh-source quality pipeline. Local backup and health scheduling is available through `pnpm ops:setup --prepare` / `--enable`, with private local alerts and no external paging; see the operations guide. The simulator remains exclusively in the independent IoT repository, with communication deferred.

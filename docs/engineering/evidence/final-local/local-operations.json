@@ -1,0 +1,21 @@
+{
+  "scope": "LOCAL_DEMO_ONLY",
+  "backup": {
+    "job": "backup",
+    "code": "OPERATION_OK",
+    "alerts": [],
+    "timestamp": "2026-10-20T17:50:40.925Z"
+  },
+  "encryptedRuntimeConfiguration": {
+    "payloadVersion": 2,
+    "sourceConfigurationExactMatch": true,
+    "evidence": "Actual authenticated local backup decoded and compared in memory; no configuration contents retained here."
+  },
+  "healthOutageAndRecovery": {
+    "outageCode": "API_NOT_READY",
+    "recoveryCode": "OPERATION_OK",
+    "evidence": "Actual ops:run health before/after temporary compiled API startup; temporary API stopped afterwards."
+  },
+  "monitoring": "Conditional health timer pauses without a canonical dev session; backup timer remains active.",
+  "device": "PHYSICAL_VERIFICATION_DEFERRED"
+}

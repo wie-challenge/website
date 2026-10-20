@@ -496,22 +496,23 @@ enum OutboxStatus {
 
 // Metadata only: never copy user-entered text, audit snapshots or wearable data.
 model OutboxEvent {
-  id             String        @id
-  auditEventId   String        @unique
+  id             String           @id
+  auditEventId   String           @unique
   eventType      String
-  version        Int           @default(1)
+  version        Int              @default(1)
   actorId        String
   organizationId String?
   targetType     String
   targetId       String
   correlationId  String
-  createdAt      DateTime      @default(now())
-  status         OutboxStatus  @default(PENDING)
-  attempts       Int           @default(0)
-  availableAt    DateTime      @default(now())
+  createdAt      DateTime         @default(now())
+  status         OutboxStatus     @default(PENDING)
+  attempts       Int              @default(0)
+  availableAt    DateTime         @default(now())
   deliveredAt    DateTime?
   lastErrorCode  String?
   durationMs     Int?
+  notices        CommerceNotice[]
   receipt        EventReceipt?
 
   @@index([status, availableAt])
@@ -552,16 +553,17 @@ model CommercialRfq {
 }
 
 model CommercialOrder {
-  id                String             @id @default(cuid())
-  rfqId             String             @unique
-  rfq               CommercialRfq      @relation(fields: [rfqId], references: [id], onDelete: Restrict)
-  status            String             @default("APPROVED")
-  version           Int                @default(1)
-  delivered         Int                @default(0)
-  materialsResolved Boolean            @default(false)
+  projection        CommerceProjection?
+  id                String              @id @default(cuid())
+  rfqId             String              @unique
+  rfq               CommercialRfq       @relation(fields: [rfqId], references: [id], onDelete: Restrict)
+  status            String              @default("APPROVED")
+  version           Int                 @default(1)
+  delivered         Int                 @default(0)
+  materialsResolved Boolean             @default(false)
   dispositionNote   String?
-  provenance        String             @default("SYNTHETIC")
-  createdAt         DateTime           @default(now())
+  provenance        String              @default("SYNTHETIC")
+  createdAt         DateTime            @default(now())
   offers            CommercialOffer[]
   batches           CommercialBatch[]
   payments          SyntheticPayment[]
@@ -651,4 +653,27 @@ model SyntheticPayment {
 
   @@index([orderId, kind, status])
   @@index([batchId, status])
+}
+
+// Rebuildable derived values only. No user-entered text or wearable data.
+model CommerceProjection {
+  orderId           String          @id
+  order             CommercialOrder @relation(fields: [orderId], references: [id], onDelete: Restrict)
+  definitionVersion Int             @default(1)
+  asOf              DateTime        @default(now())
+  metrics           Json
+}
+
+// Static event-code inbox. Scope is a buyer/internal organization or artisan account.
+model CommerceNotice {
+  id        String      @id @default(cuid())
+  eventId   String
+  event     OutboxEvent @relation(fields: [eventId], references: [id], onDelete: Restrict)
+  audience  String
+  scopeId   String
+  code      String
+  createdAt DateTime    @default(now())
+
+  @@unique([eventId, audience, scopeId])
+  @@index([audience, scopeId, createdAt])
 }

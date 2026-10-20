@@ -26,7 +26,11 @@ jobs:
       - run: pnpm db:generate
       - run: pnpm lint
       - run: pnpm typecheck
-      - run: pnpm test
+      - name: Unit, domain, backup and logging tests
+        shell: bash
+        run: |
+          mkdir -p .local
+          pnpm test | tee .local/e16-unit.log
       - name: PostgreSQL integration, replay, outbox and restore drill
         shell: bash
         run: |
@@ -44,6 +48,7 @@ jobs:
           path: |
             test-results/
             .local/e16-integration.log
+            .local/e16-unit.log
             .local/e2e-report.json
             .local/commerce-*-operator.png
           retention-days: 3

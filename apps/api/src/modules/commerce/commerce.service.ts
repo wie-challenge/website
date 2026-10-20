@@ -1,6 +1,7 @@
 import { Inject, Injectable } from '@nestjs/common';
 import type { Prisma, CommercialRfq, CommercialOffer, SyntheticPayment } from '@prisma/client';
 import {
+  type CommerceMetrics,
   type CommerceRole,
   type CommerceWorkspaceView,
   type RfqCreate,
@@ -194,6 +195,95 @@ export class CommerceService {
       targetId,
       organizationId: rfq.buyerOrganizationId,
       after: { provenance: 'SYNTHETIC' },
+    });
+  }
+  async report(actor: Actor, id: string) {
+    return iamTransaction(this.db, actor, async (tx) => {
+      const order = await this.order(tx, id);
+      const roles = await this.roles(actor, order.rfq, tx);
+      permit(roles, ['BUYER', ...operatorRoles]);
+      const projection = await tx.commerceProjection.findUnique({ where: { orderId: id } });
+      const pending = await tx.outboxEvent.count({
+        where: {
+          organizationId: order.rfq.buyerOrganizationId,
+          eventType: { startsWith: 'commerce.' },
+          status: { not: 'DELIVERED' },
+        },
+      });
+      if (!projection)
+        return { orderId: id, status: 'PENDING', pendingEvents: pending, metrics: null };
+      const metrics = projection.metrics as unknown as CommerceMetrics;
+      // Buyer and quality/logistics projections never include individual artisan earnings.
+      const finance = roles.includes('FINANCE_MANAGER')
+        ? metrics.finance
+        : roles.includes('BUYER')
+          ? {
+              currency: 'TND',
+              unit: 'MILLIME',
+              buyerReceived: metrics.finance.buyerReceived,
+              verifiedSettlement: null,
+              coverage: { verifiedSettlement: 'UNAVAILABLE' },
+            }
+          : null;
+      return {
+        orderId: id,
+        status: pending ? 'STALE' : 'CURRENT',
+        pendingEvents: pending,
+        asOf: projection.asOf.toISOString(),
+        definitionVersion: projection.definitionVersion,
+        metrics: { ...metrics, finance },
+      };
+    });
+  }
+  async reportCsv(actor: Actor, id: string) {
+    const report = await this.report(actor, id);
+    const lines = ['metric,numerator,denominator,unit,provenance'];
+    if (report.metrics) {
+      for (const [name, value] of Object.entries(report.metrics.fulfillment))
+        lines.push(`${name},${value.numerator},${value.denominator},PIECES,SYNTHETIC`);
+      for (const [name, value] of Object.entries(report.metrics.finance ?? {}))
+        if (typeof value === 'string' && /^\d+$/.test(value))
+          lines.push(`${name},${value},,MILLIME,SYNTHETIC`);
+    }
+    // Every cell comes from the fixed registry or integers, never user-entered CSV formulas.
+    return `${lines.join('\r\n')}\r\n`;
+  }
+  async inbox(actor: Actor) {
+    return iamTransaction(this.db, actor, async (tx) => {
+      const memberships = await tx.organizationMember.findMany({
+        where: {
+          userId: actor.id,
+          status: 'ACTIVE',
+          organization: { approvalStatus: 'APPROVED' },
+        },
+        include: { roles: true, organization: true },
+      });
+      const buyers = memberships
+        .filter(
+          (m) =>
+            m.organization.type === 'BUYER_BUSINESS' && m.roles.some((r) => r.role === 'BUYER'),
+        )
+        .map((m) => m.organizationId);
+      // Operator inbox event codes can reveal financial activity: limit them to finance/production.
+      const operators = memberships
+        .filter(
+          (m) =>
+            m.organization.type === 'INTERNAL' &&
+            m.roles.some((r) => ['FINANCE_MANAGER', 'PRODUCTION_MANAGER'].includes(r.role)),
+        )
+        .map((m) => m.organizationId);
+      return tx.commerceNotice.findMany({
+        where: {
+          OR: [
+            { audience: 'BUYER', scopeId: { in: buyers } },
+            { audience: 'OPERATOR', scopeId: { in: operators } },
+            { audience: 'ARTISAN', scopeId: actor.id },
+          ],
+        },
+        orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
+        take: 100,
+        select: { id: true, code: true, createdAt: true },
+      });
     });
   }
   async createRfq(actor: Actor, input: RfqCreate, key?: string) {
