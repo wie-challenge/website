@@ -1,0 +1,118 @@
+{
+  "scope": "E02-01_SYNTHETIC_BUYER_CATALOG",
+  "source": "Feature worktree before implementation commit; based on merged main 54b82eb",
+  "localChecks": {
+    "lint": "PASS",
+    "typecheck": "PASS",
+    "unit": {
+      "passed": 46
+    },
+    "integration": {
+      "passed": 61,
+      "disposableDatabase": true
+    },
+    "browser": {
+      "startTime": "2026-10-20T19:39:08.263Z",
+      "duration": 123544.79699999999,
+      "expected": 18,
+      "skipped": 0,
+      "unexpected": 0,
+      "flaky": 0
+    },
+    "audit": "PASS_NO_KNOWN_VULNERABILITIES",
+    "productionBuild": "PASS"
+  },
+  "auditNetwork": "Successful pnpm audit used per-command IPv4 DNS ordering and bounded fetch retries; no audit or TLS check was bypassed.",
+  "axe": [
+    {
+      "checkpoint": "catalog-mobile",
+      "violations": 0
+    },
+    {
+      "checkpoint": "catalog-rfq-mobile",
+      "violations": 0
+    },
+    {
+      "checkpoint": "catalog-desktop",
+      "violations": 0
+    },
+    {
+      "checkpoint": "catalog-rfq-desktop",
+      "violations": 0
+    },
+    {
+      "checkpoint": "catalog-image-fallback",
+      "violations": 0
+    },
+    {
+      "checkpoint": "axe-mobile-buyer-form",
+      "violations": 0
+    },
+    {
+      "checkpoint": "axe-mobile-artisan-decision",
+      "violations": 0
+    },
+    {
+      "checkpoint": "axe-mobile-operator-review",
+      "violations": 0
+    },
+    {
+      "checkpoint": "axe-mobile-report-inbox",
+      "violations": 0
+    },
+    {
+      "checkpoint": "axe-mobile-buyer-fulfillment",
+      "violations": 0
+    },
+    {
+      "checkpoint": "axe-tablet-buyer-form",
+      "violations": 0
+    },
+    {
+      "checkpoint": "axe-tablet-artisan-decision",
+      "violations": 0
+    },
+    {
+      "checkpoint": "axe-tablet-operator-review",
+      "violations": 0
+    },
+    {
+      "checkpoint": "axe-tablet-report-inbox",
+      "violations": 0
+    },
+    {
+      "checkpoint": "axe-tablet-buyer-fulfillment",
+      "violations": 0
+    },
+    {
+      "checkpoint": "axe-desktop-buyer-form",
+      "violations": 0
+    },
+    {
+      "checkpoint": "axe-desktop-artisan-decision",
+      "violations": 0
+    },
+    {
+      "checkpoint": "axe-desktop-operator-review",
+      "violations": 0
+    },
+    {
+      "checkpoint": "axe-desktop-report-inbox",
+      "violations": 0
+    },
+    {
+      "checkpoint": "axe-desktop-buyer-fulfillment",
+      "violations": 0
+    }
+  ],
+  "screenshots": [
+    ".local/catalog-mobile.png",
+    ".local/catalog-desktop.png"
+  ],
+  "limits": [
+    "Synthetic examples, illustrative SVGs and unverified planning ranges only.",
+    "No general accessibility certification, verified stock, real transaction or approved-SKU lineage.",
+    "Physical device verification for #197 remains deferred."
+  ],
+  "passed": true
+}

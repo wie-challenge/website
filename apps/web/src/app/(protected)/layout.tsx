@@ -17,6 +17,7 @@ export default async function ProtectedLayout({ children }: { children: React.Re
           <Link href="/settings/organizations">Organizations</Link>
           <Link href="/artisan/profile">Artisan workspace</Link>
           <Link href="/commerce/buyer">Synthetic commerce</Link>
+          <Link href="/commerce/catalog">Craft catalog</Link>
           <Link href="/support/cases">Support</Link>
           {me.user.role === 'ADMIN' && <Link href="/admin/organizations">Administration</Link>}
           <LogoutButton />

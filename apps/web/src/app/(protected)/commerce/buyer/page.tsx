@@ -1,5 +1,17 @@
 import { CommerceWorkspace } from '@/components/commerce-workspace';
 export const metadata = { title: 'Buyer synthetic commerce' };
-export default function Page() {
-  return <CommerceWorkspace mode="buyer" />;
+export default async function Page({
+  searchParams,
+}: {
+  searchParams: Promise<{ example?: string | string[] }>;
+}) {
+  const { example } = await searchParams;
+  const catalogExampleId = Array.isArray(example) ? '' : example;
+  return (
+    <CommerceWorkspace
+      key={catalogExampleId ?? 'manual'}
+      mode="buyer"
+      catalogExampleId={catalogExampleId}
+    />
+  );
 }

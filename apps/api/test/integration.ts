@@ -1,4 +1,5 @@
 import { runCommerceScenarios } from './commerce.scenarios.js';
+import { runCatalogScenarios } from './catalog.scenarios.js';
 import { runRestoreScenario } from './restore.scenarios.js';
 import { runE16Scenarios } from './e16.scenarios.js';
 import { runUpgradeScenario } from './upgrade.scenarios.js';
@@ -100,6 +101,7 @@ try {
     assert.equal((await anon.request('/api/health/live')).status, 200);
     assert.equal((await anon.request('/api/health/ready')).status, 200);
     assert.equal((await anon.request('/api/v1/me')).status, 401);
+    assert.equal((await anon.request('/api/v1/commerce/catalog')).status, 401);
     assert.equal((await anon.request('/API/v1/me')).status, 404);
     assert.equal((await anon.request('/api/v1/me/')).status, 404);
     assert.equal(
@@ -524,6 +526,7 @@ try {
   await runMfaScenarios({ db, config, client, register, mutate, check, mail });
   await runE16Scenarios({ db, register, mutate, check, config });
   await runCommerceScenarios({ db, register, check, config });
+  await runCatalogScenarios({ db, register, check });
   await runUpgradeScenario(check);
   await runRestoreScenario(database, check);
   console.log(

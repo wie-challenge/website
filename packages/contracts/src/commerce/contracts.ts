@@ -27,10 +27,16 @@ export const rfqCreateSchema = z
     deliveryAt: date,
     deliveryLocation: text.max(200),
     provenance: z.literal('SYNTHETIC'),
+    catalogExampleId: id.optional(),
   })
   .strict();
 export const rfqEditSchema = rfqCreateSchema
-  .omit({ buyerOrganizationId: true, operatorOrganizationId: true, provenance: true })
+  .omit({
+    buyerOrganizationId: true,
+    operatorOrganizationId: true,
+    provenance: true,
+    catalogExampleId: true,
+  })
   .extend({ version })
   .strict();
 export const rfqActionSchema = z.discriminatedUnion('next', [

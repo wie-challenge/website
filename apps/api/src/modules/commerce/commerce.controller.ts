@@ -33,6 +33,9 @@ export class CommerceController {
   @Get('workspace') workspace(@CurrentUser() actor: Actor) {
     return this.service.workspace(actor);
   }
+  @Get('catalog') catalog(@CurrentUser() actor: Actor) {
+    return this.service.catalog(actor);
+  }
   @Get('inbox') inbox(@CurrentUser() actor: Actor) {
     return this.service.inbox(actor);
   }

@@ -4,6 +4,8 @@ Started 2026-10-20 after the E16 review, local demos and PR checks passed. The u
 
 Branch: `epic/e02-buyer-procurement-and-rfq-catalog`, based on merged website main `54b82eb` ([PR #214](https://github.com/wie-challenge/website/pull/214)). The older `epic/e02-buyer-procurement-and-rfq` branch is preserved. This is the kickoff and implementation plan, not acceptance evidence that an E02 story is complete. No issue status was changed.
 
+Implementation follow-up: #31 now has a catalog and RFQ prefill implementation on this branch. Current acceptance evidence and limitations are recorded in [the catalog report](E02_CATALOG_REPORT.md). The inventory below preserves the starting dependency audit; no E02 issue is automatically closed by that implementation.
+
 ## Starting evidence
 
 - The local desktop buyer/artisan/operator demo passed: RFQ, quote, voluntary offer, production, QA, shipment, buyer acceptance, separate simulated receipts/payouts, closure, report, CSV and inbox. Five axe checkpoints had zero violations. Local artifacts: `.local/e16-premerge-demo.log`, `.local/e2e-report.json`, `.local/commerce-desktop-operator.png` (ignored, synthetic data).
@@ -42,4 +44,4 @@ The current implementation has `GET /api/v1/craft-skills`, active craft lookup i
 
 ## Working boundaries
 
-Use fictional fixtures and disposable databases for test writes. Preserve local credentials, existing records and the user's generated dev-mode `apps/web/next-env.d.ts` change. Do not reset volumes, start unrelated containers, infer hardware results or claim real contracts/payments. Local software/demo verification does not close #197. The branch and kickoff are created locally; publication and a feature PR are separate from this planning commit.
+Use fictional fixtures and disposable databases for test writes. Preserve local credentials, existing records and the user's generated dev-mode `apps/web/next-env.d.ts` change. Do not reset volumes, start unrelated containers, infer hardware results or claim real contracts/payments. Local software/demo verification does not close #197. At kickoff, the branch and planning commit were created locally. The later catalog implementation and its feature PR are documented in the catalog report.
