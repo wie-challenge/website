@@ -50,6 +50,7 @@ export async function seedCommerceFixture(
             userId,
             isManager: true,
             roles: { create: roles.map((role) => ({ role, assignedByUserId: userId })) },
+            ...(roles.includes('BUYER')?{permissionGrants:{create:{permission:'buyer.quotation.approve',grantedById:userId,reason:'Synthetic explicit approval authority fixture'}}}:{}),
           },
         },
       },

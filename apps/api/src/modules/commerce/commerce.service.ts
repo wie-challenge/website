@@ -1,6 +1,7 @@
 import { Inject, Injectable } from '@nestjs/common';
 import type { Prisma, CommercialRfq, CommercialOffer, SyntheticPayment } from '@prisma/client';
 import {
+  permissionsForMembership,
   type CommerceMetrics,
   type CommerceRole,
   type CommerceWorkspaceView,
@@ -134,7 +135,7 @@ export class CommerceService {
         status: 'ACTIVE',
         organization: { approvalStatus: 'APPROVED' },
       },
-      include: { roles: true, organization: true },
+      include: { roles: true, organization: true, permissionGrants: true },
     });
   }
   private async roles(actor: Actor, rfq: CommercialRfq, tx: Db): Promise<CommerceRole[]> {
@@ -142,7 +143,7 @@ export class CommerceService {
     const operator = await this.membership(actor, rfq.operatorOrganizationId, tx);
     return [
       ...(buyer?.organization.type === 'BUYER_BUSINESS' &&
-      buyer.roles.some((r) => r.role === 'BUYER')
+      buyer.roles.some((r) => ['BUYER', 'BUYER_REPRESENTATIVE'].includes(r.role))
         ? ['BUYER' as const]
         : []),
       ...(operator?.organization.type === 'INTERNAL'
@@ -269,12 +270,13 @@ export class CommerceService {
           status: 'ACTIVE',
           organization: { approvalStatus: 'APPROVED' },
         },
-        include: { roles: true, organization: true },
+        include: { roles: true, organization: true, permissionGrants: true },
       });
       const buyers = memberships
         .filter(
           (m) =>
-            m.organization.type === 'BUYER_BUSINESS' && m.roles.some((r) => r.role === 'BUYER'),
+            m.organization.type === 'BUYER_BUSINESS' &&
+            m.roles.some((r) => ['BUYER', 'BUYER_REPRESENTATIVE'].includes(r.role)),
         )
         .map((m) => m.organizationId);
       // Operator inbox event codes can reveal financial activity: limit them to finance/production.
@@ -304,7 +306,8 @@ export class CommerceService {
       const member = await this.membership(actor, input.buyerOrganizationId, tx);
       requireRule(
         member?.organization.type === 'BUYER_BUSINESS' &&
-          member.roles.some((r) => r.role === 'BUYER'),
+          member.roles.some((r) => ['BUYER', 'BUYER_REPRESENTATIVE'].includes(r.role)) &&
+          permissionsForMembership(member).includes('buyer.rfq.create'),
         'FORBIDDEN',
         'An approved buyer membership is required.',
       );
@@ -356,6 +359,12 @@ export class CommerceService {
       const row = await tx.commercialRfq.findUnique({ where: { id } });
       requireRule(row, 'NOT_FOUND', 'Commercial record not found.');
       permit(await this.roles(actor, row, tx), ['BUYER']);
+      const purchaser = await this.membership(actor, row.buyerOrganizationId, tx);
+      requireRule(
+        purchaser && permissionsForMembership(purchaser).includes('buyer.rfq.create'),
+        'FORBIDDEN',
+        'Purchasing authority is required to edit an RFQ.',
+      );
       return this.command(tx, actor, key, id, 'rfq.edit', input, async () => {
         version(row.version, input.version);
         requireRule(
@@ -389,6 +398,29 @@ export class CommerceService {
       requireRule(row, 'NOT_FOUND', 'Commercial record not found.');
       const roles = await this.roles(actor, row, tx);
       roleForNext(roles, input.next, rfqEdges);
+      if (input.next === 'SUBMITTED') {
+        const purchaser = await this.membership(actor, row.buyerOrganizationId, tx);
+        requireRule(
+          purchaser && permissionsForMembership(purchaser).includes('buyer.rfq.create'),
+          'FORBIDDEN',
+          'Purchasing authority is required to submit an RFQ.',
+        );
+      }
+      if (input.next === 'ACCEPTED') {
+        const member = await this.membership(actor, row.buyerOrganizationId, tx);
+        requireRule(
+          member &&
+            (await tx.membershipPermission.findFirst({
+              where: {
+                membershipId: member.id,
+                permission: 'buyer.quotation.approve',
+                enabled: true,
+              },
+            })),
+          'FORBIDDEN',
+          'Explicit buyer quotation approval authority is required.',
+        );
+      }
       return this.command(tx, actor, key, id, 'rfq.action', input, async () => {
         version(row.version, input.version);
         transitionRfq(row.status as RfqState, input.next, roles, {
@@ -443,7 +475,7 @@ export class CommerceService {
           capacity.craftSkillId === order.rfq.craftSkillId &&
           capacity.effectiveFrom <= order.rfq.deliveryAt &&
           capacity.effectiveTo >= order.rfq.deliveryAt &&
-          capacity.artisanProfile.user.status === 'ACTIVE' &&
+          capacity.artisanProfile.user?.status === 'ACTIVE' &&
           capacity.artisanProfile.user.emailVerified,
         'CAPACITY_UNAVAILABLE',
         'Choose a piece-capacity declaration covering this craft and delivery date.',
@@ -451,7 +483,7 @@ export class CommerceService {
       requireRule(
         await tx.consentRecord.findFirst({
           where: {
-            userId: capacity.artisanProfile.userId,
+            userId: capacity.artisanProfile.userId ?? 'unlinked-participant-no-legacy-consent',
             purpose: 'artisan.profile',
             decision: true,
             withdrawnAt: null,
@@ -857,14 +889,19 @@ export class CommerceService {
     return iamTransaction(this.db, actor, async (tx) => {
       const memberships = await tx.organizationMember.findMany({
         where: { userId: actor.id, status: 'ACTIVE', organization: { approvalStatus: 'APPROVED' } },
-        include: { organization: true, roles: true },
+        include: { organization: true, roles: true, permissionGrants: true },
       });
       const buyerOrganizations = memberships
         .filter(
           (m) =>
-            m.organization.type === 'BUYER_BUSINESS' && m.roles.some((r) => r.role === 'BUYER'),
+            m.organization.type === 'BUYER_BUSINESS' &&
+            m.roles.some((r) => ['BUYER', 'BUYER_REPRESENTATIVE'].includes(r.role)),
         )
-        .map((m) => ({ id: m.organizationId, name: m.organization.name }));
+        .map((m) => ({
+          id: m.organizationId,
+          name: m.organization.name,
+          permissions: permissionsForMembership(m),
+        }));
       const operatorOrganizations = memberships
         .filter(
           (m) =>

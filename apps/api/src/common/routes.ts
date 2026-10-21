@@ -1,4 +1,19 @@
 const exact = new Set([
+  '/api/v1/me/context',
+  '/api/v1/authorization-policies',
+  '/api/v1/admin/authorization-policies',
+  '/api/v1/associations/me',
+  '/api/v1/associations/me/coordinators',
+  '/api/v1/associations/me/artisans',
+  '/api/v1/admin/coordinators',
+  '/api/v1/admin/operators',
+  '/api/v1/admin/access-report',
+  '/api/v1/admin/personnel/invite',
+  '/api/v1/admin/operator-assignments',
+  '/api/v1/operator/dashboard',
+  '/api/v1/operator/activity',
+  '/api/v1/participant-concerns',
+  '/api/v1/admin/participant-concerns',
   '/api/health/live',
   '/api/health/ready',
   '/api/v1/me',
@@ -47,6 +62,11 @@ export function routeLabel(path: string) {
   if (/^\/api\/v1\/admin\/users\/[^/]+$/.test(path)) return '/api/v1/admin/users/:id';
   if (/^\/api\/v1\/users\/[^/]+$/.test(path)) return '/api/v1/users/:id';
   const templates = [
+    /^\/api\/v1\/associations\/me\/artisans\/[^/]+(?:\/(?:skills|capacity|authorization|assignments)(?:\/[^/]+\/withdraw)?)?$/,
+    /^\/api\/v1\/admin\/(?:coordinators|artisans|authorization-policies|participant-concerns)\/[^/]+(?:\/(?:status|transfer|assignment|link-account))?$/,
+    /^\/api\/v1\/operator\/organizations\/[^/]+\/(?:participants|duplicate-reviews)$/,
+    /^\/api\/v1\/organizations\/[^/]+\/members\/[^/]+\/permissions$/,
+
     /^\/api\/v1\/organizations\/[^/]+(?:\/(?:submit-approval|members|invitations|audit-events))?$/,
     /^\/api\/v1\/organizations\/[^/]+\/(?:members|invitations)\/[^/]+(?:\/(?:roles|resend))?$/,
     /^\/api\/v1\/admin\/organizations\/[^/]+(?:\/(?:approve|reject|suspend))?$/,
@@ -57,6 +77,20 @@ export function routeLabel(path: string) {
   ];
   if (templates.some((pattern) => pattern.test(path))) {
     const literals = new Set([
+      'authorization-policies',
+      'participant-concerns',
+      'status',
+      'transfer',
+      'assignment',
+      'assignments',
+      'link-account',
+      'operator',
+      'participants',
+      'duplicate-reviews',
+      'permissions',
+      'capacity',
+      'authorization',
+      'withdraw',
       'api',
       'v1',
       'organizations',

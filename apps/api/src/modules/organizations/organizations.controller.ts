@@ -15,6 +15,7 @@ import {
   emptySchema,
   pageSchema,
   resourceIdSchema,
+  organizationTypeSchema,
   organizationCreateSchema,
   organizationUpdateSchema,
   invitationCreateSchema,
@@ -137,7 +138,8 @@ export class OrganizationsController {
   }
   @AdminOnly() @Get('admin/organizations') adminList(
     @CurrentUser() actor: Actor,
-    @Query(new ZodValidationPipe(pageSchema)) query: PageInput,
+    @Query(new ZodValidationPipe(pageSchema.extend({ type: organizationTypeSchema.optional() })))
+    query: PageInput & { type?: OrganizationCreateInput['type'] },
   ) {
     return this.organizations.adminList(actor, query);
   }

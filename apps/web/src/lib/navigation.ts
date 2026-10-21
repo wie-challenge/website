@@ -1,5 +1,5 @@
 export function safeNext(value: string | null | undefined) {
-  const fallback = '/settings/profile';
+  const fallback = '/dashboard';
   if (!value?.startsWith('/') || value.startsWith('//') || /[\\\r\n]/.test(value)) return fallback;
   try {
     const decoded = decodeURIComponent(value);
@@ -29,6 +29,22 @@ export function safeApiPath(path: string) {
 function isWorkspacePath(path: string) {
   return (
     [
+      '/dashboard',
+      '/admin',
+      '/operator',
+      '/operator/activity',
+      '/buyer',
+      '/buyer/company',
+      '/buyer/representatives',
+      '/association',
+      '/association/artisans',
+      '/association/artisans/new',
+      '/association/coordinators',
+      '/admin/coordinators',
+      '/admin/operators',
+      '/admin/participant-concerns',
+      '/admin/authorizations',
+      '/admin/access',
       '/commerce/buyer',
       '/commerce/catalog',
       '/commerce/artisan',
@@ -54,6 +70,8 @@ function isWorkspacePath(path: string) {
       '/support/cases',
       '/support/privacy',
     ].includes(path) ||
+    /^\/association\/artisans\/[a-zA-Z0-9_-]+(?:\/history)?$/.test(path) ||
+    /^\/operator\/partners\/[a-zA-Z0-9_-]+$/.test(path) ||
     /^\/organizations\/[a-zA-Z0-9_-]+\/settings$/.test(path) ||
     /^\/artisan\/assisted\/[a-zA-Z0-9_-]+$/.test(path) ||
     /^\/organizations\/[a-zA-Z0-9_-]+\/audit$/.test(path) ||

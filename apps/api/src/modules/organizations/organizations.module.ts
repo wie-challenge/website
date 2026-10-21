@@ -7,5 +7,6 @@ import { OrganizationsService } from './organizations.service.js';
   imports: [FoundationModule, MailModule],
   controllers: [OrganizationsController],
   providers: [OrganizationsService],
+  exports: [OrganizationsService],
 })
 export class OrganizationsModule {}

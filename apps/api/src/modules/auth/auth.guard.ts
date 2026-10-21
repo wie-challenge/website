@@ -40,6 +40,7 @@ export class AuthGuard implements CanActivate {
     if (
       ![
         '/api/v1/me',
+        '/api/v1/me/context',
         '/api/v1/settings/security',
         '/api/v1/settings/preferences',
         '/api/v1/me/deactivate',

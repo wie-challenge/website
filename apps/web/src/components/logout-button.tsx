@@ -2,15 +2,18 @@
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { apiFetch } from '@/lib/api';
+import { Button } from './ui/button';
+import { LogOut } from 'lucide-react';
 export function LogoutButton() {
   const router = useRouter();
   const [pending, setPending] = useState(false);
   const [error, setError] = useState('');
   return (
     <span>
-      <button
+      <Button
         type="button"
-        className="text-button"
+        variant="ghost"
+        className="w-full justify-start text-muted-foreground"
         disabled={pending}
         onClick={async () => {
           setPending(true);
@@ -25,8 +28,9 @@ export function LogoutButton() {
           }
         }}
       >
+        <LogOut size={16} aria-hidden="true" />
         {pending ? 'Signing out…' : 'Sign out'}
-      </button>
+      </Button>
       {error && <span role="alert">{error}</span>}
     </span>
   );

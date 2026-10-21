@@ -18,35 +18,45 @@ enum AccountStatus {
 }
 
 model User {
-  twoFactorEnabled        Boolean                  @default(false)
-  twoFactor               TwoFactor?
-  id                      String                   @id
-  name                    String
-  email                   String                   @unique
-  emailVerified           Boolean                  @default(false)
-  image                   String?
-  createdAt               DateTime                 @default(now())
-  updatedAt               DateTime                 @updatedAt
-  role                    Role                     @default(USER)
-  status                  AccountStatus            @default(ACTIVE)
-  preferredLanguage       String                   @default("en")
-  organizationMemberships OrganizationMember[]
-  artisanProfile          ArtisanProfile?
-  organizationsCreated    Organization[]           @relation("OrganizationCreator")
-  organizationsReviewed   Organization[]           @relation("OrganizationReviewer")
-  rolesAssigned           MembershipRole[]         @relation("RoleAssigner")
-  invitationsCreated      Invitation[]
-  capacityDeclarations    CapacityDeclaration[]
-  delegatedGrants         DelegationGrant[]        @relation("Delegate")
-  consents                ConsentRecord[]
-  auditEvents             AuditEvent[]
-  privacyRequests         PrivacyRequest[]         @relation("PrivacySubject")
-  privacyReviews          PrivacyRequest[]         @relation("PrivacyReviewer")
-  notificationPreferences NotificationPreference[]
-  supportCases            SupportCase[]            @relation("CaseSubject")
-  assignedCases           SupportCase[]            @relation("CaseAssignee")
-  sessions                Session[]
-  accounts                Account[]
+  artisanProfilesCreated           ArtisanProfile[]          @relation("ArtisanCreator")
+  registryManagements              ArtisanManagement[]       @relation("ManagementRecorder")
+  registryAssignmentsGiven         ArtisanAssignment[]       @relation("ArtisanAssigner")
+  registryAssignmentsHeld          ArtisanAssignment[]       @relation("ResponsibleCoordinator")
+  authorizationPoliciesReviewed    AuthorizationPolicy[]     @relation("PolicyReviewer")
+  onboardingAuthorizationsRecorded OnboardingAuthorization[] @relation("AuthorizationRecorder")
+  membershipPermissionsGranted     MembershipPermission[]    @relation("PermissionGrantor")
+  operatorAccounts                 OperatorAssignment[]      @relation("Operator")
+  operatorAssignmentsGiven         OperatorAssignment[]      @relation("OperatorAssigner")
+  concernsReviewed                 ParticipantConcern[]      @relation("ConcernReviewer")
+  twoFactorEnabled                 Boolean                   @default(false)
+  twoFactor                        TwoFactor?
+  id                               String                    @id
+  name                             String
+  email                            String                    @unique
+  emailVerified                    Boolean                   @default(false)
+  image                            String?
+  createdAt                        DateTime                  @default(now())
+  updatedAt                        DateTime                  @updatedAt
+  role                             Role                      @default(USER)
+  status                           AccountStatus             @default(ACTIVE)
+  preferredLanguage                String                    @default("en")
+  organizationMemberships          OrganizationMember[]
+  artisanProfile                   ArtisanProfile?
+  organizationsCreated             Organization[]            @relation("OrganizationCreator")
+  organizationsReviewed            Organization[]            @relation("OrganizationReviewer")
+  rolesAssigned                    MembershipRole[]          @relation("RoleAssigner")
+  invitationsCreated               Invitation[]
+  capacityDeclarations             CapacityDeclaration[]
+  delegatedGrants                  DelegationGrant[]         @relation("Delegate")
+  consents                         ConsentRecord[]
+  auditEvents                      AuditEvent[]
+  privacyRequests                  PrivacyRequest[]          @relation("PrivacySubject")
+  privacyReviews                   PrivacyRequest[]          @relation("PrivacyReviewer")
+  notificationPreferences          NotificationPreference[]
+  supportCases                     SupportCase[]             @relation("CaseSubject")
+  assignedCases                    SupportCase[]             @relation("CaseAssignee")
+  sessions                         Session[]
+  accounts                         Account[]
 
   @@index([role, status])
 }
@@ -108,6 +118,7 @@ model RateBucket {
 }
 
 enum OrganizationType {
+  PARTNER_COOPERATIVE
   BUYER_BUSINESS
   ASSOCIATION
   INTERNAL
@@ -129,6 +140,8 @@ enum MembershipStatus {
 }
 
 enum BusinessRole {
+  BUYER_REPRESENTATIVE
+  HIRFACARE_OPERATOR
   BUYER
   ARTISAN
   ASSOCIATION_COORDINATOR
@@ -190,6 +203,9 @@ enum CaseStatus {
 }
 
 model Organization {
+  managingArtisans       ArtisanManagement[]
+  assignedArtisans       ArtisanAssignment[]
+  assignedOperators      OperatorAssignment[]
   buyerRfqs              CommercialRfq[]         @relation("RfqBuyer")
   operatorRfqs           CommercialRfq[]         @relation("RfqOperator")
   id                     String                  @id @default(cuid())
@@ -222,19 +238,21 @@ model Organization {
 }
 
 model OrganizationMember {
-  id             String           @id @default(cuid())
-  organizationId String
-  organization   Organization     @relation(fields: [organizationId], references: [id], onDelete: Restrict)
-  userId         String
-  user           User             @relation(fields: [userId], references: [id], onDelete: Restrict)
-  status         MembershipStatus @default(ACTIVE)
-  isManager      Boolean          @default(false)
-  joinedAt       DateTime         @default(now())
-  suspendedAt    DateTime?
-  revokedAt      DateTime?
-  createdAt      DateTime         @default(now())
-  updatedAt      DateTime         @updatedAt
-  roles          MembershipRole[]
+  id               String                 @id @default(cuid())
+  organizationId   String
+  organization     Organization           @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+  userId           String
+  user             User                   @relation(fields: [userId], references: [id], onDelete: Restrict)
+  status           MembershipStatus       @default(ACTIVE)
+  isManager        Boolean                @default(false)
+  joinedAt         DateTime               @default(now())
+  suspendedAt      DateTime?
+  revokedAt        DateTime?
+  createdAt        DateTime               @default(now())
+  updatedAt        DateTime               @updatedAt
+  roles            MembershipRole[]
+  isCoordinator    Boolean                @default(false)
+  permissionGrants MembershipPermission[]
 
   @@unique([organizationId, userId])
   @@index([userId, status])
@@ -273,21 +291,27 @@ model Invitation {
 }
 
 model ArtisanProfile {
+  createdBy             User?                     @relation("ArtisanCreator", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: NoAction, map: "ArtisanProfile_createdById_fk")
+  createdById           String?
+  participantStatus     String                    @default("ACTIVE")
+  managements           ArtisanManagement[]
+  assignments           ArtisanAssignment[]
+  authorizations        OnboardingAuthorization[]
   commercialOffers      CommercialOffer[]
   commercialBatches     CommercialBatch[]
-  id                    String                  @id @default(cuid())
-  userId                String                  @unique
-  user                  User                    @relation(fields: [userId], references: [id], onDelete: Restrict)
+  id                    String                    @id @default(cuid())
+  userId                String?                   @unique
+  user                  User?                     @relation(fields: [userId], references: [id], onDelete: Restrict)
   displayName           String
   region                String
-  preferredLanguage     String                  @default("en")
+  preferredLanguage     String                    @default("en")
   contactPhone          String?
-  contactVisibility     String                  @default("PRIVATE")
-  availabilityStatus    AvailabilityStatus      @default(AVAILABLE)
-  experienceDescription String                  @default("")
+  contactVisibility     String                    @default("PRIVATE")
+  availabilityStatus    AvailabilityStatus        @default(AVAILABLE)
+  experienceDescription String                    @default("")
   equipment             String[]
-  createdAt             DateTime                @default(now())
-  updatedAt             DateTime                @updatedAt
+  createdAt             DateTime                  @default(now())
+  updatedAt             DateTime                  @updatedAt
   skills                ArtisanSkill[]
   capacityDeclarations  CapacityDeclaration[]
   associations          AssociationMembership[]
@@ -319,20 +343,22 @@ model ArtisanSkill {
 }
 
 model CapacityDeclaration {
+  authorization    OnboardingAuthorization? @relation(fields: [authorizationId], references: [id], onDelete: Restrict, onUpdate: NoAction, map: "CapacityDeclaration_authorizationId_fk")
+  authorizationId  String?
   commercialOffers CommercialOffer[]
   supersededAt     DateTime?
-  id               String            @id @default(cuid())
+  id               String                   @id @default(cuid())
   artisanProfileId String
-  artisanProfile   ArtisanProfile    @relation(fields: [artisanProfileId], references: [id], onDelete: Restrict)
+  artisanProfile   ArtisanProfile           @relation(fields: [artisanProfileId], references: [id], onDelete: Restrict)
   craftSkillId     String
-  craftSkill       CraftSkill        @relation(fields: [craftSkillId], references: [id], onDelete: Restrict)
+  craftSkill       CraftSkill               @relation(fields: [craftSkillId], references: [id], onDelete: Restrict)
   unitType         String
-  quantity         Decimal           @db.Decimal(12, 2)
+  quantity         Decimal                  @db.Decimal(12, 2)
   effectiveFrom    DateTime
   effectiveTo      DateTime
   declaredByUserId String
-  declaredBy       User              @relation(fields: [declaredByUserId], references: [id], onDelete: Restrict)
-  createdAt        DateTime          @default(now())
+  declaredBy       User                     @relation(fields: [declaredByUserId], references: [id], onDelete: Restrict)
+  createdAt        DateTime                 @default(now())
 
   @@index([artisanProfileId, effectiveFrom])
 }
@@ -658,7 +684,7 @@ model SyntheticPayment {
 // Rebuildable derived values only. No user-entered text or wearable data.
 model CommerceProjection {
   orderId           String          @id
-  order             CommercialOrder @relation(fields: [orderId], references: [id], onDelete: Restrict)
+  order             CommercialOrder @relation(fields: [orderId], references: [id], onDelete: Restrict, onUpdate: NoAction)
   definitionVersion Int             @default(1)
   asOf              DateTime        @default(now())
   metrics           Json
@@ -668,7 +694,7 @@ model CommerceProjection {
 model CommerceNotice {
   id        String      @id @default(cuid())
   eventId   String
-  event     OutboxEvent @relation(fields: [eventId], references: [id], onDelete: Restrict)
+  event     OutboxEvent @relation(fields: [eventId], references: [id], onDelete: Restrict, onUpdate: NoAction)
   audience  String
   scopeId   String
   code      String
@@ -676,4 +702,117 @@ model CommerceNotice {
 
   @@unique([eventId, audience, scopeId])
   @@index([audience, scopeId, createdAt])
+}
+
+// Explicit authority, never inferred from a buyer finance job title.
+model MembershipPermission {
+  enabled      Boolean            @default(true)
+  grantedBy    User               @relation("PermissionGrantor", fields: [grantedById], references: [id], onDelete: Restrict, onUpdate: NoAction, map: "MembershipPermission_grantedById_fk")
+  id           String             @id @default(cuid())
+  membershipId String
+  membership   OrganizationMember @relation(fields: [membershipId], references: [id], onDelete: Restrict)
+  permission   String
+  grantedById  String
+  reason       String
+  createdAt    DateTime           @default(now())
+
+  @@unique([membershipId, permission])
+}
+
+model ArtisanManagement {
+  organization     Organization   @relation(fields: [organizationId], references: [id], onDelete: Restrict, onUpdate: NoAction, map: "ArtisanManagement_organizationId_fk")
+  recordedBy       User           @relation("ManagementRecorder", fields: [recordedById], references: [id], onDelete: Restrict, onUpdate: NoAction, map: "ArtisanManagement_recordedById_fk")
+  id               String         @id @default(cuid())
+  artisanProfileId String
+  artisan          ArtisanProfile @relation(fields: [artisanProfileId], references: [id], onDelete: Restrict)
+  organizationId   String
+  startedAt        DateTime       @default(now())
+  endedAt          DateTime?
+  reason           String
+  recordedById     String
+
+  @@index([organizationId, endedAt])
+  @@index([artisanProfileId, endedAt])
+}
+
+model ArtisanAssignment {
+  organization     Organization   @relation(fields: [organizationId], references: [id], onDelete: Restrict, onUpdate: NoAction, map: "ArtisanAssignment_organizationId_fk")
+  coordinator      User           @relation("ResponsibleCoordinator", fields: [coordinatorId], references: [id], onDelete: Restrict, onUpdate: NoAction, map: "ArtisanAssignment_coordinatorId_fk")
+  assignedBy       User           @relation("ArtisanAssigner", fields: [assignedById], references: [id], onDelete: Restrict, onUpdate: NoAction, map: "ArtisanAssignment_assignedById_fk")
+  id               String         @id @default(cuid())
+  artisanProfileId String
+  artisan          ArtisanProfile @relation(fields: [artisanProfileId], references: [id], onDelete: Restrict)
+  coordinatorId    String
+  organizationId   String
+  assignedById     String
+  startedAt        DateTime       @default(now())
+  endedAt          DateTime?
+  reason           String
+
+  @@index([coordinatorId, organizationId, endedAt])
+}
+
+model AuthorizationPolicy {
+  reviewedBy      User                      @relation("PolicyReviewer", fields: [reviewedById], references: [id], onDelete: Restrict, onUpdate: NoAction, map: "AuthorizationPolicy_reviewedById_fk")
+  id              String                    @id @default(cuid())
+  version         String                    @unique
+  methods         String[]
+  reviewReference String
+  reviewedById    String
+  active          Boolean                   @default(true)
+  createdAt       DateTime                  @default(now())
+  authorizations  OnboardingAuthorization[]
+}
+
+model OnboardingAuthorization {
+  recordedBy           User                  @relation("AuthorizationRecorder", fields: [recordedById], references: [id], onDelete: Restrict, onUpdate: NoAction, map: "OnboardingAuthorization_recordedById_fk")
+  capacityDeclarations CapacityDeclaration[]
+  id                   String                @id @default(cuid())
+  artisanProfileId     String
+  artisan              ArtisanProfile        @relation(fields: [artisanProfileId], references: [id], onDelete: Restrict)
+  policyId             String
+  policy               AuthorizationPolicy   @relation(fields: [policyId], references: [id], onDelete: Restrict)
+  purpose              String
+  method               String
+  occurredAt           DateTime
+  language             String
+  recordedById         String
+  witnessReference     String?
+  evidenceReference    String
+  withdrawnAt          DateTime?
+  withdrawalReason     String?
+  createdAt            DateTime              @default(now())
+
+  @@index([artisanProfileId, purpose, withdrawnAt])
+}
+
+model OperatorAssignment {
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Restrict, onUpdate: NoAction, map: "OperatorAssignment_organizationId_fk")
+  operator       User         @relation("Operator", fields: [operatorId], references: [id], onDelete: Restrict, onUpdate: NoAction, map: "OperatorAssignment_operatorId_fk")
+  assignedBy     User         @relation("OperatorAssigner", fields: [assignedById], references: [id], onDelete: Restrict, onUpdate: NoAction, map: "OperatorAssignment_assignedById_fk")
+  id             String       @id @default(cuid())
+  operatorId     String
+  organizationId String
+  assignedById   String
+  createdAt      DateTime     @default(now())
+  revokedAt      DateTime?
+
+  @@unique([operatorId, organizationId])
+}
+
+// Accessible independent intake; no login or fake User is created for a participant.
+model ParticipantConcern {
+  reviewedBy       User?     @relation("ConcernReviewer", fields: [reviewedById], references: [id], onDelete: Restrict, onUpdate: NoAction, map: "ParticipantConcern_reviewedById_fkey")
+  id               String    @id @default(cuid())
+  subjectReference String
+  concernType      String
+  description      String
+  contactMethod    String?
+  status           String    @default("OPEN")
+  reviewedById     String?
+  resolution       String?
+  createdAt        DateTime  @default(now())
+  reviewedAt       DateTime?
+
+  @@index([status, createdAt])
 }
