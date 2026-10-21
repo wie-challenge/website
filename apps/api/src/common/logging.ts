@@ -1,23 +1,35 @@
 import pino from 'pino';
 import type { LoggerService } from '@nestjs/common';
-export const logger = pino({
-  level: process.env.LOG_LEVEL ?? 'info',
-  redact: {
-    paths: [
-      'password',
-      'token',
-      'secret',
-      'cookie',
-      'authorization',
-      'body',
-      'payload',
-      '*.password',
-      '*.token',
-      '*.secret',
-    ],
-    remove: true,
-  },
-});
+export function createLogger(destination?: pino.DestinationStream) {
+  const options: pino.LoggerOptions = {
+    level: process.env.LOG_LEVEL ?? 'info',
+    redact: {
+      paths: [
+        'password',
+        'token',
+        'secret',
+        'cookie',
+        'authorization',
+        'body',
+        'payload',
+        '*.password',
+        '*.token',
+        '*.secret',
+        '*.authorization',
+        '*.cookie',
+        '*.body',
+        '*.payload',
+        'req.headers.authorization',
+        'req.headers.cookie',
+        'wearableSummary',
+        'sensorData',
+      ],
+      remove: true,
+    },
+  };
+  return destination ? pino(options, destination) : pino(options);
+}
+export const logger = createLogger();
 export class NestLogger implements LoggerService {
   log() {
     /* Lifecycle noise is omitted; application events use the safe structured sink. */

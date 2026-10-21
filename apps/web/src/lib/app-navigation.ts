@@ -43,11 +43,10 @@ export const sidebarSections: NavSection[] = [
 ];
 
 export const profileMenuItems = [
-  { href: '/settings/profile', label: 'Your profile' },
-  { href: '/settings/account', label: 'Account and email' },
+  { href: '/settings/profile', label: 'Account and email' },
   { href: '/settings/security', label: 'Security and two-factor' },
   { href: '/settings/notifications', label: 'Language and notifications' },
-  { href: '/settings/privacy', label: 'Privacy and your data' },
+  { href: '/support/privacy', label: 'Privacy and your data' },
 ];
 
 export function isActive(pathname: string, item: NavItem) {

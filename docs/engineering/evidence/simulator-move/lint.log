@@ -1,0 +1,3 @@
+[WARN] Your node_modules are out of sync with your lockfile. The workspace structure has changed since last install
+$ biome lint apps packages tests scripts/*.ts playwright.config.ts
+Checked 162 files in 61ms. No fixes applied.

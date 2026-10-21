@@ -1,3 +1,4 @@
+import { canEditOrganization, canReviewOrganization } from '@nasj/contracts';
 import { createHash, randomBytes } from 'node:crypto';
 import { Inject, Injectable } from '@nestjs/common';
 import {
@@ -32,7 +33,10 @@ import { audit } from '../foundation/audit.js';
 const hashToken = (token: string) => createHash('sha256').update(token).digest('hex');
 const tokenValue = () => randomBytes(32).toString('hex');
 const invitationExpiry = () => new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
-type MemberWithRoles = OrganizationMember & { roles: MembershipRole[] };
+type MemberWithRoles = OrganizationMember & {
+  roles: MembershipRole[];
+  permissionGrants?: { permission: string; enabled?: boolean }[];
+};
 function organizationView(org: Organization): OrganizationView {
   return {
     id: org.id,
@@ -62,6 +66,8 @@ function membershipView(member: MemberWithRoles): MembershipView {
     status: member.status,
     isManager: member.isManager,
     roles: member.roles.map((role) => role.role),
+    explicitPermissions:
+      member.permissionGrants?.filter((g) => g.enabled !== false).map((g) => g.permission) ?? [],
     joinedAt: member.joinedAt.toISOString(),
   };
 }
@@ -100,8 +106,8 @@ export class OrganizationsService {
       if (input.type === 'INTERNAL') await this.policy.requireAdmin(actor, tx);
       const initialRoles =
         input.type === 'BUYER_BUSINESS'
-          ? ['BUYER' as const]
-          : input.type === 'ASSOCIATION'
+          ? ['BUYER_REPRESENTATIVE' as const]
+          : ['ASSOCIATION', 'PARTNER_COOPERATIVE'].includes(input.type)
             ? ['ASSOCIATION_COORDINATOR' as const]
             : [];
       const baseSlug =
@@ -125,6 +131,8 @@ export class OrganizationsService {
           createdByUserId: actor.id,
         },
       });
+      if (initialRoles.some((role) => role === 'ASSOCIATION_COORDINATOR'))
+        await this.policy.assertSingleCoordinator(actor.id, organization.id, tx);
       const member = await tx.organizationMember.create({
         data: {
           organizationId: organization.id,
@@ -154,7 +162,7 @@ export class OrganizationsService {
       this.db.organizationMember.findMany({
         where,
         ...pagination(input),
-        include: { roles: true, organization: true },
+        include: { roles: true, organization: true, permissionGrants: true },
         orderBy: [{ createdAt: 'desc' }, { id: 'asc' }],
       }),
       this.db.organizationMember.count({ where }),
@@ -187,7 +195,7 @@ export class OrganizationsService {
   async update(actor: Actor, id: string, input: OrganizationUpdateInput) {
     return iamTransaction(this.db, actor, async (tx) => {
       const member = await this.policy.requireOrganization(actor, id, 'organization.update', tx);
-      if (!['DRAFT', 'REJECTED'].includes(member.organization.approvalStatus))
+      if (!canEditOrganization(member.organization.approvalStatus))
         fail(
           409,
           'ORGANIZATION_REVIEW_REQUIRED',
@@ -226,7 +234,7 @@ export class OrganizationsService {
         'organization.approval.request',
         tx,
       );
-      if (!['DRAFT', 'REJECTED'].includes(member.organization.approvalStatus))
+      if (!canEditOrganization(member.organization.approvalStatus))
         fail(
           409,
           'INVALID_TRANSITION',
@@ -251,10 +259,15 @@ export class OrganizationsService {
     });
   }
 
-  async adminList(actor: Actor, input: PageInput, pendingOnly = false) {
+  async adminList(
+    actor: Actor,
+    input: PageInput & { type?: Organization['type'] },
+    pendingOnly = false,
+  ) {
     await this.policy.requireAdmin(actor);
     const where: Prisma.OrganizationWhereInput = {
       ...(pendingOnly ? { approvalStatus: 'PENDING_REVIEW' } : {}),
+      ...(input.type ? { type: input.type } : {}),
       ...(input.q ? { name: { contains: input.q, mode: 'insensitive' } } : {}),
     };
     const [items, total] = await this.db.$transaction([
@@ -290,11 +303,7 @@ export class OrganizationsService {
       await this.policy.requireAdmin(actor, tx);
       const org = await tx.organization.findUnique({ where: { id } });
       if (!org) fail(404, 'NOT_FOUND', 'Organization not found.');
-      if (
-        status === 'SUSPENDED'
-          ? org.approvalStatus !== 'APPROVED'
-          : !['PENDING_REVIEW', 'SUSPENDED'].includes(org.approvalStatus)
-      )
+      if (!canReviewOrganization(org.approvalStatus, status))
         fail(
           409,
           'INVALID_TRANSITION',
@@ -334,6 +343,7 @@ export class OrganizationsService {
         ...pagination(input),
         include: {
           roles: true,
+          permissionGrants: true,
           user: { select: { id: true, name: true, email: true, status: true } },
         },
         orderBy: [{ createdAt: 'asc' }, { id: 'asc' }],
@@ -369,15 +379,24 @@ export class OrganizationsService {
     return { invitation: invitationView(invitation), delivery: 'QUEUED' as const };
   }
 
-  async invite(actor: Actor, id: string, input: InvitationCreateInput) {
+  private async invitationAuthority(actor: Actor, id: string, tx: Db = this.db) {
+    const organization = await tx.organization.findUnique({ where: { id } });
+    if (!organization) fail(404, 'NOT_FOUND', 'Organization not found.');
+    if (organization.type === 'BUYER_BUSINESS')
+      return this.policy.requireOrganization(actor, id, 'organization.members.invite', tx);
+    await this.policy.requireAdmin(actor, tx);
+    if (organization.approvalStatus !== 'APPROVED')
+      fail(
+        409,
+        'ORGANIZATION_UNAVAILABLE',
+        'Approve the organization before inviting privileged personnel.',
+      );
+    return { organization, isManager: true };
+  }
+  async invite(actor: Actor, id: string, input: InvitationCreateInput, reason?: string) {
     const token = tokenValue();
     const result = await iamTransaction(this.db, actor, async (tx) => {
-      const member = await this.policy.requireOrganization(
-        actor,
-        id,
-        'organization.members.invite',
-        tx,
-      );
+      const member = await this.invitationAuthority(actor, id, tx);
       this.validateRoles(member.organization.type, input.roles);
       if (input.isManager && !member.isManager)
         fail(403, 'FORBIDDEN', 'Only organization managers may delegate manager access.');
@@ -414,6 +433,7 @@ export class OrganizationsService {
       });
       await audit(tx, actor, {
         action: 'organization.members.invite',
+        reason,
         targetType: 'Invitation',
         targetId: invitation.id,
         organizationId: id,
@@ -425,7 +445,7 @@ export class OrganizationsService {
   }
 
   async invitations(actor: Actor, id: string, input: PageInput) {
-    await this.policy.requireOrganization(actor, id, 'organization.members.invite');
+    await this.invitationAuthority(actor, id);
     const where: Prisma.InvitationWhereInput = {
       organizationId: id,
       ...(input.q ? { email: { contains: input.q, mode: 'insensitive' } } : {}),
@@ -443,7 +463,7 @@ export class OrganizationsService {
 
   async cancelInvitation(actor: Actor, id: string, invitationId: string) {
     return iamTransaction(this.db, actor, async (tx) => {
-      await this.policy.requireOrganization(actor, id, 'organization.members.invite', tx);
+      await this.invitationAuthority(actor, id, tx);
       const invitation = await tx.invitation.findFirst({
         where: { id: invitationId, organizationId: id },
       });
@@ -467,12 +487,7 @@ export class OrganizationsService {
   async resendInvitation(actor: Actor, id: string, invitationId: string) {
     const token = tokenValue();
     const result = await iamTransaction(this.db, actor, async (tx) => {
-      const member = await this.policy.requireOrganization(
-        actor,
-        id,
-        'organization.members.invite',
-        tx,
-      );
+      const member = await this.invitationAuthority(actor, id, tx);
       const invitation = await tx.invitation.findFirst({
         where: { id: invitationId, organizationId: id },
       });
@@ -519,13 +534,13 @@ export class OrganizationsService {
             userId: invitation.createdByUserId,
           },
         },
-        include: { roles: true, organization: true },
+        include: { roles: true, organization: true, permissionGrants: true },
       });
-      if (
-        inviter?.status !== 'ACTIVE' ||
-        !inviter.isManager ||
-        invitation.organization.approvalStatus !== 'APPROVED'
-      )
+      const inviterAuthorized =
+        invitation.organization.type === 'BUYER_BUSINESS'
+          ? inviter?.status === 'ACTIVE' && inviter.isManager
+          : invitation.createdBy.role === 'ADMIN';
+      if (!inviterAuthorized || invitation.organization.approvalStatus !== 'APPROVED')
         fail(
           403,
           'INVITER_UNAVAILABLE',
@@ -550,6 +565,8 @@ export class OrganizationsService {
       });
       if (claimed.count !== 1)
         fail(409, 'INVITATION_USED', 'This invitation has already been used.');
+      if (invitation.roles.includes('ASSOCIATION_COORDINATOR'))
+        await this.policy.assertSingleCoordinator(actor.id, invitation.organizationId, tx);
       const member = await tx.organizationMember.create({
         data: {
           organizationId: invitation.organizationId,
@@ -605,7 +622,9 @@ export class OrganizationsService {
 
   async updateMember(actor: Actor, id: string, memberId: string, input: MembershipUpdateInput) {
     return iamTransaction(this.db, actor, async (tx) => {
-      await this.policy.requireOrganization(actor, id, 'organization.members.update', tx);
+      const governedOrg = await tx.organization.findUnique({ where: { id } });
+      if (governedOrg?.type !== 'BUYER_BUSINESS') await this.policy.requireAdmin(actor, tx);
+      else await this.policy.requireOrganization(actor, id, 'organization.members.update', tx);
       const member = await tx.organizationMember.findFirst({
         where: { id: memberId, organizationId: id },
         include: { roles: true, user: true },
@@ -626,6 +645,11 @@ export class OrganizationsService {
           'ACCOUNT_UNAVAILABLE',
           'Only active verified accounts may have active memberships.',
         );
+      if (
+        (input.status ?? member.status) === 'ACTIVE' &&
+        member.roles.some((r) => r.role === 'ASSOCIATION_COORDINATOR')
+      )
+        await this.policy.assertSingleCoordinator(member.userId, id, tx);
       await this.protectManager(tx, member, input);
       const next = await tx.organizationMember.update({
         where: { id: member.id },
@@ -656,12 +680,7 @@ export class OrganizationsService {
 
   async setRoles(actor: Actor, id: string, memberId: string, input: MembershipRolesInput) {
     return iamTransaction(this.db, actor, async (tx) => {
-      const manager = await this.policy.requireOrganization(
-        actor,
-        id,
-        'organization.roles.assign',
-        tx,
-      );
+      const manager = await this.invitationAuthority(actor, id, tx);
       const member = await tx.organizationMember.findFirst({
         where: { id: memberId, organizationId: id },
         include: { roles: true },
@@ -670,6 +689,8 @@ export class OrganizationsService {
       if (member.userId === actor.id)
         fail(403, 'SELF_PROMOTION_DENIED', 'Another organization manager must change your roles.');
       this.validateRoles(manager.organization.type, input.roles);
+      if (member.status === 'ACTIVE' && input.roles.includes('ASSOCIATION_COORDINATOR'))
+        await this.policy.assertSingleCoordinator(member.userId, id, tx);
       await tx.membershipRole.deleteMany({ where: { membershipId: member.id } });
       await tx.membershipRole.createMany({
         data: input.roles.map((role) => ({
@@ -707,7 +728,11 @@ export class OrganizationsService {
       if (self) {
         if (member.status !== 'ACTIVE')
           fail(403, 'MEMBERSHIP_UNAVAILABLE', 'This membership is no longer active.');
-      } else await this.policy.requireOrganization(actor, id, 'organization.members.remove', tx);
+      } else {
+        const governedOrg = await tx.organization.findUnique({ where: { id } });
+        if (governedOrg?.type !== 'BUYER_BUSINESS') await this.policy.requireAdmin(actor, tx);
+        else await this.policy.requireOrganization(actor, id, 'organization.members.remove', tx);
+      }
       await this.protectManager(tx, member, { status: self ? 'LEFT' : 'REVOKED' });
       const next = await tx.organizationMember.update({
         where: { id: member.id },

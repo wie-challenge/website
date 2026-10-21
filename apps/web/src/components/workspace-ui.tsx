@@ -7,11 +7,23 @@ import {
   useState,
   useTransition,
   useRef,
+  useId,
 } from 'react';
 import type { ReactNode, FormEvent } from 'react';
 import { apiFetch, ApiError } from '@/lib/api';
 import Link from 'next/link';
 import { useHydrated } from '@/lib/use-hydrated';
+import { Button } from './ui/button';
+import { Input as ShadcnInput } from './ui/input';
+import { Label } from './ui/label';
+import { NativeSelect } from './ui/native-select';
+import { Alert, AlertDescription } from './ui/alert';
+import { CircleCheck, LoaderCircle } from 'lucide-react';
+
+const FieldErrors = createContext<Record<string, string[]>>({});
+export function useFieldError(name: string) {
+  return useContext(FieldErrors)[name] ?? [];
+}
 
 export function useResource<T>(path: string) {
   const [result, setResult] = useState<{ path: string; value: T } | null>(null);
@@ -71,15 +83,15 @@ export function Workspace({
     <FeedbackContext.Provider value={setFeedback}>
       <div className="page-heading">
         <div>
-          <p className="eyebrow">NASJ WORKSPACE</p>
           <h1>{title}</h1>
           <p className="lead">{description}</p>
         </div>
       </div>
       {feedback && (
-        <p className="notice success" role="status">
-          {feedback}
-        </p>
+        <Alert className="notice success" role="status">
+          <CircleCheck aria-hidden="true" />
+          <AlertDescription>{feedback}</AlertDescription>
+        </Alert>
       )}
       {children}
     </FeedbackContext.Provider>
@@ -97,7 +109,10 @@ export function ResourceState({
   needsMfa?: boolean;
 }) {
   return loading ? (
-    <p role="status">Loading workspace…</p>
+    <p className="resource-loading" role="status">
+      <LoaderCircle className="size-4 animate-spin" aria-hidden="true" />
+      Loading workspace…
+    </p>
   ) : error ? (
     <div className="notice" role="alert">
       <p>{error}</p>
@@ -106,9 +121,9 @@ export function ResourceState({
           <Link href="/settings/security">Set up or verify two-factor authentication</Link>
         </p>
       )}
-      <button className="text-button" type="button" onClick={retry}>
+      <Button variant="outline" type="button" onClick={retry}>
         Try again
-      </button>
+      </Button>
     </div>
   ) : null;
 }
@@ -135,11 +150,13 @@ export function ActionForm({
   const [message, setMessage] = useState('');
   const [needsMfa, setNeedsMfa] = useState(false);
   const [error, setError] = useState('');
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string[]>>({});
   function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (confirm && !window.confirm(confirm)) return;
     const data = new FormData(event.currentTarget);
     setError('');
+    setFieldErrors({});
     setMessage('');
     setNeedsMfa(false);
     feedback?.('');
@@ -151,18 +168,21 @@ export function ActionForm({
         else setMessage(successMessage);
       } catch (failure) {
         setNeedsMfa(failure instanceof ApiError && failure.detail.code === 'MFA_REQUIRED');
+        setFieldErrors(failure instanceof ApiError ? (failure.detail.fieldErrors ?? {}) : {});
         setError(failure instanceof Error ? failure.message : 'Unable to save. Please try again.');
       }
     });
   }
   return (
     <form method="post" onSubmit={submit} className={className}>
-      <fieldset disabled={pending || !ready} aria-busy={pending}>
-        {children}
-        <button className="button secondary" type="submit">
-          {pending ? 'Saving…' : label}
-        </button>
-      </fieldset>
+      <FieldErrors.Provider value={fieldErrors}>
+        <fieldset disabled={pending || !ready} aria-busy={pending}>
+          {children}
+          <Button type="submit" className="action-submit">
+            {pending ? 'Saving…' : label}
+          </Button>
+        </fieldset>
+      </FieldErrors.Provider>
       {message && (
         <p className="notice success" role="status">
           {message}
@@ -201,10 +221,15 @@ export function Input({
   max?: string;
   step?: string;
 }) {
+  const id = useId();
+  const errors = useFieldError(name);
   return (
-    <label className="field">
-      <span className="label">{label}</span>
-      <input
+    <div className="field">
+      <Label htmlFor={id}>{label}</Label>
+      <ShadcnInput
+        id={id}
+        aria-invalid={errors.length ? true : undefined}
+        aria-describedby={errors.length ? `${id}-error` : undefined}
         name={name}
         defaultValue={value ?? ''}
         type={type}
@@ -213,7 +238,12 @@ export function Input({
         max={max}
         step={step}
       />
-    </label>
+      {errors.length > 0 && (
+        <p id={`${id}-error`} className="field-error">
+          {errors.join(' ')}
+        </p>
+      )}
+    </div>
   );
 }
 export function Select({
@@ -229,10 +259,20 @@ export function Select({
   options: readonly string[] | readonly { value: string; label: string }[];
   required?: boolean;
 }) {
+  const id = useId();
+  const errors = useFieldError(name);
   return (
-    <label className="field">
-      <span className="label">{label}</span>
-      <select aria-label={label} name={name} defaultValue={value} required={required}>
+    <div className="field">
+      <Label htmlFor={id}>{label}</Label>
+      <NativeSelect
+        id={id}
+        aria-label={label}
+        aria-invalid={errors.length ? true : undefined}
+        aria-describedby={errors.length ? `${id}-error` : undefined}
+        name={name}
+        defaultValue={value}
+        required={required}
+      >
         {options.map((item) =>
           typeof item === 'string' ? (
             <option key={item} value={item}>
@@ -244,11 +284,17 @@ export function Select({
             </option>
           ),
         )}
-      </select>
-    </label>
+      </NativeSelect>
+      {errors.length > 0 && (
+        <p id={`${id}-error`} className="field-error">
+          {errors.join(' ')}
+        </p>
+      )}
+    </div>
   );
 }
 export function humanize(value: string) {
+  if (value === 'HIRFACARE_OPERATOR') return 'NASJ operator';
   return value
     .toLowerCase()
     .replaceAll('_', ' ')

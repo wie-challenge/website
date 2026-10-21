@@ -1,4 +1,4 @@
-name: Foundation checks
+name: Architecture and security checks
 on:
   push:
   pull_request:
@@ -26,15 +26,33 @@ jobs:
       - run: pnpm db:generate
       - run: pnpm lint
       - run: pnpm typecheck
-      - run: pnpm test
-      - run: pnpm test:integration
+      - name: Unit, domain, backup and logging tests
+        shell: bash
+        run: |
+          mkdir -p .local
+          pnpm test | tee .local/e16-unit.log
+      - name: PostgreSQL integration, replay, outbox and restore drill
+        shell: bash
+        run: |
+          mkdir -p .local
+          pnpm test:integration | tee .local/e16-integration.log
       - run: pnpm exec playwright install --with-deps chromium
       - run: pnpm test:e2e
       - run: pnpm audit --audit-level=high
       - run: pnpm build
       - uses: actions/upload-artifact@v7.0.2
-        if: failure()
+        if: always()
         with:
-          name: browser-failure-traces
-          path: test-results/
+          name: e16-verification-evidence
+          include-hidden-files: true
+          path: |
+            test-results/
+            .local/e16-integration.log
+            .local/e16-unit.log
+            .local/e2e-report.json
+            .local/commerce-*-operator.png
+            .local/catalog-*.png
+            .local/ui-*.png
+            .local/e02-*.png
+            .local/nasj-*.png
           retention-days: 3

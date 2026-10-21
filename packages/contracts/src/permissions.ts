@@ -1,4 +1,6 @@
 export const businessRoles = [
+  'BUYER_REPRESENTATIVE',
+  'HIRFACARE_OPERATOR',
   'BUYER',
   'ARTISAN',
   'ASSOCIATION_COORDINATOR',
@@ -12,7 +14,47 @@ export const businessRoles = [
   'BUSINESS_DEVELOPMENT',
 ] as const;
 export type BusinessRole = (typeof businessRoles)[number];
+export const foundationPermissions = [
+  'platform.users.manage',
+  'platform.organizations.approve',
+  'platform.roles.manage',
+  'buyer.rfq.create',
+  'buyer.rfq.read',
+  'buyer.quotation.negotiate',
+  'buyer.quotation.approve',
+  'buyer.invoice.read',
+  'buyer.delivery.confirm',
+  'operator.quotation.prepare',
+  'operator.production.manage',
+  'operator.quality.approve',
+  'operator.logistics.manage',
+  'operator.payment.record',
+  'operator.payout.initiate',
+  'operator.payout.approve',
+  'operator.accounts.read',
+  'association.artisan.create',
+  'association.artisan.read',
+  'association.artisan.update',
+  'association.capacity.record',
+  'association.offer.recordDecision',
+  'association.production.update',
+  'association.handover.record',
+  'artisan.consent.record',
+  'artisan.consent.review',
+  'artisan.affiliation.transfer',
+  'audit.read.scoped',
+  'privacy.request.manage',
+] as const;
+export type FoundationPermission = (typeof foundationPermissions)[number];
+export const operationalPersonas = [
+  'PLATFORM_ADMIN',
+  'HIRFACARE_OPERATOR',
+  'BUYER_REPRESENTATIVE',
+  'ASSOCIATION_COORDINATOR',
+] as const;
+export type OperationalPersona = (typeof operationalPersonas)[number];
 export const permissionCatalog = [
+  ...foundationPermissions,
   'organization.create',
   'organization.read',
   'organization.update',
@@ -63,9 +105,45 @@ const orgManagement: Permission[] = [
   'audit.read',
 ];
 export const rolePermissions: Record<BusinessRole, readonly Permission[]> = {
-  BUYER: ['organization.read', 'finance.quotation.read'],
+  BUYER_REPRESENTATIVE: [
+    'organization.read',
+    'buyer.rfq.create',
+    'buyer.rfq.read',
+    'buyer.quotation.negotiate',
+    'buyer.invoice.read',
+    'buyer.delivery.confirm',
+  ],
+  HIRFACARE_OPERATOR: [
+    'organization.read',
+    'operator.accounts.read',
+    'operator.quotation.prepare',
+    'operator.production.manage',
+    'operator.quality.approve',
+    'operator.logistics.manage',
+    'operator.payment.record',
+    'audit.read.scoped',
+  ],
+  BUYER: [
+    'organization.read',
+    'finance.quotation.read',
+    'buyer.rfq.create',
+    'buyer.rfq.read',
+    'buyer.quotation.negotiate',
+    'buyer.invoice.read',
+    'buyer.delivery.confirm',
+  ],
   ARTISAN: ['organization.read'],
-  ASSOCIATION_COORDINATOR: ['organization.read'],
+  ASSOCIATION_COORDINATOR: [
+    'organization.read',
+    'association.artisan.create',
+    'association.artisan.read',
+    'association.artisan.update',
+    'association.capacity.record',
+    'association.offer.recordDecision',
+    'association.production.update',
+    'association.handover.record',
+    'artisan.consent.record',
+  ],
   PRODUCTION_MANAGER: ['organization.read', 'production.manage'],
   FINANCE_MANAGER: [
     'organization.read',
@@ -81,22 +159,69 @@ export const rolePermissions: Record<BusinessRole, readonly Permission[]> = {
   BUSINESS_DEVELOPMENT: ['organization.read', 'buyer.relationship.manage'],
 };
 export function rolesForOrganization(type: string): BusinessRole[] {
-  if (type === 'BUYER_BUSINESS') return ['BUYER'];
-  if (type === 'ASSOCIATION') return ['ASSOCIATION_COORDINATOR', 'ARTISAN', 'SUPPORT'];
-  if (type === 'INTERNAL') return [...businessRoles].filter((r) => r !== 'BUYER');
+  if (type === 'BUYER_BUSINESS') return ['BUYER_REPRESENTATIVE'];
+  if (['ASSOCIATION', 'PARTNER_COOPERATIVE'].includes(type)) return ['ASSOCIATION_COORDINATOR'];
+  if (type === 'INTERNAL') return ['HIRFACARE_OPERATOR'];
   return [];
+}
+export function grantAllowed(type: string, permission: string) {
+  return (
+    (type === 'BUYER_BUSINESS' &&
+      ['buyer.rfq.create', 'buyer.quotation.negotiate', 'buyer.quotation.approve'].includes(
+        permission,
+      )) ||
+    (type === 'INTERNAL' &&
+      ['operator.payout.initiate', 'operator.payout.approve'].includes(permission))
+  );
 }
 export function permissionsForMembership(member: {
   isManager: boolean;
   roles: { role: BusinessRole }[];
   status: string;
-  organization?: { approvalStatus: string };
+  organization?: { approvalStatus: string; type?: string };
+  permissionGrants?: { permission: string; enabled?: boolean }[];
 }): Permission[] {
   if (member.status !== 'ACTIVE') return [];
   const permissions = new Set<Permission>(['organization.read']);
-  for (const role of member.roles)
-    for (const permission of rolePermissions[role.role]) permissions.add(permission);
-  if (member.isManager) for (const permission of orgManagement) permissions.add(permission);
+  for (const role of member.roles) {
+    if (
+      member.organization?.type &&
+      !rolesForOrganization(member.organization.type).includes(role.role) &&
+      !(member.organization.type === 'BUYER_BUSINESS' && role.role === 'BUYER') &&
+      !(
+        member.organization.type === 'INTERNAL' &&
+        !['BUYER', 'BUYER_REPRESENTATIVE', 'ARTISAN', 'ASSOCIATION_COORDINATOR'].includes(role.role)
+      )
+    )
+      continue;
+    for (const permission of rolePermissions[role.role] ?? []) permissions.add(permission);
+  }
+  for (const grant of member.permissionGrants ?? [])
+    if (
+      grantAllowed(member.organization?.type ?? '', grant.permission) &&
+      member.roles.some((r) =>
+        member.organization?.type === 'BUYER_BUSINESS'
+          ? ['BUYER', 'BUYER_REPRESENTATIVE'].includes(r.role)
+          : r.role === 'HIRFACARE_OPERATOR',
+      )
+    ) {
+      if (grant.enabled === false) permissions.delete(grant.permission as Permission);
+      else permissions.add(grant.permission as Permission);
+    }
+  if (member.isManager)
+    for (const permission of orgManagement) {
+      if (
+        member.organization?.type &&
+        member.organization.type !== 'BUYER_BUSINESS' &&
+        permission !== 'organization.read' &&
+        permission !== 'organization.update' &&
+        permission !== 'organization.approval.request' &&
+        permission !== 'organization.members.read' &&
+        permission !== 'audit.read'
+      )
+        continue;
+      permissions.add(permission);
+    }
   if (member.organization && member.organization.approvalStatus !== 'APPROVED') {
     const governance: Permission[] = [
       'organization.read',

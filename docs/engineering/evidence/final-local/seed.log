@@ -1,0 +1,2 @@
+$ tsx --tsconfig apps/api/tsconfig.json --env-file=.env scripts/seed-local.ts
+Six local fixture accounts are ready at http://localhost:3000. Credentials: .local/dev-credentials.json. Existing passwords and records were preserved.

@@ -1,4 +1,6 @@
 'use client';
+import { NativeSelect } from './ui/native-select';
+import { Label } from './ui/label';
 import Link from 'next/link';
 import { useState } from 'react';
 import type { Page, OrganizationView, MeView } from '@nasj/contracts';
@@ -104,7 +106,7 @@ export function Privacy({ admin = false }: { admin?: boolean }) {
                 );
                 const link = document.createElement('a');
                 link.href = url;
-                link.download = 'nasj-personal-data.json';
+                link.download = 'hirfacare-personal-data.json';
                 link.click();
                 setTimeout(() => URL.revokeObjectURL(url), 1000);
               }}
@@ -458,10 +460,11 @@ export function SupportCases() {
 }
 export function AdminOrganizations({ pending = false, id }: { pending?: boolean; id?: string }) {
   const [page, setPage] = useState(1);
+  const [type, setType] = useState('');
   const resource = useResource<Page<OrganizationView> | OrganizationView>(
     id
       ? `/api/v1/admin/organizations/${encodeURIComponent(id)}`
-      : `/api/v1/admin/organizations${pending ? '/pending' : ''}?page=${page}`,
+      : `/api/v1/admin/organizations${pending ? '/pending' : ''}?page=${page}${!pending && type ? `&type=${type}` : ''}`,
   );
   const items = resource.data
     ? 'items' in resource.data
@@ -473,6 +476,33 @@ export function AdminOrganizations({ pending = false, id }: { pending?: boolean;
       title={pending ? 'Organization approvals.' : 'Organization administration.'}
       description="Review organization profiles and record approval decisions with a reason."
     >
+      <nav className="workspace-tabs">
+        <Link href="/admin/organizations">All organizations</Link>
+        <Link href="/admin/approvals">Pending approval</Link>
+        <Link href="/admin/users">User accounts</Link>
+        <Link href="/admin/audit">Audit history</Link>
+        <Link href="/admin/privacy-requests">Privacy requests</Link>
+      </nav>
+      {!id && !pending && (
+        <div className="field">
+          <Label htmlFor="organization-type-filter">Organization type</Label>
+          <NativeSelect
+            id="organization-type-filter"
+            value={type}
+            onChange={(e) => {
+              setType(e.target.value);
+              setPage(1);
+            }}
+          >
+            <option value="">All organization types</option>
+            {['BUYER_BUSINESS', 'ASSOCIATION', 'PARTNER_COOPERATIVE', 'INTERNAL'].map((t) => (
+              <option key={t} value={t}>
+                {humanize(t)}
+              </option>
+            ))}
+          </NativeSelect>
+        </div>
+      )}
       <ResourceState {...resource} retry={resource.reload} />
       <ul className="record-list">
         {items?.map((org) => (

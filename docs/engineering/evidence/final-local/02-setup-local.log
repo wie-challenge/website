@@ -1,0 +1,2 @@
+$ tsx scripts/setup-local.ts
+Created .env with random local secrets. Existing databases were not accessed.

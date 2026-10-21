@@ -1,0 +1,50 @@
+Already up to date
+Done in 262ms using pnpm v11.3.0
+No known vulnerabilities found
+$ biome lint src test
+Checked 4 files in 12ms. No fixes applied.
+$ tsc -p tsconfig.json --noEmit && tsc -p tsconfig.test.json
+$ tsx --test test/*.test.ts
+✔ default 40-minute threshold has exact before/at boundary and bounded simulated pulse (4.914721ms)
+✔ editable threshold validates settings atomically; configuring never pulses (0.405974ms)
+✔ rest only resets accumulated activity after sustained rest; no false stationary reminders (0.207064ms)
+✔ short rest pauses rather than inventing activity duration (0.129067ms)
+✔ cooldown, dismiss, reset and disable preserve participant control (0.222526ms)
+✔ NaN, infinity, out-of-range and disconnected signals break continuity (0.251025ms)
+✔ missing samples and duplicate/reordered monotonic clocks cannot create reminders (0.254541ms)
+✔ motor failure stops output and requires a fresh model before resuming (0.153413ms)
+✔ weekly coverage splits at Tunis Monday boundary with bounded retention and defensive copies (0.316977ms)
+✔ wall-clock jumps do not add invented summary time; monotonic threshold remains authoritative (0.205772ms)
+✔ local deletion clears summaries and threshold state without any pulse (0.175655ms)
+✔ entire fixed-device lifecycle runs with fetch and sockets blocked and zero attempts (3.993474ms)
+ℹ tests 12
+ℹ suites 0
+ℹ pass 12
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 100.119296
+$ tsc -p tsconfig.json
+$ tsx src/demo.ts
+{
+  "build": "wearable-simulator/0.1.0",
+  "provenance": "SIMULATED",
+  "physicalDevice": false,
+  "clock": "accelerated fixture milliseconds",
+  "simulatedPulsesMs": [
+    200
+  ],
+  "summary": [
+    {
+      "week": "2026-10-19",
+      "timezone": "Africa/Tunis",
+      "provenance": "SIMULATED",
+      "build": "wearable-simulator/0.1.0",
+      "activityMs": 2460000,
+      "coveredMs": 2580000,
+      "missingIntervals": 0,
+      "reminders": 1
+    }
+  ]
+}

@@ -24,6 +24,23 @@ export class PolicyService {
     if (user.role !== 'ADMIN') fail(403, 'FORBIDDEN', 'Administrator access is required.');
     return user;
   }
+  async assertSingleCoordinator(userId: string, organizationId: string, db: Db = this.db) {
+    if (
+      await db.organizationMember.findFirst({
+        where: {
+          userId,
+          isCoordinator: true,
+          status: 'ACTIVE',
+          organizationId: { not: organizationId },
+        },
+      })
+    )
+      fail(
+        409,
+        'ACTIVE_AFFILIATION_EXISTS',
+        'End or transfer the existing coordinator affiliation first.',
+      );
+  }
   async requireOrganization(
     actor: Actor,
     organizationId: string,
@@ -34,7 +51,7 @@ export class PolicyService {
     await requireMfa(db, actor, this.config.REQUIRE_PRIVILEGED_MFA);
     const member = await db.organizationMember.findUnique({
       where: { organizationId_userId: { organizationId, userId: actor.id } },
-      include: { organization: true, roles: true },
+      include: { organization: true, roles: true, permissionGrants: true },
     });
     if (!member || !permissionsForMembership(member).includes(action))
       fail(403, 'FORBIDDEN', 'You do not have permission in this organization.');

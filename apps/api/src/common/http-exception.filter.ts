@@ -1,3 +1,4 @@
+import { CommerceRuleError } from '@nasj/contracts';
 import { Catch, HttpException, type ArgumentsHost, type ExceptionFilter } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { ZodError } from 'zod';
@@ -12,7 +13,29 @@ export function errorResponse(error: unknown, requestId: string) {
     message: 'Unable to complete this request.',
   };
   const kind = error && typeof error === 'object' && 'type' in error ? error.type : undefined;
-  if (kind === 'entity.parse.failed') {
+  if (error instanceof CommerceRuleError) {
+    status =
+      error.code === 'FORBIDDEN' || error.code === 'CONSENT_REQUIRED'
+        ? 403
+        : error.code === 'NOT_FOUND'
+          ? 404
+          : error.code === 'INVALID_TRANSITION'
+            ? 409
+            : error.code.startsWith('INVALID_')
+              ? 400
+              : 409;
+    body = {
+      code: error.code,
+      message: error.message,
+      ...(['INVALID_DEADLINE', 'INVALID_CRAFT'].includes(error.code)
+        ? {
+            fieldErrors: {
+              [error.code === 'INVALID_DEADLINE' ? 'deliveryAt' : 'craftSkillId']: [error.message],
+            },
+          }
+        : {}),
+    };
+  } else if (kind === 'entity.parse.failed') {
     status = 400;
     body = { code: 'VALIDATION_ERROR', message: 'Request body must contain valid JSON.' };
   } else if (kind === 'entity.too.large') {

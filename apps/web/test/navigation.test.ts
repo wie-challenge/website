@@ -12,7 +12,7 @@ test('login redirect allowlist rejects external, encoded and unsupported destina
     '/auth/login',
     'javascript:alert(1)',
   ])
-    assert.equal(safeNext(value), '/settings/profile');
+    assert.equal(safeNext(value), '/dashboard');
   assert.equal(safeNext('/admin/users?page=2'), '/admin/users?page=2');
   assert.equal(safeApiPath('/api/v1/../auth/sign-out'), false);
   assert.equal(safeApiPath('/api/v1/%ZZ'), false);
@@ -74,7 +74,7 @@ test('workspace redirects allow scoped destinations and discard invitation secre
     '/admin/organizations/id/private',
     '/artisan/assisted/id/private',
   ])
-    assert.equal(safeNext(path), '/settings/profile');
+    assert.equal(safeNext(path), '/dashboard');
 });
 
 test('PUT mutations use the same CSRF and credential protections as other writes', async () => {

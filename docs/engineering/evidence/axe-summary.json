@@ -1,0 +1,42 @@
+[
+  {
+    "name": "axe-mobile-buyer-form",
+    "violations": 0,
+    "passedRules": 15
+  },
+  {
+    "name": "axe-mobile-artisan-decision",
+    "violations": 0,
+    "passedRules": 13
+  },
+  {
+    "name": "axe-mobile-operator-review",
+    "violations": 0,
+    "passedRules": 17
+  },
+  {
+    "name": "axe-mobile-buyer-fulfillment",
+    "violations": 0,
+    "passedRules": 16
+  },
+  {
+    "name": "axe-desktop-buyer-form",
+    "violations": 0,
+    "passedRules": 15
+  },
+  {
+    "name": "axe-desktop-artisan-decision",
+    "violations": 0,
+    "passedRules": 13
+  },
+  {
+    "name": "axe-desktop-operator-review",
+    "violations": 0,
+    "passedRules": 17
+  },
+  {
+    "name": "axe-desktop-buyer-fulfillment",
+    "violations": 0,
+    "passedRules": 16
+  }
+]

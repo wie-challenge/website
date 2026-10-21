@@ -91,7 +91,7 @@ export type ArtisanProfileView = Omit<
   'processingConsent' | 'policyVersion'
 > & {
   id: string;
-  userId: string;
+  userId: string | null;
   createdAt: string;
   updatedAt: string;
 };

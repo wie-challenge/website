@@ -50,7 +50,7 @@ test('demo configuration cannot point at ordinary database and production requir
   const env = {
     NODE_ENV: 'test',
     PUBLIC_APP_URL: 'http://localhost:3000',
-    DATABASE_URL: 'postgresql://synthetic:synthetic@localhost:5542/nasj',
+    DATABASE_URL: 'postgresql://synthetic:synthetic@localhost:5542/hirfacare',
     BETTER_AUTH_SECRET: 'a'.repeat(64),
   };
   assert.throws(() => validateEnvironment({ ...env, DEMO_MODE: 'true' }));
@@ -58,7 +58,7 @@ test('demo configuration cannot point at ordinary database and production requir
     validateEnvironment({
       ...env,
       DEMO_MODE: 'true',
-      DATABASE_URL: 'postgresql://synthetic:synthetic@localhost:5542/nasj_demo',
+      DATABASE_URL: 'postgresql://synthetic:synthetic@localhost:5542/hirfacare_demo',
     }).DEMO_MODE,
     true,
   );

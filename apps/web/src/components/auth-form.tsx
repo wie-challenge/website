@@ -9,6 +9,7 @@ import {
   registerSchema,
   resetPasswordSchema,
 } from '@nasj/contracts';
+import type { IdentityContext } from '@nasj/contracts';
 import { ApiError, apiFetch } from '@/lib/api';
 import { Field } from './field';
 export type AuthMode = 'login' | 'register' | 'forgot-password' | 'reset-password' | 'verify-email';
@@ -104,7 +105,11 @@ export function AuthForm({
         if (mode === 'login') {
           if (onAuthenticated) await onAuthenticated();
           else {
-            router.replace(next);
+            router.replace(
+              next === '/dashboard'
+                ? (await apiFetch<IdentityContext>('/api/v1/me/context')).landingPath
+                : next,
+            );
             router.refresh();
           }
           return;
@@ -142,7 +147,7 @@ export function AuthForm({
   }
   return (
     <section className="auth-card">
-      <p className="eyebrow">YOUR NASJ ACCOUNT</p>
+      <p className="eyebrow">YOUR HIRFACARE ACCOUNT</p>
       {embedded ? <h2>{titles[mode]}</h2> : <h1>{titles[mode]}</h1>}
       <p className="lead">{descriptions[mode]}</p>
       {message && (
@@ -165,7 +170,11 @@ export function AuthForm({
                 );
                 if (onAuthenticated) await onAuthenticated();
                 else {
-                  router.replace(next);
+                  router.replace(
+                    next === '/dashboard'
+                      ? (await apiFetch<IdentityContext>('/api/v1/me/context')).landingPath
+                      : next,
+                  );
                   router.refresh();
                 }
               } catch (error) {
