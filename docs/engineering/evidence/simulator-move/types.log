@@ -1,5 +1,5 @@
 [WARN] Your node_modules are out of sync with your lockfile. The workspace structure has changed since last install
-$ pnpm --filter @hirfacare/contracts build && pnpm --filter @hirfacare/api typecheck && pnpm --filter @hirfacare/api typecheck:test && pnpm --filter @hirfacare/web typecheck
+$ pnpm --filter @nasj/contracts build && pnpm --filter @nasj/api typecheck && pnpm --filter @nasj/api typecheck:test && pnpm --filter @nasj/web typecheck
 $ tsc -p tsconfig.json
 $ prisma generate && tsc --noEmit
 Loaded Prisma config from prisma.config.ts.

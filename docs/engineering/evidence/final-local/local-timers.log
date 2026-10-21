@@ -1,6 +1,6 @@
 NEXT                           LEFT LAST                              PASSED UNIT                         ACTIVATES
-Tue 2026-10-20 18:55:00 CET     36s Tue 2026-10-20 18:50:00 CET 4min 23s ago hirfacare-local-health.timer hirfacare-local-health.service
-Wed 2026-10-21 00:00:00 CET 5h 5min -                                      - hirfacare-local-backup.timer hirfacare-local-backup.service
+Tue 2026-10-20 18:55:00 CET     36s Tue 2026-10-20 18:50:00 CET 4min 23s ago nasj-local-health.timer nasj-local-health.service
+Wed 2026-10-21 00:00:00 CET 5h 5min -                                      - nasj-local-backup.timer nasj-local-backup.service
 
 2 timers listed.
 Pass --all to see loaded but inactive timers, too.

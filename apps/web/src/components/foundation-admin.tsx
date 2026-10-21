@@ -56,7 +56,7 @@ export function PersonnelAdmin({ coordinators = false }: { coordinators?: boolea
             post('admin/personnel/invite', {
               organizationId: text(d, 'organizationId'),
               email: text(d, 'email'),
-              persona: coordinators ? 'ASSOCIATION_COORDINATOR' : 'HIRFACARE_OPERATOR',
+              persona: coordinators ? 'ASSOCIATION_COORDINATOR' : 'nasj_OPERATOR',
               reason: text(d, 'reason'),
             })
           }

@@ -218,7 +218,7 @@ test('buyer and administrator default workspaces are distinct and participant co
     await mutate(admin.request, 'admin/personnel/invite', {
       organizationId: internal.id,
       email: oe,
-      persona: 'HIRFACARE_OPERATOR',
+      persona: 'nasj_OPERATOR',
       reason,
     });
     const invitation = await (

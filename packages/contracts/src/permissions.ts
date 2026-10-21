@@ -1,6 +1,6 @@
 export const businessRoles = [
   'BUYER_REPRESENTATIVE',
-  'HIRFACARE_OPERATOR',
+  'nasj_OPERATOR',
   'BUYER',
   'ARTISAN',
   'ASSOCIATION_COORDINATOR',
@@ -48,7 +48,7 @@ export const foundationPermissions = [
 export type FoundationPermission = (typeof foundationPermissions)[number];
 export const operationalPersonas = [
   'PLATFORM_ADMIN',
-  'HIRFACARE_OPERATOR',
+  'nasj_OPERATOR',
   'BUYER_REPRESENTATIVE',
   'ASSOCIATION_COORDINATOR',
 ] as const;
@@ -113,7 +113,7 @@ export const rolePermissions: Record<BusinessRole, readonly Permission[]> = {
     'buyer.invoice.read',
     'buyer.delivery.confirm',
   ],
-  HIRFACARE_OPERATOR: [
+  nasj_OPERATOR: [
     'organization.read',
     'operator.accounts.read',
     'operator.quotation.prepare',
@@ -161,7 +161,7 @@ export const rolePermissions: Record<BusinessRole, readonly Permission[]> = {
 export function rolesForOrganization(type: string): BusinessRole[] {
   if (type === 'BUYER_BUSINESS') return ['BUYER_REPRESENTATIVE'];
   if (['ASSOCIATION', 'PARTNER_COOPERATIVE'].includes(type)) return ['ASSOCIATION_COORDINATOR'];
-  if (type === 'INTERNAL') return ['HIRFACARE_OPERATOR'];
+  if (type === 'INTERNAL') return ['nasj_OPERATOR'];
   return [];
 }
 export function grantAllowed(type: string, permission: string) {
@@ -202,7 +202,7 @@ export function permissionsForMembership(member: {
       member.roles.some((r) =>
         member.organization?.type === 'BUYER_BUSINESS'
           ? ['BUYER', 'BUYER_REPRESENTATIVE'].includes(r.role)
-          : r.role === 'HIRFACARE_OPERATOR',
+          : r.role === 'nasj_OPERATOR',
       )
     ) {
       if (grant.enabled === false) permissions.delete(grant.permission as Permission);

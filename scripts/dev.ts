@@ -191,7 +191,7 @@ try {
       'default',
       'compose',
       '-p',
-      'hirfacare-foundation',
+      'nasj-foundation',
       'up',
       '-d',
       '--wait',

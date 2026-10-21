@@ -115,9 +115,9 @@ export function userUnits(root: string, node: string, envFile: string) {
   for (const path of [root, node, envFile])
     if (!/^\/[a-zA-Z0-9_./:@-]+$/.test(path))
       throw Error('Use absolute plain paths for local user units.');
-  const service = (job: LocalJob) => `# HirfaCare managed local-demo unit v1
+  const service = (job: LocalJob) => `# nasj managed local-demo unit v1
 [Unit]
-Description=HirfaCare local ${job}
+Description=nasj local ${job}
 ${job === 'health' ? `ConditionPathExists=${root}/.local/dev.lock\n` : ''}[Service]
 Type=oneshot
 WorkingDirectory=${root}
@@ -127,24 +127,24 @@ ExecStart=${node} --env-file=${root}/.env --env-file=${envFile} --import tsx ${r
 TimeoutStartSec=${job === 'backup' ? '150' : '45'}
 `;
   return {
-    'hirfacare-local-backup.service': service('backup'),
-    'hirfacare-local-health.service': service('health'),
-    'hirfacare-local-backup.timer': `# HirfaCare managed local-demo unit v1
+    'nasj-local-backup.service': service('backup'),
+    'nasj-local-health.service': service('health'),
+    'nasj-local-backup.timer': `# nasj managed local-demo unit v1
 [Unit]
-Description=Daily local HirfaCare encrypted backup
+Description=Daily local nasj encrypted backup
 [Timer]
 OnCalendar=daily
 Persistent=true
-Unit=hirfacare-local-backup.service
+Unit=nasj-local-backup.service
 [Install]
 WantedBy=timers.target
 `,
-    'hirfacare-local-health.timer': `# HirfaCare managed local-demo unit v1
+    'nasj-local-health.timer': `# nasj managed local-demo unit v1
 [Unit]
-Description=Local HirfaCare health and backup freshness
+Description=Local nasj health and backup freshness
 [Timer]
 OnCalendar=*:0/5
-Unit=hirfacare-local-health.service
+Unit=nasj-local-health.service
 [Install]
 WantedBy=timers.target
 `,

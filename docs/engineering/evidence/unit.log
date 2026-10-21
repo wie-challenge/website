@@ -1,4 +1,4 @@
-$ pnpm --filter @hirfacare/contracts build && pnpm --filter @hirfacare/api test && pnpm --filter @hirfacare/web test
+$ pnpm --filter @nasj/contracts build && pnpm --filter @nasj/api test && pnpm --filter @nasj/web test
 $ tsc -p tsconfig.json
 $ tsx --test test/unit/*.test.ts
 ✔ all specified RFQ, offer, batch, order and payment transitions reject missing edges and roles (8.14482ms)

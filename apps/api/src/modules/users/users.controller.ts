@@ -63,9 +63,9 @@ export class UsersController {
     @Res({ passthrough: true }) res: Response,
   ) {
     const result = await this.users.deactivate(actor);
-    res.clearCookie('hirfacare_demo.session_token', { path: '/', httpOnly: true, sameSite: 'lax' });
-    res.clearCookie('hirfacare.session_token', { path: '/', httpOnly: true, sameSite: 'lax' });
-    res.clearCookie('__Secure-hirfacare.session_token', {
+    res.clearCookie('nasj_demo.session_token', { path: '/', httpOnly: true, sameSite: 'lax' });
+    res.clearCookie('nasj.session_token', { path: '/', httpOnly: true, sameSite: 'lax' });
+    res.clearCookie('__Secure-nasj.session_token', {
       path: '/',
       httpOnly: true,
       sameSite: 'lax',

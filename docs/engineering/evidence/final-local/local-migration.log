@@ -1,9 +1,9 @@
-$ pnpm --filter @hirfacare/api db:migrate
+$ pnpm --filter @nasj/api db:migrate
 $ prisma migrate deploy
 Loaded Prisma config from prisma.config.ts.
 
 Prisma schema loaded from prisma/schema.prisma.
-Datasource "db": PostgreSQL database "hirfacare", schema "public" at "127.0.0.1:5442"
+Datasource "db": PostgreSQL database "nasj", schema "public" at "127.0.0.1:5442"
 
 7 migrations found in prisma/migrations
 

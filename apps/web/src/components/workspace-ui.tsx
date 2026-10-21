@@ -294,7 +294,7 @@ export function Select({
   );
 }
 export function humanize(value: string) {
-  if (value === 'HIRFACARE_OPERATOR') return 'NASJ operator';
+  if (value === 'nasj_OPERATOR') return 'NASJ operator';
   return value
     .toLowerCase()
     .replaceAll('_', ' ')

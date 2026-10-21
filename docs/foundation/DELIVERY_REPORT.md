@@ -4,9 +4,9 @@ Implementation branch: `foundation/revised-role-model` in the website and docume
 
 ## Architecture and authorization
 
-Four operational personas are resolved from the existing account and scoped memberships: PLATFORM_ADMIN (existing ADMIN), HIRFACARE_OPERATOR, BUYER_REPRESENTATIVE and ASSOCIATION_COORDINATOR. ARTISAN is a participant with an optional verified account link. USER remains an ordinary platform account. Existing business-role enum values remain historical compatibility values; new assignments use the revised personas.
+Four operational personas are resolved from the existing account and scoped memberships: PLATFORM_ADMIN (existing ADMIN), nasj_OPERATOR, BUYER_REPRESENTATIVE and ASSOCIATION_COORDINATOR. ARTISAN is a participant with an optional verified account link. USER remains an ordinary platform account. Existing business-role enum values remain historical compatibility values; new assignments use the revised personas.
 
-The existing Organization names BUYER_BUSINESS, ASSOCIATION and INTERNAL remain, with PARTNER_COOPERATIVE added. ASSOCIATION and INTERNAL correspond to PARTNER_ASSOCIATION and HIRFACARE_INTERNAL in the business terminology.
+The existing Organization names BUYER_BUSINESS, ASSOCIATION and INTERNAL remain, with PARTNER_COOPERATIVE added. ASSOCIATION and INTERNAL correspond to PARTNER_ASSOCIATION and nasj_INTERNAL in the business terminology.
 
 The action catalog and organization-specific permission mapping are in `packages/contracts/src/permissions.ts`. AccessService/PolicyService enforce current account, role, permission and organization scope. Registry operations additionally require a single approved active affiliation, explicit participant assignment and the appropriate current authorization evidence. Governance checks existing ADMIN status and privileged MFA. Ordinary non-manager buyer representatives retain the existing non-privileged MFA treatment. Grants cannot turn buyer permissions into internal financial authority.
 

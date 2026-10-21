@@ -1,5 +1,5 @@
-$ pnpm db:generate && pnpm --filter @hirfacare/contracts build && playwright test
-$ pnpm --filter @hirfacare/api db:generate
+$ pnpm db:generate && pnpm --filter @nasj/contracts build && playwright test
+$ pnpm --filter @nasj/api db:generate
 $ prisma generate
 Loaded Prisma config from prisma.config.ts.
 

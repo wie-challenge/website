@@ -127,7 +127,7 @@ try {
     async () => {
       assert.equal(alice.me.user.emailVerified, true);
       assert.equal(alice.me.user.role, 'USER');
-      const cookie = alice.client.jar.get('hirfacare.session_token');
+      const cookie = alice.client.jar.get('nasj.session_token');
       assert.ok(cookie);
       const login = await alice.client.request('/api/auth/sign-in/email', 'POST', {
         email: 'alice@example.com',

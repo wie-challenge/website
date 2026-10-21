@@ -1,4 +1,4 @@
-$ pnpm --filter @hirfacare/api db:generate
+$ pnpm --filter @nasj/api db:generate
 $ prisma generate
 Loaded Prisma config from prisma.config.ts.
 

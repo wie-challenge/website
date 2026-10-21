@@ -52,14 +52,14 @@ export function AppShell({
           },
         ]
       : []),
-    ...(context?.personas.includes('HIRFACARE_OPERATOR')
+    ...(context?.personas.includes('nasj_OPERATOR')
       ? [{ href: '/operator', label: 'Internal operations', icon: 'organization' as const }]
       : []),
     ...(context?.personas.includes('BUYER_REPRESENTATIVE')
       ? [{ href: '/buyer/company', label: 'Your company', icon: 'organization' as const }]
       : []),
     ...(context?.personas.includes('BUYER_REPRESENTATIVE') ||
-    context?.personas.includes('HIRFACARE_OPERATOR') ||
+    context?.personas.includes('nasj_OPERATOR') ||
     capabilities.operator
       ? [{ href: '/procurement', label: 'Procurement', icon: 'organization' as const }]
       : []),

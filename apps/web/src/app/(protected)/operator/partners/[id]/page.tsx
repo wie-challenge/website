@@ -3,7 +3,7 @@ import { FoundationGate } from '@/components/foundation-gate';
 export default async function Page({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   return (
-    <FoundationGate persona="HIRFACARE_OPERATOR">
+    <FoundationGate persona="nasj_OPERATOR">
       <PartnerReview id={id} />
     </FoundationGate>
   );

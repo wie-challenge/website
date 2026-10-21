@@ -63,7 +63,7 @@ export async function runRoleScenarios({ db, register, mutate, check, mail }: Ha
   const member = (
     who: Identity,
     organizationId: string,
-    role: 'ASSOCIATION_COORDINATOR' | 'BUYER_REPRESENTATIVE' | 'HIRFACARE_OPERATOR',
+    role: 'ASSOCIATION_COORDINATOR' | 'BUYER_REPRESENTATIVE' | 'nasj_OPERATOR',
     manager = false,
   ) =>
     db.organizationMember.create({
@@ -80,7 +80,7 @@ export async function runRoleScenarios({ db, register, mutate, check, mail }: Ha
     member(c, orgA.id, 'ASSOCIATION_COORDINATOR'),
     member(d, orgB.id, 'ASSOCIATION_COORDINATOR'),
     member(buyer, business.id, 'BUYER_REPRESENTATIVE', true),
-    member(operator, internal.id, 'HIRFACARE_OPERATOR'),
+    member(operator, internal.id, 'nasj_OPERATOR'),
   ]);
   const call = (who: Identity, path: string, body: unknown, method = 'POST') =>
     mutate(who.client, `/api/v1/${path}`, method, body);
@@ -127,7 +127,7 @@ export async function runRoleScenarios({ db, register, mutate, check, mail }: Ha
         [admin, 'PLATFORM_ADMIN', '/admin'],
         [a, 'ASSOCIATION_COORDINATOR', '/association'],
         [buyer, 'BUYER_REPRESENTATIVE', '/buyer'],
-        [operator, 'HIRFACARE_OPERATOR', '/operator'],
+        [operator, 'nasj_OPERATOR', '/operator'],
       ] as const) {
         const r = await who.client.request('/api/v1/me/context');
         assert.equal(r.status, 200);
@@ -841,7 +841,7 @@ export async function runRoleScenarios({ db, register, mutate, check, mail }: Ha
           await call(
             a,
             `organizations/${orgA.id}/members/${ma.id}/roles`,
-            { roles: ['HIRFACARE_OPERATOR'], reason },
+            { roles: ['nasj_OPERATOR'], reason },
             'PUT',
           )
         ).status,
@@ -856,7 +856,7 @@ export async function runRoleScenarios({ db, register, mutate, check, mail }: Ha
           await call(a, 'admin/personnel/invite', {
             organizationId: internal.id,
             email: 'forged@example.com',
-            persona: 'HIRFACARE_OPERATOR',
+            persona: 'nasj_OPERATOR',
             reason,
           })
         ).status,

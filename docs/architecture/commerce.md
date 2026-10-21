@@ -2,7 +2,7 @@
 
 This bounded implementation completes the domain and critical-journey scope of #32/#88. All commercial rows have immutable `SYNTHETIC` provenance, enforced by PostgreSQL CHECK constraints. Settlement evidence is always `SIMULATED_SETTLEMENT`. There is no banking adapter, real contract execution, monitoring upload, verified-hardware claim or assertion that simulated receipts are real money.
 
-The states below come from sections 3–5 of the product's `HirfaCare_FINAL_Detailed_Backlog.md`, inspected in the optional sibling docs checkout. The original requirements for #32/#88/#195 are preserved in `../engineering/issues/`. The implemented transitions live in `packages/contracts/src/commerce/domain.ts`, independently of Prisma/Nest/React. Strict wire contracts and safe projection types live in `commerce/contracts.ts`. Nest's `CommerceService` invokes these rules within the existing serialized IAM transaction; state, command outcome, audit and metadata-only outbox commit atomically.
+The states below come from sections 3–5 of the product's `nasj_FINAL_Detailed_Backlog.md`, inspected in the optional sibling docs checkout. The original requirements for #32/#88/#195 are preserved in `../engineering/issues/`. The implemented transitions live in `packages/contracts/src/commerce/domain.ts`, independently of Prisma/Nest/React. Strict wire contracts and safe projection types live in `commerce/contracts.ts`. Nest's `CommerceService` invokes these rules within the existing serialized IAM transaction; state, command outcome, audit and metadata-only outbox commit atomically.
 
 ```mermaid
 flowchart LR

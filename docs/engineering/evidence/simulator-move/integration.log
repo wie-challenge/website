@@ -1,6 +1,6 @@
 [WARN] Your node_modules are out of sync with your lockfile. The workspace structure has changed since last install
-$ pnpm db:generate && pnpm --filter @hirfacare/contracts build && pnpm --filter @hirfacare/api test:integration
-$ pnpm --filter @hirfacare/api db:generate
+$ pnpm db:generate && pnpm --filter @nasj/contracts build && pnpm --filter @nasj/api test:integration
+$ pnpm --filter @nasj/api db:generate
 $ prisma generate
 Loaded Prisma config from prisma.config.ts.
 

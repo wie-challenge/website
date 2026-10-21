@@ -32,7 +32,7 @@ A company manager can invite more representatives without shared credentials. Me
 
 The existing craft catalog and synthetic buyer request flow remain available within company scope. Buyers cannot access internal operator, association or administrator workspaces, individual artisan payouts or internal financial administration.
 
-## HirfaCare operator
+## nasj operator
 
 After an administrator invitation is accepted, sign-in opens `/operator`. Only assigned approved buyer/partner accounts appear. Assigned-account activity exposes safe audit metadata; private snapshots and user-entered reasons are excluded. Partner review exposes minimal participant references and independent duplicate review, without contact or financial records.
 
@@ -40,7 +40,7 @@ Pricing, assisted offers, production and actual payments are explicitly upcoming
 
 ## Participant without an account
 
-Open `/participant-support`, or ask a trusted helper. Submit a participant/offer reference and a concern, with an optional safe contact method. The response does not reveal whether a reference exists and creates no fake User. HirfaCare administrators receive it independently of association operations. A real pilot must staff this review and supply accessible offline contact details during onboarding.
+Open `/participant-support`, or ask a trusted helper. Submit a participant/offer reference and a concern, with an optional safe contact method. The response does not reveal whether a reference exists and creates no fake User. nasj administrators receive it independently of association operations. A real pilot must staff this review and supply accessible offline contact details during onboarding.
 
 ## Commands and migrations
 
@@ -48,7 +48,7 @@ From `website/`:
 
 ```bash
 pnpm exec tsx --env-file=.env scripts/role-migration-preflight.ts
-pnpm --filter @hirfacare/api exec prisma validate
+pnpm --filter @nasj/api exec prisma validate
 pnpm lint
 pnpm typecheck
 pnpm test

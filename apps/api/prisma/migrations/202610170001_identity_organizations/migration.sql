@@ -435,11 +435,11 @@ ALTER TABLE "SupportCase" ADD CONSTRAINT "SupportCase_assignedToUserId_fkey" FOR
 
 -- Immutable audit: application and runtime credentials cannot UPDATE or DELETE events.
 -- A schema owner can explicitly remove the trigger during an authorized retention migration.
-CREATE FUNCTION hirfacare_audit_append_only() RETURNS trigger LANGUAGE plpgsql AS $$
+CREATE FUNCTION nasj_audit_append_only() RETURNS trigger LANGUAGE plpgsql AS $$
 BEGIN RAISE EXCEPTION 'Audit events are append-only'; END;
 $$;
 CREATE TRIGGER audit_append_only BEFORE UPDATE OR DELETE ON "AuditEvent"
-FOR EACH ROW EXECUTE FUNCTION hirfacare_audit_append_only();
+FOR EACH ROW EXECUTE FUNCTION nasj_audit_append_only();
 
 ALTER TABLE "CapacityDeclaration" ADD CONSTRAINT "capacity_nonnegative" CHECK (quantity >= 0);
 ALTER TABLE "CapacityDeclaration" ADD CONSTRAINT "capacity_effective_period" CHECK ("effectiveTo" > "effectiveFrom");
