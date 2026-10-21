@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { deriveCommerceMetrics, type MetricSource } from '@hirfacare/contracts';
+import { deriveCommerceMetrics, type MetricSource } from '@nasj/contracts';
 const source = (): MetricSource => ({
   provenance: 'SYNTHETIC',
   status: 'IN_PRODUCTION',

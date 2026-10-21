@@ -10,7 +10,7 @@ import {
   profileSchema,
   type MeView,
   type SessionView,
-} from '@hirfacare/contracts';
+} from '@nasj/contracts';
 import { apiFetch, ApiError } from '@/lib/api';
 import { Field } from './field';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';

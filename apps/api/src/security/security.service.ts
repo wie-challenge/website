@@ -10,7 +10,7 @@ import {
   validateEmail,
 } from '@arcjet/nest';
 import type { Request, Response } from 'express';
-import { emailSchema } from '@hirfacare/contracts';
+import { emailSchema } from '@nasj/contracts';
 import { APP_CONFIG, type AppConfig } from '../config/env.js';
 import { PrismaService } from '../database/prisma.service.js';
 import { fail } from '../common/errors.js';

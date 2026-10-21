@@ -1,5 +1,5 @@
 {
-  "name": "@hirfacare/api",
+  "name": "@nasj/api",
   "private": true,
   "version": "0.1.0",
   "type": "module",
@@ -18,7 +18,7 @@
   },
   "dependencies": {
     "@arcjet/nest": "1.14.1",
-    "@hirfacare/contracts": "workspace:*",
+    "@nasj/contracts": "workspace:*",
     "@nestjs/common": "11.1.28",
     "@nestjs/core": "11.1.28",
     "@nestjs/platform-express": "11.2.6",
@@ -33,6 +33,7 @@
     "pino": "10.3.1",
     "reflect-metadata": "0.2.2",
     "rxjs": "7.8.2",
+    "sharp": "0.35.5",
     "zod": "4.4.3"
   },
   "devDependencies": {

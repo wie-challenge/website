@@ -81,8 +81,8 @@ try {
     { cwd: root, env, maxBuffer: 1024 * 1024 },
   );
   console.log('Separate demo PostgreSQL and mail capture are ready.');
-  await exec('pnpm', ['--filter', '@hirfacare/contracts', 'build'], { cwd: root, env });
-  await exec('pnpm', ['--filter', '@hirfacare/api', 'db:generate'], { cwd: root, env });
+  await exec('pnpm', ['--filter', '@nasj/contracts', 'build'], { cwd: root, env });
+  await exec('pnpm', ['--filter', '@nasj/api', 'db:generate'], { cwd: root, env });
   await exec('pnpm', ['exec', 'prisma', 'migrate', 'deploy'], {
     cwd: fileURLToPath(new URL('../apps/api/', import.meta.url)),
     env,

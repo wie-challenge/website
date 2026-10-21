@@ -1,7 +1,7 @@
 'use client';
 import { useState } from 'react';
 import Link from 'next/link';
-import type { Page as PageData } from '@hirfacare/contracts';
+import type { Page as PageData } from '@nasj/contracts';
 import { apiFetch } from '@/lib/api';
 import {
   Workspace,
@@ -24,7 +24,7 @@ export function ParticipantSupport() {
       description="You do not need an account to report an incorrect authorization, work decision or access record."
     >
       <p>
-        HirfaCare administrators receive this concern independently of the association. Include a
+        NASJ administrators receive this concern independently of the association. Include a
         participant or offer reference where available. A trusted person may help you complete the
         form. Do not include medical or wearable readings.
       </p>
@@ -47,7 +47,7 @@ export function ParticipantSupport() {
             });
             if (!response.ok) throw new Error('Unable to submit the concern. Please retry.');
           }}
-          successMessage="Your concern has been sent for independent HirfaCare review."
+          successMessage="Your concern has been sent for independent NASJ review."
         >
           <Input name="subjectReference" label="Participant or offer reference" required />
           <Select

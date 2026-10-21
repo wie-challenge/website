@@ -6,7 +6,7 @@ import {
   pageSchema,
   resourceIdSchema,
   type PageInput,
-} from '@hirfacare/contracts';
+} from '@nasj/contracts';
 import { Public, AdminOnly, CurrentUser, type Actor } from '../../common/identity.js';
 import { ZodValidationPipe } from '../../common/validation.pipe.js';
 import { RegistryService } from './registry.service.js';

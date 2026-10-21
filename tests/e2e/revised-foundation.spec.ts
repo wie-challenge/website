@@ -204,7 +204,7 @@ test('buyer and administrator default workspaces are distinct and participant co
     await register(operator.request, oe);
     const operatorId = await loginApi(operator.request, oe);
     const internal = await mutate(admin.request, 'organizations', {
-      name: 'Synthetic Internal HirfaCare',
+      name: 'Synthetic Internal NASJ',
       type: 'INTERNAL',
       region: 'Tunis',
       description: 'Synthetic internal organization for operator routing.',
@@ -267,7 +267,7 @@ test('buyer and administrator default workspaces are distinct and participant co
     await page
       .getByRole('button', { name: 'Send concern for independent review', exact: true })
       .click();
-    await expect(page.getByRole('status')).toContainText('sent for independent HirfaCare review');
+    await expect(page.getByRole('status')).toContainText('sent for independent NASJ review');
     await axe(page, 'revised-public-participant-support');
     await ap.goto('/admin/participant-concerns');
     await expect(

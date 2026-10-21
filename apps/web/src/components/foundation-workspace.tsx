@@ -1,7 +1,7 @@
 'use client';
 import Link from 'next/link';
 import { useState } from 'react';
-import type { IdentityContext, Page as PageData } from '@hirfacare/contracts';
+import type { IdentityContext, Page as PageData } from '@nasj/contracts';
 import { apiFetch } from '@/lib/api';
 import { Card } from './ui/card';
 import { Badge } from './ui/badge';
@@ -151,7 +151,7 @@ export function FoundationDashboard({
   mode: 'onboarding' | 'buyer' | 'admin' | 'association';
 }) {
   const titles = {
-    onboarding: 'Welcome to HirfaCare',
+    onboarding: 'Welcome to NASJ',
     buyer: 'Your company workspace',
     admin: 'Platform administration',
     association: 'Association workspace',
@@ -188,7 +188,7 @@ export function FoundationDashboard({
       {mode === 'buyer' && (
         <p>
           <Link href="/buyer/company">Company profile and representatives</Link> ·{' '}
-          <Link href="/commerce/buyer">Buyer requests</Link> ·{' '}
+          <Link href="/procurement">Procurement requests</Link> ·{' '}
           <Link href="/commerce/catalog">Craft catalog</Link>
         </p>
       )}
@@ -495,9 +495,9 @@ export function ArtisanRecord({ id }: { id: string }) {
           </Card>
           <p>
             An incorrect participation or work-decision record can be disputed through the{' '}
-            <Link href="/participant-support">independent HirfaCare support contact</Link>. An
-            artisan without an account can contact HirfaCare directly; the coordinator should
-            provide the contact details during onboarding.
+            <Link href="/participant-support">independent NASJ support contact</Link>. An artisan
+            without an account can contact NASJ directly; the coordinator should provide the contact
+            details during onboarding.
           </p>
         </>
       )}
@@ -571,7 +571,7 @@ export function OperatorDashboard() {
   }>(`/api/v1/operator/dashboard?page=${page}`);
   return (
     <Workspace
-      title="HirfaCare operations"
+      title="NASJ operations"
       description="Your assigned buyer accounts and partner organizations."
     >
       <p>

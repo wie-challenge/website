@@ -30,7 +30,7 @@ import {
   type SupportCreateInput,
   type SupportUpdateInput,
   type ConsentCreateInput,
-} from '@hirfacare/contracts';
+} from '@nasj/contracts';
 import { CurrentUser, AdminOnly, type Actor } from '../../common/identity.js';
 import { ZodValidationPipe } from '../../common/validation.pipe.js';
 import { GovernanceService } from './governance.service.js';

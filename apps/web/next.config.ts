@@ -16,7 +16,7 @@ if (
   throw new Error('API_INTERNAL_URL must be one HTTP(S) origin.');
 const config: NextConfig = {
   distDir: process.env.NEXT_DIST_DIR ?? '.next',
-  transpilePackages: ['@hirfacare/contracts'],
+  transpilePackages: ['@nasj/contracts'],
   poweredByHeader: false,
   devIndicators: false,
   logging: { incomingRequests: { ignore: [/\/api\/auth\//] } },

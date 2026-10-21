@@ -1,0 +1,39 @@
+{
+  "date": "2026-10-21",
+  "scope": "LOCAL_SYNTHETIC_DEMO",
+  "unitTestsPassed": 49,
+  "integrationScenariosPassed": 93,
+  "restoredTables": 51,
+  "browserTests": {
+    "startTime": "2026-10-21T13:58:08.389Z",
+    "duration": 201161.72499999998,
+    "expected": 25,
+    "skipped": 0,
+    "unexpected": 0,
+    "flaky": 0
+  },
+  "axeCheckpoints": 41,
+  "axeViolations": 0,
+  "finalProcurementBrowserCasesPassed": 3,
+  "checks": {
+    "lint": "PASS",
+    "typecheck": "PASS",
+    "build": "PASS",
+    "dependencyAudit": "NO_KNOWN_VULNERABILITIES",
+    "prismaValidate": "PASS",
+    "databaseSchemaDiff": "EMPTY",
+    "frozenOfflineInstall": "PASS",
+    "localBuyerSignIn": "PASS"
+  },
+  "localMigration": {
+    "name": "20261021030000_buyer_procurement",
+    "encryptedBackup": true,
+    "userRowsPreserved": 6,
+    "accountRowsPreserved": 6,
+    "sessionRowsPreserved": 2
+  },
+  "hostedCI": "NOT_RUN",
+  "merge": "NOT_PERFORMED",
+  "physicalWearableChecks": "PENDING_HARDWARE",
+  "realPayoutsEnabled": false
+}

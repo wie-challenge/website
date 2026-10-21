@@ -25,7 +25,7 @@ import {
   type CapacityDeclarationInput,
   type AssociationLinkInput,
   type DelegationGrantInput,
-} from '@hirfacare/contracts';
+} from '@nasj/contracts';
 import { CurrentUser, type Actor } from '../../common/identity.js';
 import { ZodValidationPipe } from '../../common/validation.pipe.js';
 import { ArtisansService } from './artisans.service.js';

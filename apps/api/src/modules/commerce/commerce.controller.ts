@@ -23,7 +23,7 @@ import {
   type OrderAction,
   type PaymentCreate,
   type PaymentAction,
-} from '@hirfacare/contracts';
+} from '@nasj/contracts';
 import { CurrentUser, type Actor } from '../../common/identity.js';
 import { ZodValidationPipe } from '../../common/validation.pipe.js';
 import { CommerceService } from './commerce.service.js';

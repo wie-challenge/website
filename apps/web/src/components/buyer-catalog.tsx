@@ -7,7 +7,7 @@ import { NativeSelect } from './ui/native-select';
 import { Badge } from './ui/badge';
 import { Label } from './ui/label';
 import Link from 'next/link';
-import type { BuyerCatalog, CatalogExample } from '@hirfacare/contracts';
+import type { BuyerCatalog, CatalogExample } from '@nasj/contracts';
 import { ResourceState, Workspace, useResource } from './workspace-ui';
 
 function ExampleImage({ image }: { image: CatalogExample['image'] }) {

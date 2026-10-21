@@ -1,6 +1,6 @@
 import { test, expect, type Page, type APIRequestContext } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
-import type { CommerceWorkspaceView } from '@hirfacare/contracts';
+import type { CommerceWorkspaceView } from '@nasj/contracts';
 const password = 'Synthetic-commerce-browser-password-2026!';
 const origin = 'http://127.0.0.1:3100';
 async function register(request: APIRequestContext, email: string) {

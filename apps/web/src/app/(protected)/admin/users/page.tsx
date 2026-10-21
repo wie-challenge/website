@@ -1,6 +1,6 @@
 import { DeniedWorkspace } from '@/components/foundation-gate';
 import { redirect } from 'next/navigation';
-import type { Page, UserView } from '@hirfacare/contracts';
+import type { Page, UserView } from '@nasj/contracts';
 import { getMe, serverApi } from '@/lib/server-api';
 import { AdminUsers } from '@/components/admin-users';
 export default async function UsersPage() {

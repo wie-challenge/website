@@ -1,4 +1,4 @@
-import { exactCapacityQuantity, isCapacityRevision } from '@hirfacare/contracts';
+import { exactCapacityQuantity, isCapacityRevision } from '@nasj/contracts';
 import { replaySafe, validateIdempotencyKey } from '../foundation/idempotency.js';
 import { HttpException, Inject, Injectable } from '@nestjs/common';
 import type {
@@ -9,7 +9,7 @@ import type {
   AssociationLinkInput,
   DelegationGrantInput,
   DelegationScope,
-} from '@hirfacare/contracts';
+} from '@nasj/contracts';
 import type { Prisma } from '@prisma/client';
 import { PrismaService } from '../../database/prisma.service.js';
 import type { Actor } from '../../common/identity.js';

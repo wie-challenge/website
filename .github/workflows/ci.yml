@@ -53,4 +53,6 @@ jobs:
             .local/commerce-*-operator.png
             .local/catalog-*.png
             .local/ui-*.png
+            .local/e02-*.png
+            .local/nasj-*.png
           retention-days: 3

@@ -4,7 +4,7 @@ import {
   permissionsForMembership,
   rolesForOrganization,
   capacityDeclarationSchema,
-} from '@hirfacare/contracts';
+} from '@nasj/contracts';
 import { validateEnvironment } from '../../src/config/env.js';
 test('membership permissions deny revoked access and separate management from financial authority', () => {
   const member = {

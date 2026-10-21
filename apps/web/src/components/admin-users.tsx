@@ -2,7 +2,7 @@
 import { useHydrated } from '@/lib/use-hydrated';
 import { useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
-import type { AccountUpdate, Page, UserView } from '@hirfacare/contracts';
+import type { AccountUpdate, Page, UserView } from '@nasj/contracts';
 import { apiFetch, ApiError } from '@/lib/api';
 export function AdminUsers({ initial }: { initial: Page<UserView> }) {
   const router = useRouter();

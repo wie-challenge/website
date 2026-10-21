@@ -93,7 +93,8 @@ test('signup, email verification, profile, sessions and password changes work in
   await page.getByLabel('New password', { exact: true }).fill(resetPassword);
   await page.getByRole('button', { name: 'Update password', exact: true }).click();
   await expect(page.getByRole('status')).toContainText('Password updated');
-  await page.getByRole('button', { name: 'Sign out', exact: true }).click();
+  await page.getByRole('button', { name: 'Account menu' }).click();
+  await page.getByRole('menuitem', { name: 'Sign out', exact: true }).click();
   await expect(page).toHaveURL(/\/auth\/login/);
   await login(page, email, resetPassword);
   await expect(page.getByLabel('Your name', { exact: true })).toHaveValue('UI Maker Updated');

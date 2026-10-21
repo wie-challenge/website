@@ -8,8 +8,8 @@ import {
   loginSchema,
   registerSchema,
   resetPasswordSchema,
-} from '@hirfacare/contracts';
-import type { IdentityContext } from '@hirfacare/contracts';
+} from '@nasj/contracts';
+import type { IdentityContext } from '@nasj/contracts';
 import { ApiError, apiFetch } from '@/lib/api';
 import { Field } from './field';
 export type AuthMode = 'login' | 'register' | 'forgot-password' | 'reset-password' | 'verify-email';
@@ -21,7 +21,7 @@ const titles: Record<AuthMode, string> = {
   'verify-email': 'Verify your email.',
 };
 const descriptions: Record<AuthMode, string> = {
-  login: 'Sign in to your HirfaCare account.',
+  login: 'Sign in to your NASJ account.',
   register: 'Create an account and verify your email to get started.',
   'forgot-password': 'We’ll send a recovery link if an account matches this address.',
   'reset-password': 'Use at least 12 characters. Your other sessions will be signed out.',

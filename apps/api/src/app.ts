@@ -49,7 +49,7 @@ export async function createApp(options: { config?: AppConfig; arcjet?: ArcjetNe
     if (config.PUBLIC_APP_URL.startsWith('https://'))
       res.setHeader('Strict-Transport-Security', 'max-age=31536000');
     // Always overwrite the only IP header consumed by Better Auth.
-    req.headers['x-hirfacare-client-ip'] = req.ip ?? req.socket.remoteAddress ?? '';
+    req.headers['x-nasj-client-ip'] = req.ip ?? req.socket.remoteAddress ?? '';
     res.once('finish', () =>
       logger.info(
         {
@@ -64,7 +64,14 @@ export async function createApp(options: { config?: AppConfig; arcjet?: ArcjetNe
     );
     next();
   });
-  app.use(express.json({ limit: '32kb' }));
+  const ordinaryJson = express.json({ limit: '32kb' });
+  const attachmentJson = express.json({ limit: '384kb' });
+  app.use((req: Request, res: Response, next: NextFunction) =>
+    (/^\/api\/v1\/procurement\/rfqs\/[a-zA-Z0-9_-]{1,128}\/attachments$/.test(req.path) &&
+      req.method === 'POST'
+      ? attachmentJson
+      : ordinaryJson)(req, res, next),
+  );
   app.use((req: Request, _res: Response, next: NextFunction) => {
     try {
       if (

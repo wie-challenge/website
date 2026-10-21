@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { getIdentityContext } from '@/lib/server-api';
-import type { OperationalPersona } from '@hirfacare/contracts';
+import type { OperationalPersona } from '@nasj/contracts';
 export function DeniedWorkspace() {
   return (
     <>

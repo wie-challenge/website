@@ -5,9 +5,8 @@ export function safeNext(value: string | null | undefined) {
     const decoded = decodeURIComponent(value);
     if (decoded.includes('\\') || decoded.startsWith('//') || /[\r\n]/.test(decoded))
       return fallback;
-    const url = new URL(value, 'https://hirfacare.invalid');
-    if (url.origin !== 'https://hirfacare.invalid' || !isWorkspacePath(url.pathname))
-      return fallback;
+    const url = new URL(value, 'https://nasj.invalid');
+    if (url.origin !== 'https://nasj.invalid' || !isWorkspacePath(url.pathname)) return fallback;
     return url.pathname + url.search;
   } catch {
     return fallback;
@@ -70,6 +69,7 @@ function isWorkspacePath(path: string) {
       '/support/cases',
       '/support/privacy',
     ].includes(path) ||
+    /^\/procurement(?:\/[a-zA-Z0-9_-]+(?:\/discussion)?)?$/.test(path) ||
     /^\/association\/artisans\/[a-zA-Z0-9_-]+(?:\/history)?$/.test(path) ||
     /^\/operator\/partners\/[a-zA-Z0-9_-]+$/.test(path) ||
     /^\/organizations\/[a-zA-Z0-9_-]+\/settings$/.test(path) ||

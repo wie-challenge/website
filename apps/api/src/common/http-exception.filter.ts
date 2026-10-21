@@ -1,4 +1,4 @@
-import { CommerceRuleError } from '@hirfacare/contracts';
+import { CommerceRuleError } from '@nasj/contracts';
 import { Catch, HttpException, type ArgumentsHost, type ExceptionFilter } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { ZodError } from 'zod';
@@ -24,7 +24,17 @@ export function errorResponse(error: unknown, requestId: string) {
             : error.code.startsWith('INVALID_')
               ? 400
               : 409;
-    body = { code: error.code, message: error.message };
+    body = {
+      code: error.code,
+      message: error.message,
+      ...(['INVALID_DEADLINE', 'INVALID_CRAFT'].includes(error.code)
+        ? {
+            fieldErrors: {
+              [error.code === 'INVALID_DEADLINE' ? 'deliveryAt' : 'craftSkillId']: [error.message],
+            },
+          }
+        : {}),
+    };
   } else if (kind === 'entity.parse.failed') {
     status = 400;
     body = { code: 'VALIDATION_ERROR', message: 'Request body must contain valid JSON.' };

@@ -24,7 +24,7 @@ import {
   MAX_TND_MILLIMES,
   type CommerceRole,
   type Fulfillment,
-} from '@hirfacare/contracts';
+} from '@nasj/contracts';
 const roles: CommerceRole[] = [
   'BUYER',
   'ARTISAN',

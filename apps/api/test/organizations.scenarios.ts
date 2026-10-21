@@ -7,7 +7,7 @@ import type {
   OrganizationView,
   Page,
   OrganizationMemberView,
-} from '@hirfacare/contracts';
+} from '@nasj/contracts';
 import type { PrismaService } from '../src/database/prisma.service.js';
 
 type Reply = { status: number; body: unknown };
@@ -259,7 +259,9 @@ export async function runOrganizationScenarios({
       );
       const detail = await invitee.client.request(`/api/v1/organizations/${organization.id}`);
       assert.equal(detail.status, 200);
-      assert.deepEqual((detail.body as OrganizationMembershipView).myMembership.roles, ['BUYER_REPRESENTATIVE']);
+      assert.deepEqual((detail.body as OrganizationMembershipView).myMembership.roles, [
+        'BUYER_REPRESENTATIVE',
+      ]);
       assert.equal((detail.body as OrganizationMembershipView).myMembership.isManager, false);
       assert.equal(
         (

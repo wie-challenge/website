@@ -13,7 +13,7 @@ import type {
   CommercialOrderView,
   CommercialBatchView,
   CatalogExample,
-} from '@hirfacare/contracts';
+} from '@nasj/contracts';
 import { apiFetch } from '@/lib/api';
 import {
   Workspace,

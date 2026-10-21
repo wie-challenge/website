@@ -4,7 +4,7 @@ import { fileURLToPath } from 'node:url';
 import type { AppConfig } from '../src/config/env.js';
 import { randomUUID } from 'node:crypto';
 import type { PrismaService } from '../src/database/prisma.service.js';
-import type { CommerceWorkspaceView } from '@hirfacare/contracts';
+import type { CommerceWorkspaceView } from '@nasj/contracts';
 import { dispatchBatch } from '../src/jobs/outbox.js';
 import { consumeLocalEvent, rebuildAnalyticsBatch } from '../src/jobs/commerce-consumer.js';
 import { seedCommerceFixture } from './commerce.fixture.js';

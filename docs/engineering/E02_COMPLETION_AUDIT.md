@@ -1,6 +1,8 @@
 # E02 completion audit — 2026-10-21
 
-**E02 is not complete.** This audit compares the nine canonical stories and their expanded acceptance criteria in `docs/HirfaCare_FINAL_GitHub_Issues.csv` (documentation repository) with the API, database, UI and executed tests. The epic [#3](https://github.com/wie-challenge/website/issues/3) remains open. The canonical backlog is unchanged.
+**Historical pre-implementation audit.** See [the procurement delivery report](E02_PROCUREMENT_DELIVERY.md) for the subsequently implemented local-demo workflows and final verification. The full live-pilot dependency gates remain separate.
+
+**At the time of this audit, E02 was not complete.** This audit compares the nine canonical stories and their expanded acceptance criteria in `docs/HirfaCare_FINAL_GitHub_Issues.csv` (documentation repository) with the API, database, UI and executed tests. The epic [#3](https://github.com/wie-challenge/website/issues/3) remains open. The canonical backlog is unchanged.
 
 The catalog implementation was reviewed and merged through [PR #215](https://github.com/wie-challenge/website/pull/215), merge commit `823113b549b8603ddbaf2da653f5fa9240c8b3b2`. Its hosted Architecture and security checks passed. All nine story issues were open at audit time; an open issue and implemented software are distinct statuses.
 

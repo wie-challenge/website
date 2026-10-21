@@ -1,5 +1,5 @@
 import type { Prisma, OutboxEvent } from '@prisma/client';
-import { deriveCommerceMetrics } from '@hirfacare/contracts';
+import { deriveCommerceMetrics } from '@nasj/contracts';
 import type { LocalConsumer } from './outbox.js';
 
 const sourceInclude = { rfq: true, offers: true, batches: true, payments: true } as const;

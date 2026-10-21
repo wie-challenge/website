@@ -10,7 +10,7 @@ import {
   isCapacityRevision,
   canEditOrganization,
   canReviewOrganization,
-} from '@hirfacare/contracts';
+} from '@nasj/contracts';
 import { validateIdempotencyKey } from '../../src/modules/foundation/idempotency.js';
 
 test('TND has exact scale, bounded addition and canonical serialization', () => {

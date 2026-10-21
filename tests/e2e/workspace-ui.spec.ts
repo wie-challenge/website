@@ -88,7 +88,7 @@ test('mobile drawer supports focus, escape, navigation and keyboard account tabs
   await a11y(page, 'ui-mobile-account');
   const menu = page.getByRole('button', { name: 'Open navigation', exact: true });
   await menu.click();
-  const drawer = page.getByRole('dialog', { name: 'HirfaCare navigation', exact: true });
+  const drawer = page.getByRole('dialog', { name: 'NASJ navigation', exact: true });
   await expect(drawer).toBeVisible();
   await expect(drawer.getByRole('link', { name: 'Operator review', exact: true })).toHaveCount(0);
   await a11y(page, 'ui-mobile-drawer');

@@ -3,7 +3,7 @@ import { NativeSelect } from './ui/native-select';
 import { Label } from './ui/label';
 import Link from 'next/link';
 import { useState } from 'react';
-import type { Page, OrganizationView, MeView } from '@hirfacare/contracts';
+import type { Page, OrganizationView, MeView } from '@nasj/contracts';
 import { apiFetch } from '@/lib/api';
 import {
   Workspace,

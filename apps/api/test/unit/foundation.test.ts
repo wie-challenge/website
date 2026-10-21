@@ -2,12 +2,7 @@ import 'reflect-metadata';
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { HttpException } from '@nestjs/common';
-import {
-  profileSchema,
-  registerSchema,
-  accountUpdateSchema,
-  pageSchema,
-} from '@hirfacare/contracts';
+import { profileSchema, registerSchema, accountUpdateSchema, pageSchema } from '@nasj/contracts';
 import { validateEnvironment, trustedNetwork } from '../../src/config/env.js';
 import { csrfToken, verifyCsrf } from '../../src/common/csrf.js';
 import { errorResponse } from '../../src/common/http-exception.filter.js';

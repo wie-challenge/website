@@ -7,7 +7,7 @@ import { fail } from '../../common/errors.js';
 export class HealthController {
   constructor(@Inject(PrismaService) private readonly db: PrismaService) {}
   @Get('live') live() {
-    return { status: 'ok', service: 'hirfacare-api' };
+    return { status: 'ok', service: 'nasj-api' };
   }
   @Get('ready') async ready() {
     try {

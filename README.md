@@ -1,4 +1,4 @@
-# HirfaCare foundation
+# NASJ website
 
 A small full-stack starting point extracted and adapted from the IEEE Tunisia Partnership Hub. The reference project is unchanged. Product documents and the GitHub backlog importer belong to the separate `docs` repository. The optional sibling checkout at `../docs/` is not required to run this website.
 
@@ -21,7 +21,7 @@ Browser → Next.js App Router → same-origin /api rewrite → NestJS
 
 ## Repository layout
 
-HirfaCare uses four independent Git repositories: `website`, `ai-backend`, `iot` and `docs`. The parent `wie-challenge/` directory is only a local container for sibling checkouts; it has no Git repository, submodules or shared dependency manifest.
+NASJ uses four independent Git repositories: `website`, `ai-backend`, `iot` and `docs`. The parent `wie-challenge/` directory is only a local container for sibling checkouts; it has no Git repository, submodules or shared dependency manifest.
 
 This website repository owns:
 
@@ -53,7 +53,7 @@ Press **Ctrl+C** once to stop both app processes; database/mail services and dat
 
 `setup:local` creates a mode-0600 `.env` with random authentication/database secrets only if it does not exist. It never overwrites existing secrets. `.env.example` documents the actual configuration. Never copy the placeholder values directly into production.
 
-Compose creates a dedicated `hirfacare-foundation` project and persistent PostgreSQL volume; the SQL Server container on this machine is unrelated. `pnpm services:stop` stops only this project's services and preserves data.
+Compose creates a dedicated `nasj` project and persistent PostgreSQL volume; the SQL Server container on this machine is unrelated. `pnpm services:stop` stops only this project's services and preserves data.
 
 ## Administrator setup
 
@@ -100,7 +100,7 @@ The original authentication migration is preserved. Six additive migrations add 
 
 `pnpm db:migrate` uses **migrate deploy**, with no reset or `db push`. Review the SQL and point credentials at the intended dedicated database before running it elsewhere. If tables already conflict, stop and design a baseline/data-preserving migration rather than resetting. Keep migrations committed and deploy them once before starting the new API version. Use least-privilege runtime credentials and a separate migration owner in production.
 
-For new schema work, edit `apps/api/prisma/schema.prisma`, create a reviewed migration against a dedicated developer database (`pnpm --filter @hirfacare/api exec prisma migrate dev --name your_change`), generate the client, and run integration tests. Never run `migrate dev` against shared/production data.
+For new schema work, edit `apps/api/prisma/schema.prisma`, create a reviewed migration against a dedicated developer database (`pnpm --filter @nasj/api exec prisma migrate dev --name your_change`), generate the client, and run integration tests. Never run `migrate dev` against shared/production data.
 
 ## Checks
 
@@ -127,9 +127,9 @@ pnpm db:generate
 pnpm build
 pnpm db:migrate
 # Terminal/process 1
-pnpm --filter @hirfacare/api start
+pnpm --filter @nasj/api start
 # Terminal/process 2
-pnpm --filter @hirfacare/web start
+pnpm --filter @nasj/web start
 ```
 
 Set `NODE_ENV=production` for the deployed API. `next start` serves the optimized frontend; container packaging can be added for the deployment platform when needed. TLS terminates at your controlled ingress. Keep PostgreSQL private and explicitly configure/validate proxy trust before enabling LIVE IP-based limits. The included Compose file is a local development setup, not a production deployment.

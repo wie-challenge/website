@@ -1,4 +1,4 @@
-import type { BuyerCatalog, CatalogExample } from '@hirfacare/contracts';
+import type { BuyerCatalog, CatalogExample } from '@nasj/contracts';
 
 const assumption =
   'Fictional planning range for 10 pieces after specification and material review. Capacity, shipping and delivery date must be reassessed; no stock or supply is confirmed.';

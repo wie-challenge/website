@@ -7,7 +7,7 @@ import {
   type RegistryUpdate,
   type AssistedCapacity,
   type PageInput,
-} from '@hirfacare/contracts';
+} from '@nasj/contracts';
 import { PrismaService } from '../../database/prisma.service.js';
 import { AccessService, partnerTypes } from '../foundation/access.service.js';
 import { PolicyService } from '../foundation/policy.service.js';

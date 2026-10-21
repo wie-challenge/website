@@ -4,7 +4,7 @@ import {
   type FoundationPermission,
   type IdentityContext,
   type Permission,
-} from '@hirfacare/contracts';
+} from '@nasj/contracts';
 import { PrismaService } from '../../database/prisma.service.js';
 import { PolicyService } from './policy.service.js';
 import type { Db } from './transaction.js';

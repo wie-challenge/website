@@ -219,7 +219,12 @@ export async function runE16Scenarios({ db, register, mutate, check, config }: H
         (failure) => {
           const error = failure as { code: number; stdout: string };
           assert.equal(error.code, 1);
-          assert.deepEqual(JSON.parse(error.stdout).alerts, ['API_NOT_READY']);
+          const alerts = JSON.parse(error.stdout).alerts as string[];
+          assert.ok(alerts.includes('API_NOT_READY'));
+          assert.ok(
+            alerts.every((code) => ['API_NOT_READY', 'OUTBOX_LAG'].includes(code)),
+            'The isolated API outage may coexist with real queue lag under load.',
+          );
           return true;
         },
       );

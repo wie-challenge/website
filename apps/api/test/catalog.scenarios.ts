@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { randomUUID } from 'node:crypto';
-import type { BuyerCatalog } from '@hirfacare/contracts';
+import type { BuyerCatalog } from '@nasj/contracts';
 import type { PrismaService } from '../src/database/prisma.service.js';
 import { seedCommerceFixture } from './commerce.fixture.js';
 type Client = {

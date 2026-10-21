@@ -8,7 +8,7 @@ import {
   registryCreateSchema,
   assistedCapacitySchema,
   artisanDecisionEvidenceSchema,
-} from '@hirfacare/contracts';
+} from '@nasj/contracts';
 test('four personas separate platform governance, buyer authority and internal financial permissions', () => {
   assert.deepEqual(operationalPersonas, [
     'PLATFORM_ADMIN',

@@ -75,7 +75,7 @@ export const envSchema = z.object({
   SMTP_REQUIRE_TLS: bool.default(false),
   SMTP_USER: z.preprocess(optional, z.string().optional()),
   SMTP_PASSWORD: z.preprocess(optional, z.string().optional()),
-  EMAIL_FROM: z.string().min(3).default('HirfaCare <noreply@hirfacare.local>'),
+  EMAIL_FROM: z.string().min(3).default('NASJ <noreply@nasj.local>'),
   LOG_LEVEL: z.enum(['silent', 'error', 'warn', 'info', 'debug']).default('info'),
 });
 export function validateEnvironment(values: Record<string, unknown>) {

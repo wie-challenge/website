@@ -1,6 +1,6 @@
 'use client';
 import { useState } from 'react';
-import type { Page as PageData } from '@hirfacare/contracts';
+import type { Page as PageData } from '@nasj/contracts';
 import { apiFetch } from '@/lib/api';
 import {
   Workspace,

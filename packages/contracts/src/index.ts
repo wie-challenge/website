@@ -81,3 +81,5 @@ export * from './commerce/metrics.js';
 export * from './commerce/catalog.js';
 
 export * from './foundation.js';
+
+export * from './procurement.js';

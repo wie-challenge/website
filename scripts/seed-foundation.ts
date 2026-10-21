@@ -193,7 +193,7 @@ export async function seedFoundation(mode: 'demo' | 'development') {
       },
       {
         slug: 'demo-internal-operator',
-        name: 'DEMO — HirfaCare Operations',
+        name: 'DEMO — NASJ Operations',
         type: 'INTERNAL' as const,
         owner: 'admin',
       },

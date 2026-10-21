@@ -1,6 +1,6 @@
 'use client';
 import { useState } from 'react';
-import type { CommerceMetrics } from '@hirfacare/contracts';
+import type { CommerceMetrics } from '@nasj/contracts';
 import { apiFetch } from '@/lib/api';
 import { humanize } from './workspace-ui';
 type Report = {

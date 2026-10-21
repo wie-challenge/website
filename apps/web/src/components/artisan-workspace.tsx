@@ -8,7 +8,7 @@ import type {
   CapacityDeclarationView,
   AssociationMembershipView,
   DelegationGrantView,
-} from '@hirfacare/contracts';
+} from '@nasj/contracts';
 import { apiFetch } from '@/lib/api';
 import {
   Workspace,
@@ -141,7 +141,7 @@ export function ArtisanWorkspace({ artisanId }: { artisanId?: string }) {
               {!profile && !artisanId && (
                 <label className="check-label">
                   <input name="processingConsent" type="checkbox" required />I consent to processing
-                  this artisan profile for participation in HirfaCare (artisan-profile-v1).
+                  this artisan profile for participation in NASJ (artisan-profile-v1).
                 </label>
               )}
               <p className="hint">

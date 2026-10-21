@@ -1,4 +1,4 @@
-import type { ApiFailure, MeView } from '@hirfacare/contracts';
+import type { ApiFailure, MeView } from '@nasj/contracts';
 import { safeApiPath } from './navigation';
 export class ApiError extends Error {
   constructor(

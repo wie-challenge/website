@@ -1,5 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common';
-import type { AccountUpdate, PageInput, ProfileInput } from '@hirfacare/contracts';
+import type { AccountUpdate, PageInput, ProfileInput } from '@nasj/contracts';
 import { PrismaService } from '../../database/prisma.service.js';
 import { APP_CONFIG, type AppConfig } from '../../config/env.js';
 import type { Actor } from '../../common/identity.js';

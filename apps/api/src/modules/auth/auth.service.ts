@@ -18,7 +18,7 @@ export class AuthService {
     @Inject(MailService) mail: MailService,
   ) {
     this.auth = betterAuth({
-      appName: 'HirfaCare',
+      appName: 'NASJ',
       baseURL: config.PUBLIC_APP_URL,
       basePath: '/api/auth',
       secret: config.BETTER_AUTH_SECRET,
@@ -27,7 +27,7 @@ export class AuthService {
       telemetry: { enabled: false },
       plugins: [
         twoFactor({
-          issuer: 'HirfaCare',
+          issuer: 'NASJ',
           skipVerificationOnEnable: false,
           accountLockout: { enabled: true, maxFailedAttempts: 5, durationSeconds: 900 },
         }),
@@ -47,7 +47,7 @@ export class AuthService {
           sameSite: 'lax',
           secure: config.PUBLIC_APP_URL.startsWith('https://'),
         },
-        ipAddress: { ipAddressHeaders: ['x-hirfacare-client-ip'] },
+        ipAddress: { ipAddressHeaders: ['x-nasj-client-ip'] },
       },
       session: {
         cookieCache: { enabled: false },
@@ -66,7 +66,7 @@ export class AuthService {
           sendChangeEmailConfirmation: async ({ user, token }) => {
             await mail.send(
               user.email,
-              'Confirm your HirfaCare email change',
+              'Confirm your NASJ email change',
               `Confirm the email change, then verify the new address: ${config.PUBLIC_APP_URL}/auth/verify-email#token=${encodeURIComponent(token)}`,
             );
           },
@@ -95,7 +95,7 @@ export class AuthService {
         sendResetPassword: async ({ user, token }) => {
           await mail.send(
             user.email,
-            'Reset your HirfaCare password',
+            'Reset your NASJ password',
             `Reset your password within one hour: ${config.PUBLIC_APP_URL}/auth/reset-password#token=${encodeURIComponent(token)}\nIf you did not request this, ignore this email.`,
           );
         },
@@ -122,7 +122,7 @@ export class AuthService {
         sendVerificationEmail: async ({ user, token }) => {
           await mail.send(
             user.email,
-            'Verify your HirfaCare email',
+            'Verify your NASJ email',
             `Verify your email within 24 hours: ${config.PUBLIC_APP_URL}/auth/verify-email#token=${encodeURIComponent(token)}`,
           );
         },
