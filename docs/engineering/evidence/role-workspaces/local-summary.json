@@ -1,0 +1,52 @@
+{
+  "date": "2026-10-22",
+  "scope": "Local role workspaces and access verification; no hosted deployment or issue closure",
+  "unit": {
+    "passed": 53,
+    "failed": 0
+  },
+  "integration": {
+    "passed": 94,
+    "failed": 0,
+    "includes": "Four-role API allow/deny matrix, tenant isolation, revocation, explicit grants and 51-table restore"
+  },
+  "browserFull": {
+    "passed": 27,
+    "failed": 0,
+    "skipped": 0,
+    "flaky": 0,
+    "axeCheckpoints": 48,
+    "axeViolations": 0
+  },
+  "localAccounts": {
+    "personas": [
+      "admin",
+      "operator",
+      "buyer",
+      "coordinator"
+    ],
+    "allSignIn": true,
+    "correctLandings": true,
+    "roleApiMatrix": true,
+    "mobileWidths": [
+      360
+    ],
+    "operatorAssignedToBuyerAndPartner": true
+  },
+  "checks": [
+    "lint",
+    "API and web typechecks",
+    "seed script typecheck",
+    "production build through Playwright setup"
+  ],
+  "backlogStoriesMapped": 192,
+  "limitations": [
+    "Physical wearable verification pending hardware",
+    "Local synthetic E02 workflow; live finance, logistics, assisted offers and upstream dependencies remain in backlog"
+  ],
+  "browserFinalFocused": {
+    "passed": 13,
+    "failed": 0,
+    "scope": "Admin account controls, role dashboards, mobile headings, navigation and accessibility after final UI changes"
+  }
+}

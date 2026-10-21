@@ -9,20 +9,14 @@ import type { BusinessRole } from '../packages/contracts/src/permissions.js';
 import { assertLocalDevelopment } from './local-development.js';
 
 const personas = [
-  { key: 'buyer', name: 'Demo Business Buyer', email: 'buyer@nasj-demo.invalid' },
-  { key: 'artisan', name: 'Demo Woman Artisan', email: 'artisan@nasj-demo.invalid' },
+  { key: 'admin', name: 'Demo Platform Admin', email: 'admin@nasj-demo.invalid' },
+  { key: 'operator', name: 'Demo NASJ Operator', email: 'operator@nasj-demo.invalid' },
+  { key: 'buyer', name: 'Demo Buyer Representative', email: 'buyer@nasj-demo.invalid' },
   {
     key: 'coordinator',
     name: 'Demo Association Coordinator',
     email: 'coordinator@nasj-demo.invalid',
   },
-  {
-    key: 'production',
-    name: 'Demo Production Manager',
-    email: 'production@nasj-demo.invalid',
-  },
-  { key: 'finance', name: 'Demo Finance Manager', email: 'finance@nasj-demo.invalid' },
-  { key: 'admin', name: 'Demo Platform Reviewer', email: 'admin@nasj-demo.invalid' },
 ] as const;
 type Credential = { persona: string; name: string; email: string; password: string };
 export async function seedFoundation(mode: 'demo' | 'development') {
@@ -71,20 +65,22 @@ export async function seedFoundation(mode: 'demo' | 'development') {
         throw error;
       },
     );
-    if (!demo && !credentialsExist) {
-      // Keep existing local reviewer credentials useful at the canonical development URL.
-      // This copies only synthetic fixture passwords; no identities or application data cross databases.
+    if (credentialsExist) {
+      // Preserve synthetic passwords while normalizing manifests from the former project name.
       try {
-        const previous = JSON.parse(
-          await readFile(new URL('../.local/demo-credentials.json', import.meta.url), 'utf8'),
-        ) as { environment?: string; personas?: Credential[] };
-        if (previous.environment !== 'isolated-local-demo' || !Array.isArray(previous.personas))
+        const previous = JSON.parse(await readFile(credentialsFile, 'utf8')) as {
+          environment?: string;
+          personas?: Credential[];
+        };
+        if (
+          previous.environment !== (demo ? 'isolated-local-demo' : 'local-development') ||
+          !Array.isArray(previous.personas)
+        )
           throw new Error('Invalid synthetic credential manifest.');
         for (const entry of generated.personas) {
-          const old = previous.personas.find(
-            (item) => item.persona === entry.persona && item.email === entry.email,
-          );
-          if (!old || typeof old.password !== 'string' || old.password.length < 24)
+          const old = previous.personas.find((item) => item.persona === entry.persona);
+          if (!old) continue; // New personas receive a generated password once.
+          if (typeof old.password !== 'string' || old.password.length < 24)
             throw new Error('Invalid synthetic credential entry.');
           entry.password = old.password;
         }
@@ -92,64 +88,42 @@ export async function seedFoundation(mode: 'demo' | 'development') {
         if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error;
       }
     }
-    let newlyCreated = false;
-    try {
-      await writeFile(credentialsFile, `${JSON.stringify(generated, null, 2)}\n`, {
-        flag: 'wx',
-        mode: 0o600,
-      });
-      newlyCreated = true;
-    } catch (error) {
-      if ((error as NodeJS.ErrnoException).code !== 'EEXIST') throw error;
-    }
-    await chmod(credentialsFile, 0o600);
-    const saved: unknown = JSON.parse(await readFile(credentialsFile, 'utf8'));
-    if (
-      !saved ||
-      typeof saved !== 'object' ||
-      !('version' in saved) ||
-      saved.version !== 1 ||
-      !('environment' in saved) ||
-      saved.environment !== (demo ? 'isolated-local-demo' : 'local-development') ||
-      !('personas' in saved) ||
-      !Array.isArray(saved.personas)
-    )
-      throw new Error('Invalid demo credential manifest; no credentials were changed.');
-    const entries = saved.personas as Credential[];
-    if (
-      entries.length !== personas.length ||
-      personas.some(
-        (persona) =>
-          entries.filter(
-            (entry) =>
-              entry.persona === persona.key &&
-              entry.email === persona.email &&
-              typeof entry.password === 'string' &&
-              entry.password.length >= 24,
-          ).length !== 1,
-      )
-    )
-      throw new Error('Demo credential manifest does not match synthetic personas.');
     app = await createApp({ config });
     const db = app.get(PrismaService);
     const auth = app.get(AuthService);
-    // A dedicated database can still have a wrong local fixture: fail closed rather than modify it.
-    if (
-      demo &&
-      (await db.user.count({
-        where: { email: { notIn: personas.map((persona) => persona.email) } },
-      }))
-    )
+    const previousEntries: Credential[] = credentialsExist
+      ? JSON.parse(await readFile(credentialsFile, 'utf8')).personas
+      : [];
+    for (const persona of personas) {
+      if (
+        (await db.user.findUnique({ where: { email: persona.email } })) &&
+        !previousEntries.some((entry) => entry.persona === persona.key)
+      )
+        throw new Error(
+          'Existing fixture login has no preserved credentials; refusing to replace its password.',
+        );
+    }
+    // Permit historical fixture accounts in an upgraded isolated demo, but never other identities.
+    const allowedEmails = [
+      ...personas.map((persona) => persona.email),
+      ...['admin', 'buyer', 'coordinator', 'artisan', 'production', 'finance'].flatMap((key) => [
+        `${key}@nasj-demo.invalid`,
+        `${key}@hirfacare-demo.invalid`,
+      ]),
+    ];
+    if (demo && (await db.user.count({ where: { email: { notIn: allowedEmails } } })))
       throw new Error('Non-demo identities detected; refusing to seed this database.');
+    await writeFile(credentialsFile, `${JSON.stringify(generated, null, 2)}\n`, {
+      flag: 'w',
+      mode: 0o600,
+    });
+    await chmod(credentialsFile, 0o600);
+    const entries = generated.personas;
     const users = new Map<string, string>();
     for (const persona of personas) {
       const credential = entries.find((entry) => entry.persona === persona.key);
       if (!credential) throw new Error('Missing local demo credential.');
       const existing = await db.user.findUnique({ where: { email: persona.email } });
-      if (existing && newlyCreated)
-        throw new Error(
-          'Existing demo users have no preserved credential manifest; refusing to replace passwords.',
-        );
       if (!existing)
         await auth.auth.api.signUpEmail({
           body: { name: persona.name, email: persona.email, password: credential.password },
@@ -238,7 +212,12 @@ export async function seedFoundation(mode: 'demo' | 'development') {
           manager: boolean;
           roles: BusinessRole[];
         }[] = [
-          { persona: 'buyer', slug: 'demo-buyer-business', manager: true, roles: ['BUYER'] },
+          {
+            persona: 'buyer',
+            slug: 'demo-buyer-business',
+            manager: true,
+            roles: ['BUYER_REPRESENTATIVE'],
+          },
           {
             persona: 'coordinator',
             slug: 'demo-artisan-association',
@@ -246,29 +225,10 @@ export async function seedFoundation(mode: 'demo' | 'development') {
             roles: ['ASSOCIATION_COORDINATOR'],
           },
           {
-            persona: 'artisan',
-            slug: 'demo-artisan-association',
-            manager: false,
-            roles: ['ARTISAN'],
-          },
-          { persona: 'admin', slug: 'demo-internal-operator', manager: true, roles: [] },
-          {
-            persona: 'production',
+            persona: 'operator',
             slug: 'demo-internal-operator',
             manager: false,
-            roles: ['PRODUCTION_MANAGER'],
-          },
-          {
-            persona: 'finance',
-            slug: 'demo-internal-operator',
-            manager: false,
-            roles: ['FINANCE_MANAGER'],
-          },
-          {
-            persona: 'coordinator',
-            slug: 'demo-internal-operator',
-            manager: false,
-            roles: ['SUPPORT'],
+            roles: ['NASJ_OPERATOR'],
           },
         ];
         for (const item of memberships) {
@@ -289,33 +249,93 @@ export async function seedFoundation(mode: 'demo' | 'development') {
               update: {},
               create: { membershipId: membership.id, role, assignedByUserId: admin },
             });
+          if (item.persona === 'buyer') {
+            // Approval authority is an explicit grant, never inferred from the buyer role.
+            await tx.membershipPermission.upsert({
+              where: {
+                membershipId_permission: {
+                  membershipId: membership.id,
+                  permission: 'buyer.quotation.approve',
+                },
+              },
+              update: {},
+              create: {
+                membershipId: membership.id,
+                permission: 'buyer.quotation.approve',
+                grantedById: admin,
+                reason: 'Synthetic buyer signatory for local E02 demonstrations.',
+              },
+            });
+          }
         }
-        const profile = await tx.artisanProfile.upsert({
-          where: { userId: id('artisan') },
-          update: {},
-          create: {
-            userId: id('artisan'),
+        for (const slug of ['demo-buyer-business', 'demo-artisan-association'])
+          await tx.operatorAssignment.upsert({
+            where: {
+              operatorId_organizationId: {
+                operatorId: id('operator'),
+                organizationId: orgId(slug),
+              },
+            },
+            update: {},
+            create: {
+              operatorId: id('operator'),
+              organizationId: orgId(slug),
+              assignedById: admin,
+            },
+          });
+        // Participants are managed records, not login personas. Keep any existing linked record intact.
+        const historicalProfile = await tx.artisanProfile.findFirst({
+          where: {
             displayName: 'DEMO — Amel Artisan',
-            region: 'Nabeul',
-            preferredLanguage: 'fr',
-            experienceDescription:
-              'Fictional artisan demonstrating voluntary capacity and association relationships.',
-            equipment: ['Hand loom', 'Embroidery tools'],
+            OR: [
+              { userId: null, createdById: id('coordinator') },
+              {
+                user: {
+                  email: { in: ['artisan@nasj-demo.invalid', 'artisan@hirfacare-demo.invalid'] },
+                },
+              },
+            ],
           },
         });
+        const profile =
+          historicalProfile ??
+          (await tx.artisanProfile.create({
+            data: {
+              createdById: id('coordinator'),
+              displayName: 'DEMO — Amel Artisan',
+              region: 'Nabeul',
+              preferredLanguage: 'fr',
+              experienceDescription:
+                'Fictional participant managed by the demo association; no login required.',
+              equipment: ['Hand loom', 'Embroidery tools'],
+            },
+          }));
+        const associationId = orgId('demo-artisan-association');
         if (
-          !(await tx.consentRecord.findFirst({
-            where: { userId: id('artisan'), purpose: 'artisan.profile' },
+          !(await tx.artisanManagement.findFirst({
+            where: { artisanProfileId: profile.id, endedAt: null },
           }))
         )
-          await tx.consentRecord.create({
+          await tx.artisanManagement.create({
             data: {
-              userId: id('artisan'),
-              purpose: 'artisan.profile',
-              policyVersion: 'artisan-profile-v1',
-              decision: true,
-              collectionContext:
-                'Synthetic isolated demonstration fixture; fictional profile consent.',
+              artisanProfileId: profile.id,
+              organizationId: associationId,
+              recordedById: id('coordinator'),
+              reason: 'Synthetic local-demo association management.',
+            },
+          });
+        if (
+          !(await tx.artisanAssignment.findFirst({
+            where: { artisanProfileId: profile.id, organizationId: associationId, endedAt: null },
+          }))
+        )
+          await tx.artisanAssignment.create({
+            data: {
+              artisanProfileId: profile.id,
+              organizationId: associationId,
+              coordinatorId: id('coordinator'),
+              assignedById: admin,
+              reason: 'Synthetic local-demo coordinator assignment.',
             },
           });
         const skill = await tx.craftSkill.upsert({
@@ -347,81 +367,9 @@ export async function seedFoundation(mode: 'demo' | 'development') {
               quantity: '12.00',
               effectiveFrom: capacityStart,
               effectiveTo: capacityEnd,
-              declaredByUserId: id('artisan'),
+              declaredByUserId: id('coordinator'),
             },
           });
-        // Normalize only known legacy synthetic fixture labels; preserve user edits/history.
-        const repairedSkill = await tx.artisanSkill.updateMany({
-          where: {
-            artisanProfileId: profile.id,
-            craftSkillId: skill.id,
-            proficiency: 'Experienced',
-          },
-          data: { proficiency: 'ADVANCED' },
-        });
-        const repairedCapacity = await tx.capacityDeclaration.updateMany({
-          where: {
-            artisanProfileId: profile.id,
-            craftSkillId: skill.id,
-            unitType: 'PIECES_PER_WEEK',
-          },
-          data: { unitType: 'PIECES' },
-        });
-        const associationId = orgId('demo-artisan-association');
-        const repairedConsent = await tx.consentRecord.updateMany({
-          where: {
-            userId: id('artisan'),
-            purpose: 'association.link',
-            collectionContext: 'Synthetic isolated demo seed; fictional consent, no real person.',
-          },
-          data: { purpose: `association:${associationId}` },
-        });
-        if (repairedSkill.count || repairedCapacity.count || repairedConsent.count)
-          await tx.auditEvent.create({
-            data: {
-              actorId: admin,
-              targetType: demo ? 'DemoEnvironment' : 'DevelopmentEnvironment',
-              targetId: demo ? 'nasj_demo' : 'nasj',
-              action: demo
-                ? 'demo.fixture.labels.normalized'
-                : 'development.fixture.labels.normalized',
-              correlationId: crypto.randomUUID(),
-              reason: 'Normalize legacy synthetic fixture labels to the validated API vocabulary.',
-              after: {
-                skills: repairedSkill.count,
-                capacities: repairedCapacity.count,
-                consents: repairedConsent.count,
-              },
-            },
-          });
-
-        if (
-          !(await tx.associationMembership.findUnique({
-            where: {
-              artisanProfileId_organizationId: {
-                artisanProfileId: profile.id,
-                organizationId: associationId,
-              },
-            },
-          }))
-        ) {
-          const consent = await tx.consentRecord.create({
-            data: {
-              userId: id('artisan'),
-              purpose: `association:${associationId}`,
-              policyVersion: 'association-v1',
-              decision: true,
-              collectionContext: 'Synthetic isolated demo seed; fictional consent, no real person.',
-            },
-          });
-          await tx.associationMembership.create({
-            data: {
-              artisanProfileId: profile.id,
-              organizationId: associationId,
-              consentRecordId: consent.id,
-            },
-          });
-        }
         if (
           !(await tx.auditEvent.findFirst({
             where: {
@@ -446,7 +394,7 @@ export async function seedFoundation(mode: 'demo' | 'development') {
       { maxWait: 15000, timeout: 30000 },
     );
     console.log(
-      `Six local fixture accounts are ready at ${config.PUBLIC_APP_URL}. Credentials: .local/${demo ? 'demo' : 'dev'}-credentials.json. Existing passwords and records were preserved.`,
+      `${personas.length} role-based local fixture accounts are ready at ${config.PUBLIC_APP_URL}. Credentials: .local/${demo ? 'demo' : 'dev'}-credentials.json. Existing passwords and records were preserved.`,
     );
   } catch (error) {
     console.error(

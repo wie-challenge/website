@@ -4,7 +4,12 @@ import { usePathname } from 'next/navigation';
 import { useState, type ReactNode } from 'react';
 import { DropdownMenu } from 'radix-ui';
 import type { IdentityContext } from '@nasj/contracts';
-import { initials, profileMenuItems } from '@/lib/app-navigation';
+import {
+  initials,
+  profileMenuItems,
+  workspaceNavigation,
+  workspaceRoleLabel,
+} from '@/lib/app-navigation';
 import { Wordmark, SiteFooter } from './brand';
 import { Icon } from './icons';
 import { LogoutButton } from './logout-button';
@@ -36,67 +41,21 @@ export function AppShell({
 }) {
   const pathname = usePathname(),
     [open, setOpen] = useState(false);
-  const work = [
-    {
-      href: context?.landingPath ?? '/dashboard',
-      label: 'Dashboard',
-      icon: 'organization' as const,
-    },
-    ...(context?.personas.includes('ASSOCIATION_COORDINATOR')
-      ? [
-          { href: '/association/artisans', label: 'Artisan registry', icon: 'artisan' as const },
-          {
-            href: '/procurement/discussions',
-            label: 'Order discussions',
-            icon: 'support' as const,
-          },
-        ]
-      : []),
-    ...(context?.personas.includes('NASJ_OPERATOR')
-      ? [{ href: '/operator', label: 'Internal operations', icon: 'organization' as const }]
-      : []),
-    ...(context?.personas.includes('BUYER_REPRESENTATIVE')
-      ? [{ href: '/buyer/company', label: 'Your company', icon: 'organization' as const }]
-      : []),
-    ...(context?.personas.includes('BUYER_REPRESENTATIVE') ||
-    context?.personas.includes('NASJ_OPERATOR') ||
-    capabilities.operator
-      ? [{ href: '/procurement', label: 'Procurement', icon: 'organization' as const }]
-      : []),
-    { href: '/commerce/catalog', label: 'Craft catalog', icon: 'artisan' as const },
-    ...(capabilities.buyer
-      ? [{ href: '/commerce/buyer', label: 'Buyer requests', icon: 'organization' as const }]
-      : []),
-    ...(capabilities.artisan
-      ? [{ href: '/commerce/artisan', label: 'Offers & production', icon: 'artisan' as const }]
-      : []),
-    ...(capabilities.operator
-      ? [{ href: '/commerce/operator', label: 'Operator review', icon: 'organization' as const }]
-      : []),
-  ];
-  const account = [
-    { href: '/settings/organizations', label: 'Organizations', icon: 'organization' as const },
-    ...(context?.linkedArtisanProfileId
-      ? [{ href: '/artisan/profile', label: 'Your artisan profile', icon: 'artisan' as const }]
-      : []),
-    { href: '/settings/profile', label: 'Your account', icon: 'users' as const },
-    { href: '/settings/security', label: 'Security', icon: 'privacy' as const },
-    { href: '/support/cases', label: 'Support', icon: 'support' as const },
-    ...(capabilities.admin
-      ? [{ href: '/admin', label: 'Administration', icon: 'approval' as const }]
-      : []),
-  ];
+  const sections = workspaceNavigation(context, capabilities);
+  const roleLabel = workspaceRoleLabel(context);
+  const activeHref = sections
+    .flatMap((s) => s.items)
+    .filter((item) => pathname === item.href || pathname.startsWith(`${item.href}/`))
+    .sort((a, b) => b.href.length - a.href.length)[0]?.href;
   function navigation(mobile = false) {
     return (
       <>
         <div className="sidebar-brand">
           <Wordmark href={context?.landingPath ?? '/dashboard'} />
         </div>
+        <p className="sidebar-role">{roleLabel}</p>
         <nav aria-label={mobile ? 'Mobile account navigation' : 'Account navigation'}>
-          {[
-            { label: 'Workspace', items: work },
-            { label: 'Manage', items: account },
-          ].map((section) => (
+          {sections.map((section) => (
             <div className="sidebar-section" key={section.label}>
               <p className="sidebar-label">{section.label}</p>
               <ul>
@@ -104,8 +63,8 @@ export function AppShell({
                   <li key={item.href}>
                     <Link
                       href={item.href}
-                      className={pathname === item.href ? 'sidebar-link active' : 'sidebar-link'}
-                      aria-current={pathname === item.href ? 'page' : undefined}
+                      className={activeHref === item.href ? 'sidebar-link active' : 'sidebar-link'}
+                      aria-current={activeHref === item.href ? 'page' : undefined}
                       onClick={() => setOpen(false)}
                     >
                       <Icon name={item.icon} />
@@ -120,14 +79,14 @@ export function AppShell({
         <div className="shell-user">
           <div className="user-identity">
             <span className="user-avatar" aria-hidden="true">
-              {initials(name)}
+              {name.trim().charAt(0).toUpperCase() || '?'}
             </span>
             <div>
-              <strong>{name}</strong>
-              <span>{email}</span>
+              <strong title={name}>{name}</strong>
+              <span title={roleLabel}>{roleLabel}</span>
             </div>
           </div>
-          <LogoutButton />
+          <LogoutButton iconOnly />
         </div>
       </>
     );
@@ -156,7 +115,15 @@ export function AppShell({
               {navigation(true)}
             </SheetContent>
           </Sheet>
-          {demo && <Badge variant="outline">Demo workspace</Badge>}
+          <div className="workspace-identity">
+            <span className="workspace-identity-label">Workspace</span>
+            <strong>{roleLabel}</strong>
+          </div>
+          {demo && (
+            <Badge variant="outline" className="max-[600px]:hidden">
+              Demo workspace
+            </Badge>
+          )}
           <DropdownMenu.Root modal={false}>
             <DropdownMenu.Trigger asChild>
               <button type="button" className="profile-trigger" aria-label="Account menu">
@@ -192,7 +159,7 @@ export function AppShell({
                   ))}
                 </ul>
                 <div className="profile-signout">
-                  <LogoutButton menuItem />
+                  <LogoutButton menuItem iconOnly />
                 </div>
               </DropdownMenu.Content>
             </DropdownMenu.Portal>

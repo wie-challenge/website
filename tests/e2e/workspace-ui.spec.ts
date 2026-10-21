@@ -37,7 +37,7 @@ async function a11y(page: Page, label: string) {
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
 }
 
-test('desktop sidebar shows buyer work, active navigation and a compact request composer', async ({
+test('desktop sidebar shows buyer work, active navigation and the current procurement workspace', async ({
   page,
   request,
 }) => {
@@ -49,22 +49,17 @@ test('desktop sidebar shows buyer work, active navigation and a compact request 
   ).toBeTruthy();
   await login(page, `commerce-buyer-${suffix}@example.com`);
   const nav = page.getByRole('navigation', { name: 'Account navigation', exact: true });
-  await expect(nav.getByRole('link', { name: 'Buyer requests', exact: true })).toBeVisible();
+  await expect(nav.getByRole('link', { name: 'Procurement requests', exact: true })).toBeVisible();
   await expect(nav.getByRole('link', { name: 'Operator review', exact: true })).toHaveCount(0);
   await expect(nav.getByRole('link', { name: 'Administration', exact: true })).toHaveCount(0);
   await expect(page.getByRole('button', { name: 'Open navigation', exact: true })).toBeHidden();
-  await nav.getByRole('link', { name: 'Buyer requests', exact: true }).click();
-  await expect(nav.getByRole('link', { name: 'Buyer requests', exact: true })).toHaveAttribute(
-    'aria-current',
-    'page',
-  );
+  await nav.getByRole('link', { name: 'Procurement requests', exact: true }).click();
   await expect(
-    page.getByRole('region', { name: 'Records in this workspace', exact: true }),
-  ).toContainText('Your requests0');
-  await expect(page.getByRole('button', { name: 'Save RFQ draft', exact: true })).toBeHidden();
-  await page.getByText('Create a synthetic request', { exact: true }).click();
-  await expect(page.getByLabel('Request title', { exact: true })).toBeVisible();
-  await expect(page.getByRole('button', { name: 'Save RFQ draft', exact: true })).toBeVisible();
+    nav.getByRole('link', { name: 'Procurement requests', exact: true }),
+  ).toHaveAttribute('aria-current', 'page');
+  await expect(page).toHaveURL(/\/procurement$/);
+  await expect(page.getByRole('heading', { level: 1 })).toHaveText('Procurement');
+  await expect(page.getByRole('link', { name: 'User accounts', exact: true })).toHaveCount(0);
   expect((await page.locator('.shell-header').boundingBox())!.y).toBe(0);
   await a11y(page, 'ui-desktop-workspace');
   await page.evaluate(() => window.scrollTo(0, 0));

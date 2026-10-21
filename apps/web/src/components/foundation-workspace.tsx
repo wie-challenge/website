@@ -3,10 +3,12 @@ import Link from 'next/link';
 import { useState } from 'react';
 import type { IdentityContext, Page as PageData } from '@nasj/contracts';
 import { apiFetch } from '@/lib/api';
+import { dashboardActions } from '@/lib/app-navigation';
 import { Card } from './ui/card';
 import { Badge } from './ui/badge';
 import {
   Workspace,
+  WorkspaceActions,
   ResourceState,
   ActionForm,
   Input,
@@ -169,7 +171,11 @@ export function FoundationDashboard({
       description={
         mode === 'onboarding'
           ? 'Complete organization verification or accept your invitation to start.'
-          : 'Access is based on your active organization and permissions.'
+          : mode === 'admin'
+            ? 'Manage people, review organization requests and oversee platform access.'
+            : mode === 'association'
+              ? 'Manage your assigned artisans and record their participation and capacity.'
+              : 'Request handmade products and follow your company’s procurement.'
       }
     >
       {mode === 'onboarding' && (
@@ -185,49 +191,27 @@ export function FoundationDashboard({
           </p>
         </Card>
       )}
-      {mode === 'buyer' && (
-        <p>
-          <Link href="/buyer/company">Company profile and representatives</Link> ·{' '}
-          <Link href="/procurement">Procurement requests</Link> ·{' '}
-          <Link href="/commerce/catalog">Craft catalog</Link>
-        </p>
+      {mode !== 'onboarding' && <WorkspaceActions actions={dashboardActions[mode]} />}
+      {orgs.length > 0 && mode !== 'admin' && (
+        <h2 className="workspace-section-title">Your organization</h2>
       )}
-      {mode === 'association' && (
-        <p>
-          <Link href="/association/artisans">Assigned artisan registry</Link> ·{' '}
-          <Link href="/association/artisans/new">Add artisan</Link> ·{' '}
-          <Link href="/association/coordinators">Association coordinators</Link>
-        </p>
-      )}
-      {orgs.map((o) => (
-        <Card key={o.id} className="panel block p-5">
-          <h2>{o.name}</h2>
-          <Badge variant="secondary">{humanize(o.approvalStatus)}</Badge>
-          <p>{humanize(o.type)}</p>
-          <Link href={`/organizations/${o.id}/settings`}>
-            Organization details and authorized settings
-          </Link>
-        </Card>
-      ))}
+      {orgs
+        .filter(() => mode !== 'admin')
+        .map((o) => (
+          <Card key={o.id} className="panel block p-5">
+            <h2>{o.name}</h2>
+            <Badge variant="secondary">{humanize(o.approvalStatus)}</Badge>
+            <p>{humanize(o.type)}</p>
+            <Link href={`/organizations/${o.id}/settings`}>
+              Organization details and authorized settings
+            </Link>
+          </Card>
+        ))}
       {mode === 'admin' && (
-        <Card className="panel block p-5">
-          <h2>Governance</h2>
-          <p>
-            <Link href="/admin/users">Accounts</Link> ·{' '}
-            <Link href="/admin/organizations">Organization approvals</Link> ·{' '}
-            <Link href="/admin/coordinators">Coordinator access</Link> ·{' '}
-            <Link href="/admin/operators">Internal personnel</Link> ·{' '}
-            <Link href="/admin/authorizations">Authorization policies</Link> ·{' '}
-            <Link href="/admin/participant-concerns">Participant concerns</Link> ·{' '}
-            <Link href="/admin/access">Access diagnostics</Link> ·{' '}
-            <Link href="/admin/audit">Audit history</Link> ·{' '}
-            <Link href="/admin/privacy-requests">Privacy requests</Link>
-          </p>
-          <p>
-            Administration grants governance authority. Operational and financial access require
-            separate scoped permissions.
-          </p>
-        </Card>
+        <p className="workspace-scope-note">
+          Commercial requests are coordinated by assigned NASJ operators. Administrator access
+          covers user management, organization approvals and independent governance.
+        </p>
       )}
       {mode === 'association' && (
         <p>
@@ -248,9 +232,10 @@ export function ArtisanRegistry() {
       title="Artisan registry"
       description="Only artisans assigned to you in your active association appear here."
     >
-      <p>
-        <Link href="/association/artisans/new">Add artisan</Link>
-      </p>
+      <WorkspaceActions
+        label="Artisan registry actions"
+        actions={[dashboardActions.association[1]]}
+      />
       <ResourceState {...resource} retry={resource.reload} />
       {resource.data?.items.map((p) => (
         <Card key={p.id} className="panel block p-5">
@@ -574,9 +559,8 @@ export function OperatorDashboard() {
       title="NASJ operations"
       description="Your assigned buyer accounts and partner organizations."
     >
-      <p>
-        <Link href="/operator/activity">Assigned account activity</Link>
-      </p>
+      <WorkspaceActions actions={dashboardActions.operator} />
+      <h2 className="workspace-section-title">Assigned buyers and partner organizations</h2>
       <ResourceState {...r} retry={r.reload} />
       {r.data?.organizations.map((o) => (
         <Card key={o.id} className="panel block p-5">
@@ -598,9 +582,10 @@ export function OperatorDashboard() {
         <p>No approved organizations are assigned to you yet. Contact a platform administrator.</p>
       )}
       <Pagination data={r.data} page={page} change={setPage} />
-      <p>
-        Pricing, assisted offer decisions, production planning and payment reconciliation are
-        upcoming modules. Real payouts are disabled.
+      <p className="workspace-scope-note">
+        Coordinate requests and quotations for assigned buyers, and review assigned partner
+        organizations. Assisted offer decisions, production planning and payment reconciliation
+        remain in the backlog.
       </p>
     </Workspace>
   );

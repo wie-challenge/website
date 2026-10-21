@@ -140,6 +140,26 @@ export async function runRoleScenarios({ db, register, mutate, check, mail }: Ha
     },
   );
   await check(
+    'four-role API matrix separates platform governance, operator coordination and association registry',
+    async () => {
+      for (const [who, allowed] of [
+        [admin, [200, 403, 403]],
+        [operator, [403, 200, 403]],
+        [a, [403, 403, 200]],
+        [buyer, [403, 403, 403]],
+      ] as const) {
+        for (const [index, path] of [
+          '/admin/users',
+          '/operator/dashboard',
+          '/associations/me/artisans',
+        ].entries()) {
+          const reply = await who.client.request(`/api/v1${path}`);
+          assert.equal(reply.status, allowed[index], path);
+        }
+      }
+    },
+  );
+  await check(
     'assisted policies require administrator review and independent witness evidence',
     async () => {
       assert.equal(

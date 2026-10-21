@@ -28,3 +28,18 @@ Final source verification now includes `pnpm verify:clean`: actual ordinary froz
 E02 catalog verification adds three disposable API scenarios for the bounded buyer-safe projection, replay-safe catalog-to-RFQ creation, forged/unavailable/mismatched selections, inactive crafts and an empty active catalog. The existing root operations CLI regression now owns a temporary 503 endpoint, so a running developer API cannot turn its intentional-outage assertion into a false failure.
 
 Three catalog browser cases cover mobile (360×800) and desktop (1280×900) browsing, synthetic/unavailable labels, lead-time assumptions, keyboard activation, missing-image and empty-category states, RFQ specification prefill, required buyer confirmations and a persisted editable draft with no order. A separate controlled-failure case covers loading, a safe 503/retry, an empty projection and a genuinely failed image request. Main-content axe scans cover both catalog/RFQ viewports and the image fallback. Screenshots `.local/catalog-{mobile,desktop}.png` are ignored locally and retained in the CI evidence artifact. Run `pnpm test:e2e --grep 'catalog'` for focused coverage; the full suite also retains all existing commerce/identity journeys.
+
+## Local role accounts
+
+Run `pnpm db:seed` from `website` with the local development database and SMTP service running. It creates these synthetic logins and writes their generated passwords to the private, ignored `.local/dev-credentials.json`:
+
+| Persona | Email | Landing page |
+| --- | --- | --- |
+| Platform admin | `admin@nasj-demo.invalid` | `/admin` |
+| NASJ operator | `operator@nasj-demo.invalid` | `/operator` |
+| Buyer representative | `buyer@nasj-demo.invalid` | `/buyer` |
+| Association coordinator | `coordinator@nasj-demo.invalid` | `/association` |
+
+The operator is assigned to the demo buyer and partner association organizations, and the buyer has an explicit quotation-approval grant. The fictional artisan is an association-managed participant record assigned to the coordinator; a fresh seed creates no artisan, production or finance login. Existing historical users and linked artisan records are preserved. The credential file lists only the four current login personas; historical credentials are omitted. Existing persona passwords remain stable on repeat runs; the new operator receives a generated password on its first seed. A missing credential manifest for an existing fixture login causes refusal rather than a password reset.
+
+`pnpm demo:seed` uses the same four personas in the separate demo database and writes `.local/demo-credentials.json`. Seeding stays restricted to the configured local databases. The seed does not restore intentionally revoked assignments, affiliations or permission grants.
