@@ -58,6 +58,14 @@ export function AppShell({
     ...(context?.personas.includes('BUYER_REPRESENTATIVE')
       ? [{ href: '/buyer/company', label: 'Your company', icon: Building2 }]
       : []),
+    ...(context?.personas.includes('BUYER_REPRESENTATIVE') ||
+    context?.personas.includes('HIRFACARE_OPERATOR') ||
+    capabilities.operator
+      ? [{ href: '/procurement', label: 'Procurement', icon: ShoppingBag }]
+      : []),
+    ...(context?.personas.includes('ASSOCIATION_COORDINATOR')
+      ? [{ href: '/procurement/discussions', label: 'Order discussions', icon: ShoppingBag }]
+      : []),
     { href: '/commerce/catalog', label: 'Craft catalog', icon: Store },
     ...(capabilities.buyer
       ? [{ href: '/commerce/buyer', label: 'Buyer requests', icon: ShoppingBag }]

@@ -20,6 +20,11 @@ import { NativeSelect } from './ui/native-select';
 import { Alert, AlertDescription } from './ui/alert';
 import { CircleCheck, LoaderCircle } from 'lucide-react';
 
+const FieldErrors = createContext<Record<string, string[]>>({});
+export function useFieldError(name: string) {
+  return useContext(FieldErrors)[name] ?? [];
+}
+
 export function useResource<T>(path: string) {
   const [result, setResult] = useState<{ path: string; value: T } | null>(null);
   const [error, setError] = useState('');
@@ -145,11 +150,13 @@ export function ActionForm({
   const [message, setMessage] = useState('');
   const [needsMfa, setNeedsMfa] = useState(false);
   const [error, setError] = useState('');
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string[]>>({});
   function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (confirm && !window.confirm(confirm)) return;
     const data = new FormData(event.currentTarget);
     setError('');
+    setFieldErrors({});
     setMessage('');
     setNeedsMfa(false);
     feedback?.('');
@@ -161,18 +168,21 @@ export function ActionForm({
         else setMessage(successMessage);
       } catch (failure) {
         setNeedsMfa(failure instanceof ApiError && failure.detail.code === 'MFA_REQUIRED');
+        setFieldErrors(failure instanceof ApiError ? (failure.detail.fieldErrors ?? {}) : {});
         setError(failure instanceof Error ? failure.message : 'Unable to save. Please try again.');
       }
     });
   }
   return (
     <form method="post" onSubmit={submit} className={className}>
-      <fieldset disabled={pending || !ready} aria-busy={pending}>
-        {children}
-        <Button type="submit" className="action-submit">
-          {pending ? 'Saving…' : label}
-        </Button>
-      </fieldset>
+      <FieldErrors.Provider value={fieldErrors}>
+        <fieldset disabled={pending || !ready} aria-busy={pending}>
+          {children}
+          <Button type="submit" className="action-submit">
+            {pending ? 'Saving…' : label}
+          </Button>
+        </fieldset>
+      </FieldErrors.Provider>
       {message && (
         <p className="notice success" role="status">
           {message}
@@ -212,11 +222,14 @@ export function Input({
   step?: string;
 }) {
   const id = useId();
+  const errors = useFieldError(name);
   return (
     <div className="field">
       <Label htmlFor={id}>{label}</Label>
       <ShadcnInput
         id={id}
+        aria-invalid={errors.length ? true : undefined}
+        aria-describedby={errors.length ? `${id}-error` : undefined}
         name={name}
         defaultValue={value ?? ''}
         type={type}
@@ -225,6 +238,11 @@ export function Input({
         max={max}
         step={step}
       />
+      {errors.length > 0 && (
+        <p id={`${id}-error`} className="field-error">
+          {errors.join(' ')}
+        </p>
+      )}
     </div>
   );
 }
@@ -242,10 +260,19 @@ export function Select({
   required?: boolean;
 }) {
   const id = useId();
+  const errors = useFieldError(name);
   return (
     <div className="field">
       <Label htmlFor={id}>{label}</Label>
-      <NativeSelect id={id} aria-label={label} name={name} defaultValue={value} required={required}>
+      <NativeSelect
+        id={id}
+        aria-label={label}
+        aria-invalid={errors.length ? true : undefined}
+        aria-describedby={errors.length ? `${id}-error` : undefined}
+        name={name}
+        defaultValue={value}
+        required={required}
+      >
         {options.map((item) =>
           typeof item === 'string' ? (
             <option key={item} value={item}>
@@ -258,6 +285,11 @@ export function Select({
           ),
         )}
       </NativeSelect>
+      {errors.length > 0 && (
+        <p id={`${id}-error`} className="field-error">
+          {errors.join(' ')}
+        </p>
+      )}
     </div>
   );
 }

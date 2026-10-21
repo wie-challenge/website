@@ -1,5 +1,6 @@
-import {runRoleUpgradeScenario} from './roles-upgrade.scenarios.js';
-import {runRoleScenarios} from './roles.scenarios.js';
+import { runProcurementScenarios } from './procurement.scenarios.js';
+import { runRoleUpgradeScenario } from './roles-upgrade.scenarios.js';
+import { runRoleScenarios } from './roles.scenarios.js';
 import { runCommerceScenarios } from './commerce.scenarios.js';
 import { runCatalogScenarios } from './catalog.scenarios.js';
 import { runRestoreScenario } from './restore.scenarios.js';
@@ -522,7 +523,7 @@ try {
     },
   );
   await runRoleUpgradeScenario(check);
-  await runRoleScenarios({db,register,mutate,check,mail});
+  await runRoleScenarios({ db, register, mutate, check, mail });
   await runOrganizationScenarios({ db, register, mutate, check, mail });
   await runArtisanScenarios({ db, register, mutate, check });
   await runGovernanceScenarios({ db, register, mutate, check, mail });
@@ -531,6 +532,7 @@ try {
   await runE16Scenarios({ db, register, mutate, check, config });
   await runCommerceScenarios({ db, register, check, config });
   await runCatalogScenarios({ db, register, check });
+  await runProcurementScenarios({ db, register, check, config });
   await runUpgradeScenario(check);
   await runRestoreScenario(database, check);
   console.log(

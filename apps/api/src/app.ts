@@ -64,7 +64,14 @@ export async function createApp(options: { config?: AppConfig; arcjet?: ArcjetNe
     );
     next();
   });
-  app.use(express.json({ limit: '32kb' }));
+  const ordinaryJson = express.json({ limit: '32kb' });
+  const attachmentJson = express.json({ limit: '384kb' });
+  app.use((req: Request, res: Response, next: NextFunction) =>
+    (/^\/api\/v1\/procurement\/rfqs\/[a-zA-Z0-9_-]{1,128}\/attachments$/.test(req.path) &&
+      req.method === 'POST'
+      ? attachmentJson
+      : ordinaryJson)(req, res, next),
+  );
   app.use((req: Request, _res: Response, next: NextFunction) => {
     try {
       if (

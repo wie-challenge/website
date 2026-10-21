@@ -46,6 +46,7 @@ import { iamTransaction, type Db } from '../foundation/transaction.js';
 import { replaySafe, validateIdempotencyKey } from '../foundation/idempotency.js';
 import { audit } from '../foundation/audit.js';
 import { findCatalogExample, projectBuyerCatalog } from './catalog.js';
+import { activity, revision } from '../procurement/records.js';
 
 type Order = Prisma.CommercialOrderGetPayload<{
   include: { rfq: true; offers: true; batches: true; payments: true };
@@ -203,6 +204,17 @@ export class CommerceService {
     targetType: string,
     targetId: string,
   ) {
+    if (targetType === 'CommercialRfq' || targetType === 'CommercialOrder') {
+      const current = await tx.commercialRfq.findUniqueOrThrow({ where: { id: rfq.id } });
+      if (action === 'rfq.create' || action === 'rfq.edit')
+        await revision(
+          tx,
+          actor,
+          current,
+          action === 'rfq.create' ? 'Initial buyer draft.' : 'Buyer edited the draft.',
+        );
+      await activity(tx, actor, current, action);
+    }
     await audit(tx, actor, {
       action: `commerce.${action}`,
       targetType,
@@ -301,7 +313,7 @@ export class CommerceService {
       });
     });
   }
-  async createRfq(actor: Actor, input: RfqCreate, key?: string) {
+  async createRfq(actor: Actor, input: RfqCreate, key?: string, managed = false) {
     return iamTransaction(this.db, actor, async (tx) => {
       const member = await this.membership(actor, input.buyerOrganizationId, tx);
       requireRule(
@@ -337,7 +349,7 @@ export class CommerceService {
         key,
         input.buyerOrganizationId,
         'rfq.create',
-        input,
+        { ...input, managed },
         async () => {
           requireRule(
             new Date(input.deliveryAt) > new Date(),
@@ -346,7 +358,11 @@ export class CommerceService {
           );
           const { catalogExampleId: _example, ...fields } = input;
           const row = await tx.commercialRfq.create({
-            data: { ...fields, deliveryAt: new Date(input.deliveryAt) },
+            data: {
+              ...fields,
+              deliveryAt: new Date(input.deliveryAt),
+              procurementManaged: managed,
+            },
           });
           await this.event(tx, actor, row, 'rfq.create', 'CommercialRfq', row.id);
           return saved(row);
@@ -397,6 +413,12 @@ export class CommerceService {
       const row = await tx.commercialRfq.findUnique({ where: { id } });
       requireRule(row, 'NOT_FOUND', 'Commercial record not found.');
       const roles = await this.roles(actor, row, tx);
+      if (row.procurementManaged && ['QUOTED', 'ACCEPTED'].includes(input.next))
+        requireRule(
+          false,
+          'INVALID_TRANSITION',
+          'Use the versioned procurement quotation and acceptance workflow.',
+        );
       roleForNext(roles, input.next, rfqEdges);
       if (input.next === 'SUBMITTED') {
         const purchaser = await this.membership(actor, row.buyerOrganizationId, tx);
@@ -756,6 +778,22 @@ export class CommerceService {
         const artisanDue = sums(row.batches, (b) =>
           payableForUnits(row.offers.find((o) => o.id === b.offerId)!.unitPayMillimes, b.approved),
         );
+        if (input.next === 'IN_PRODUCTION' && row.rfq.procurementManaged) {
+          const sample = await tx.procurementSample.findFirst({
+            where: { rfqId: row.rfqId },
+            orderBy: { version: 'desc' },
+            include: { decision: true },
+          });
+          const current = await tx.procurementRevision.findFirst({
+            where: { rfqId: row.rfqId },
+            orderBy: { version: 'desc' },
+          });
+          requireRule(
+            sample?.decision?.decision === 'APPROVED' && sample.revisionId === current?.id,
+            'SAMPLE_APPROVAL_REQUIRED',
+            'The latest sample and specification require buyer approval before production.',
+          );
+        }
         transitionOrder(row.status as OrderState, input.next, roles, {
           ...q,
           buyerDue: row.rfq.quoteMillimes!,

@@ -188,7 +188,7 @@ export function FoundationDashboard({
       {mode === 'buyer' && (
         <p>
           <Link href="/buyer/company">Company profile and representatives</Link> ·{' '}
-          <Link href="/commerce/buyer">Buyer requests</Link> ·{' '}
+          <Link href="/procurement">Procurement requests</Link> ·{' '}
           <Link href="/commerce/catalog">Craft catalog</Link>
         </p>
       )}

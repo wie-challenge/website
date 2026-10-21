@@ -57,6 +57,38 @@ const exact = new Set([
   '/api/v1/me/sessions/revoke-others',
 ]);
 export function routeLabel(path: string) {
+  if (/^\/api\/v1\/procurement(?:\/|$)/.test(path)) {
+    const words = new Set([
+      'api',
+      'v1',
+      'procurement',
+      'rfqs',
+      'documents',
+      'products',
+      'activity',
+      'revisions',
+      'submit',
+      'review',
+      'attachments',
+      'remove',
+      'token',
+      'content',
+      'questions',
+      'answer',
+      'thread',
+      'samples',
+      'sample-decisions',
+      'quotes',
+      'accept',
+      'download',
+      'status',
+      'reorder',
+    ]);
+    return path
+      .split('/')
+      .map((s) => (s && !words.has(s) ? ':id' : s))
+      .join('/');
+  }
   if (exact.has(path)) return path;
   if (/^\/api\/v1\/me\/sessions\/[^/]+$/.test(path)) return '/api/v1/me/sessions/:id';
   if (/^\/api\/v1\/admin\/users\/[^/]+$/.test(path)) return '/api/v1/admin/users/:id';

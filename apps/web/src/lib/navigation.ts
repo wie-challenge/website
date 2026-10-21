@@ -70,6 +70,7 @@ function isWorkspacePath(path: string) {
       '/support/cases',
       '/support/privacy',
     ].includes(path) ||
+    /^\/procurement(?:\/[a-zA-Z0-9_-]+(?:\/discussion)?)?$/.test(path) ||
     /^\/association\/artisans\/[a-zA-Z0-9_-]+(?:\/history)?$/.test(path) ||
     /^\/operator\/partners\/[a-zA-Z0-9_-]+$/.test(path) ||
     /^\/organizations\/[a-zA-Z0-9_-]+\/settings$/.test(path) ||

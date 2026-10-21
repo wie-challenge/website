@@ -1088,3 +1088,37 @@
     transition: none !important;
   }
 }
+
+@layer components {
+  .procurement-list {
+    list-style: none;
+    padding: 0;
+    display: grid;
+    gap: 1rem;
+  }
+  .procurement-list > li {
+    min-width: 0;
+    padding-block: 0.75rem;
+    border-bottom: 1px solid var(--border);
+    overflow-wrap: anywhere;
+  }
+  .procurement-list .inline-actions {
+    gap: 0.5rem;
+  }
+  .procurement-preview {
+    display: block;
+    max-width: 100%;
+    max-height: 20rem;
+    object-fit: contain;
+    margin-block: 0.75rem;
+  }
+  .procurement-cards {
+    display: grid;
+    gap: 1rem;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 22rem), 1fr));
+  }
+  .field-error {
+    color: var(--destructive);
+    font-size: 0.875rem;
+  }
+}
