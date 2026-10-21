@@ -98,6 +98,10 @@ Final local verification results follow. Raw local evidence is ignored under `.l
 
 Coverage includes same-association unassigned denial, cross-organization denial, accountless creation, current authorization/capacity evidence, forged scopes, duplicate review, independent concern review, suspended/revoked access, reviewed account linking, buyer-only visibility and permissions, separate financial grant holders, transaction rollback, and concurrent affiliation/role/invitation/create/reassignment/transfer operations. Existing authentication, last-admin, MFA, tenant, synthetic commerce and restore regressions are retained.
 
+## Hosted review follow-up
+
+The first hosted run exposed a transient contrast failure when a hydrated form enabled its submit button. The shared shadcn button now transitions colors only, so disabled opacity ends immediately when the button becomes actionable. The existing catalog axe checks exercise the affected reload path; no accessibility rule is disabled and no scan delay is added. Final hosted status is recorded by [PR #216](https://github.com/wie-challenge/website/pull/216).
+
 ## Operational limits and backlog
 
 This is a local foundation, not a real commercial pilot approval. Actual legal review of policy/methods and witness/evidence verification remains an operational requirement; this software records review references rather than claiming their truth or providing an SMS verification service. Independent concerns need staffed review and an accessible offline contact channel. Duplicate review uses scoped name/region/reference matching, not universal identity deduplication. Retention and hosting/backup/security operations require a real deployment review. Automated axe checks do not establish full accessibility conformance.
