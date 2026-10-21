@@ -2,11 +2,13 @@
 import { useRef } from 'react';
 import Link from 'next/link';
 import { CommerceReport } from './commerce-report';
+import { CatalogRequestSelection } from './buyer-catalog';
 import type {
   CommerceWorkspaceView,
   CommercialRfqView,
   CommercialOrderView,
   CommercialBatchView,
+  CatalogExample,
 } from '@hirfacare/contracts';
 import { apiFetch } from '@/lib/api';
 import {
@@ -50,7 +52,13 @@ function useCommand() {
     return result;
   };
 }
-export function CommerceWorkspace({ mode }: { mode: Mode }) {
+export function CommerceWorkspace({
+  mode,
+  catalogExampleId,
+}: {
+  mode: Mode;
+  catalogExampleId?: string;
+}) {
   const resource = useResource<CommerceWorkspaceView>('/api/v1/commerce/workspace');
   const inbox =
     useResource<{ id: string; code: string; createdAt: string }[]>('/api/v1/commerce/inbox');
@@ -65,7 +73,7 @@ export function CommerceWorkspace({ mode }: { mode: Mode }) {
   const buyer = (id: string) => Boolean(data?.buyerOrganizations.some((o) => o.id === id));
   const action = (path: string, next: string, version: number, extra: object = {}) =>
     send(`${path}/actions`, { next, version, ...extra });
-  function rfqFields(rfq?: CommercialRfqView) {
+  function rfqFields(rfq?: Partial<CommercialRfqView>) {
     return (
       <>
         <Input name="title" label="Request title" value={rfq?.title} required />
@@ -97,7 +105,7 @@ export function CommerceWorkspace({ mode }: { mode: Mode }) {
           label="Delivery deadline"
           type="datetime-local"
           value={
-            rfq
+            rfq?.deliveryAt
               ? new Date(
                   new Date(rfq.deliveryAt).getTime() -
                     new Date(rfq.deliveryAt).getTimezoneOffset() * 60000,
@@ -126,6 +134,50 @@ export function CommerceWorkspace({ mode }: { mode: Mode }) {
     deliveryAt: asDate(f, 'deliveryAt'),
     deliveryLocation: text(f, 'deliveryLocation'),
   });
+  function createRequest(example?: CatalogExample) {
+    if (!data) return null;
+    return (
+      <details open={Boolean(example)}>
+        <summary>Create a synthetic request</summary>
+        <ActionForm
+          label="Save RFQ draft"
+          onSuccess={resource.reload}
+          action={(f) =>
+            send('rfqs', {
+              ...rfqBody(f),
+              buyerOrganizationId: text(f, 'buyerOrganizationId'),
+              operatorOrganizationId: text(f, 'operatorOrganizationId'),
+              provenance: 'SYNTHETIC',
+              ...(example ? { catalogExampleId: example.id } : {}),
+            })
+          }
+        >
+          <Select
+            name="buyerOrganizationId"
+            label="Buyer organization"
+            options={data.buyerOrganizations.map((o) => ({ value: o.id, label: o.name }))}
+            required
+          />
+          <Select
+            name="operatorOrganizationId"
+            label="Responsible operator organization"
+            options={data.operatorCatalog.map((o) => ({ value: o.id, label: o.name }))}
+            required
+          />
+          {rfqFields(
+            example
+              ? {
+                  title: `Synthetic ${example.name}`,
+                  craftSkillId: example.craftSkillId,
+                  specification: example.specification,
+                  designRequirements: example.designRequirements,
+                }
+              : undefined,
+          )}
+        </ActionForm>
+      </details>
+    );
+  }
   function orderCard(order: CommercialOrderView) {
     const ownBuyer = buyer(order.buyerOrganizationId),
       permission = roles(order.operatorOrganizationId);
@@ -510,41 +562,21 @@ export function CommerceWorkspace({ mode }: { mode: Mode }) {
           {mode === 'buyer' && (
             <section aria-labelledby="buyer-heading">
               <h2 id="buyer-heading">Create and track a buyer RFQ</h2>
+              <p>
+                <Link href="/commerce/catalog">Browse craft examples</Link> to start with a
+                synthetic specification.
+              </p>
               {!data.buyerOrganizations.length ? (
                 <p>
                   An approved buyer organization membership is required.{' '}
                   <Link href="/settings/organizations">Manage organizations</Link>.
                 </p>
+              ) : catalogExampleId !== undefined ? (
+                <CatalogRequestSelection id={catalogExampleId}>
+                  {createRequest}
+                </CatalogRequestSelection>
               ) : (
-                <details>
-                  <summary>Create a synthetic request</summary>
-                  <ActionForm
-                    label="Save RFQ draft"
-                    onSuccess={resource.reload}
-                    action={(f) =>
-                      send('rfqs', {
-                        ...rfqBody(f),
-                        buyerOrganizationId: text(f, 'buyerOrganizationId'),
-                        operatorOrganizationId: text(f, 'operatorOrganizationId'),
-                        provenance: 'SYNTHETIC',
-                      })
-                    }
-                  >
-                    <Select
-                      name="buyerOrganizationId"
-                      label="Buyer organization"
-                      options={data.buyerOrganizations.map((o) => ({ value: o.id, label: o.name }))}
-                      required
-                    />
-                    <Select
-                      name="operatorOrganizationId"
-                      label="Responsible operator organization"
-                      options={data.operatorCatalog.map((o) => ({ value: o.id, label: o.name }))}
-                      required
-                    />
-                    {rfqFields()}
-                  </ActionForm>
-                </details>
+                createRequest()
               )}
             </section>
           )}

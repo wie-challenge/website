@@ -44,6 +44,7 @@ import type { Actor } from '../../common/identity.js';
 import { iamTransaction, type Db } from '../foundation/transaction.js';
 import { replaySafe, validateIdempotencyKey } from '../foundation/idempotency.js';
 import { audit } from '../foundation/audit.js';
+import { findCatalogExample, projectBuyerCatalog } from './catalog.js';
 
 type Order = Prisma.CommercialOrderGetPayload<{
   include: { rfq: true; offers: true; batches: true; payments: true };
@@ -113,6 +114,18 @@ function orderQuantities(order: Order) {
 @Injectable()
 export class CommerceService {
   constructor(@Inject(PrismaService) private readonly db: PrismaService) {}
+  async catalog(actor: Actor) {
+    return iamTransaction(this.db, actor, async (tx) =>
+      projectBuyerCatalog(
+        await tx.craftSkill.findMany({
+          where: { isActive: true },
+          select: { id: true, name: true, description: true },
+          orderBy: { name: 'asc' },
+          take: 100,
+        }),
+      ),
+    );
+  }
   private async membership(actor: Actor, id: string, tx: Db) {
     return tx.organizationMember.findFirst({
       where: {
@@ -307,6 +320,14 @@ export class CommerceService {
         'INVALID_CRAFT',
         'Choose an active craft.',
       );
+      if (input.catalogExampleId !== undefined) {
+        const example = findCatalogExample(input.catalogExampleId);
+        requireRule(
+          example?.availability === 'ILLUSTRATIVE' && example.craftSkillId === input.craftSkillId,
+          'INVALID_CATALOG_SELECTION',
+          'Choose an available example for this craft or start a request without a catalog example.',
+        );
+      }
       return this.command(
         tx,
         actor,
@@ -320,8 +341,9 @@ export class CommerceService {
             'INVALID_DEADLINE',
             'Choose a future delivery deadline.',
           );
+          const { catalogExampleId: _example, ...fields } = input;
           const row = await tx.commercialRfq.create({
-            data: { ...input, deliveryAt: new Date(input.deliveryAt) },
+            data: { ...fields, deliveryAt: new Date(input.deliveryAt) },
           });
           await this.event(tx, actor, row, 'rfq.create', 'CommercialRfq', row.id);
           return saved(row);

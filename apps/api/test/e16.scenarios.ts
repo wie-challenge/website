@@ -1,4 +1,5 @@
 import { execFile } from 'node:child_process';
+import { createServer } from 'node:http';
 import { promisify } from 'node:util';
 import { fileURLToPath } from 'node:url';
 import type { AppConfig } from '../src/config/env.js';
@@ -201,19 +202,30 @@ export async function runE16Scenarios({ db, register, mutate, check, config }: H
     const status = JSON.parse(result.stdout.trim());
     assert.ok(Array.isArray(status.counts));
     assert.equal(typeof status.oldestPendingAgeMs, 'number');
-    // Exercise the actual root CLI under strict pnpm resolution; API port zero is intentionally down.
-    await assert.rejects(
-      promisify(execFile)(process.execPath, ['--import', 'tsx', 'scripts/check-operations.ts'], {
-        ...options,
-        env: { ...options.env, TSX_TSCONFIG_PATH: 'apps/api/tsconfig.json', BACKUP_DIRECTORY: '' },
-      }),
-      (failure) => {
-        const error = failure as { code: number; stdout: string };
-        assert.equal(error.code, 1);
-        assert.deepEqual(JSON.parse(error.stdout).alerts, ['API_NOT_READY']);
-        return true;
-      },
-    );
+    // Own the unhealthy endpoint: a developer's real API may already be healthy on port 3001.
+    const unavailable = createServer((_request, response) => response.writeHead(503).end());
+    await new Promise<void>((resolve) => unavailable.listen(0, '127.0.0.1', resolve));
+    try {
+      await assert.rejects(
+        promisify(execFile)(process.execPath, ['--import', 'tsx', 'scripts/check-operations.ts'], {
+          ...options,
+          env: {
+            ...options.env,
+            API_PORT: String((unavailable.address() as { port: number }).port),
+            TSX_TSCONFIG_PATH: 'apps/api/tsconfig.json',
+            BACKUP_DIRECTORY: '',
+          },
+        }),
+        (failure) => {
+          const error = failure as { code: number; stdout: string };
+          assert.equal(error.code, 1);
+          assert.deepEqual(JSON.parse(error.stdout).alerts, ['API_NOT_READY']);
+          return true;
+        },
+      );
+    } finally {
+      await new Promise<void>((resolve) => unavailable.close(() => resolve()));
+    }
   });
   await check(
     'E16 failed local delivery rolls back consumer effects, exhausts bounded retries and recovers',

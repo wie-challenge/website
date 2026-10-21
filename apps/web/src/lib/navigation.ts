@@ -30,6 +30,7 @@ function isWorkspacePath(path: string) {
   return (
     [
       '/commerce/buyer',
+      '/commerce/catalog',
       '/commerce/artisan',
       '/commerce/operator',
       '/settings/profile',

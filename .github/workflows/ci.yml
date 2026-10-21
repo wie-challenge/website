@@ -51,4 +51,5 @@ jobs:
             .local/e16-unit.log
             .local/e2e-report.json
             .local/commerce-*-operator.png
+            .local/catalog-*.png
           retention-days: 3
