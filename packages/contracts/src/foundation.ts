@@ -99,7 +99,7 @@ export const privilegedInviteSchema = z
   .object({
     organizationId: id,
     email: z.email().toLowerCase(),
-    persona: z.enum(['HIRFACARE_OPERATOR', 'ASSOCIATION_COORDINATOR']),
+    persona: z.enum(['NASJ_OPERATOR', 'ASSOCIATION_COORDINATOR']),
     reason,
   })
   .strict();

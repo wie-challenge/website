@@ -9,7 +9,7 @@ const output = join(root, '.local', 'clean-verification');
 await mkdir(output, { recursive: true, mode: 0o700 });
 const cache = join(homedir(), '.cache');
 await mkdir(cache, { recursive: true });
-const source = await mkdtemp(join(cache, 'hirfacare-clean-'));
+const source = await mkdtemp(join(cache, 'nasj-clean-'));
 const commands = [
   ['install', '--frozen-lockfile'],
   ['setup:local'],

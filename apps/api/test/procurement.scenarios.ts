@@ -274,7 +274,7 @@ export async function runProcurementScenarios({
     data: {
       userId: assigned.me.user.id,
       organizationId: fixture.operatorOrganizationId,
-      roles: { create: { role: 'HIRFACARE_OPERATOR', assignedByUserId: operator.me.user.id } },
+      roles: { create: { role: 'NASJ_OPERATOR', assignedByUserId: operator.me.user.id } },
     },
   });
   const rep = await db.organizationMember.create({

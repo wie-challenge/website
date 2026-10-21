@@ -147,7 +147,7 @@ export function AuthForm({
   }
   return (
     <section className="auth-card">
-      <p className="eyebrow">YOUR HIRFACARE ACCOUNT</p>
+      <p className="eyebrow">YOUR NASJ ACCOUNT</p>
       {embedded ? <h2>{titles[mode]}</h2> : <h1>{titles[mode]}</h1>}
       <p className="lead">{descriptions[mode]}</p>
       {message && (

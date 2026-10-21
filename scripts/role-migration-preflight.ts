@@ -19,7 +19,7 @@ try {
     `SELECT "artisanProfileId",array_agg("organizationId") AS "organizationIds" FROM "AssociationMembership" WHERE status='ACTIVE' AND "endedAt" IS NULL GROUP BY "artisanProfileId" HAVING count(*)>1`,
   );
   const legacy = await client.query(
-    `SELECT r.role,count(*)::int AS count FROM "MembershipRole" r WHERE r.role::text NOT IN ('BUYER_REPRESENTATIVE','HIRFACARE_OPERATOR','ASSOCIATION_COORDINATOR') GROUP BY r.role`,
+    `SELECT r.role,count(*)::int AS count FROM "MembershipRole" r WHERE r.role::text NOT IN ('BUYER_REPRESENTATIVE','NASJ_OPERATOR','ASSOCIATION_COORDINATOR') GROUP BY r.role`,
   );
   const counts = await client.query(
     `SELECT (SELECT count(*)::int FROM "User") AS users,(SELECT count(*)::int FROM "Account") AS accounts,(SELECT count(*)::int FROM "Session") AS sessions,(SELECT count(*)::int FROM "ArtisanProfile") AS artisans`,
