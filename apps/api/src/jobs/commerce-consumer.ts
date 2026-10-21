@@ -49,7 +49,7 @@ async function resolve(tx: Prisma.TransactionClient, event: OutboxEvent) {
         include: { artisanProfile: true },
       });
       orderId = row.orderId;
-      artisanId = row.artisanProfile.userId;
+      artisanId = row.artisanProfile.userId ?? undefined;
       break;
     }
     case 'CommercialBatch': {
@@ -58,7 +58,7 @@ async function resolve(tx: Prisma.TransactionClient, event: OutboxEvent) {
         include: { artisanProfile: true },
       });
       orderId = row.orderId;
-      artisanId = row.artisanProfile.userId;
+      artisanId = row.artisanProfile.userId ?? undefined;
       break;
     }
     case 'SyntheticPayment': {
@@ -67,7 +67,7 @@ async function resolve(tx: Prisma.TransactionClient, event: OutboxEvent) {
         include: { batch: { include: { artisanProfile: true } } },
       });
       orderId = row.orderId;
-      artisanId = row.batch?.artisanProfile.userId;
+      artisanId = row.batch?.artisanProfile.userId ?? undefined;
       buyerVisible = row.kind === 'BUYER_RECEIPT';
       break;
     }

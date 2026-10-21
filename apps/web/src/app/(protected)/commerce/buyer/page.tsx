@@ -1,3 +1,4 @@
+import { CommerceGate } from '@/components/foundation-gate';
 import { CommerceWorkspace } from '@/components/commerce-workspace';
 export const metadata = { title: 'Buyer synthetic commerce' };
 export default async function Page({
@@ -8,10 +9,12 @@ export default async function Page({
   const { example } = await searchParams;
   const catalogExampleId = Array.isArray(example) ? '' : example;
   return (
-    <CommerceWorkspace
-      key={catalogExampleId ?? 'manual'}
-      mode="buyer"
-      catalogExampleId={catalogExampleId}
-    />
+    <CommerceGate mode="buyer">
+      <CommerceWorkspace
+        key={catalogExampleId ?? 'manual'}
+        mode="buyer"
+        catalogExampleId={catalogExampleId}
+      />
+    </CommerceGate>
   );
 }

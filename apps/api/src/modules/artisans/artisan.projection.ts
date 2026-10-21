@@ -7,6 +7,7 @@ import type {
 } from '@hirfacare/contracts';
 export const profileSelect = {
   id: true,
+  createdById: true,
   userId: true,
   displayName: true,
   region: true,
@@ -62,7 +63,7 @@ export function capacityView(
     craftSkillId: p.craftSkillId,
     unitType: p.unitType,
     quantity: p.quantity.toString(),
-    supersededAt:p.supersededAt?.toISOString()??null,
+    supersededAt: p.supersededAt?.toISOString() ?? null,
     effectiveFrom: p.effectiveFrom.toISOString(),
     effectiveTo: p.effectiveTo.toISOString(),
     declaredByUserId: p.declaredByUserId,

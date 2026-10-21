@@ -52,4 +52,5 @@ jobs:
             .local/e2e-report.json
             .local/commerce-*-operator.png
             .local/catalog-*.png
+            .local/ui-*.png
           retention-days: 3

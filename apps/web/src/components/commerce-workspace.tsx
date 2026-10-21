@@ -1,8 +1,12 @@
 'use client';
-import { useRef } from 'react';
+import { useRef, useId } from 'react';
 import Link from 'next/link';
 import { CommerceReport } from './commerce-report';
 import { CatalogRequestSelection } from './buyer-catalog';
+import { Card } from './ui/card';
+import { Textarea } from './ui/textarea';
+import { Badge } from './ui/badge';
+import { Label } from './ui/label';
 import type {
   CommerceWorkspaceView,
   CommercialRfqView,
@@ -24,11 +28,20 @@ import {
 
 type Mode = 'buyer' | 'artisan' | 'operator';
 function LongText({ name, label, value }: { name: string; label: string; value?: string }) {
+  const id = useId();
   return (
-    <label className="field">
-      <span className="label">{label}</span>
-      <textarea name={name} defaultValue={value} required maxLength={2000} rows={3} />
-    </label>
+    <div className="field">
+      <Label htmlFor={id}>{label}</Label>
+      <Textarea
+        id={id}
+        aria-label={label}
+        name={name}
+        defaultValue={value}
+        required
+        maxLength={2000}
+        rows={3}
+      />
+    </div>
   );
 }
 function asDate(data: FormData, name: string) {
@@ -135,9 +148,10 @@ export function CommerceWorkspace({
     deliveryLocation: text(f, 'deliveryLocation'),
   });
   function createRequest(example?: CatalogExample) {
-    if (!data) return null;
+    if (!data?.buyerOrganizations.some((o) => o.permissions?.includes('buyer.rfq.create')))
+      return null;
     return (
-      <details open={Boolean(example)}>
+      <details className="request-composer panel" open={Boolean(example)}>
         <summary>Create a synthetic request</summary>
         <ActionForm
           label="Save RFQ draft"
@@ -155,7 +169,9 @@ export function CommerceWorkspace({
           <Select
             name="buyerOrganizationId"
             label="Buyer organization"
-            options={data.buyerOrganizations.map((o) => ({ value: o.id, label: o.name }))}
+            options={data.buyerOrganizations
+              .filter((o) => o.permissions?.includes('buyer.rfq.create'))
+              .map((o) => ({ value: o.id, label: o.name }))}
             required
           />
           <Select
@@ -210,9 +226,14 @@ export function CommerceWorkspace({
       BUYER_ACCEPTED: { state: 'SETTLED', label: 'Reconcile simulated settlement', allow: finance },
     };
     return (
-      <article className="panel commerce-card" key={order.id} aria-label={`Order ${order.title}`}>
+      <Card
+        role="article"
+        className="panel commerce-card block gap-0 p-5"
+        key={order.id}
+        aria-label={`Order ${order.title}`}
+      >
         <h3>{order.title}</h3>
-        <p>Order · {humanize(order.status)} · Synthetic</p>
+        <Badge variant="secondary">Order · {humanize(order.status)} · Synthetic</Badge>
         <dl className="commerce-facts">
           <dt>Requested</dt>
           <dd>{order.quantity} pieces</dd>
@@ -352,7 +373,7 @@ export function CommerceWorkspace({
             </ActionForm>
           </details>
         )}
-      </article>
+      </Card>
     );
   }
   function batchCard(batch: CommercialBatchView) {
@@ -360,8 +381,9 @@ export function CommerceWorkspace({
     const permission = order ? roles(order.operatorOrganizationId) : [];
     const own = batch.artisanProfileId === data!.artisanProfileId;
     return (
-      <article
-        className="panel commerce-card"
+      <Card
+        role="article"
+        className="panel commerce-card block gap-0 p-5"
         key={batch.id}
         aria-label={`Production batch ${batch.id}`}
       >
@@ -514,51 +536,80 @@ export function CommerceWorkspace({
             onSuccess={resource.reload}
           />
         )}
-      </article>
+      </Card>
     );
   }
   return (
     <Workspace
       title={titles[mode]}
-      description="Synthetic commerce demonstration. Requests, production records and settlement results here are fictional and do not establish real contracts or move money."
+      description={
+        mode === 'buyer'
+          ? 'Create a request, review quotes and track your orders. Demo records use simulated values.'
+          : mode === 'artisan'
+            ? 'Review offers and update the work you accepted. This is a simulated demo; participation is always your choice.'
+            : 'Manage requests, production and fulfillment. Records and payments in this demo are simulated.'
+      }
     >
       <nav className="workspace-tabs" aria-label="Commerce journeys">
-        <Link href="/commerce/buyer" aria-current={mode === 'buyer' ? 'page' : undefined}>
-          Buyer requests
-        </Link>
-        <Link href="/commerce/artisan" aria-current={mode === 'artisan' ? 'page' : undefined}>
-          Artisan decisions and progress
-        </Link>
-        <Link href="/commerce/operator" aria-current={mode === 'operator' ? 'page' : undefined}>
-          Operator review
-        </Link>
+        {(mode === 'buyer' || Boolean(data?.buyerOrganizations.length)) && (
+          <Link href="/commerce/buyer" aria-current={mode === 'buyer' ? 'page' : undefined}>
+            Buyer requests
+          </Link>
+        )}
+        {(mode === 'artisan' || Boolean(data?.artisanProfileId)) && (
+          <Link href="/commerce/artisan" aria-current={mode === 'artisan' ? 'page' : undefined}>
+            Artisan decisions and progress
+          </Link>
+        )}
+        {(mode === 'operator' || Boolean(data?.operatorOrganizations.length)) && (
+          <Link href="/commerce/operator" aria-current={mode === 'operator' ? 'page' : undefined}>
+            Operator review
+          </Link>
+        )}
       </nav>
-      <details>
-        <summary>Commerce notifications</summary>
-        <button className="btn-secondary" type="button" onClick={inbox.reload}>
-          Refresh notifications
-        </button>
-        <ResourceState {...inbox} retry={inbox.reload} />
-        {inbox.data &&
-          (inbox.data.length ? (
-            <ul>
-              {inbox.data.map((notice) => (
-                <li key={notice.id}>
-                  {humanize(notice.code.replace('commerce.', '').replaceAll('.', ' '))} ·{' '}
-                  <time dateTime={notice.createdAt}>
-                    {new Date(notice.createdAt).toLocaleString()}
-                  </time>
-                </li>
-              ))}
-            </ul>
-          ) : (
-            <p>No processed commerce notifications yet.</p>
-          ))}
-        <p>Refresh to check for new commerce updates.</p>
-      </details>
       <ResourceState {...resource} retry={resource.reload} />
       {data && (
         <>
+          <section className="workspace-stats" aria-label="Records in this workspace">
+            {(mode === 'artisan'
+              ? [
+                  {
+                    label: 'Your offers',
+                    value: data.offers.filter((o) => o.artisanProfileId === data.artisanProfileId)
+                      .length,
+                  },
+                  {
+                    label: 'Production batches',
+                    value: data.batches.filter((b) => b.artisanProfileId === data.artisanProfileId)
+                      .length,
+                  },
+                ]
+              : [
+                  {
+                    label: mode === 'buyer' ? 'Your requests' : 'Assigned requests',
+                    value: data.rfqs.filter((r) =>
+                      mode === 'buyer'
+                        ? buyer(r.buyerOrganizationId)
+                        : roles(r.operatorOrganizationId).length > 0,
+                    ).length,
+                  },
+                  {
+                    label: 'Orders',
+                    value: data.orders.filter((o) =>
+                      mode === 'buyer'
+                        ? buyer(o.buyerOrganizationId)
+                        : roles(o.operatorOrganizationId).length > 0,
+                    ).length,
+                  },
+                ]
+            ).map((stat) => (
+              <Card className="workspace-stat block gap-0 p-4" key={stat.label}>
+                <p>{stat.label}</p>
+                <strong>{stat.value}</strong>
+                <span>In this view</span>
+              </Card>
+            ))}
+          </section>
           {mode === 'buyer' && (
             <section aria-labelledby="buyer-heading">
               <h2 id="buyer-heading">Create and track a buyer RFQ</h2>
@@ -599,7 +650,12 @@ export function CommerceWorkspace({
                     : roles(r.operatorOrganizationId).length > 0,
                 )
                 .map((r) => (
-                  <article key={r.id} className="panel commerce-card" aria-label={`RFQ ${r.title}`}>
+                  <Card
+                    role="article"
+                    key={r.id}
+                    className="panel commerce-card block gap-0 p-5"
+                    aria-label={`RFQ ${r.title}`}
+                  >
                     <h3>{r.title}</h3>
                     <p>
                       {humanize(r.status)} · Version {r.version} · Synthetic
@@ -674,25 +730,29 @@ export function CommerceWorkspace({
                           />
                         </ActionForm>
                       )}
-                    {buyer(r.buyerOrganizationId) && r.status === 'QUOTED' && (
-                      <>
-                        <ActionForm
-                          label="Accept exact synthetic quote"
-                          action={() => action(`rfqs/${r.id}`, 'ACCEPTED', r.version)}
-                          onSuccess={resource.reload}
-                        />
-                        <ActionForm
-                          label="Decline quote"
-                          action={() => action(`rfqs/${r.id}`, 'DECLINED', r.version)}
-                          onSuccess={resource.reload}
-                        />
-                      </>
-                    )}
-                  </article>
+                    {buyer(r.buyerOrganizationId) &&
+                      data.buyerOrganizations
+                        .find((o) => o.id === r.buyerOrganizationId)
+                        ?.permissions?.includes('buyer.quotation.approve') &&
+                      r.status === 'QUOTED' && (
+                        <>
+                          <ActionForm
+                            label="Accept exact synthetic quote"
+                            action={() => action(`rfqs/${r.id}`, 'ACCEPTED', r.version)}
+                            onSuccess={resource.reload}
+                          />
+                          <ActionForm
+                            label="Decline quote"
+                            action={() => action(`rfqs/${r.id}`, 'DECLINED', r.version)}
+                            onSuccess={resource.reload}
+                          />
+                        </>
+                      )}
+                  </Card>
                 ))}
             </section>
           )}
-          {mode !== 'artisan' && (
+          {mode !== 'artisan' && data.orders.length > 0 && (
             <section aria-labelledby="orders-heading">
               <h2 id="orders-heading">
                 {mode === 'buyer' ? 'Your orders' : 'Production and fulfillment review'}
@@ -725,8 +785,9 @@ export function CommerceWorkspace({
               {data.offers
                 .filter((o) => mode === 'operator' || o.artisanProfileId === data.artisanProfileId)
                 .map((o) => (
-                  <article
-                    className="panel commerce-card"
+                  <Card
+                    role="article"
+                    className="panel commerce-card block gap-0 p-5"
                     key={o.id}
                     aria-label={`Artisan offer ${o.id}`}
                   >
@@ -768,7 +829,7 @@ export function CommerceWorkspace({
                         />
                       </>
                     )}
-                  </article>
+                  </Card>
                 ))}
             </section>
           )}
@@ -783,56 +844,59 @@ export function CommerceWorkspace({
                 .map(batchCard)}
             </section>
           )}
-          <section aria-labelledby="payments-heading">
-            <h2 id="payments-heading">Simulated payment records</h2>
-            <p>
-              Buyer receipts and individual artisan payouts use separate ledgers. “Settled” here
-              always means simulated settlement, never an actual transfer.
-            </p>
-            {!data.payments.length && <p>No simulated payments in your permitted scope.</p>}
-            {data.payments.map((p) => {
-              const order = data.orders.find((o) => o.id === p.orderId);
-              const finance =
-                order && roles(order.operatorOrganizationId).includes('FINANCE_MANAGER');
-              const next: Record<string, string> = {
-                SCHEDULED: 'APPROVED',
-                APPROVED: 'INITIATED',
-                INITIATED: 'SETTLED',
-              };
-              return (
-                <article
-                  className="panel commerce-card"
-                  key={p.id}
-                  aria-label={`Simulated payment ${p.id}`}
-                >
-                  <h3>
-                    {humanize(p.kind)} · {p.amountTnd} TND
-                  </h3>
-                  <p>
-                    {humanize(p.status)} ·{' '}
-                    {p.evidenceType === 'SIMULATED_SETTLEMENT'
-                      ? 'Simulated settlement recorded'
-                      : 'Synthetic demonstration only'}
-                  </p>
-                  {finance && next[p.status] && (
-                    <ActionForm
-                      label={`Mark simulated payment ${humanize(next[p.status]).toLowerCase()}`}
-                      action={() =>
-                        action(
-                          `payments/${p.id}`,
-                          next[p.status],
-                          p.version,
-                          next[p.status] === 'SETTLED'
-                            ? { evidenceType: 'SIMULATED_SETTLEMENT' }
-                            : {},
-                        )
-                      }
-                      onSuccess={resource.reload}
-                    />
-                  )}
-                </article>
-              );
-            })}
+          <section aria-labelledby="payments-heading" className="section-gap">
+            <details open={data.payments.length > 0}>
+              <summary id="payments-heading">Simulated payment records</summary>
+              <p>
+                Buyer receipts and individual artisan payouts use separate ledgers. “Settled” here
+                always means simulated settlement, never an actual transfer.
+              </p>
+              {!data.payments.length && <p>No simulated payments in your permitted scope.</p>}
+              {data.payments.map((p) => {
+                const order = data.orders.find((o) => o.id === p.orderId);
+                const finance =
+                  order && roles(order.operatorOrganizationId).includes('FINANCE_MANAGER');
+                const next: Record<string, string> = {
+                  SCHEDULED: 'APPROVED',
+                  APPROVED: 'INITIATED',
+                  INITIATED: 'SETTLED',
+                };
+                return (
+                  <Card
+                    role="article"
+                    className="panel commerce-card block gap-0 p-5"
+                    key={p.id}
+                    aria-label={`Simulated payment ${p.id}`}
+                  >
+                    <h3>
+                      {humanize(p.kind)} · {p.amountTnd} TND
+                    </h3>
+                    <p>
+                      {humanize(p.status)} ·{' '}
+                      {p.evidenceType === 'SIMULATED_SETTLEMENT'
+                        ? 'Simulated settlement recorded'
+                        : 'Synthetic demonstration only'}
+                    </p>
+                    {finance && next[p.status] && (
+                      <ActionForm
+                        label={`Mark simulated payment ${humanize(next[p.status]).toLowerCase()}`}
+                        action={() =>
+                          action(
+                            `payments/${p.id}`,
+                            next[p.status],
+                            p.version,
+                            next[p.status] === 'SETTLED'
+                              ? { evidenceType: 'SIMULATED_SETTLEMENT' }
+                              : {},
+                          )
+                        }
+                        onSuccess={resource.reload}
+                      />
+                    )}
+                  </Card>
+                );
+              })}
+            </details>
           </section>
           <p className="hint">
             Each list shows at most 100 records. This bounded prototype does not implement real
@@ -840,6 +904,31 @@ export function CommerceWorkspace({
           </p>
         </>
       )}
+      <div className="panel section-gap">
+        <details>
+          <summary>Commerce notifications</summary>
+          <button className="btn-secondary" type="button" onClick={inbox.reload}>
+            Refresh notifications
+          </button>
+          <ResourceState {...inbox} retry={inbox.reload} />
+          {inbox.data &&
+            (inbox.data.length ? (
+              <ul>
+                {inbox.data.map((notice) => (
+                  <li key={notice.id}>
+                    {humanize(notice.code.replace('commerce.', '').replaceAll('.', ' '))} ·{' '}
+                    <time dateTime={notice.createdAt}>
+                      {new Date(notice.createdAt).toLocaleString()}
+                    </time>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p>No processed commerce notifications yet.</p>
+            ))}
+          <p>Refresh to check for new commerce updates.</p>
+        </details>
+      </div>
     </Workspace>
   );
 }

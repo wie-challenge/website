@@ -69,7 +69,7 @@ export async function runOrganizationScenarios({
       owner.client,
       `/api/v1/organizations/${organization.id}/invitations`,
       'POST',
-      { email, roles: ['BUYER'], isManager },
+      { email, roles: ['BUYER_REPRESENTATIVE'], isManager },
     );
     assert.equal(reply.status, 201);
     const data = reply.body as { invitation: InvitationView; delivery: string };
@@ -99,7 +99,7 @@ export async function runOrganizationScenarios({
       organization = created.body as OrganizationMembershipView;
       assert.equal(organization.approvalStatus, 'DRAFT');
       assert.equal(organization.myMembership.isManager, true);
-      assert.deepEqual(organization.myMembership.roles, ['BUYER']);
+      assert.deepEqual(organization.myMembership.roles, ['BUYER_REPRESENTATIVE']);
       assert.equal(
         (await outsider.client.request(`/api/v1/organizations/${organization.id}`)).status,
         403,
@@ -114,7 +114,7 @@ export async function runOrganizationScenarios({
             owner.client,
             `/api/v1/organizations/${organization.id}/invitations`,
             'POST',
-            { email: 'org-invitee@example.com', roles: ['BUYER'] },
+            { email: 'org-invitee@example.com', roles: ['BUYER_REPRESENTATIVE'] },
           )
         ).status,
         403,
@@ -219,7 +219,7 @@ export async function runOrganizationScenarios({
             reviewer.client,
             `/api/v1/organizations/${organization.id}/invitations`,
             'POST',
-            { email: 'org-outsider@example.com', roles: ['BUYER'] },
+            { email: 'org-outsider@example.com', roles: ['BUYER_REPRESENTATIVE'] },
           )
         ).status,
         403,
@@ -259,7 +259,7 @@ export async function runOrganizationScenarios({
       );
       const detail = await invitee.client.request(`/api/v1/organizations/${organization.id}`);
       assert.equal(detail.status, 200);
-      assert.deepEqual((detail.body as OrganizationMembershipView).myMembership.roles, ['BUYER']);
+      assert.deepEqual((detail.body as OrganizationMembershipView).myMembership.roles, ['BUYER_REPRESENTATIVE']);
       assert.equal((detail.body as OrganizationMembershipView).myMembership.isManager, false);
       assert.equal(
         (
@@ -278,7 +278,7 @@ export async function runOrganizationScenarios({
             owner.client,
             `/api/v1/organizations/${organization.id}/invitations`,
             'POST',
-            { email: 'org-invitee@example.com', roles: ['BUYER'] },
+            { email: 'org-invitee@example.com', roles: ['BUYER_REPRESENTATIVE'] },
           )
         ).status,
         409,
@@ -425,7 +425,7 @@ export async function runOrganizationScenarios({
             owner.client,
             `/api/v1/organizations/${organization.id}/members/${organization.myMembership.id}/roles`,
             'PUT',
-            { roles: ['BUYER'], reason: 'Self role edit prohibited' },
+            { roles: ['BUYER_REPRESENTATIVE'], reason: 'Self role edit prohibited' },
           )
         ).status,
         403,

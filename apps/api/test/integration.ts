@@ -1,3 +1,5 @@
+import {runRoleUpgradeScenario} from './roles-upgrade.scenarios.js';
+import {runRoleScenarios} from './roles.scenarios.js';
 import { runCommerceScenarios } from './commerce.scenarios.js';
 import { runCatalogScenarios } from './catalog.scenarios.js';
 import { runRestoreScenario } from './restore.scenarios.js';
@@ -519,6 +521,8 @@ try {
       assert.equal((await operator.client.request('/api/v1/me')).status, 401);
     },
   );
+  await runRoleUpgradeScenario(check);
+  await runRoleScenarios({db,register,mutate,check,mail});
   await runOrganizationScenarios({ db, register, mutate, check, mail });
   await runArtisanScenarios({ db, register, mutate, check });
   await runGovernanceScenarios({ db, register, mutate, check, mail });

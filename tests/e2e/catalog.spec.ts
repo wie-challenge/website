@@ -21,7 +21,7 @@ async function register(request: APIRequestContext, email: string) {
   ).toBe(200);
 }
 async function login(page: Page, email: string) {
-  await page.goto('/auth/login');
+  await page.goto('/auth/login?next=%2Fsettings%2Fprofile');
   await page.getByLabel('Email address', { exact: true }).fill(email);
   await page.getByLabel('Password', { exact: true }).fill(password);
   await page.getByRole('button', { name: 'Sign in', exact: true }).click();
@@ -77,6 +77,7 @@ for (const profile of [
     const panel = page.getByRole('article', { name: 'Embroidered decorative panel', exact: true });
     await expect(panel.getByText(/No example image available/)).toBeVisible();
     await accessible(page, `catalog-${profile.name}`);
+    await page.evaluate(() => window.scrollTo(0, 0));
     await page.screenshot({ path: `.local/catalog-${profile.name}.png`, fullPage: true });
     await page.getByRole('combobox', { name: 'Browse craft', exact: true }).selectOption('other');
     await expect(page.getByText('No examples are available in this category yet.')).toBeVisible();

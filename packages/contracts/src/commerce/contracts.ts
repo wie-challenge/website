@@ -200,7 +200,7 @@ export type CommercialPaymentView = {
   provenance: 'SYNTHETIC';
 };
 export type CommerceWorkspaceView = {
-  buyerOrganizations: { id: string; name: string }[];
+  buyerOrganizations: { id: string; name: string; permissions?: string[] }[];
   operatorOrganizations: { id: string; name: string; roles: string[] }[];
   operatorCatalog: { id: string; name: string }[];
   crafts: { id: string; name: string }[];

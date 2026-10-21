@@ -28,7 +28,7 @@ async function register(request: APIRequestContext, email: string, name: string)
   ).toBeTruthy();
 }
 async function login(page: Page, email: string) {
-  await page.goto('/auth/login');
+  await page.goto('/auth/login?next=%2Fsettings%2Fprofile');
   await page.getByLabel('Email address', { exact: true }).fill(email);
   await page.getByLabel('Password', { exact: true }).fill(password);
   await page.getByRole('button', { name: 'Sign in', exact: true }).click();
@@ -111,7 +111,7 @@ test('buyer onboarding, approval, invitation and scoped membership revocation wo
   await expect(page.getByText('Approval: Approved', { exact: false })).toBeVisible();
   const staffEmail = 'identity-staff@example.com';
   await page.getByLabel('Invitee email', { exact: true }).fill(staffEmail);
-  await page.getByRole('checkbox', { name: 'Buyer', exact: true }).check();
+  await page.getByRole('checkbox', { name: 'Buyer representative', exact: true }).check();
   await page.getByRole('button', { name: 'Invite member', exact: true }).click();
   await expect(page.getByText(staffEmail, { exact: true })).toBeVisible();
   const invitation = await mailToken(request, staffEmail, 'invitation');
@@ -388,5 +388,5 @@ test('authenticator enrollment and recovery-code sign-in work without persisting
   await page.getByRole('button', { name: 'Use recovery code', exact: true }).click();
   await page.getByLabel('Recovery code', { exact: true }).fill(backup);
   await page.getByRole('button', { name: 'Verify sign-in', exact: true }).click();
-  await expect(page).toHaveURL(/\/settings\/profile/);
+  await expect(page).toHaveURL(/\/dashboard/);
 });

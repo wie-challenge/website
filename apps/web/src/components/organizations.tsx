@@ -118,8 +118,8 @@ export function Organizations() {
               label="Organization type"
               options={
                 me.data?.user.role === 'ADMIN'
-                  ? ['BUYER_BUSINESS', 'ASSOCIATION', 'INTERNAL']
-                  : ['BUYER_BUSINESS', 'ASSOCIATION']
+                  ? ['BUYER_BUSINESS', 'ASSOCIATION', 'PARTNER_COOPERATIVE', 'INTERNAL']
+                  : ['BUYER_BUSINESS', 'ASSOCIATION', 'PARTNER_COOPERATIVE']
               }
             />
             <OrganizationFields />
@@ -299,6 +299,88 @@ function Members({
                 </ActionForm>
               </details>
             )}
+            {canAssign &&
+              member.roles.some((r) => ['BUYER', 'BUYER_REPRESENTATIVE'].includes(r)) && (
+                <details>
+                  <summary>Quotation approval authority</summary>
+                  <p>
+                    Current authority:{' '}
+                    {member.explicitPermissions?.includes('buyer.quotation.approve')
+                      ? 'Authorized'
+                      : 'Not authorized'}
+                  </p>
+                  <ActionForm
+                    label="Save quotation approval authority"
+                    action={(data) =>
+                      apiFetch(`${path}/members/${member.id}/permissions`, {
+                        method: 'PUT',
+                        body: {
+                          permission: 'buyer.quotation.approve',
+                          enabled: text(data, 'enabled') === 'true',
+                          reason: text(data, 'approvalReason'),
+                        },
+                      })
+                    }
+                    onSuccess={resource.reload}
+                  >
+                    <Select
+                      name="enabled"
+                      label="Quotation approval access"
+                      options={[
+                        { value: 'true', label: 'Authorize approval' },
+                        { value: 'false', label: 'Revoke approval' },
+                      ]}
+                    />
+                    <Input
+                      name="approvalReason"
+                      label="Approval authority review reason"
+                      required
+                    />
+                  </ActionForm>
+                </details>
+              )}
+            {canAssign &&
+              member.roles.some((r) => ['BUYER', 'BUYER_REPRESENTATIVE'].includes(r)) && (
+                <details>
+                  <summary>Purchasing and negotiation authority</summary>
+                  <ActionForm
+                    label="Save purchasing authority"
+                    action={(data) =>
+                      apiFetch(`${path}/members/${member.id}/permissions`, {
+                        method: 'PUT',
+                        body: {
+                          permission: text(data, 'purchasingPermission'),
+                          enabled: text(data, 'purchasingEnabled') === 'true',
+                          reason: text(data, 'purchasingReason'),
+                        },
+                      })
+                    }
+                    onSuccess={resource.reload}
+                  >
+                    <Select
+                      name="purchasingPermission"
+                      label="Purchasing permission"
+                      options={[
+                        { value: 'buyer.rfq.create', label: 'Prepare and submit RFQs' },
+                        { value: 'buyer.quotation.negotiate', label: 'Negotiate quotations' },
+                      ]}
+                    />
+                    <Select
+                      name="purchasingEnabled"
+                      label="Purchasing access"
+                      options={[
+                        { value: 'true', label: 'Authorize' },
+                        { value: 'false', label: 'Remove authority' },
+                      ]}
+                    />
+                    <Input
+                      name="purchasingReason"
+                      label="Purchasing authority review reason"
+                      required
+                    />
+                  </ActionForm>
+                </details>
+              )}
             {canAssign && (
               <details>
                 <summary>Manage business roles</summary>

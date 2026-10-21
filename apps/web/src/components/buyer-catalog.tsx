@@ -1,6 +1,11 @@
 'use client';
-import { useState, type ReactNode } from 'react';
+import { useState, useId, type ReactNode } from 'react';
 import Image from 'next/image';
+import { Card } from './ui/card';
+import { Button } from './ui/button';
+import { NativeSelect } from './ui/native-select';
+import { Badge } from './ui/badge';
+import { Label } from './ui/label';
 import Link from 'next/link';
 import type { BuyerCatalog, CatalogExample } from '@hirfacare/contracts';
 import { ResourceState, Workspace, useResource } from './workspace-ui';
@@ -27,6 +32,7 @@ function ExampleImage({ image }: { image: CatalogExample['image'] }) {
 export function BuyerCraftCatalog() {
   const resource = useResource<BuyerCatalog>('/api/v1/commerce/catalog');
   const [category, setCategory] = useState('');
+  const categoryId = useId();
   const categories = resource.data?.categories.filter((c) => !category || c.id === category) ?? [];
   return (
     <Workspace
@@ -39,17 +45,22 @@ export function BuyerCraftCatalog() {
       <ResourceState {...resource} retry={resource.reload} />
       {resource.data && (
         <>
-          <label className="field catalog-filter">
-            <span className="label">Browse craft</span>
-            <select value={category} onChange={(event) => setCategory(event.target.value)}>
+          <div className="field catalog-filter">
+            <Label htmlFor={categoryId}>Browse craft</Label>
+            <NativeSelect
+              id={categoryId}
+              aria-label="Browse craft"
+              value={category}
+              onChange={(event) => setCategory(event.target.value)}
+            >
               <option value="">All crafts</option>
               {resource.data.categories.map((c) => (
                 <option key={c.id} value={c.id}>
                   {c.name}
                 </option>
               ))}
-            </select>
-          </label>
+            </NativeSelect>
+          </div>
           <p className="hint">
             Illustrations are fictional designs, not photographs of verified products. Lead times
             are planning assumptions, not promises.
@@ -67,18 +78,19 @@ export function BuyerCraftCatalog() {
                 ) : (
                   <div className="catalog-grid">
                     {c.examples.map((example) => (
-                      <article
+                      <Card
+                        role="article"
                         key={example.id}
-                        className="panel catalog-card"
+                        className="panel catalog-card block gap-0 p-4"
                         aria-label={example.name}
                       >
                         <ExampleImage image={example.image} />
-                        <p className="eyebrow">
+                        <Badge variant="secondary">
                           Synthetic example ·{' '}
                           {example.availability === 'UNAVAILABLE'
                             ? 'Unavailable'
                             : 'Illustrative only'}
-                        </p>
+                        </Badge>
                         <h3>{example.name}</h3>
                         <p>{example.specification}</p>
                         <p>Unit: piece</p>
@@ -88,18 +100,26 @@ export function BuyerCraftCatalog() {
                             {example.leadTime.maxDays} days
                           </strong>
                         </p>
-                        <p>{example.leadTime.assumption}</p>
+                        <details className="catalog-assumptions">
+                          <summary>Planning assumptions</summary>
+                          <p>{example.leadTime.assumption}</p>
+                        </details>
                         {example.availability === 'UNAVAILABLE' ? (
                           <p>{example.unavailableReason}</p>
                         ) : (
-                          <Link
-                            className="button secondary"
-                            href={`/commerce/buyer?example=${encodeURIComponent(example.id)}`}
+                          <Button
+                            asChild
+                            variant="outline"
+                            className="catalog-start h-auto min-h-10 w-full whitespace-normal text-xs leading-relaxed"
                           >
-                            Start RFQ for {example.name}
-                          </Link>
+                            <Link
+                              href={`/commerce/buyer?example=${encodeURIComponent(example.id)}`}
+                            >
+                              Start RFQ for {example.name}
+                            </Link>
+                          </Button>
                         )}
-                      </article>
+                      </Card>
                     ))}
                   </div>
                 )}

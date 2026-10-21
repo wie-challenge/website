@@ -9,6 +9,7 @@ import {
   registerSchema,
   resetPasswordSchema,
 } from '@hirfacare/contracts';
+import type { IdentityContext } from '@hirfacare/contracts';
 import { ApiError, apiFetch } from '@/lib/api';
 import { Field } from './field';
 export type AuthMode = 'login' | 'register' | 'forgot-password' | 'reset-password' | 'verify-email';
@@ -104,7 +105,11 @@ export function AuthForm({
         if (mode === 'login') {
           if (onAuthenticated) await onAuthenticated();
           else {
-            router.replace(next);
+            router.replace(
+              next === '/dashboard'
+                ? (await apiFetch<IdentityContext>('/api/v1/me/context')).landingPath
+                : next,
+            );
             router.refresh();
           }
           return;
@@ -165,7 +170,11 @@ export function AuthForm({
                 );
                 if (onAuthenticated) await onAuthenticated();
                 else {
-                  router.replace(next);
+                  router.replace(
+                    next === '/dashboard'
+                      ? (await apiFetch<IdentityContext>('/api/v1/me/context')).landingPath
+                      : next,
+                  );
                   router.refresh();
                 }
               } catch (error) {

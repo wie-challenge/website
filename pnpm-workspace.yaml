@@ -16,6 +16,7 @@ minimumReleaseAgeExclude:
   - '@better-auth/prisma-adapter@1.7.10'
   - '@better-auth/telemetry@1.7.10'
   - better-auth@1.7.10
+  - lucide-react@1.60.0
 
 # Prisma CLI-only transitives pinned past published advisories; runtime remains PostgreSQL.
 overrides:

@@ -22,7 +22,7 @@ async function register(request: APIRequestContext, email: string, name: string)
     (await request.get(`/api/auth/verify-email?token=${encodeURIComponent(value)}`)).status(),
   ).toBe(200);
 }
-async function login(page: Page, email: string, pw = password, next = '') {
+async function login(page: Page, email: string, pw = password, next = '/settings/profile') {
   await page.goto(`/auth/login${next ? `?next=${encodeURIComponent(next)}` : ''}`);
   await page.getByLabel('Email address', { exact: true }).fill(email);
   await page.getByLabel('Password', { exact: true }).fill(pw);
@@ -76,6 +76,7 @@ test('signup, email verification, profile, sessions and password changes work in
   const otherPage = await other.newPage();
   await login(otherPage, email);
   await page.reload();
+  await page.getByRole('tab', { name: 'Password & sessions', exact: true }).click();
   await expect(page.getByText('Another session', { exact: true })).toBeVisible();
   await page.getByRole('button', { name: 'Sign out session', exact: true }).click();
   await expect(page.getByText('Another session', { exact: true })).toHaveCount(0);
@@ -84,7 +85,10 @@ test('signup, email verification, profile, sessions and password changes work in
   await other.close();
   expect((await page.request.get('/api/v1/admin/users')).status()).toBe(403);
   await page.goto('/admin/users');
-  await expect(page).toHaveURL(/\/settings\/profile/);
+  await expect(page.getByRole('heading', { name: 'Access denied', exact: true })).toBeVisible();
+  await expect(page).toHaveURL(/\/admin\/users/);
+  await page.goto('/settings/profile');
+  await page.getByRole('tab', { name: 'Password & sessions', exact: true }).click();
   await page.getByLabel('Current password', { exact: true }).fill(password);
   await page.getByLabel('New password', { exact: true }).fill(resetPassword);
   await page.getByRole('button', { name: 'Update password', exact: true }).click();
@@ -168,7 +172,7 @@ test('mobile forms, reduced motion and validation do not overflow', async ({ pag
 test('network failures show a recoverable message without exposing upstream details', async ({
   page,
 }) => {
-  await page.goto('/auth/login');
+  await page.goto('/auth/login?next=%2Fsettings%2Fprofile');
   await page.route('**/api/auth/sign-in/email', (route) => route.abort('failed'));
   await page.getByLabel('Email address', { exact: true }).fill('error@example.com');
   await page.getByLabel('Password', { exact: true }).fill(password);
@@ -215,7 +219,7 @@ test('pending authentication disables duplicate submissions and recovers after a
       body: JSON.stringify({ code: 'SIGN_IN_FAILED', message: 'Sign-in unsuccessful. Try again.' }),
     });
   });
-  await page.goto('/auth/login');
+  await page.goto('/auth/login?next=%2Fsettings%2Fprofile');
   await page.getByLabel('Email address', { exact: true }).fill('pending@example.com');
   await page.getByLabel('Password', { exact: true }).fill(password);
   await page.getByRole('button', { name: 'Sign in', exact: true }).click();
@@ -234,7 +238,7 @@ test('small-screen login supports keyboard focus, associated labels and direct A
   page,
 }) => {
   await page.setViewportSize({ width: 320, height: 740 });
-  await page.goto('/auth/login');
+  await page.goto('/auth/login?next=%2Fsettings%2Fprofile');
   await page.keyboard.press('Tab');
   await expect(page.getByRole('link', { name: 'Skip to content' })).toBeFocused();
   await page.keyboard.press('Enter');

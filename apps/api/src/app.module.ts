@@ -1,3 +1,4 @@
+import { RegistryModule } from './modules/registry/registry.module.js';
 import { CommerceModule } from './modules/commerce/commerce.module.js';
 import { OrganizationsModule } from './modules/organizations/organizations.module.js';
 import { ArtisansModule } from './modules/artisans/artisans.module.js';
@@ -26,6 +27,7 @@ export class AppModule {
         ArtisansModule,
         GovernanceModule,
         CommerceModule,
+        RegistryModule,
       ],
       controllers: [HealthController],
     };

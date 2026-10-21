@@ -20,7 +20,7 @@ async function register(request: APIRequestContext, email: string) {
   ).toBe(200);
 }
 async function login(page: Page, email: string) {
-  await page.goto('/auth/login');
+  await page.goto('/auth/login?next=%2Fsettings%2Fprofile');
   await page.getByLabel('Email address', { exact: true }).fill(email);
   await page.getByLabel('Password', { exact: true }).fill(password);
   await page.getByRole('button', { name: 'Sign in', exact: true }).click();
@@ -251,6 +251,7 @@ for (const profile of [
       await keyboardButton(operator, 'Approve inspected batch');
       await keyboardButton(operator, 'Complete approved batch');
       await a11y(operator, `${profile.name}-operator-review`);
+      await operator.evaluate(() => window.scrollTo(0, 0));
       await operator.screenshot({
         path: `.local/commerce-${profile.name}-operator.png`,
         fullPage: true,
@@ -298,6 +299,7 @@ for (const profile of [
       await operator.getByRole('button', { name: 'Refresh notifications', exact: true }).click();
       await expect(operator.getByRole('list').filter({ hasText: /order.closed/i })).toBeVisible();
       await a11y(operator, `${profile.name}-report-inbox`);
+      await operator.evaluate(() => window.scrollTo(0, 0));
       await operator.screenshot({
         path: `.local/commerce-${profile.name}-operator.png`,
         fullPage: true,
