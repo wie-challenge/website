@@ -12,12 +12,12 @@ import {
 test('four personas separate platform governance, buyer authority and internal financial permissions', () => {
   assert.deepEqual(operationalPersonas, [
     'PLATFORM_ADMIN',
-    'HIRFACARE_OPERATOR',
+    'NASJ_OPERATOR',
     'BUYER_REPRESENTATIVE',
     'ASSOCIATION_COORDINATOR',
   ]);
   assert.deepEqual(rolesForOrganization('BUYER_BUSINESS'), ['BUYER_REPRESENTATIVE']);
-  assert.deepEqual(rolesForOrganization('INTERNAL'), ['HIRFACARE_OPERATOR']);
+  assert.deepEqual(rolesForOrganization('INTERNAL'), ['NASJ_OPERATOR']);
   assert.equal(grantAllowed('BUYER_BUSINESS', 'operator.payout.approve'), false);
   const buyer = {
     status: 'ACTIVE',

@@ -15,11 +15,11 @@ Prepare private directories and a key outside Git (example path under ignored `.
 ```sh
 install -d -m 700 .local/backups .local/backup-keys
 (umask 077; set -C; openssl rand 32 > .local/backup-keys/demo.key)
-export BACKUP_CONTAINER=hirfacare-foundation-postgres-1
+export BACKUP_CONTAINER=nasj-postgres-1
 export BACKUP_DIRECTORY="$PWD/.local/backups"
 export BACKUP_KEY_FILE="$PWD/.local/backup-keys/demo.key"
-export BACKUP_DATABASE_USER=hirfacare
-export BACKUP_DATABASE_NAME=hirfacare
+export BACKUP_DATABASE_USER=nasj
+export BACKUP_DATABASE_NAME=nasj
 export BACKUP_CONFIG_FILE="$PWD/.env"
 pnpm ops:backup
 pnpm ops:check
@@ -44,7 +44,7 @@ For incidents: correlate safe request/event IDs, inspect readiness/DB availabili
 
 ## Local-demo schedule and alert destination
 
-`pnpm ops:setup --prepare` validates the canonical local development configuration, preserves an existing private recovery key/configuration, and prepares/verifies user systemd units under ignored `.local/operations/units`. `pnpm ops:setup --enable` installs only HirfaCare-managed units in the current user's systemd directory and enables the timers; it refuses unmanaged replacements. `pnpm ops:setup --disable` disables those timers while preserving backup archives and keys. No system-wide services, external alert messages or lingering user session are configured.
+`pnpm ops:setup --prepare` validates the canonical local development configuration, preserves an existing private recovery key/configuration, and prepares/verifies user systemd units under ignored `.local/operations/units`. `pnpm ops:setup --enable` installs only NASJ-managed units in the current user's systemd directory and enables the timers; it refuses unmanaged replacements. `pnpm ops:setup --disable` disables those timers while preserving backup archives and keys. No system-wide services, external alert messages or lingering user session are configured.
 
 The backup timer runs daily at midnight in the host timezone and catches missed runs when the user manager resumes. The health timer checks every five minutes while `.local/dev.lock` indicates the canonical `pnpm dev` session is active. It pauses while the application is intentionally stopped; stale locks after a crash still allow outage detection until the normal launcher cleans them up. The local host was configured and checked on 2026-10-20. The project's previously disconnected PostgreSQL container was reattached to its own existing Docker network; migrations were then applied without resetting its volume or credentials.
 
@@ -53,10 +53,10 @@ The backup timer runs daily at midnight in the host timezone and catches missed 
 ```sh
 pnpm ops:setup --prepare
 pnpm ops:setup --enable
-systemctl --user list-timers 'hirfacare-local-*'
+systemctl --user list-timers 'nasj-local-*'
 pnpm ops:run backup
 pnpm ops:run health
-systemctl --user status hirfacare-local-backup.service hirfacare-local-health.service
+systemctl --user status nasj-local-backup.service nasj-local-health.service
 pnpm ops:setup --disable
 ```
 

@@ -176,7 +176,7 @@ Detailed implementation and verification are tracked in [the implementation trac
 
 ## E16 reliability and verification
 
-Capacity declarations now accept scoped replay keys, and IAM audits write metadata-only outbox events transactionally. Run `pnpm worker --watch` as a separate local database consumer, `pnpm worker --status` for diagnostics, and `pnpm ops:check` for local readiness/queue alerts. The built worker is `pnpm --filter @hirfacare/api worker --watch`. The worker delivers durable scoped commerce notices and rebuilds synthetic reports; physical firmware and device communication remain deferred.
+Capacity declarations now accept scoped replay keys, and IAM audits write metadata-only outbox events transactionally. Run `pnpm worker --watch` as a separate local database consumer, `pnpm worker --status` for diagnostics, and `pnpm ops:check` for local readiness/queue alerts. The built worker is `pnpm --filter @nasj/api worker --watch`. The worker delivers durable scoped commerce notices and rebuilds synthetic reports; physical firmware and device communication remain deferred.
 
 Self-contained guides in this repository: [architecture and exact TND rules](docs/architecture/README.md), [API/replay contract](docs/api/README.md), [development](docs/development/README.md), [deployment](docs/deployment/README.md), [security](docs/security/README.md), [testing](docs/testing/README.md), [firmware/privacy matrix](docs/firmware/README.md), [backup/recovery and alerts](docs/operations/README.md).
 
