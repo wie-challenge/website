@@ -9,7 +9,10 @@ export async function hasPrivilegedAccess(db: Db, userId: string) {
       where: {
         userId,
         status: 'ACTIVE',
-        OR: [{ isManager: true }, { roles: { some: { role: { notIn: ['BUYER', 'ARTISAN'] } } } }],
+        OR: [
+          { isManager: true },
+          { roles: { some: { role: { notIn: ['BUYER', 'BUYER_REPRESENTATIVE', 'ARTISAN'] } } } },
+        ],
       },
     }),
   );

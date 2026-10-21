@@ -22,7 +22,7 @@ async function register(request: APIRequestContext, email: string, name: string)
     (await request.get(`/api/auth/verify-email?token=${encodeURIComponent(value)}`)).status(),
   ).toBe(200);
 }
-async function login(page: Page, email: string, pw = password, next = '') {
+async function login(page: Page, email: string, pw = password, next = '/settings/profile') {
   await page.goto(`/auth/login${next ? `?next=${encodeURIComponent(next)}` : ''}`);
   await page.getByLabel('Email address', { exact: true }).fill(email);
   await page.getByLabel('Password', { exact: true }).fill(pw);
@@ -63,7 +63,7 @@ test('signup, email verification, profile, sessions and password changes work in
   await expect(page.getByLabel('Your name', { exact: true })).toHaveValue('UI Maker');
   await page.reload();
   await expect(page.getByLabel('Your name', { exact: true })).toHaveValue('UI Maker');
-  expect(await page.evaluate(() => document.cookie.includes('nasj.session_token'))).toBe(
+  expect(await page.evaluate(() => document.cookie.includes('hirfacare.session_token'))).toBe(
     false,
   );
   expect(await page.evaluate(() => localStorage.length)).toBe(0);
@@ -76,6 +76,7 @@ test('signup, email verification, profile, sessions and password changes work in
   const otherPage = await other.newPage();
   await login(otherPage, email);
   await page.reload();
+  await page.getByRole('tab', { name: 'Password & sessions', exact: true }).click();
   await expect(page.getByText('Another session', { exact: true })).toBeVisible();
   await page.getByRole('button', { name: 'Sign out session', exact: true }).click();
   await expect(page.getByText('Another session', { exact: true })).toHaveCount(0);
@@ -84,13 +85,16 @@ test('signup, email verification, profile, sessions and password changes work in
   await other.close();
   expect((await page.request.get('/api/v1/admin/users')).status()).toBe(403);
   await page.goto('/admin/users');
-  await expect(page).toHaveURL(/\/settings\/profile/);
+  await expect(page.getByRole('heading', { name: 'Access denied', exact: true })).toBeVisible();
+  await expect(page).toHaveURL(/\/admin\/users/);
+  await page.goto('/settings/profile');
+  await page.getByRole('tab', { name: 'Password & sessions', exact: true }).click();
   await page.getByLabel('Current password', { exact: true }).fill(password);
   await page.getByLabel('New password', { exact: true }).fill(resetPassword);
   await page.getByRole('button', { name: 'Update password', exact: true }).click();
   await expect(page.getByRole('status')).toContainText('Password updated');
   await page.getByRole('button', { name: 'Account menu' }).click();
-  await page.getByRole('button', { name: 'Sign out', exact: true }).click();
+  await page.getByRole('menuitem', { name: 'Sign out', exact: true }).click();
   await expect(page).toHaveURL(/\/auth\/login/);
   await login(page, email, resetPassword);
   await expect(page.getByLabel('Your name', { exact: true })).toHaveValue('UI Maker Updated');
@@ -169,7 +173,7 @@ test('mobile forms, reduced motion and validation do not overflow', async ({ pag
 test('network failures show a recoverable message without exposing upstream details', async ({
   page,
 }) => {
-  await page.goto('/auth/login');
+  await page.goto('/auth/login?next=%2Fsettings%2Fprofile');
   await page.route('**/api/auth/sign-in/email', (route) => route.abort('failed'));
   await page.getByLabel('Email address', { exact: true }).fill('error@example.com');
   await page.getByLabel('Password', { exact: true }).fill(password);
@@ -216,7 +220,7 @@ test('pending authentication disables duplicate submissions and recovers after a
       body: JSON.stringify({ code: 'SIGN_IN_FAILED', message: 'Sign-in unsuccessful. Try again.' }),
     });
   });
-  await page.goto('/auth/login');
+  await page.goto('/auth/login?next=%2Fsettings%2Fprofile');
   await page.getByLabel('Email address', { exact: true }).fill('pending@example.com');
   await page.getByLabel('Password', { exact: true }).fill(password);
   await page.getByRole('button', { name: 'Sign in', exact: true }).click();
@@ -229,4 +233,43 @@ test('pending authentication disables duplicate submissions and recovers after a
   }
   await expect(page.locator('main').getByRole('alert')).toContainText('Sign-in unsuccessful');
   await expect(page.getByRole('button', { name: 'Sign in', exact: true })).toBeEnabled();
+});
+
+test('small-screen login supports keyboard focus, associated labels and direct API denials through the proxy', async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 320, height: 740 });
+  await page.goto('/auth/login?next=%2Fsettings%2Fprofile');
+  await page.keyboard.press('Tab');
+  await expect(page.getByRole('link', { name: 'Skip to content' })).toBeFocused();
+  await page.keyboard.press('Enter');
+  const email = page.getByLabel('Email address', { exact: true });
+  await email.focus();
+  await page.keyboard.type('keyboard@example.com');
+  await page.keyboard.press('Tab');
+  const passwordInput = page.getByLabel('Password', { exact: true });
+  await expect(passwordInput).toBeFocused();
+  await page.keyboard.type(password);
+  await page.keyboard.press('Tab');
+  await expect(page.getByRole('button', { name: 'Show password', exact: true })).toBeFocused();
+  await page.keyboard.press('Enter');
+  await expect(passwordInput).toHaveAttribute('type', 'text');
+  await page.keyboard.press('Enter');
+  await expect(passwordInput).toHaveAttribute('type', 'password');
+  await page.keyboard.press('Tab');
+  await expect(page.getByRole('button', { name: 'Sign in', exact: true })).toBeFocused();
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+  for (const field of await page.locator('input:not([type="hidden"])').all()) {
+    const id = await field.getAttribute('id');
+    expect(id).toBeTruthy();
+    await expect(page.locator(`label[for="${id}"]`)).not.toBeEmpty();
+  }
+  const denied = await page.request.get('/api/v1/me');
+  expect(denied.status()).toBe(401);
+  expect((await denied.json()).requestId).toBe(denied.headers()['x-request-id']);
+  const malformed = await page.request.post('/api/auth/sign-in/email', {
+    headers: { Origin: 'http://127.0.0.1:3100' },
+    data: { email: 'bad', password: 'bad', wearableSummary: {} },
+  });
+  expect(malformed.status()).toBe(400);
 });

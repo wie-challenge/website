@@ -72,9 +72,6 @@ function start(command: string, args: string[], cwd = root) {
     env: environment,
     stdio: 'inherit',
     detached: process.platform !== 'win32',
-    // Windows exposes pnpm as a .cmd shim, which Node only launches through a shell.
-    // Arguments are fixed literals in this file, never user input.
-    shell: process.platform === 'win32' && command === 'pnpm',
   });
   children.add(child);
   if (child.pid) processGroups.add(child.pid);
@@ -194,7 +191,7 @@ try {
       'default',
       'compose',
       '-p',
-      'nasj',
+      'hirfacare-foundation',
       'up',
       '-d',
       '--wait',

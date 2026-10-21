@@ -356,7 +356,7 @@ export class GovernanceService {
                 craftSkillId: c.craftSkillId,
                 unitType: c.unitType,
                 quantity: c.quantity.toString(),
-                supersededAt:c.supersededAt,
+                supersededAt: c.supersededAt,
                 effectiveFrom: c.effectiveFrom,
                 effectiveTo: c.effectiveTo,
                 createdAt: c.createdAt,

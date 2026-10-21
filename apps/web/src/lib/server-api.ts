@@ -1,7 +1,7 @@
 import 'server-only';
 import { headers } from 'next/headers';
 import { cache } from 'react';
-import type { MeView } from '@nasj/contracts';
+import type { IdentityContext, MeView } from '@nasj/contracts';
 export async function serverApi<T>(path: string): Promise<T | null> {
   if (!path.startsWith('/api/v1/')) throw new Error('Invalid server API destination.');
   const incoming = await headers();
@@ -17,3 +17,5 @@ export async function serverApi<T>(path: string): Promise<T | null> {
   return response.json() as Promise<T>;
 }
 export const getMe = cache(() => serverApi<MeView>('/api/v1/me'));
+
+export const getIdentityContext = cache(() => serverApi<IdentityContext>('/api/v1/me/context'));

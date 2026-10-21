@@ -13,7 +13,8 @@
     "bootstrap-admin": "tsx --env-file=../../.env src/bootstrap-admin.ts",
     "test": "tsx --test test/unit/*.test.ts",
     "test:integration": "tsx test/integration.ts",
-    "typecheck:test": "tsc -p tsconfig.test.json"
+    "typecheck:test": "tsc -p tsconfig.test.json",
+    "worker": "node --env-file-if-exists=../../.env dist/jobs/main.js"
   },
   "dependencies": {
     "@arcjet/nest": "1.14.1",
@@ -32,6 +33,7 @@
     "pino": "10.3.1",
     "reflect-metadata": "0.2.2",
     "rxjs": "7.8.2",
+    "sharp": "0.35.5",
     "zod": "4.4.3"
   },
   "devDependencies": {

@@ -47,9 +47,7 @@
   },
   "overrides": [
     {
-      "includes": [
-        "apps/api/src/**/*.module.ts"
-      ],
+      "includes": ["apps/api/src/**/*.module.ts"],
       "linter": {
         "rules": {
           "complexity": {
@@ -58,5 +56,10 @@
         }
       }
     }
-  ]
+  ],
+  "css": {
+    "parser": {
+      "tailwindDirectives": true
+    }
+  }
 }

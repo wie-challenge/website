@@ -1,0 +1,72 @@
+$ pnpm db:generate && pnpm --filter @hirfacare/contracts build && pnpm --filter @hirfacare/api test:integration
+$ pnpm --filter @hirfacare/api db:generate
+$ prisma generate
+Loaded Prisma config from prisma.config.ts.
+
+Prisma schema loaded from prisma/schema.prisma.
+
+✔ Generated Prisma Client (v7.10.0) to ./../../node_modules/.pnpm/@prisma+client@7.10.0_prisma@7.10.0_@types+node@24.13.3_@types+react-dom@19.2.3_@types+_5598489cc1f5cf1be1d53099868dea5d/node_modules/@prisma/client in 351ms
+
+Start by importing your Prisma Client (See: https://pris.ly/d/importing-client)
+
+
+$ tsc -p tsconfig.json
+$ tsx test/integration.ts
+PASS startup, migrations, readiness and unauthenticated API denial
+PASS real signup, SMTP verification, login and safe cookie/session projections
+PASS generic registration and failed login avoid account enumeration
+PASS origin, CSRF, validation and object ownership protect profile and admin routes
+PASS parser and size errors use safe envelopes and request tracing
+PASS sessions are ownership-bound and revocation/logout invalidate access
+PASS password recovery is generic, single-use and revokes existing sessions
+PASS expired sessions and invalid verification links are rejected
+PASS admin pagination, role changes and last-administrator race protection
+PASS self-deactivation ends sessions and prevents future login without deleting history
+PASS atomic rate limits resist concurrent requests and spoofed forwarded IP headers
+PASS explicit proxy trust resolves independent clients while ignoring private identity header spoofing
+PASS operator bootstrap promotes only an existing verified account and revokes its sessions
+PASS organization onboarding denies public internal-operator creation, mass assignment and cross-tenant access
+PASS invitation email binding, hashed secrets, type-specific roles and concurrent single-use acceptance
+PASS expired, cancelled and rotated invitations deny stale links
+PASS invitation acceptance rechecks suspended organization, inviter status and current manager authority
+PASS membership revocation is immediate and isolated while last manager and self role changes are protected
+PASS concurrent manager departures preserve a verified organization manager
+PASS independent artisan profile, safe projection and strict mass assignment
+PASS artisan skill replacement validates catalog, duplicates and ownership
+PASS voluntary capacity preserves history and rejects wearable or health fields
+PASS association participation requires explicit consent and an approved association
+PASS delegation is precise, audited, email-private and restricted to linked association
+PASS delegate membership suspension removes access immediately and leaves owner access
+PASS revoked delegation and expired delegation lose access immediately
+PASS consent withdrawal and relationship withdrawal revoke assisted access
+PASS platform administrator has no implicit artisan or delegation access
+PASS personal preferences and privacy requests are owner-bound and reviewed with retention reasons
+PASS self data export excludes credentials and other users, with immutable redacted audits
+PASS consent withdrawal is ownership-bound and records purpose/version without deleting history
+PASS support cases enforce resource ownership, assignment and opt-in SMTP submission
+PASS organization responsibility summary blocks last-manager self-deactivation
+PASS emergency administrator suspension remains possible and audits unmanaged organizations
+PASS profile updates record field names without recording submitted personal values
+PASS revoke-other-sessions preserves current login and writes safe audit atomically
+PASS reassigned organization responsibility permits deactivation and retains memberships/audit
+PASS individual session revocation records safe durable history before ending current access
+PASS trusted recovery CLI validates operator and target before scoped audited handover
+PASS privileged MFA is enforced before approval/admin access and verified enrollment invalidates older sessions
+PASS verified email change keeps old identity until confirmations and blocks ordinary email profile editing
+PASS unverified accounts cannot sign in and expired recovery records cannot reset credentials
+PASS E16 concurrent capacity replay has one persisted revision, audit, outcome and event
+PASS E16 replay rechecks privacy consent, resource ownership and session expiry
+PASS E16 transaction failure rolls back mutation, command outcome, audit and outbox then retries safely
+PASS E16 operator worker CLI processes and reports the disposable queue
+PASS E16 failed local delivery rolls back consumer effects, exhausts bounded retries and recovers
+(node:240870) DeprecationWarning: Calling client.query() when the client is already executing a query is deprecated and will be removed in pg@9.0. Use async/await or an external async flow control mechanism instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+PASS commerce draft persistence, tenant privacy, strict validation and concurrent keyed creation
+PASS commerce exact quote acceptance creates one order and requires reconciled simulated funding
+PASS commerce offer reservations reconcile concurrent allocation, decline, expiry and explicit owner acceptance
+PASS commerce cumulative progress, inspection attempts and rework reject excess and preserve quantities
+PASS commerce fulfillment and separate exact synthetic ledgers block unpaid closure and duplicate settlement
+PASS additive migrations preserve preexisting identity, credential and session records
+{"evidence":"DISPOSABLE_SYNTHETIC_RESTORE","tables":31,"rows":579,"backupMs":145,"restoreAndVerifyMs":1161,"archiveBytes":140449}
+PASS E16 real pg_dump/pg_restore preserves every table in an isolated synthetic database
+Integration passed: 54 scenarios against a newly created disposable PostgreSQL database and local SMTP capture.

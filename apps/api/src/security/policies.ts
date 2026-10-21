@@ -3,7 +3,8 @@ export type PolicyName = 'login' | 'registration' | 'reset' | 'verification' | '
 export function policyName(path: string): PolicyName {
   if (path === '/api/auth/sign-in/email' || path.startsWith('/api/auth/two-factor/'))
     return 'login';
-  if (path === '/api/auth/sign-up/email') return 'registration';
+  if (path === '/api/auth/sign-up/email' || path === '/api/v1/participant-concerns')
+    return 'registration';
   if (
     [
       '/api/auth/request-password-reset',
@@ -32,6 +33,7 @@ export function ratePolicy(config: AppConfig, name: PolicyName) {
 }
 export function botProtected(path: string) {
   return [
+    '/api/v1/participant-concerns',
     '/api/auth/sign-in/email',
     '/api/auth/sign-up/email',
     '/api/auth/request-password-reset',

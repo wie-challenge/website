@@ -9,20 +9,20 @@ import type { BusinessRole } from '../packages/contracts/src/permissions.js';
 import { assertLocalDevelopment } from './local-development.js';
 
 const personas = [
-  { key: 'buyer', name: 'Demo Business Buyer', email: 'buyer@nasj-demo.invalid' },
-  { key: 'artisan', name: 'Demo Woman Artisan', email: 'artisan@nasj-demo.invalid' },
+  { key: 'buyer', name: 'Demo Business Buyer', email: 'buyer@hirfacare-demo.invalid' },
+  { key: 'artisan', name: 'Demo Woman Artisan', email: 'artisan@hirfacare-demo.invalid' },
   {
     key: 'coordinator',
     name: 'Demo Association Coordinator',
-    email: 'coordinator@nasj-demo.invalid',
+    email: 'coordinator@hirfacare-demo.invalid',
   },
   {
     key: 'production',
     name: 'Demo Production Manager',
-    email: 'production@nasj-demo.invalid',
+    email: 'production@hirfacare-demo.invalid',
   },
-  { key: 'finance', name: 'Demo Finance Manager', email: 'finance@nasj-demo.invalid' },
-  { key: 'admin', name: 'Demo Platform Reviewer', email: 'admin@nasj-demo.invalid' },
+  { key: 'finance', name: 'Demo Finance Manager', email: 'finance@hirfacare-demo.invalid' },
+  { key: 'admin', name: 'Demo Platform Reviewer', email: 'admin@hirfacare-demo.invalid' },
 ] as const;
 type Credential = { persona: string; name: string; email: string; password: string };
 export async function seedFoundation(mode: 'demo' | 'development') {
@@ -42,10 +42,10 @@ export async function seedFoundation(mode: 'demo' | 'development') {
       (process.env.DEMO_MODE !== 'true' ||
         process.env.NODE_ENV === 'production' ||
         !['postgres:', 'postgresql:'].includes(database.protocol) ||
-        database.pathname !== '/nasj_demo' ||
+        database.pathname !== '/hirfacare_demo' ||
         database.hostname !== '127.0.0.1' ||
         database.port !== '5542' ||
-        database.username !== 'nasj_demo' ||
+        database.username !== 'hirfacare_demo' ||
         database.search ||
         database.hash ||
         process.env.PUBLIC_APP_URL !== 'http://127.0.0.1:3200')
@@ -215,7 +215,7 @@ export async function seedFoundation(mode: 'demo' | 'development') {
               region: 'Tunis',
               description:
                 'Fictional demonstration organization. No real commercial activity or personal records.',
-              contactEmail: `${spec.owner}@nasj-demo.invalid`,
+              contactEmail: `${spec.owner}@hirfacare-demo.invalid`,
               representativeName:
                 personas.find((p) => p.key === spec.owner)?.name ?? 'Demo Representative',
               createdByUserId: id(spec.owner),
@@ -381,7 +381,7 @@ export async function seedFoundation(mode: 'demo' | 'development') {
             data: {
               actorId: admin,
               targetType: demo ? 'DemoEnvironment' : 'DevelopmentEnvironment',
-              targetId: demo ? 'nasj_demo' : 'nasj',
+              targetId: demo ? 'hirfacare_demo' : 'hirfacare',
               action: demo
                 ? 'demo.fixture.labels.normalized'
                 : 'development.fixture.labels.normalized',
@@ -434,7 +434,7 @@ export async function seedFoundation(mode: 'demo' | 'development') {
             data: {
               actorId: admin,
               targetType: demo ? 'DemoEnvironment' : 'DevelopmentEnvironment',
-              targetId: demo ? 'nasj_demo' : 'nasj',
+              targetId: demo ? 'hirfacare_demo' : 'hirfacare',
               action: demo ? 'demo.fixtures.created' : 'development.fixtures.created',
               correlationId: demo ? 'isolated-demo-seed-v1' : 'local-development-seed-v1',
               reason: demo

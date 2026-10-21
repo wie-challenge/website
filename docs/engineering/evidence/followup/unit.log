@@ -1,0 +1,84 @@
+$ pnpm --filter @hirfacare/contracts build && pnpm --filter @hirfacare/api test && pnpm --filter @hirfacare/web test && pnpm --filter @hirfacare/wearable-simulator test
+$ tsc -p tsconfig.json
+$ tsx --test test/unit/*.test.ts
+✔ authenticated backup encryption rejects corruption, wrong keys and invalid archive bounds (5.25769ms)
+✔ backup files and keys require owner privacy, reject symlinks and never overwrite archives (22.845976ms)
+✔ real Pino redaction removes secrets, request bodies and signal fields from structured output (1.776612ms)
+✔ seven-day retention removes only expired private tool archives (6.20836ms)
+✔ all specified RFQ, offer, batch, order and payment transitions reject missing edges and roles (7.418069ms)
+✔ quantity reconciliation rejects excess allocation, production, QA, delivery and invalid numbers (0.636986ms)
+✔ settlements are exact, bounded and cannot overpay approved quantities (0.342549ms)
+✔ deterministic quantity/settlement properties hold across partitions and boundary mutations (9.118556ms)
+✔ expiry, explicit rework consent, evidence, funding and closure gates cannot be bypassed (0.693806ms)
+✔ synthetic partial fulfillment carries denominators and exact earned/outstanding millimes (2.174676ms)
+✔ empty sources do not invent rates or verified evidence; incompatible provenance is rejected (0.489844ms)
+✔ persisted audit milestones preserve shipped and accepted history during disputes (0.229464ms)
+✔ TND has exact scale, bounded addition and canonical serialization (1.026813ms)
+✔ HALF_UP rational rounding and round-trip properties (1.333208ms)
+✔ capacity permits zero and exact cents; rejects loss and impossible quantities (0.27566ms)
+✔ capacity revisions require identical positive periods; adjacent periods are allowed by query (0.157206ms)
+✔ all implemented organization approval transitions are explicit (0.149062ms)
+✔ idempotency key is optional but bounded and cannot contain sensitive arbitrary text (0.327035ms)
+✔ configuration rejects unsafe production defaults and unrestricted proxy trust (7.76107ms)
+✔ strict contracts prevent public role/status mass assignment and bound pagination (1.355058ms)
+{"level":50,"time":1792515427200,"pid":56252,"hostname":"ashenix-crawlere40","requestId":"request-one","errorType":"Error","msg":"Request failed"}
+✔ CSRF proofs are session-bound and cannot be replayed for another session (9.778267ms)
+✔ public user projections exclude future fields and credentials (0.605153ms)
+✔ errors never echo malformed input, database messages or internal exception details (1.565968ms)
+✔ rate policies distinguish abuse flows and narrowly exempt health probes (0.702414ms)
+✔ local startup accepts only the canonical local development services (1.611898ms)
+✔ startup refusal never echoes a database credential (0.560651ms)
+✔ operational alert threshold reports failures and lag without payloads (1.59738ms)
+✔ database outage fails readiness with safe 503 while liveness remains healthy (0.949908ms)
+✔ backup age alerts follow the approved 24-hour recovery point without exposing paths (0.214016ms)
+✔ membership permissions deny revoked access and separate management from financial authority (1.107676ms)
+✔ capacity schema rejects unknown health inputs and invalid date periods (3.104597ms)
+✔ demo configuration cannot point at ordinary database and production requires privileged MFA (2.446602ms)
+✔ legitimate Arcjet decisions pass without a second rate counter or credential forwarding (4.523765ms)
+✔ live rate decisions return 429 and bot decisions return 403 (1.268091ms)
+✔ dry-run deny remains observable without blocking normal authentication (0.279031ms)
+✔ operational failure is closed by default; explicit open mode uses only the local fallback counter (0.78427ms)
+✔ health probes never invoke bot/provider rules (0.210951ms)
+ℹ tests 37
+ℹ suites 0
+ℹ pass 37
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 779.365453
+$ tsx --test test/*.test.ts
+✔ login redirect allowlist rejects external, encoded and unsupported destinations (0.83731ms)
+✔ browser mutations obtain a session-bound CSRF proof and never store session credentials (13.208783ms)
+✔ API failures and network errors become safe user-facing errors (0.689574ms)
+✔ workspace redirects allow scoped destinations and discard invitation secrets (0.40178ms)
+✔ PUT mutations use the same CSRF and credential protections as other writes (0.511032ms)
+ℹ tests 5
+ℹ suites 0
+ℹ pass 5
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 153.071408
+$ tsx --test test/*.test.ts
+✔ default 40-minute threshold has exact before/at boundary and bounded simulated pulse (5.571836ms)
+✔ editable threshold validates settings atomically; configuring never pulses (0.361677ms)
+✔ rest only resets accumulated activity after sustained rest; no false stationary reminders (0.20117ms)
+✔ short rest pauses rather than inventing activity duration (0.112662ms)
+✔ cooldown, dismiss, reset and disable preserve participant control (0.204926ms)
+✔ NaN, infinity, out-of-range and disconnected signals break continuity (0.231994ms)
+✔ missing samples and duplicate/reordered monotonic clocks cannot create reminders (0.23998ms)
+✔ motor failure stops output and requires a fresh model before resuming (0.15122ms)
+✔ weekly coverage splits at Tunis Monday boundary with bounded retention and defensive copies (0.281768ms)
+✔ wall-clock jumps do not add invented summary time; monotonic threshold remains authoritative (0.203976ms)
+✔ local deletion clears summaries and threshold state without any pulse (0.169061ms)
+✔ entire fixed-device lifecycle runs with fetch and sockets blocked and zero attempts (4.238031ms)
+ℹ tests 12
+ℹ suites 0
+ℹ pass 12
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 153.690131

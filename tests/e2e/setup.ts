@@ -1,4 +1,6 @@
-import { spawn, type ChildProcess } from 'node:child_process';
+import { seedBrowserCommerceFixture } from '../../apps/api/test/commerce.fixture';
+import { promisify } from 'node:util';
+import { spawn, execFile, type ChildProcess } from 'node:child_process';
 import { createServer } from 'node:http';
 import { createServer as netServer } from 'node:net';
 import { randomBytes } from 'node:crypto';
@@ -46,6 +48,28 @@ export default async function setup() {
         res.end(JSON.stringify({ token }));
       } else if (url.pathname.endsWith('/promote') && req.method === 'POST') {
         await promoteDisposableAdmin(database.url, email);
+        res.end('{}');
+      } else if (url.pathname.endsWith('/commerce-fixture') && req.method === 'POST') {
+        const fixture = await seedBrowserCommerceFixture(
+          database.url,
+          url.searchParams.get('suffix') ?? '',
+        );
+        res.setHeader('Content-Type', 'application/json');
+        res.end(JSON.stringify(fixture));
+      } else if (url.pathname.endsWith('/run-worker') && req.method === 'POST') {
+        // Loopback nonce test control only; not registered in the production app.
+        await promisify(execFile)(
+          process.execPath,
+          [
+            `${root}node_modules/tsx/dist/cli.mjs`,
+            '--tsconfig',
+            `${root}apps/api/tsconfig.json`,
+            'apps/api/src/jobs/main.ts',
+            '--once',
+          ],
+          { cwd: root, env: { ...process.env, ...environment } },
+        );
+        res.setHeader('Content-Type', 'application/json');
         res.end('{}');
       } else res.writeHead(404).end();
     } catch {

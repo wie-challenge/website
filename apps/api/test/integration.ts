@@ -1,3 +1,10 @@
+import { runProcurementScenarios } from './procurement.scenarios.js';
+import { runRoleUpgradeScenario } from './roles-upgrade.scenarios.js';
+import { runRoleScenarios } from './roles.scenarios.js';
+import { runCommerceScenarios } from './commerce.scenarios.js';
+import { runCatalogScenarios } from './catalog.scenarios.js';
+import { runRestoreScenario } from './restore.scenarios.js';
+import { runE16Scenarios } from './e16.scenarios.js';
 import { runUpgradeScenario } from './upgrade.scenarios.js';
 import { runLifecycleScenarios } from './lifecycle.scenarios.js';
 import { runMfaScenarios } from './mfa.scenarios.js';
@@ -56,7 +63,13 @@ try {
           if (value) jar.set(name, value);
           else jar.delete(name);
         }
-        return { status: response.status, body: await response.json(), headers: response.headers };
+        return {
+          status: response.status,
+          body: response.headers.get('content-type')?.includes('application/json')
+            ? await response.json()
+            : await response.text(),
+          headers: response.headers,
+        };
       },
     };
   }
@@ -91,6 +104,7 @@ try {
     assert.equal((await anon.request('/api/health/live')).status, 200);
     assert.equal((await anon.request('/api/health/ready')).status, 200);
     assert.equal((await anon.request('/api/v1/me')).status, 401);
+    assert.equal((await anon.request('/api/v1/commerce/catalog')).status, 401);
     assert.equal((await anon.request('/API/v1/me')).status, 404);
     assert.equal((await anon.request('/api/v1/me/')).status, 404);
     assert.equal(
@@ -113,7 +127,7 @@ try {
     async () => {
       assert.equal(alice.me.user.emailVerified, true);
       assert.equal(alice.me.user.role, 'USER');
-      const cookie = alice.client.jar.get('nasj.session_token');
+      const cookie = alice.client.jar.get('hirfacare.session_token');
       assert.ok(cookie);
       const login = await alice.client.request('/api/auth/sign-in/email', 'POST', {
         email: 'alice@example.com',
@@ -508,12 +522,19 @@ try {
       assert.equal((await operator.client.request('/api/v1/me')).status, 401);
     },
   );
+  await runRoleUpgradeScenario(check);
+  await runRoleScenarios({ db, register, mutate, check, mail });
   await runOrganizationScenarios({ db, register, mutate, check, mail });
   await runArtisanScenarios({ db, register, mutate, check });
   await runGovernanceScenarios({ db, register, mutate, check, mail });
   await runLifecycleScenarios({ db, client, register, mutate, check, config });
   await runMfaScenarios({ db, config, client, register, mutate, check, mail });
+  await runE16Scenarios({ db, register, mutate, check, config });
+  await runCommerceScenarios({ db, register, check, config });
+  await runCatalogScenarios({ db, register, check });
+  await runProcurementScenarios({ db, register, check, config });
   await runUpgradeScenario(check);
+  await runRestoreScenario(database, check);
   console.log(
     `Integration passed: ${assertions} scenarios against a newly created disposable PostgreSQL database and local SMTP capture.`,
   );

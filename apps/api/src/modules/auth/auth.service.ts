@@ -40,7 +40,7 @@ export class AuthService {
         },
       },
       advanced: {
-        cookiePrefix: config.DEMO_MODE ? 'nasj_demo' : 'nasj',
+        cookiePrefix: config.DEMO_MODE ? 'hirfacare_demo' : 'hirfacare',
         useSecureCookies: config.PUBLIC_APP_URL.startsWith('https://'),
         defaultCookieAttributes: {
           httpOnly: true,

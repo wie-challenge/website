@@ -1,7 +1,12 @@
 import { z } from 'zod';
 import { businessRoles, type BusinessRole } from './permissions.js';
 
-export const organizationTypeSchema = z.enum(['BUYER_BUSINESS', 'ASSOCIATION', 'INTERNAL']);
+export const organizationTypeSchema = z.enum([
+  'BUYER_BUSINESS',
+  'ASSOCIATION',
+  'PARTNER_COOPERATIVE',
+  'INTERNAL',
+]);
 export const organizationApprovalSchema = z.enum([
   'DRAFT',
   'PENDING_REVIEW',
@@ -39,7 +44,7 @@ export const invitationCreateSchema = z
     email: contactEmail,
     roles: z
       .array(businessRoleSchema)
-      .max(11)
+      .max(13)
       .refine((roles) => new Set(roles).size === roles.length, 'Duplicate roles are not allowed.'),
     isManager: z.boolean().default(false),
   })
@@ -66,7 +71,7 @@ export const membershipRolesSchema = z
   .object({
     roles: z
       .array(businessRoleSchema)
-      .max(11)
+      .max(13)
       .refine((roles) => new Set(roles).size === roles.length, 'Duplicate roles are not allowed.'),
     reason: z.string().trim().min(5).max(1000),
   })
@@ -104,6 +109,7 @@ export type MembershipView = {
   organizationId: string;
   status: z.infer<typeof membershipStatusSchema>;
   isManager: boolean;
+  explicitPermissions?: string[];
   roles: BusinessRole[];
   joinedAt: string | null;
 };

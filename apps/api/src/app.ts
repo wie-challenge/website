@@ -35,10 +35,11 @@ export async function createApp(options: { config?: AppConfig; arcjet?: ArcjetNe
     origin: config.PUBLIC_APP_URL,
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'X-CSRF-Token'],
+    allowedHeaders: ['Content-Type', 'X-CSRF-Token', 'Idempotency-Key'],
     exposedHeaders: ['X-Request-ID', 'Retry-After'],
   });
   app.use((req: AppRequest, res: Response, next: NextFunction) => {
+    const startedAt = performance.now();
     req.requestId = randomUUID();
     res.setHeader('X-Request-ID', req.requestId);
     res.setHeader('Cache-Control', 'no-store');
@@ -56,13 +57,21 @@ export async function createApp(options: { config?: AppConfig; arcjet?: ArcjetNe
           method: req.method,
           endpoint: routeLabel(req.path),
           status: res.statusCode,
+          durationMs: Math.round(performance.now() - startedAt),
         },
         'Request completed',
       ),
     );
     next();
   });
-  app.use(express.json({ limit: '32kb' }));
+  const ordinaryJson = express.json({ limit: '32kb' });
+  const attachmentJson = express.json({ limit: '384kb' });
+  app.use((req: Request, res: Response, next: NextFunction) =>
+    (/^\/api\/v1\/procurement\/rfqs\/[a-zA-Z0-9_-]{1,128}\/attachments$/.test(req.path) &&
+      req.method === 'POST'
+      ? attachmentJson
+      : ordinaryJson)(req, res, next),
+  );
   app.use((req: Request, _res: Response, next: NextFunction) => {
     try {
       if (

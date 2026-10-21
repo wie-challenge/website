@@ -7,7 +7,7 @@ import { SMTPServer } from 'smtp-server';
 import { validateEnvironment } from '../src/config/env.js';
 const exec = promisify(execFile);
 export async function disposableDatabase(options: { foundationOnly?: boolean } = {}) {
-  const name = `nasj-test-${randomBytes(8).toString('hex')}`;
+  const name = `hirfacare-test-${randomBytes(8).toString('hex')}`;
   const password = randomBytes(24).toString('hex');
   await exec('docker', [
     '--context',
@@ -74,7 +74,7 @@ export async function disposableDatabase(options: { foundationOnly?: boolean } =
         migrationOptions,
       );
     } else await exec('pnpm', ['exec', 'prisma', 'migrate', 'deploy'], migrationOptions);
-    return { url, stop };
+    return { url, stop, containerName: name };
   } catch (error) {
     await stop();
     throw error;

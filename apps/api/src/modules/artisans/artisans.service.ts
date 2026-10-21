@@ -1,3 +1,5 @@
+import { exactCapacityQuantity, isCapacityRevision } from '@nasj/contracts';
+import { replaySafe, validateIdempotencyKey } from '../foundation/idempotency.js';
 import { HttpException, Inject, Injectable } from '@nestjs/common';
 import type {
   ArtisanProfileInput,
@@ -43,6 +45,12 @@ export class ArtisansService {
   ) {
     const profile = await db.artisanProfile.findUnique({ where: { id }, select: profileSelect });
     if (!profile) fail(404, 'NOT_FOUND', 'Artisan profile not found.');
+    if (!profile.userId)
+      fail(
+        403,
+        'ASSISTED_REGISTRY_REQUIRED',
+        'Use the assigned association registry for this participant.',
+      );
     const owner = await db.user.findUnique({
       where: { id: profile.userId },
       select: { status: true, emailVerified: true },
@@ -50,6 +58,12 @@ export class ArtisansService {
     if (owner?.status !== 'ACTIVE' || !owner.emailVerified)
       fail(403, 'FORBIDDEN', 'This artisan profile is unavailable.');
     if (profile.userId === actor.id) return { profile, delegation: null };
+    if (profile.createdById && profile.createdById !== profile.userId)
+      fail(
+        403,
+        'ASSISTED_REGISTRY_REQUIRED',
+        'Use the assigned registry and current worker authorization for assisted participants.',
+      );
     await this.requireProfileConsent(profile.userId, db);
     const grants = await db.delegationGrant.findMany({
       where: {
@@ -97,7 +111,13 @@ export class ArtisansService {
       'An active association relationship and delegation for this action are required.',
     );
   }
-  private async requireProfileConsent(userId: string, db: Db) {
+  private async requireProfileConsent(userId: string | null, db: Db) {
+    if (!userId)
+      fail(
+        403,
+        'AUTHORIZATION_REQUIRED',
+        'Use participant authorization in the association registry.',
+      );
     const consent = await db.consentRecord.findFirst({
       where: {
         userId,
@@ -281,7 +301,8 @@ export class ArtisansService {
       ).map(capacityView),
     };
   }
-  async declare(actor: Actor, input: CapacityDeclarationInput, id?: string) {
+  async declare(actor: Actor, input: CapacityDeclarationInput, id?: string, key?: string) {
+    validateIdempotencyKey(key);
     return iamTransaction(this.db, actor, async (tx) => {
       const { profile, delegation } = await this.target(actor, id, 'artisan.capacity.update', tx);
       await this.requireProfileConsent(profile.userId, tx);
@@ -296,34 +317,62 @@ export class ArtisansService {
       });
       if (!skill?.craftSkill.isActive)
         fail(400, 'INVALID_SKILL', 'Declare capacity for one of your active craft skills.');
-      const effectiveFrom=new Date(input.effectiveFrom),effectiveTo=new Date(input.effectiveTo);
-      const overlaps=await tx.capacityDeclaration.findMany({where:{artisanProfileId:profile.id,craftSkillId:input.craftSkillId,unitType:input.unitType,supersededAt:null,effectiveFrom:{lt:effectiveTo},effectiveTo:{gt:effectiveFrom}},select:{id:true,effectiveFrom:true,effectiveTo:true}});
-      if(overlaps.some(row=>row.effectiveFrom.getTime()!==effectiveFrom.getTime() || row.effectiveTo.getTime()!==effectiveTo.getTime())) fail(409,'CAPACITY_OVERLAP','This period overlaps an existing declaration. Revise the same exact period or choose a non-overlapping period.');
-      if(overlaps.length)await tx.capacityDeclaration.updateMany({where:{id:{in:overlaps.map(row=>row.id)}},data:{supersededAt:new Date()}});
-      const row = await tx.capacityDeclaration.create({
-        data: {
-          artisanProfileId: profile.id,
-          craftSkillId: input.craftSkillId,
-          unitType: input.unitType,
-          quantity: input.quantity,
-          effectiveFrom: new Date(input.effectiveFrom),
-          effectiveTo: new Date(input.effectiveTo),
-          declaredByUserId: actor.id,
+      return replaySafe(
+        tx,
+        { actorId: actor.id, resourceId: profile.id, operation: 'capacity.declare', key },
+        input,
+        async () => {
+          const quantity = exactCapacityQuantity(input.quantity);
+          const effectiveFrom = new Date(input.effectiveFrom),
+            effectiveTo = new Date(input.effectiveTo);
+          const overlaps = await tx.capacityDeclaration.findMany({
+            where: {
+              artisanProfileId: profile.id,
+              craftSkillId: input.craftSkillId,
+              unitType: input.unitType,
+              supersededAt: null,
+              effectiveFrom: { lt: effectiveTo },
+              effectiveTo: { gt: effectiveFrom },
+            },
+            select: { id: true, effectiveFrom: true, effectiveTo: true },
+          });
+          if (!isCapacityRevision({ effectiveFrom, effectiveTo }, overlaps))
+            fail(
+              409,
+              'CAPACITY_OVERLAP',
+              'This period overlaps an existing declaration. Revise the same exact period or choose a non-overlapping period.',
+            );
+          if (overlaps.length)
+            await tx.capacityDeclaration.updateMany({
+              where: { id: { in: overlaps.map((row) => row.id) } },
+              data: { supersededAt: new Date() },
+            });
+          const row = await tx.capacityDeclaration.create({
+            data: {
+              artisanProfileId: profile.id,
+              craftSkillId: input.craftSkillId,
+              unitType: input.unitType,
+              quantity,
+              effectiveFrom: new Date(input.effectiveFrom),
+              effectiveTo: new Date(input.effectiveTo),
+              declaredByUserId: actor.id,
+            },
+          });
+          await audit(tx, actor, {
+            action: 'artisan.capacity.update',
+            targetType: 'CapacityDeclaration',
+            targetId: row.id,
+            organizationId: delegation?.organizationId,
+            after: {
+              artisanProfileId: profile.id,
+              declaredByUserId: actor.id,
+              delegationId: delegation?.id ?? null,
+              source: 'VOLUNTARY_DECLARATION',
+            },
+          });
+          return capacityView(row);
         },
-      });
-      await audit(tx, actor, {
-        action: 'artisan.capacity.update',
-        targetType: 'CapacityDeclaration',
-        targetId: row.id,
-        organizationId: delegation?.organizationId,
-        after: {
-          artisanProfileId: profile.id,
-          declaredByUserId: actor.id,
-          delegationId: delegation?.id ?? null,
-          source: 'VOLUNTARY_DECLARATION',
-        },
-      });
-      return capacityView(row);
+      );
     });
   }
   async associationCatalog() {
@@ -362,6 +411,30 @@ export class ArtisansService {
         where: { id: input.organizationId, type: 'ASSOCIATION', approvalStatus: 'APPROVED' },
       });
       if (!org) fail(400, 'INVALID_ASSOCIATION', 'Select an approved association.');
+      const management = await tx.artisanManagement.findFirst({
+        where: { artisanProfileId: profile.id, endedAt: null },
+      });
+      if (management && management.organizationId !== org.id)
+        fail(
+          409,
+          'CONTROLLED_TRANSFER_REQUIRED',
+          'Ask for a reviewed managing association transfer.',
+        );
+      if (
+        await tx.associationMembership.findFirst({
+          where: {
+            artisanProfileId: profile.id,
+            status: 'ACTIVE',
+            endedAt: null,
+            organizationId: { not: org.id },
+          },
+        })
+      )
+        fail(
+          409,
+          'CONTROLLED_TRANSFER_REQUIRED',
+          'Only one active managing association is permitted.',
+        );
       const old = await tx.associationMembership.findUnique({
         where: {
           artisanProfileId_organizationId: {
@@ -400,6 +473,15 @@ export class ArtisansService {
           consentRecordId: consent.id,
         },
       });
+      if (!management)
+        await tx.artisanManagement.create({
+          data: {
+            artisanProfileId: profile.id,
+            organizationId: org.id,
+            recordedById: actor.id,
+            reason: 'Existing authenticated participant voluntary association link',
+          },
+        });
       await audit(tx, actor, {
         action: 'artisan.associations.manage',
         targetType: 'AssociationMembership',
@@ -418,6 +500,14 @@ export class ArtisansService {
       });
       if (!row) fail(404, 'NOT_FOUND', 'Active association relationship not found.');
       const now = new Date();
+      await tx.artisanManagement.updateMany({
+        where: { artisanProfileId: profile.id, organizationId: row.organizationId, endedAt: null },
+        data: { endedAt: now },
+      });
+      await tx.artisanAssignment.updateMany({
+        where: { artisanProfileId: profile.id, organizationId: row.organizationId, endedAt: null },
+        data: { endedAt: now },
+      });
       await tx.associationMembership.update({
         where: { id },
         data: { status: 'REVOKED', endedAt: now },

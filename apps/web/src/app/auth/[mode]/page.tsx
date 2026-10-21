@@ -30,8 +30,8 @@ export default async function AuthPage({
           </h2>
           <p>
             {mode === 'register'
-              ? 'Create your account, verify your email, then register a company or association, or build your artisan profile.'
-              : 'Sign in to manage your organization, your team and your artisan profile.'}
+              ? 'Create your account, verify your email, then register a company or association, and accept your team invitation.'
+              : 'Sign in to manage your organization, your team and your assigned work.'}
           </p>
         </div>
         <Weave />

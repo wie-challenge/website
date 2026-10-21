@@ -1,0 +1,33 @@
+$ pnpm --filter @hirfacare/api db:migrate
+$ prisma migrate deploy
+Loaded Prisma config from prisma.config.ts.
+
+Prisma schema loaded from prisma/schema.prisma.
+Datasource "db": PostgreSQL database "hirfacare", schema "public" at "127.0.0.1:5442"
+
+7 migrations found in prisma/migrations
+
+Applying migration `202610170001_identity_organizations`
+Applying migration `202610170002_privileged_mfa`
+Applying migration `202610170003_capacity_revisions`
+Applying migration `202610200001_e16_reliability`
+Applying migration `202610200002_synthetic_commerce`
+Applying migration `202610200003_commerce_projections`
+
+The following migration(s) have been applied:
+
+migrations/
+  └─ 202610170001_identity_organizations/
+    └─ migration.sql
+  └─ 202610170002_privileged_mfa/
+    └─ migration.sql
+  └─ 202610170003_capacity_revisions/
+    └─ migration.sql
+  └─ 202610200001_e16_reliability/
+    └─ migration.sql
+  └─ 202610200002_synthetic_commerce/
+    └─ migration.sql
+  └─ 202610200003_commerce_projections/
+    └─ migration.sql
+
+All migrations have been successfully applied.

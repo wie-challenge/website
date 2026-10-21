@@ -28,7 +28,7 @@ async function register(request: APIRequestContext, email: string, name: string)
   ).toBeTruthy();
 }
 async function login(page: Page, email: string) {
-  await page.goto('/auth/login');
+  await page.goto('/auth/login?next=%2Fsettings%2Fprofile');
   await page.getByLabel('Email address', { exact: true }).fill(email);
   await page.getByLabel('Password', { exact: true }).fill(password);
   await page.getByRole('button', { name: 'Sign in', exact: true }).click();
@@ -111,7 +111,7 @@ test('buyer onboarding, approval, invitation and scoped membership revocation wo
   await expect(page.getByText('Approval: Approved', { exact: false })).toBeVisible();
   const staffEmail = 'identity-staff@example.com';
   await page.getByLabel('Invitee email', { exact: true }).fill(staffEmail);
-  await page.getByRole('checkbox', { name: 'Buyer', exact: true }).check();
+  await page.getByRole('checkbox', { name: 'Buyer representative', exact: true }).check();
   await page.getByRole('button', { name: 'Invite member', exact: true }).click();
   await expect(page.getByText(staffEmail, { exact: true })).toBeVisible();
   const invitation = await mailToken(request, staffEmail, 'invitation');
@@ -134,7 +134,7 @@ test('buyer onboarding, approval, invitation and scoped membership revocation wo
     ).ok(),
   ).toBeTruthy();
   await staff.getByRole('button', { name: 'Account menu' }).click();
-  await staff.getByRole('button', { name: 'Sign out', exact: true }).click();
+  await staff.getByRole('menuitem', { name: 'Sign out', exact: true }).click();
   await staff.goto(`/invitations/accept#token=${invitation}`);
   await staff.getByLabel('Email address', { exact: true }).fill(staffEmail);
   expect(await staff.evaluate(() => location.hash)).toBe('');
@@ -214,6 +214,8 @@ test('independent artisan manages skills, capacity, association consent and limi
   browser,
 }) => {
   test.setTimeout(120000);
+  await page.setViewportSize({ width: 360, height: 800 });
+  await page.emulateMedia({ reducedMotion: 'reduce' });
   const artisanEmail = 'identity-artisan@example.com';
   const coordinatorEmail = 'identity-coordinator@example.com';
   await register(request, artisanEmail, 'Identity Artisan');
@@ -244,8 +246,33 @@ test('independent artisan manages skills, capacity, association consent and limi
   await capacity.getByLabel('Quantity per week', { exact: true }).fill('12');
   await capacity.getByLabel('Effective from', { exact: true }).fill('2027-01-01T08:00');
   await capacity.getByLabel('Effective until', { exact: true }).fill('2027-01-08T08:00');
+  const replayKeys: string[] = [];
+  let dropResponse = true;
+  await page.route('**/api/v1/artisans/me/capacity', async (route) => {
+    if (route.request().method() !== 'POST') return route.continue();
+    replayKeys.push(route.request().headers()['idempotency-key']);
+    if (dropResponse) {
+      dropResponse = false;
+      const committed = await route.fetch();
+      expect(committed.status()).toBe(201);
+      return route.abort('failed');
+    }
+    return route.continue();
+  });
+  await capacity.getByRole('button', { name: 'Declare capacity', exact: true }).click();
+  await expect(capacity.getByRole('alert')).toContainText('temporarily unavailable');
   await capacity.getByRole('button', { name: 'Declare capacity', exact: true }).click();
   await expect(capacity.getByText('12 hours per week', { exact: false })).toBeVisible();
+  expect(replayKeys).toHaveLength(2);
+  expect(replayKeys[0]).toBeTruthy();
+  expect(replayKeys[1]).toBe(replayKeys[0]);
+  const persisted = await (await page.request.get('/api/v1/artisans/me/capacity')).json();
+  expect(persisted.items).toHaveLength(1);
+  expect(persisted.items[0].quantity).toBe('12');
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(
+    true,
+  );
+  await page.unroute('**/api/v1/artisans/me/capacity');
   await page
     .getByLabel('Availability for new opportunities', { exact: true })
     .selectOption('PAUSED');
@@ -355,7 +382,7 @@ test('authenticator enrollment and recovery-code sign-in work without persisting
   await expect(page.locator('.recovery-codes')).toHaveCount(0);
   expect(await page.evaluate(() => localStorage.length)).toBe(0);
   await page.getByRole('button', { name: 'Account menu' }).click();
-  await page.getByRole('button', { name: 'Sign out', exact: true }).click();
+  await page.getByRole('menuitem', { name: 'Sign out', exact: true }).click();
   await page.getByLabel('Email address', { exact: true }).fill(email);
   await page.getByLabel('Password', { exact: true }).fill(password);
   await page.getByRole('button', { name: 'Sign in', exact: true }).click();
@@ -363,5 +390,5 @@ test('authenticator enrollment and recovery-code sign-in work without persisting
   await page.getByRole('button', { name: 'Use recovery code', exact: true }).click();
   await page.getByLabel('Recovery code', { exact: true }).fill(backup);
   await page.getByRole('button', { name: 'Verify sign-in', exact: true }).click();
-  await expect(page).toHaveURL(/\/settings\/profile/);
+  await expect(page).toHaveURL(/\/dashboard/);
 });

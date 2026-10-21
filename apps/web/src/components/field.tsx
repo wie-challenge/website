@@ -1,5 +1,7 @@
 'use client';
 import { useState } from 'react';
+import { Input } from './ui/input';
+import { Label } from './ui/label';
 export function Field({
   name,
   label,
@@ -21,9 +23,9 @@ export function Field({
   const password = type === 'password';
   return (
     <div className="field">
-      <label htmlFor={name}>{label}</label>
+      <Label htmlFor={name}>{label}</Label>
       <div className="input-wrap">
-        <input
+        <Input
           id={name}
           name={name}
           type={password && visible ? 'text' : type}
