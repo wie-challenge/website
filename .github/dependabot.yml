@@ -23,6 +23,11 @@ updates:
     cooldown:
       default-days: 3
     open-pull-requests-limit: 5
+    # Major versions can break the code: they are planned team tasks, not weekly bot PRs.
+    # Vulnerable versions are still caught by `pnpm audit` in CI.
+    ignore:
+      - dependency-name: '*'
+        update-types: [version-update:semver-major]
     groups:
       minor-and-patch:
         update-types: [minor, patch]
