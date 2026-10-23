@@ -89,8 +89,7 @@ export function validateEnvironment(values: Record<string, unknown>) {
     throw new Error('ARCJET_KEY is required when ARCJET_ENABLED=true.');
   if (
     config.DEMO_MODE &&
-    (new URL(config.DATABASE_URL).pathname !== '/nasj_demo' ||
-      config.NODE_ENV === 'production')
+    (new URL(config.DATABASE_URL).pathname !== '/nasj_demo' || config.NODE_ENV === 'production')
   )
     throw new Error(
       'Demo mode requires the isolated nasj_demo database and nonproduction environment.',

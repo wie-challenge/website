@@ -7,6 +7,7 @@
     "node": ">=24 <25"
   },
   "scripts": {
+    "prepare": "husky",
     "dev": "tsx scripts/dev.ts",
     "build": "pnpm --filter @nasj/contracts build && pnpm --filter @nasj/api build && pnpm --filter @nasj/web build",
     "lint": "biome lint apps packages tests scripts/*.ts playwright.config.ts",
@@ -39,6 +40,7 @@
     "@biomejs/biome": "2.5.13",
     "@playwright/test": "1.63.0",
     "@types/node": "24.13.3",
+    "husky": "9.1.7",
     "tsx": "4.23.13",
     "typescript": "5.9.3"
   }

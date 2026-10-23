@@ -117,6 +117,17 @@ pnpm build
 
 Unit tests use provider doubles. Integration tests create, migrate and remove their own uniquely named PostgreSQL containers and capture mail locally; they never use `.env`'s database for test writes. Browser tests also use a disposable database, an isolated optimized Next build and a local API on 3100/3101. They require Docker and Chromium. `/usr/bin/chromium` is used when available; otherwise Playwright's installed Chromium is used. Override with `PLAYWRIGHT_CHROMIUM_EXECUTABLE` if necessary. Test traces contain synthetic fixture data and are ignored by Git.
 
+CI runs lint, typecheck, unit tests and the audit on every push, and integration, e2e and build on pull requests to `main` once they are marked ready for review (Draft PRs skip them).
+
+### Security checks
+
+`pnpm install` installs a Git pre-commit hook (Husky) that checks the staged files only:
+
+1. `biome check --staged`: lint and formatting. Fix with `pnpm exec biome check --staged --write`.
+2. Gitleaks: refuses API keys, tokens, passwords and private keys. Install it once (`winget install gitleaks`, `brew install gitleaks` or a release binary from <https://github.com/gitleaks/gitleaks/releases>); without it the hook only prints a warning.
+
+The hook is an early warning, not the security boundary: CI repeats the checks. If you ever skip it with `git commit --no-verify`, say why in the pull request. If a secret was committed, even on a branch that was never merged, treat it as leaked and rotate it.
+
 ## Production build and start
 
 Set deployment secrets through the server environment. Build with the intended `API_INTERNAL_URL`, then run each service under a process supervisor:
