@@ -1,11 +1,12 @@
-name: Architecture and security checks
+# Fast checks on every push (~3-5 min): lint, types, unit tests, dependency audit.
+# The slow tests (integration, e2e, build) run in pr.yml, once a PR is ready for review.
+name: Checks
 on:
   push:
-  pull_request:
 permissions:
   contents: read
 jobs:
-  check:
+  quality:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     env:
@@ -31,28 +32,26 @@ jobs:
         run: |
           mkdir -p .local
           pnpm test | tee .local/e16-unit.log
-      - name: PostgreSQL integration, replay, outbox and restore drill
-        shell: bash
-        run: |
-          mkdir -p .local
-          pnpm test:integration | tee .local/e16-integration.log
-      - run: pnpm exec playwright install --with-deps chromium
-      - run: pnpm test:e2e
-      - run: pnpm audit --audit-level=high
-      - run: pnpm build
       - uses: actions/upload-artifact@v7.0.2
         if: always()
         with:
-          name: e16-verification-evidence
+          name: unit-evidence
           include-hidden-files: true
-          path: |
-            test-results/
-            .local/e16-integration.log
-            .local/e16-unit.log
-            .local/e2e-report.json
-            .local/commerce-*-operator.png
-            .local/catalog-*.png
-            .local/ui-*.png
-            .local/e02-*.png
-            .local/nasj-*.png
+          path: .local/e16-unit.log
           retention-days: 3
+
+  # Reads pnpm-lock.yaml only: no install needed, so it finishes in about a minute.
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7.0.1
+        with:
+          persist-credentials: false
+      - uses: pnpm/action-setup@v6.1.0
+        with:
+          version: 11.3.0
+      - uses: actions/setup-node@v7.1.0
+        with:
+          node-version: '24'
+      - run: pnpm audit --audit-level=high
