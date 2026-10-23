@@ -20,7 +20,7 @@
     "@arcjet/nest": "1.14.1",
     "@nasj/contracts": "workspace:*",
     "@nestjs/common": "11.1.28",
-    "@nestjs/core": "11.1.28",
+    "@nestjs/core": "12.2.0",
     "@nestjs/platform-express": "11.2.6",
     "@prisma/adapter-pg": "7.10.0",
     "@prisma/client": "7.10.0",
