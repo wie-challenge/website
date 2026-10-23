@@ -5,13 +5,23 @@ on:
   pull_request:
     branches: [main]
     types: [opened, synchronize, reopened, ready_for_review]
-permissions:
-  contents: read
+    # Docs-only PRs don't need the slow tests. checks.yml still runs on every push.
+    paths-ignore:
+      - '**/*.md'
+      - 'docs/**'
+# No token permissions by default; each job asks only for what it needs.
+permissions: {}
+# A newer push to the same PR cancels the older, now outdated run.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 jobs:
   integration:
     if: github.event.pull_request.draft == false
-    runs-on: ubuntu-latest
-    timeout-minutes: 20
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      contents: read
     env:
       NEXT_TELEMETRY_DISABLED: '1'
     steps:
@@ -43,8 +53,10 @@ jobs:
 
   e2e:
     if: github.event.pull_request.draft == false
-    runs-on: ubuntu-latest
-    timeout-minutes: 20
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    permissions:
+      contents: read
     env:
       NEXT_TELEMETRY_DISABLED: '1'
     steps:
@@ -80,8 +92,10 @@ jobs:
 
   build:
     if: github.event.pull_request.draft == false
-    runs-on: ubuntu-latest
-    timeout-minutes: 20
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      contents: read
     env:
       NEXT_TELEMETRY_DISABLED: '1'
     steps:

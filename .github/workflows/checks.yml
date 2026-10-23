@@ -3,12 +3,18 @@
 name: Checks
 on:
   push:
-permissions:
-  contents: read
+# No token permissions by default; each job asks only for what it needs.
+permissions: {}
+# A newer push to the same branch cancels the older, now outdated run.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 jobs:
   quality:
-    runs-on: ubuntu-latest
-    timeout-minutes: 20
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      contents: read
     env:
       NEXT_TELEMETRY_DISABLED: '1'
     steps:
@@ -42,8 +48,10 @@ jobs:
 
   # Reads pnpm-lock.yaml only: no install needed, so it finishes in about a minute.
   audit:
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    permissions:
+      contents: read
     steps:
       - uses: actions/checkout@v7.0.1
         with:
