@@ -38,8 +38,7 @@ export class AccessService {
     if (
       approved.some(
         (m) =>
-          m.organization.type === 'INTERNAL' &&
-          m.roles.some((r) => r.role === 'NASJ_OPERATOR'),
+          m.organization.type === 'INTERNAL' && m.roles.some((r) => r.role === 'NASJ_OPERATOR'),
       )
     )
       personas.push('NASJ_OPERATOR');
