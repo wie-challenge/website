@@ -63,4 +63,42 @@ jobs:
         with:
           node-version: '24'
       - run: pnpm audit --audit-level=high
-  
+
+  # Secrets in the commits of this push. Enforced from day one: a new secret is never acceptable.
+  secrets-new:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    permissions:
+      contents: read
+    env:
+      ENFORCE: 'true'
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - run: bash scripts/ci/install-gitleaks.sh
+      - name: Scan the pushed commits
+        id: scan
+        env:
+          BEFORE: ${{ github.event.before }}
+        run: |
+          set +e
+          # New branch (or force-push): "before" is unknown, so scan everything not yet on main.
+          if git cat-file -e "${BEFORE}^{commit}" 2>/dev/null; then range="${BEFORE}..HEAD"; else range="origin/main..HEAD"; fi
+          echo "Scanning commits: $range"
+          mkdir -p reports
+          gitleaks git . --log-opts="$range" --redact --no-banner --verbose --exit-code 99 \
+            --report-format json --report-path reports/gitleaks.json
+          echo "code=$?" >>"$GITHUB_OUTPUT"
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        if: always()
+        with:
+          name: gitleaks-new-report
+          path: reports/
+          retention-days: 7
+      - name: Gate
+        if: always()
+        env:
+          CODE: ${{ steps.scan.outputs.code }}
+        run: bash scripts/ci/gate.sh gitleaks "$CODE" 99 "$ENFORCE"
