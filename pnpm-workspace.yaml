@@ -23,3 +23,7 @@ overrides:
   deepmerge-ts: 8.0.0
   mysql2: 3.23.1
   'smtp-server>nodemailer': 10.0.12
+  # Express/NestJS transitives pinned past GHSA-27r3-jxmh-p828 (body-parser) and the multer DoS
+  # advisory. Remove once @nestjs/platform-express ships with multer >= 2.5.0.
+  body-parser: 2.4.0
+  multer: 2.5.0
