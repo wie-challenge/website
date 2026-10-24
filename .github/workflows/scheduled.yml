@@ -7,14 +7,14 @@ on:
 permissions: {}
 jobs:
   # Secrets anywhere in the history, including commits made before the hooks existed.
-  # Report-only until every finding is triaged (rotated, or exempted with a reason).
+  # Blocking: the baseline (2026-10-24) was clean. Exempt only rotated or false-positive findings.
   secrets-history:
     runs-on: ubuntu-24.04
     timeout-minutes: 10
     permissions:
       contents: read
     env:
-      ENFORCE: 'false'
+      ENFORCE: 'true'
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
