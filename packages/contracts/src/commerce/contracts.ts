@@ -7,6 +7,13 @@ const units = z.number().int().min(1).max(1000000);
 const count = z.number().int().min(0).max(1000000);
 const version = z.number().int().min(1);
 const date = z.iso.datetime({ offset: true });
+export const artisanGroupsQuerySchema = z
+  .object({
+    craft: z.string().trim().min(1).max(120).optional(),
+    area: z.string().trim().min(1).max(120).optional(),
+    period: z.iso.datetime({ offset: true }).optional(),
+  })
+  .strict();
 export const tndSchema = z.string().refine((value) => {
   try {
     parseTnd(value);
@@ -122,6 +129,21 @@ export type InspectionInput = z.infer<typeof inspectionSchema>;
 export type OrderAction = z.infer<typeof orderActionSchema>;
 export type PaymentCreate = z.infer<typeof paymentCreateSchema>;
 export type PaymentAction = z.infer<typeof paymentActionSchema>;
+export type ArtisanGroupsQuery = z.infer<typeof artisanGroupsQuerySchema>;
+export type ArtisanGroupCapacityView = {
+  period: { from: string; to: string };
+  declared: string;
+  committed: string;
+  remaining: string;
+  unit: 'PIECES';
+};
+export type ArtisanGroupView = {
+  name: string;
+  craft: string;
+  area: string;
+  provenance: 'SYNTHETIC';
+  capacities: ArtisanGroupCapacityView[];
+};
 export type CommercialRfqView = {
   id: string;
   buyerOrganizationId: string;

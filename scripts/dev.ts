@@ -67,10 +67,12 @@ async function shutdown() {
 }
 function start(command: string, args: string[], cwd = root) {
   if (stopping) throw new Error('Startup cancelled.');
-  const child = spawn(command, args, {
+  const executable = process.platform === 'win32' && command === 'pnpm' ? 'pnpm.cmd' : command;
+  const child = spawn(executable, args, {
     cwd,
     env: environment,
     stdio: 'inherit',
+    shell: process.platform === 'win32' && command === 'pnpm',
     detached: process.platform !== 'win32',
   });
   children.add(child);
@@ -236,12 +238,12 @@ try {
     'dev',
     'apps/web',
     '--hostname',
-    'localhost',
+    '127.0.0.1',
     '--port',
     '3000',
   ]);
   watchFailure(web);
-  await ready('http://localhost:3000', web);
+  await ready('http://127.0.0.1:3000', web);
   console.log(
     '\nNASJ ready: http://localhost:3000\nAccounts: .local/dev-credentials.json\nMail inbox: http://localhost:8026\nPress Ctrl+C to stop the API and web. Database records are preserved.\n',
   );

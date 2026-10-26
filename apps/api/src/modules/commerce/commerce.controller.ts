@@ -1,4 +1,15 @@
-import { Body, Controller, Get, Header, Headers, Inject, Param, Patch, Post } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Header,
+  Headers,
+  Inject,
+  Param,
+  Patch,
+  Post,
+  Query,
+} from '@nestjs/common';
 import {
   resourceIdSchema,
   rfqCreateSchema,
@@ -12,6 +23,7 @@ import {
   orderActionSchema,
   paymentCreateSchema,
   paymentActionSchema,
+  artisanGroupsQuerySchema,
   type RfqCreate,
   type RfqEdit,
   type RfqAction,
@@ -23,6 +35,7 @@ import {
   type OrderAction,
   type PaymentCreate,
   type PaymentAction,
+  type ArtisanGroupsQuery,
 } from '@nasj/contracts';
 import { CurrentUser, type Actor } from '../../common/identity.js';
 import { ZodValidationPipe } from '../../common/validation.pipe.js';
@@ -32,6 +45,12 @@ export class CommerceController {
   constructor(@Inject(CommerceService) private readonly service: CommerceService) {}
   @Get('workspace') workspace(@CurrentUser() actor: Actor) {
     return this.service.workspace(actor);
+  }
+  @Get('artisan-groups') artisanGroups(
+    @CurrentUser() actor: Actor,
+    @Query(new ZodValidationPipe(artisanGroupsQuerySchema)) query: ArtisanGroupsQuery,
+  ) {
+    return this.service.artisanGroups(actor, query);
   }
   @Get('catalog') catalog(@CurrentUser() actor: Actor) {
     return this.service.catalog(actor);

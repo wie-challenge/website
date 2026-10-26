@@ -71,7 +71,10 @@ export function AppShell({
       ? [{ href: '/commerce/artisan', label: 'Offers & production', icon: 'artisan' as const }]
       : []),
     ...(capabilities.operator
-      ? [{ href: '/commerce/operator', label: 'Operator review', icon: 'organization' as const }]
+      ? [
+          { href: '/commerce/operator', label: 'Operator review', icon: 'organization' as const },
+          { href: '/commerce/operator/artisan-groups', label: 'Artisan groups', icon: 'artisan' as const },
+        ]
       : []),
   ];
   const account = [

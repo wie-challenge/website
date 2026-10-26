@@ -422,6 +422,130 @@ export async function seedFoundation(mode: 'demo' | 'development') {
             },
           });
         }
+        const seededGroups = [
+          {
+            name: 'DEMO — Amina Weaving Circle',
+            craft: 'DEMO — Hand weaving',
+            area: 'Kairouan',
+            quantity: '8.00',
+          },
+          {
+            name: 'DEMO — Salma Basket Collective',
+            craft: 'DEMO — Basketry',
+            area: 'Kebili',
+            quantity: '0.00',
+          },
+          {
+            name: 'DEMO — Yasmine Ceramic Studio',
+            craft: 'DEMO — Ceramics',
+            area: 'Nabeul',
+            quantity: '18.00',
+          },
+        ];
+        for (const group of seededGroups) {
+          const seededProfile = await tx.artisanProfile.findFirst({
+            where: { displayName: group.name },
+          });
+          const profileRecord =
+            seededProfile ??
+            (await tx.artisanProfile.create({
+              data: {
+                displayName: group.name,
+                region: group.area,
+                createdById: admin,
+                experienceDescription: 'Synthetic fictional group fixture for planning only.',
+                equipment: [],
+              },
+            }));
+          const seededSkill = await tx.craftSkill.upsert({
+            where: { name: group.craft },
+            update: {},
+            create: {
+              name: group.craft,
+              category: 'Synthetic craft',
+              description: 'Synthetic fictional craft for local demonstration.',
+            },
+          });
+          await tx.artisanSkill.upsert({
+            where: {
+              artisanProfileId_craftSkillId: {
+                artisanProfileId: profileRecord.id,
+                craftSkillId: seededSkill.id,
+              },
+            },
+            update: {},
+            create: {
+              artisanProfileId: profileRecord.id,
+              craftSkillId: seededSkill.id,
+              proficiency: 'DEMO',
+            },
+          });
+          const declaration = await tx.capacityDeclaration.findFirst({
+            where: {
+              artisanProfileId: profileRecord.id,
+              craftSkillId: seededSkill.id,
+              unitType: 'PIECES',
+            },
+          });
+          const seededDeclaration =
+            declaration ??
+            (await tx.capacityDeclaration.create({
+              data: {
+                artisanProfileId: profileRecord.id,
+                craftSkillId: seededSkill.id,
+                unitType: 'PIECES',
+                quantity: group.quantity,
+                effectiveFrom: capacityStart,
+                effectiveTo: capacityEnd,
+                declaredByUserId: id('artisan'),
+              },
+            }));
+          if (group.name === 'DEMO — Yasmine Ceramic Studio') {
+            const existingCommitted = await tx.commercialOffer.findFirst({
+              where: { capacityDeclarationId: seededDeclaration.id, status: 'ACCEPTED' },
+            });
+            if (!existingCommitted) {
+              const rfq = await tx.commercialRfq.create({
+                data: {
+                  buyerOrganizationId: orgId('demo-buyer-business'),
+                  operatorOrganizationId: orgId('demo-internal-operator'),
+                  craftSkillId: seededSkill.id,
+                  title: 'DEMO — Ceramic planning reservation',
+                  specification: 'Synthetic fixture reservation for capacity reconciliation.',
+                  designRequirements: 'Fictional local demonstration only.',
+                  quantity: 18,
+                  deliveryAt: capacityEnd,
+                  deliveryLocation: 'Synthetic planning destination',
+                  status: 'ACCEPTED',
+                  provenance: 'SYNTHETIC',
+                  quoteMillimes: 18000n,
+                  quoteExpiresAt: capacityEnd,
+                },
+              });
+              const order = await tx.commercialOrder.create({
+                data: { rfqId: rfq.id, status: 'PLANNING', provenance: 'SYNTHETIC' },
+              });
+              await tx.commercialOffer.create({
+                data: {
+                  orderId: order.id,
+                  capacityDeclarationId: seededDeclaration.id,
+                  artisanProfileId: profileRecord.id,
+                  quantity: 18,
+                  unitPayMillimes: 1000n,
+                  estimatedHours: 'Synthetic planning estimate',
+                  expiresAt: capacityEnd,
+                  materials: 'Synthetic materials',
+                  reworkTerms: 'Synthetic rework terms',
+                  paymentConditions: 'Synthetic payment conditions',
+                  status: 'ACCEPTED',
+                  provenance: 'SYNTHETIC',
+                  acceptedAt: new Date(),
+                  decidedByUserId: id('artisan'),
+                },
+              });
+            }
+          }
+        }
         if (
           !(await tx.auditEvent.findFirst({
             where: {

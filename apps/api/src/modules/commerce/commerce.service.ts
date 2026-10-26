@@ -16,6 +16,7 @@ import {
   type OrderAction,
   type PaymentCreate,
   type PaymentAction,
+  type ArtisanGroupsQuery,
   type RfqState,
   type OfferState,
   type BatchState,
@@ -127,6 +128,85 @@ export class CommerceService {
         }),
       ),
     );
+  }
+  async artisanGroups(actor: Actor, query: ArtisanGroupsQuery) {
+    return iamTransaction(this.db, actor, async (tx) => {
+      const membership = await tx.organizationMember.findFirst({
+        where: {
+          userId: actor.id,
+          status: 'ACTIVE',
+          organization: { type: 'INTERNAL', approvalStatus: 'APPROVED' },
+          roles: { some: { role: 'PRODUCTION_MANAGER' } },
+        },
+        include: { organization: true },
+      });
+      requireRule(membership, 'FORBIDDEN', 'Coordinator operator access is required.');
+      const rows = await tx.artisanProfile.findMany({
+        where: {
+          displayName: { startsWith: 'DEMO — ' },
+          ...(query.area ? { region: { equals: query.area, mode: 'insensitive' } } : {}),
+          skills: query.craft
+            ? { some: { craftSkill: { name: { equals: query.craft, mode: 'insensitive' } } } }
+            : undefined,
+        },
+        include: {
+          skills: { include: { craftSkill: true } },
+          capacityDeclarations: {
+            where: {
+              unitType: 'PIECES',
+              supersededAt: null,
+              ...(query.period
+                ? {
+                    effectiveFrom: { lte: new Date(query.period) },
+                    effectiveTo: { gt: new Date(query.period) },
+                  }
+                : {}),
+            },
+            include: { commercialOffers: { select: { quantity: true, status: true } } },
+            orderBy: { effectiveFrom: 'asc' },
+          },
+        },
+        orderBy: { displayName: 'asc' },
+      });
+      const result = rows
+        .map((row) => ({
+          name: row.displayName,
+          craft: row.skills[0]?.craftSkill.name ?? 'Unspecified craft',
+          area: row.region,
+          provenance: 'SYNTHETIC' as const,
+          capacities: row.capacityDeclarations.map((declaration) => {
+            const declared = BigInt(declaration.quantity.toFixed(2).replace('.', ''));
+            const scale = 100n;
+            const committed =
+              declaration.commercialOffers
+                .filter((offer) => offer.status === 'ACCEPTED')
+                .reduce((sum, offer) => sum + BigInt(offer.quantity), 0n) * scale;
+            const remaining = committed > declared ? 0n : declared - committed;
+            const decimal = (value: bigint) =>
+              `${value / scale}.${(value % scale).toString().padStart(2, '0')}`;
+            return {
+              period: {
+                from: declaration.effectiveFrom.toISOString(),
+                to: declaration.effectiveTo.toISOString(),
+              },
+              declared: decimal(declared),
+              committed: decimal(committed),
+              remaining: decimal(remaining),
+              unit: 'PIECES' as const,
+            };
+          }),
+        }))
+        .filter((row) => row.capacities.length > 0);
+      await audit(tx, actor, {
+        action: 'commerce.artisan-groups.read',
+        targetType: 'ArtisanGroupRegistry',
+        targetId: membership.organizationId,
+        organizationId: membership.organizationId,
+        reason: 'Read synthetic artisan capacity registry.',
+        after: { provenance: 'SYNTHETIC', filters: Object.keys(query) },
+      });
+      return result;
+    });
   }
   private async membership(actor: Actor, id: string, tx: Db) {
     return tx.organizationMember.findFirst({
