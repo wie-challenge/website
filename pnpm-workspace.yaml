@@ -20,6 +20,8 @@ minimumReleaseAgeExclude:
 
 # Prisma CLI-only transitives pinned past published advisories; runtime remains PostgreSQL.
 overrides:
+  body-parser: 2.4.0
   deepmerge-ts: 8.0.0
+  multer: 2.5.0
   mysql2: 3.23.1
   'smtp-server>nodemailer': 10.0.12
