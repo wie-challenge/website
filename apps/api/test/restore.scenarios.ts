@@ -48,10 +48,10 @@ export async function runRestoreScenario(
   await check(
     'E16 real pg_dump/pg_restore preserves every table in an isolated synthetic database',
     async () => {
-      if (!/^hirfacare-test-[a-f0-9]{16}$/.test(source.containerName))
+      if (!/^nasj-test-[a-f0-9]{16}$/.test(source.containerName))
         throw new Error('Disposable source required.');
       const target = await disposableDatabase();
-      const directory = await mkdtemp(join(tmpdir(), 'hirfacare-restore-'));
+      const directory = await mkdtemp(join(tmpdir(), 'nasj-restore-'));
       try {
         const before = await snapshot(source.url);
         const started = performance.now();

@@ -109,7 +109,7 @@ export class RegistryService {
     contactMethod?: string;
   }) {
     await this.db.participantConcern.create({ data: input });
-    return { message: 'Your concern has been sent for independent HirfaCare review.' };
+    return { message: 'Your concern has been sent for independent NASJ review.' };
   }
   async concerns(actor: Actor, q: PageInput) {
     await this.policy.requireAdmin(actor);
@@ -776,7 +776,7 @@ export class RegistryService {
       ...(operators
         ? {
             organization: { type: 'INTERNAL' as const },
-            roles: { some: { role: 'HIRFACARE_OPERATOR' as const } },
+            roles: { some: { role: 'NASJ_OPERATOR' as const } },
           }
         : { isCoordinator: true }),
       ...(q.q ? { user: { name: { contains: q.q, mode: 'insensitive' as const } } } : {}),
@@ -863,7 +863,7 @@ export class RegistryService {
         (input.enabled &&
           !member.roles.some((r) =>
             org.type === 'INTERNAL'
-              ? r.role === 'HIRFACARE_OPERATOR'
+              ? r.role === 'NASJ_OPERATOR'
               : ['BUYER', 'BUYER_REPRESENTATIVE'].includes(r.role),
           ))
       )
