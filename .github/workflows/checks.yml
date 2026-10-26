@@ -104,14 +104,14 @@ jobs:
         run: bash scripts/ci/gate.sh gitleaks "$CODE" 99 "$ENFORCE"
 
   # Dangerous code patterns: registry rulesets + NASJ rules in .semgrep/ (each with a test file).
-  # Report-only until the first CI results are reviewed; then ERROR-level findings block.
+  # Blocking on ERROR-level findings (first CI run, 2026-10-26: 0 findings).
   sast:
     runs-on: ubuntu-24.04
     timeout-minutes: 10
     permissions:
       contents: read
     env:
-      ENFORCE: 'false'
+      ENFORCE: 'true'
       SEMGREP_VERSION: 1.182.1
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -140,3 +140,52 @@ jobs:
         env:
           CODE: ${{ steps.scan.outputs.code }}
         run: bash scripts/ci/gate.sh semgrep "$CODE" 99 "$ENFORCE"
+
+  # Security of the workflow files themselves: syntax + ShellCheck on run: scripts (actionlint),
+  # and GitHub Actions risks such as template injection or excessive permissions (zizmor).
+  # Report-only for the first CI run (ShellCheck results are only visible in CI); then blocking.
+  workflow-lint:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    permissions:
+      contents: read
+    env:
+      ENFORCE: 'false'
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - run: bash scripts/ci/install-workflow-linters.sh
+      - name: actionlint
+        id: actionlint
+        run: |
+          set +e
+          actionlint .github/workflows/*.yml
+          echo "code=$?" >>"$GITHUB_OUTPUT"
+      - name: zizmor
+        id: zizmor
+        env:
+          GH_TOKEN: ${{ github.token }} # lets zizmor check pinned SHAs against the actions' repositories
+        run: |
+          set +e
+          mkdir -p reports
+          zizmor --no-progress --format=sarif .github/workflows/ >reports/zizmor.sarif
+          # Gate on high-severity findings; medium and low stay in the report.
+          zizmor --no-progress --min-severity=high .github/workflows/
+          echo "code=$?" >>"$GITHUB_OUTPUT"
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        if: always()
+        with:
+          name: zizmor-report
+          path: reports/
+          retention-days: 7
+      - name: Gate (actionlint)
+        if: always()
+        env:
+          CODE: ${{ steps.actionlint.outputs.code }}
+        run: bash scripts/ci/gate.sh actionlint "$CODE" 1 "$ENFORCE"
+      - name: Gate (zizmor)
+        if: always()
+        env:
+          CODE: ${{ steps.zizmor.outputs.code }}
+        run: bash scripts/ci/gate.sh zizmor "$CODE" 14 "$ENFORCE"
