@@ -74,6 +74,7 @@ test('public user projections exclude future fields and credentials', () => {
     emailVerified: true,
     role: 'USER',
     status: 'ACTIVE',
+    isDemo: false,
     createdAt: now,
     updatedAt: now,
     password: 'must-never-leak',

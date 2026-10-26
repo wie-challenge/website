@@ -8,6 +8,7 @@ import { initials, profileMenuItems } from '@/lib/app-navigation';
 import { Wordmark, SiteFooter } from './brand';
 import { Icon } from './icons';
 import { LogoutButton } from './logout-button';
+import { apiFetch } from '@/lib/api';
 import { Button } from './ui/button';
 import {
   Sheet,
@@ -25,6 +26,7 @@ export function AppShell({
   capabilities,
   children,
   demo = false,
+  demoIdentity = false,
   context,
 }: {
   name: string;
@@ -32,10 +34,12 @@ export function AppShell({
   capabilities: Capabilities;
   children: ReactNode;
   demo?: boolean;
+  demoIdentity?: boolean;
   context?: IdentityContext | null;
 }) {
   const pathname = usePathname(),
     [open, setOpen] = useState(false);
+  const demoRole = email.split('.')[1]?.split('@')[0] ?? 'user';
   const work = [
     {
       href: context?.landingPath ?? '/dashboard',
@@ -137,6 +141,34 @@ export function AppShell({
       <aside className="sidebar">{navigation()}</aside>
       <div className="app-main">
         <header className="topbar shell-header">
+          {demoIdentity && (
+            <div className="demo-mode-banner" role="status">
+              <strong>DEMO MODE</strong> — Signed in as Demo {demoRole} ({email}) — synthetic data
+              only
+              <label>
+                <span className="sr-only">Switch demo role</span>
+                <select
+                  value={demoRole}
+                  onChange={async (event) => {
+                    await apiFetch('/api/auth/demo/sign-in', {
+                      method: 'POST',
+                      body: { persona: event.target.value },
+                    });
+                    window.location.reload();
+                  }}
+                >
+                  {['buyer', 'artisan', 'coordinator', 'production', 'qa', 'finance'].map(
+                    (role) => (
+                      <option key={role} value={role}>
+                        {role}
+                      </option>
+                    ),
+                  )}
+                </select>
+              </label>
+              <LogoutButton />
+            </div>
+          )}
           <Sheet open={open} onOpenChange={setOpen}>
             <SheetTrigger asChild>
               <Button

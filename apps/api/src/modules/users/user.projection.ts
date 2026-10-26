@@ -7,6 +7,7 @@ export const userSelect = {
   emailVerified: true,
   role: true,
   status: true,
+  isDemo: true,
   createdAt: true,
   updatedAt: true,
 } as const;
@@ -18,6 +19,7 @@ export function publicUser(user: Pick<User, keyof typeof userSelect>): UserView 
     emailVerified: user.emailVerified,
     role: user.role,
     status: user.status,
+    isDemo: user.isDemo,
     createdAt: user.createdAt.toISOString(),
     updatedAt: user.updatedAt.toISOString(),
   };

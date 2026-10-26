@@ -51,6 +51,7 @@ model User {
   updatedAt                        DateTime                    @updatedAt
   role                             Role                        @default(USER)
   status                           AccountStatus               @default(ACTIVE)
+  isDemo                           Boolean                     @default(false)
   preferredLanguage                String                      @default("en")
   organizationMemberships          OrganizationMember[]
   artisanProfile                   ArtisanProfile?

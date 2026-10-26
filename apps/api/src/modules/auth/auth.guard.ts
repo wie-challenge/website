@@ -36,6 +36,7 @@ export class AuthGuard implements CanActivate {
       sessionId: session.session.id,
       sessionCreatedAt: session.session.createdAt,
       sessionExpiresAt: session.session.expiresAt,
+      isDemo: user.isDemo,
     };
     if (
       ![

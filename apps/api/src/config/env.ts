@@ -110,6 +110,17 @@ export function validateEnvironment(values: Record<string, unknown>) {
   }
   return config;
 }
+export function isSyntheticEnvironment(config: AppConfig) {
+  const database = new URL(config.DATABASE_URL);
+  return (
+    config.DEMO_MODE ||
+    (config.NODE_ENV === 'development' &&
+      config.PUBLIC_APP_URL === 'http://localhost:3000' &&
+      database.hostname === '127.0.0.1' &&
+      database.port === '5442' &&
+      database.pathname === '/nasj')
+  );
+}
 export function loadConfig() {
   dotenv({ path: fileURLToPath(new URL('../../../../.env', import.meta.url)), quiet: true });
   return validateEnvironment(process.env);

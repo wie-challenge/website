@@ -947,6 +947,41 @@
     background: var(--accent);
     color: var(--primary);
   }
+  .demo-entry {
+    margin-top: 2rem;
+    padding-top: 2rem;
+    border-top: 1px solid var(--border);
+  }
+  .demo-persona-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1rem;
+  }
+  .demo-persona-card {
+    display: grid;
+    gap: 0.5rem;
+    padding: 1rem;
+    border: 1px solid var(--border);
+    border-radius: 0.75rem;
+  }
+  .demo-persona-card code {
+    overflow-wrap: anywhere;
+    font-size: 0.75rem;
+  }
+  .demo-mode-banner {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    width: 100%;
+    padding: 0.5rem 1rem;
+    background: #fff3d6;
+    color: #5f3b00;
+    font-size: 0.8rem;
+  }
+  .demo-mode-banner select {
+    margin-left: 0.25rem;
+  }
   .wordmark {
     display: inline-flex;
     align-items: center;

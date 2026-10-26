@@ -5,7 +5,7 @@ import { prismaAdapter } from 'better-auth/adapters/prisma';
 import { APIError } from 'better-auth/api';
 import { fromNodeHeaders } from 'better-auth/node';
 import type { IncomingHttpHeaders } from 'node:http';
-import { APP_CONFIG, type AppConfig } from '../../config/env.js';
+import { APP_CONFIG, isSyntheticEnvironment, type AppConfig } from '../../config/env.js';
 import { PrismaService } from '../../database/prisma.service.js';
 import { MailService } from '../mail/mail.service.js';
 import { logger } from '../../common/logging.js';
@@ -40,7 +40,7 @@ export class AuthService {
         },
       },
       advanced: {
-        cookiePrefix: config.DEMO_MODE ? 'nasj_demo' : 'nasj',
+        cookiePrefix: isSyntheticEnvironment(config) ? 'nasj_demo' : 'nasj',
         useSecureCookies: config.PUBLIC_APP_URL.startsWith('https://'),
         defaultCookieAttributes: {
           httpOnly: true,

@@ -48,6 +48,7 @@ export const userViewSchema = z.object({
   emailVerified: z.boolean(),
   role: roleSchema,
   status: statusSchema,
+  isDemo: z.boolean(),
   createdAt: z.string(),
   updatedAt: z.string(),
 });

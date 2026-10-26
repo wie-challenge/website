@@ -1,4 +1,5 @@
 import { fromNodeHeaders } from 'better-auth/node';
+import { createHmac, randomBytes, randomUUID } from 'node:crypto';
 import type { RequestHandler } from 'express';
 import { z } from 'zod';
 import {
@@ -9,7 +10,7 @@ import {
   registerSchema,
   resetPasswordSchema,
 } from '@nasj/contracts';
-import type { AppConfig } from '../../config/env.js';
+import { isSyntheticEnvironment, type AppConfig } from '../../config/env.js';
 import { fail } from '../../common/errors.js';
 import { publicUser } from '../users/user.projection.js';
 import type { AuthService } from './auth.service.js';
@@ -33,10 +34,62 @@ const bodies = new Map<string, z.ZodType>([
   ['/two-factor/verify-totp', z.object({ code: z.string().regex(/^\d{6}$/) }).strict()],
   ['/two-factor/verify-backup-code', z.object({ code: z.string().min(5).max(32) }).strict()],
 ]);
+const demoPersonas = {
+  buyer: 'demo.buyer@demo.invalid',
+  artisan: 'demo.artisan@demo.invalid',
+  coordinator: 'demo.coordinator@demo.invalid',
+  production: 'demo.production@demo.invalid',
+  qa: 'demo.qa@demo.invalid',
+  finance: 'demo.finance@demo.invalid',
+} as const;
 export function authGateway(auth: AuthService, config: AppConfig): RequestHandler {
   return async (req, res, next) => {
     try {
       const path = req.path.slice('/api/auth'.length);
+      if (path === '/demo/sign-in' && req.method === 'POST') {
+        if (!isSyntheticEnvironment(config))
+          fail(404, 'NOT_FOUND', 'The synthetic demonstration is unavailable.');
+        const { persona } = z
+          .object({
+            persona: z.enum(['buyer', 'artisan', 'coordinator', 'production', 'qa', 'finance']),
+          })
+          .strict()
+          .parse(req.body);
+        const user = await auth.db.user.findUnique({
+          where: { email: demoPersonas[persona] },
+        });
+        if (!user?.isDemo || user.status !== 'ACTIVE' || !user.emailVerified)
+          fail(403, 'DEMO_UNAVAILABLE', 'This synthetic demo identity is unavailable.');
+        const now = new Date();
+        const expiresAt = new Date(now.getTime() + 7 * 86400 * 1000);
+        const token = randomBytes(32).toString('base64url');
+        const session = await auth.db.session.create({
+          data: {
+            id: randomUUID(),
+            token,
+            userId: user.id,
+            createdAt: now,
+            updatedAt: now,
+            expiresAt,
+          },
+        });
+        const signature = createHmac('sha256', config.BETTER_AUTH_SECRET)
+          .update(token)
+          .digest('base64');
+        res.cookie('nasj_demo.session_token', `${token}.${signature}`, {
+          httpOnly: true,
+          sameSite: 'lax',
+          secure: config.PUBLIC_APP_URL.startsWith('https://'),
+          path: '/',
+          expires: expiresAt,
+        });
+        res.json({
+          persona,
+          user: { name: user.name, email: user.email, isDemo: true },
+          session: { id: session.id, expiresAt: expiresAt.toISOString() },
+        });
+        return;
+      }
       if (path === '/get-session' && req.method === 'GET') {
         z.object({}).strict().parse(req.query);
         const session = await auth.session(req.headers);
@@ -186,6 +239,7 @@ export function authGateway(auth: AuthService, config: AppConfig): RequestHandle
                 sessionId: resulting.session.id,
                 sessionCreatedAt: resulting.session.createdAt,
                 sessionExpiresAt: resulting.session.expiresAt,
+                isDemo: user.isDemo,
                 requestId: (req as { requestId?: string }).requestId,
               },
               {

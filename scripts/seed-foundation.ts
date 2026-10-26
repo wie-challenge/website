@@ -9,20 +9,21 @@ import type { BusinessRole } from '../packages/contracts/src/permissions.js';
 import { assertLocalDevelopment } from './local-development.js';
 
 const personas = [
-  { key: 'buyer', name: 'Demo Business Buyer', email: 'buyer@nasj-demo.invalid' },
-  { key: 'artisan', name: 'Demo Woman Artisan', email: 'artisan@nasj-demo.invalid' },
+  { key: 'buyer', name: 'Demo Business Buyer', email: 'demo.buyer@demo.invalid' },
+  { key: 'artisan', name: 'Demo Woman Artisan', email: 'demo.artisan@demo.invalid' },
   {
     key: 'coordinator',
     name: 'Demo Association Coordinator',
-    email: 'coordinator@nasj-demo.invalid',
+    email: 'demo.coordinator@demo.invalid',
   },
   {
     key: 'production',
     name: 'Demo Production Manager',
-    email: 'production@nasj-demo.invalid',
+    email: 'demo.production@demo.invalid',
   },
-  { key: 'finance', name: 'Demo Finance Manager', email: 'finance@nasj-demo.invalid' },
-  { key: 'admin', name: 'Demo Platform Reviewer', email: 'admin@nasj-demo.invalid' },
+  { key: 'qa', name: 'Demo Quality Inspector', email: 'demo.qa@demo.invalid' },
+  { key: 'finance', name: 'Demo Finance Manager', email: 'demo.finance@demo.invalid' },
+  { key: 'admin', name: 'Demo Platform Reviewer', email: 'demo.admin@demo.invalid' },
 ] as const;
 type Credential = { persona: string; name: string; email: string; password: string };
 export async function seedFoundation(mode: 'demo' | 'development') {
@@ -162,8 +163,19 @@ export async function seedFoundation(mode: 'demo' | 'development') {
             emailVerified: true,
             role: persona.key === 'admin' ? 'ADMIN' : 'USER',
             status: 'ACTIVE',
+            isDemo: true,
           },
         }));
+      await db.user.update({
+        where: { id: user.id },
+        data: {
+          name: persona.name,
+          emailVerified: true,
+          role: persona.key === 'admin' ? 'ADMIN' : 'USER',
+          status: 'ACTIVE',
+          isDemo: true,
+        },
+      });
       users.set(persona.key, user.id);
     }
     const id = (key: string) => {
@@ -257,6 +269,12 @@ export async function seedFoundation(mode: 'demo' | 'development') {
             slug: 'demo-internal-operator',
             manager: false,
             roles: ['PRODUCTION_MANAGER'],
+          },
+          {
+            persona: 'qa',
+            slug: 'demo-internal-operator',
+            manager: false,
+            roles: ['QUALITY_INSPECTOR'],
           },
           {
             persona: 'finance',

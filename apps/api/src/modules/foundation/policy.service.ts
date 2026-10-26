@@ -53,6 +53,13 @@ export class PolicyService {
       where: { organizationId_userId: { organizationId, userId: actor.id } },
       include: { organization: true, roles: true, permissionGrants: true },
     });
+    if (actor.isDemo) {
+      const organization =
+        member?.organization ??
+        (await db.organization.findUnique({ where: { id: organizationId } }));
+      if (organization && !organization.slug.startsWith('demo-'))
+        fail(403, 'DEMO_LIVE_RESOURCE', 'Demo credentials cannot access live resources.');
+    }
     if (!member || !permissionsForMembership(member).includes(action))
       fail(403, 'FORBIDDEN', 'You do not have permission in this organization.');
     return member;

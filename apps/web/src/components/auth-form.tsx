@@ -12,6 +12,7 @@ import {
 import type { IdentityContext } from '@nasj/contracts';
 import { ApiError, apiFetch } from '@/lib/api';
 import { Field } from './field';
+import { DemoEntry } from './demo-entry';
 export type AuthMode = 'login' | 'register' | 'forgot-password' | 'reset-password' | 'verify-email';
 const titles: Record<AuthMode, string> = {
   login: 'Welcome back.',
@@ -215,54 +216,57 @@ export function AuthForm({
           <Link href="/auth/forgot-password">Request a new link</Link>.
         </p>
       ) : (
-        <form method="post" onSubmit={submit} noValidate>
-          <fieldset disabled={pending || !ready} aria-busy={pending}>
-            {mode === 'register' && (
-              <Field name="name" label="Your name" autoComplete="name" error={errors.name} />
-            )}
-            {mode !== 'reset-password' && (
-              <Field
-                name="email"
-                label="Email address"
-                type="email"
-                autoComplete="email"
-                error={errors.email}
-              />
-            )}
-            {(mode === 'login' || mode === 'register') && (
-              <Field
-                name="password"
-                label="Password"
-                type="password"
-                autoComplete={mode === 'login' ? 'current-password' : 'new-password'}
-                error={errors.password}
-                hint={mode === 'register' ? 'At least 12 characters.' : undefined}
-              />
-            )}
-            {mode === 'reset-password' && (
-              <Field
-                name="newPassword"
-                label="New password"
-                type="password"
-                autoComplete="new-password"
-                error={errors.newPassword}
-              />
-            )}
-            <button className="button" type="submit">
-              {pending
-                ? 'Please wait…'
-                : mode === 'login'
-                  ? 'Sign in'
-                  : mode === 'register'
-                    ? 'Create account'
-                    : mode === 'reset-password'
-                      ? 'Update password'
-                      : mode === 'verify-email'
-                        ? 'Send verification email'
-                        : 'Send recovery link'}
-            </button>
-          </fieldset>
-        </form>
+        <>
+          <form method="post" onSubmit={submit} noValidate>
+            <fieldset disabled={pending || !ready} aria-busy={pending}>
+              {mode === 'register' && (
+                <Field name="name" label="Your name" autoComplete="name" error={errors.name} />
+              )}
+              {mode !== 'reset-password' && (
+                <Field
+                  name="email"
+                  label="Email address"
+                  type="email"
+                  autoComplete="email"
+                  error={errors.email}
+                />
+              )}
+              {(mode === 'login' || mode === 'register') && (
+                <Field
+                  name="password"
+                  label="Password"
+                  type="password"
+                  autoComplete={mode === 'login' ? 'current-password' : 'new-password'}
+                  error={errors.password}
+                  hint={mode === 'register' ? 'At least 12 characters.' : undefined}
+                />
+              )}
+              {mode === 'reset-password' && (
+                <Field
+                  name="newPassword"
+                  label="New password"
+                  type="password"
+                  autoComplete="new-password"
+                  error={errors.newPassword}
+                />
+              )}
+              <button className="button" type="submit">
+                {pending
+                  ? 'Please wait…'
+                  : mode === 'login'
+                    ? 'Sign in'
+                    : mode === 'register'
+                      ? 'Create account'
+                      : mode === 'reset-password'
+                        ? 'Update password'
+                        : mode === 'verify-email'
+                          ? 'Send verification email'
+                          : 'Send recovery link'}
+              </button>
+            </fieldset>
+          </form>
+          {mode === 'login' && <DemoEntry next={next} />}
+        </>
       )}
       {!embedded && (
         <nav className="auth-links" aria-label="Account options">

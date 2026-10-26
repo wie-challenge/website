@@ -7,6 +7,7 @@ export type Actor = {
   sessionCreatedAt: Date;
   sessionExpiresAt: Date;
   role: 'USER' | 'ADMIN';
+  isDemo: boolean;
 };
 export type AppRequest = Request & { requestId: string; actor: Actor };
 export const CurrentUser = createParamDecorator(

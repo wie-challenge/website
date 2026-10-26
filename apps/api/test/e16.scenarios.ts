@@ -53,6 +53,7 @@ export async function runE16Scenarios({ db, register, mutate, check, config }: H
     role: 'USER',
     sessionCreatedAt: session.createdAt,
     sessionExpiresAt: session.expiresAt,
+    isDemo: false,
   };
   const input = {
     craftSkillId: 'weaving',

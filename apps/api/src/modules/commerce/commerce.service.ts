@@ -42,6 +42,7 @@ import {
 } from '@nasj/contracts';
 import { PrismaService } from '../../database/prisma.service.js';
 import type { Actor } from '../../common/identity.js';
+import { fail } from '../../common/errors.js';
 import { iamTransaction, type Db } from '../foundation/transaction.js';
 import { replaySafe, validateIdempotencyKey } from '../foundation/idempotency.js';
 import { audit } from '../foundation/audit.js';
@@ -93,6 +94,10 @@ function held(offer: CommercialOffer, now = new Date()) {
 }
 function livePayment(payment: SyntheticPayment) {
   return !['FAILED', 'CANCELLED'].includes(payment.status);
+}
+export function assertDemoResource(actor: Actor, provenance: string) {
+  if (actor.isDemo && provenance !== 'SYNTHETIC')
+    fail(403, 'DEMO_LIVE_RESOURCE', 'Demo credentials cannot access live resources.');
 }
 function orderQuantities(order: Order) {
   const add = (name: 'produced' | 'submitted' | 'approved' | 'rejected' | 'pending') =>
@@ -173,9 +178,10 @@ export class CommerceService {
         'Active artisan profile processing consent is required.',
       );
   }
-  private async order(tx: Db, id: string) {
+  private async order(tx: Db, actor: Actor, id: string) {
     const row = await tx.commercialOrder.findUnique({ where: { id }, include: orderInclude });
     requireRule(row, 'NOT_FOUND', 'Commercial record not found.');
+    assertDemoResource(actor, row.rfq.provenance);
     return row;
   }
   private command<T extends Prisma.InputJsonValue>(
@@ -225,7 +231,7 @@ export class CommerceService {
   }
   async report(actor: Actor, id: string) {
     return iamTransaction(this.db, actor, async (tx) => {
-      const order = await this.order(tx, id);
+      const order = await this.order(tx, actor, id);
       const roles = await this.roles(actor, order.rfq, tx);
       permit(roles, ['BUYER', ...operatorRoles]);
       const projection = await tx.commerceProjection.findUnique({ where: { orderId: id } });
@@ -374,6 +380,7 @@ export class CommerceService {
     return iamTransaction(this.db, actor, async (tx) => {
       const row = await tx.commercialRfq.findUnique({ where: { id } });
       requireRule(row, 'NOT_FOUND', 'Commercial record not found.');
+      assertDemoResource(actor, row.provenance);
       permit(await this.roles(actor, row, tx), ['BUYER']);
       const purchaser = await this.membership(actor, row.buyerOrganizationId, tx);
       requireRule(
@@ -412,6 +419,7 @@ export class CommerceService {
     return iamTransaction(this.db, actor, async (tx) => {
       const row = await tx.commercialRfq.findUnique({ where: { id } });
       requireRule(row, 'NOT_FOUND', 'Commercial record not found.');
+      assertDemoResource(actor, row.provenance);
       const roles = await this.roles(actor, row, tx);
       if (row.procurementManaged && ['QUOTED', 'ACCEPTED'].includes(input.next))
         requireRule(
@@ -484,7 +492,7 @@ export class CommerceService {
   }
   async createOffer(actor: Actor, input: OfferCreate, key?: string) {
     return iamTransaction(this.db, actor, async (tx) => {
-      const order = await this.order(tx, input.orderId);
+      const order = await this.order(tx, actor, input.orderId);
       permit(await this.roles(actor, order.rfq, tx), ['PRODUCTION_MANAGER']);
       const capacity = await tx.capacityDeclaration.findUnique({
         where: { id: input.capacityDeclarationId },
@@ -579,7 +587,7 @@ export class CommerceService {
     return iamTransaction(this.db, actor, async (tx) => {
       const row = await tx.commercialOffer.findUnique({ where: { id } });
       requireRule(row, 'NOT_FOUND', 'Commercial record not found.');
-      const order = await this.order(tx, row.orderId);
+      const order = await this.order(tx, actor, row.orderId);
       const roles = await this.roles(actor, order.rfq, tx);
       if (['ACCEPTED', 'DECLINED'].includes(input.next)) {
         await this.owner(actor, row.artisanProfileId, tx, input.next === 'ACCEPTED');
@@ -641,7 +649,7 @@ export class CommerceService {
     return iamTransaction(this.db, actor, async (tx) => {
       const row = await tx.commercialBatch.findUnique({ where: { id }, include: { offer: true } });
       requireRule(row, 'NOT_FOUND', 'Commercial record not found.');
-      const order = await this.order(tx, row.orderId);
+      const order = await this.order(tx, actor, row.orderId);
       const roles = await this.roles(actor, order.rfq, tx);
       if (
         ['IN_PROGRESS', 'SUBMITTED', 'DISPUTED'].includes(input.next) &&
@@ -694,7 +702,7 @@ export class CommerceService {
       const row = await tx.commercialBatch.findUnique({ where: { id }, include: { offer: true } });
       requireRule(row, 'NOT_FOUND', 'Commercial record not found.');
       await this.owner(actor, row.artisanProfileId, tx);
-      const order = await this.order(tx, row.orderId);
+      const order = await this.order(tx, actor, row.orderId);
       return this.command(tx, actor, key, id, 'batch.progress', input, async () => {
         version(row.version, input.version);
         requireRule(
@@ -717,7 +725,7 @@ export class CommerceService {
     return iamTransaction(this.db, actor, async (tx) => {
       const row = await tx.commercialBatch.findUnique({ where: { id } });
       requireRule(row, 'NOT_FOUND', 'Commercial record not found.');
-      const order = await this.order(tx, row.orderId);
+      const order = await this.order(tx, actor, row.orderId);
       permit(await this.roles(actor, order.rfq, tx), ['QUALITY_INSPECTOR']);
       return this.command(tx, actor, key, id, 'batch.inspect', input, async () => {
         version(row.version, input.version);
@@ -761,7 +769,7 @@ export class CommerceService {
   }
   async orderAction(actor: Actor, id: string, input: OrderAction, key?: string) {
     return iamTransaction(this.db, actor, async (tx) => {
-      const row = await this.order(tx, id);
+      const row = await this.order(tx, actor, id);
       const roles = await this.roles(actor, row.rfq, tx);
       roleForNext(roles, input.next, orderEdges);
       return this.command(tx, actor, key, id, 'order.action', input, async () => {
@@ -834,7 +842,7 @@ export class CommerceService {
   }
   async createPayment(actor: Actor, input: PaymentCreate, key?: string) {
     return iamTransaction(this.db, actor, async (tx) => {
-      const order = await this.order(tx, input.orderId);
+      const order = await this.order(tx, actor, input.orderId);
       permit(await this.roles(actor, order.rfq, tx), ['FINANCE_MANAGER']);
       return this.command(tx, actor, key, order.id, 'payment.create', input, async () => {
         requireRule(
@@ -888,7 +896,7 @@ export class CommerceService {
     return iamTransaction(this.db, actor, async (tx) => {
       const row = await tx.syntheticPayment.findUnique({ where: { id } });
       requireRule(row, 'NOT_FOUND', 'Commercial record not found.');
-      const order = await this.order(tx, row.orderId);
+      const order = await this.order(tx, actor, row.orderId);
       const roles = await this.roles(actor, order.rfq, tx);
       roleForNext(roles, input.next, paymentEdges);
       return this.command(tx, actor, key, id, 'payment.action', input, async () => {

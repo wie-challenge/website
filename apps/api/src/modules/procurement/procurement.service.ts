@@ -33,6 +33,8 @@ export class ProcurementService {
     @Inject(APP_CONFIG) private readonly config: AppConfig,
   ) {}
   private async access(tx: Db, actor: Actor, rfq: CommercialRfq, thread = false): Promise<Access> {
+    if (actor.isDemo && rfq.provenance !== 'SYNTHETIC')
+      fail(403, 'DEMO_LIVE_RESOURCE', 'Demo credentials cannot access live resources.');
     const members = await tx.organizationMember.findMany({
       where: { userId: actor.id, status: 'ACTIVE', organization: { approvalStatus: 'APPROVED' } },
       include: { roles: true, permissionGrants: true, organization: true },
