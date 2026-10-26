@@ -5,6 +5,17 @@ import { resolve, dirname } from 'node:path';
 const ARCHIVE_NAME = /^backup-\d{4}-\d{2}-\d{2}T\d{2}-\d{2}-\d{2}\.\d{3}Z-[a-f0-9-]{36}\.hcab$/;
 const MAGIC = Buffer.from('HCAB1');
 const MAX_ARCHIVE_BYTES = 64 * 1024 * 1024;
+
+const POSIX = process.platform !== 'win32';
+/** POSIX ownership/mode checks are meaningless on Windows (uid is always 0, mode is synthetic). */
+function isPrivateOwned(stat: { uid: number; mode: number }) {
+  return !POSIX || (stat.uid === process.getuid?.() && (stat.mode & 0o077) === 0);
+}
+/** realpath comparison is skipped on Windows (8.3 short names differ from long names). */
+async function hasNoSymlinkInPath(parent: string) {
+  return !POSIX || (await realpath(parent)) === parent;
+}
+
 /** Versioned authenticated encryption; tampering/wrong key never yields a restore archive. */
 export function encryptBackup(archive: Buffer, key: Buffer) {
   if (key.length !== 32 || !archive.length || archive.length > MAX_ARCHIVE_BYTES)
@@ -32,12 +43,7 @@ export async function readBackupKey(path: string) {
   const file = await open(path, constants.O_RDONLY | constants.O_NOFOLLOW);
   try {
     const stat = await file.stat();
-    if (
-      !stat.isFile() ||
-      stat.uid !== process.getuid?.() ||
-      (stat.mode & 0o077) !== 0 ||
-      stat.size !== 32
-    )
+    if (!stat.isFile() || !isPrivateOwned(stat) || stat.size !== 32)
       throw Error('Backup key must be a private owned 32-byte regular file.');
     return await file.readFile();
   } finally {
@@ -50,9 +56,8 @@ export async function writePrivateBackup(path: string, encrypted: Buffer) {
   if (
     !stat.isDirectory() ||
     stat.isSymbolicLink() ||
-    stat.uid !== process.getuid?.() ||
-    (stat.mode & 0o077) !== 0 ||
-    (await realpath(parent)) !== parent
+    !isPrivateOwned(stat) ||
+    !(await hasNoSymlinkInPath(parent))
   )
     throw Error('Backup directory must be private, owned and contain no symlinks.');
   const file = await open(
@@ -76,9 +81,8 @@ export async function pruneExpiredBackups(directory: string, now = Date.now()) {
   if (
     !stat.isDirectory() ||
     stat.isSymbolicLink() ||
-    stat.uid !== process.getuid?.() ||
-    (stat.mode & 0o077) !== 0 ||
-    (await realpath(parent)) !== parent
+    !isPrivateOwned(stat) ||
+    !(await hasNoSymlinkInPath(parent))
   )
     throw Error('Private backup directory required.');
   let removed = 0;
@@ -86,12 +90,7 @@ export async function pruneExpiredBackups(directory: string, now = Date.now()) {
     if (!ARCHIVE_NAME.test(name)) continue;
     const path = resolve(parent, name);
     const info = await lstat(path);
-    if (
-      info.isFile() &&
-      info.uid === process.getuid?.() &&
-      (info.mode & 0o077) === 0 &&
-      info.mtimeMs < now - 7 * 86400000
-    ) {
+    if (info.isFile() && isPrivateOwned(info) && info.mtimeMs < now - 7 * 86400000) {
       await unlink(path);
       removed++;
     }
@@ -106,9 +105,8 @@ export async function backupStatus(directory: string, now = Date.now()) {
   if (
     !stat.isDirectory() ||
     stat.isSymbolicLink() ||
-    stat.uid !== process.getuid?.() ||
-    (stat.mode & 0o077) !== 0 ||
-    (await realpath(parent)) !== parent
+    !isPrivateOwned(stat) ||
+    !(await hasNoSymlinkInPath(parent))
   )
     throw Error('Private backup directory required.');
   let latest = 0;
@@ -116,12 +114,7 @@ export async function backupStatus(directory: string, now = Date.now()) {
   for (const name of await readdir(parent)) {
     if (!ARCHIVE_NAME.test(name)) continue;
     const info = await lstat(resolve(parent, name));
-    if (
-      info.isFile() &&
-      info.uid === process.getuid?.() &&
-      (info.mode & 0o077) === 0 &&
-      info.size > 33
-    ) {
+    if (info.isFile() && isPrivateOwned(info) && info.size > 33) {
       latest = Math.max(latest, info.mtimeMs);
       count++;
     }
@@ -137,8 +130,7 @@ export async function readBackupConfiguration(path: string) {
     const info = await file.stat();
     if (
       !info.isFile() ||
-      info.uid !== process.getuid?.() ||
-      (info.mode & 0o077) !== 0 ||
+      !isPrivateOwned(info) ||
       info.size < 1 ||
       info.size > MAX_CONFIG_BYTES
     )

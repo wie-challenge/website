@@ -16,6 +16,13 @@ const ALERT_CODES = new Set([
   'BACKUP_UNAVAILABLE',
   'OPERATION_FAILED',
 ]);
+
+const POSIX = process.platform !== 'win32';
+/** POSIX ownership/mode checks are meaningless on Windows (uid is always 0, mode is synthetic). */
+function isPrivateOwned(stat: { uid: number; mode: number }) {
+  return !POSIX || (stat.uid === process.getuid?.() && (stat.mode & 0o077) === 0);
+}
+
 export function operationResult(job: LocalJob, exitCode: number, stdout: string) {
   let value: { code?: string; alerts?: unknown } = {};
   try {
@@ -72,12 +79,7 @@ export async function writeOperationStatus(
 ) {
   await mkdir(directory, { recursive: true, mode: 0o700 });
   const info = await lstat(directory);
-  if (
-    !info.isDirectory() ||
-    info.isSymbolicLink() ||
-    info.uid !== process.getuid?.() ||
-    (info.mode & 0o077) !== 0
-  )
+  if (!info.isDirectory() || info.isSymbolicLink() || !isPrivateOwned(info))
     throw Error('Private owned operations directory required.');
   const latest = join(directory, `${result.job}.json`);
   const temporary = `${latest}.${process.pid}.tmp`;
@@ -101,7 +103,7 @@ export async function writeOperationStatus(
     );
     try {
       const stat = await alerts.stat();
-      if (!stat.isFile() || stat.uid !== process.getuid?.() || (stat.mode & 0o077) !== 0)
+      if (!stat.isFile() || !isPrivateOwned(stat))
         throw Error('Private owned alert file required.');
       if (stat.size > 1024 * 1024) await alerts.truncate(0);
       await alerts.writeFile(`${JSON.stringify(result)}\n`);

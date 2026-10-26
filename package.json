@@ -1,4 +1,4 @@
-{
+﻿{
   "name": "nasj",
   "private": true,
   "type": "module",
@@ -9,7 +9,7 @@
   "scripts": {
     "dev": "tsx scripts/dev.ts",
     "build": "pnpm --filter @nasj/contracts build && pnpm --filter @nasj/api build && pnpm --filter @nasj/web build",
-    "lint": "biome lint apps packages tests scripts/*.ts playwright.config.ts",
+    "lint": "biome lint apps packages tests scripts playwright.config.ts",
     "format": "biome format --write apps packages tests scripts/*.ts playwright.config.ts",
     "typecheck": "pnpm --filter @nasj/contracts build && pnpm --filter @nasj/api typecheck && pnpm --filter @nasj/api typecheck:test && pnpm --filter @nasj/web typecheck",
     "test": "pnpm --filter @nasj/contracts build && pnpm --filter @nasj/api test && pnpm --filter @nasj/web test",
@@ -38,8 +38,9 @@
     "@axe-core/playwright": "4.14.0",
     "@biomejs/biome": "2.5.13",
     "@playwright/test": "1.63.0",
-    "@types/node": "24.13.3",
+    "@types/node": "^24.13.3",
     "tsx": "4.23.13",
     "typescript": "5.9.3"
   }
 }
+

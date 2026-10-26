@@ -1,3 +1,4 @@
+import type { CommerceRole } from './commerce/domain.js';
 export const businessRoles = [
   'BUYER_REPRESENTATIVE',
   'NASJ_OPERATOR',
@@ -75,9 +76,13 @@ export const permissionCatalog = [
   'delegation.create',
   'delegation.read',
   'delegation.revoke',
+  'artisan.offer.decide',
+  'artisan.batch.report',
+  'artisan.payment.read',
   'finance.quotation.read',
   'finance.payout.read',
   'finance.payout.approve',
+  'finance.payment.manage',
   'quality.inspection.read',
   'quality.inspection.create',
   'support.case.read',
@@ -150,6 +155,7 @@ export const rolePermissions: Record<BusinessRole, readonly Permission[]> = {
     'finance.quotation.read',
     'finance.payout.read',
     'finance.payout.approve',
+    'finance.payment.manage',
   ],
   QUALITY_INSPECTOR: ['organization.read', 'quality.inspection.read', 'quality.inspection.create'],
   INVENTORY_LOGISTICS_COORDINATOR: ['organization.read', 'inventory.manage'],
@@ -158,6 +164,49 @@ export const rolePermissions: Record<BusinessRole, readonly Permission[]> = {
   PRODUCT_DESIGNER: ['organization.read', 'product.specification.manage'],
   BUSINESS_DEVELOPMENT: ['organization.read', 'buyer.relationship.manage'],
 };
+// Artisans have no organization membership: their access rests on owning the profile.
+// These actions apply only to the artisan's own resources and are never granted through a role.
+export const artisanOwnerPermissions: readonly Permission[] = [
+  'artisan.profile.read',
+  'artisan.profile.update',
+  'artisan.skills.manage',
+  'artisan.capacity.read',
+  'artisan.capacity.update',
+  'artisan.associations.manage',
+  'delegation.create',
+  'delegation.read',
+  'delegation.revoke',
+  'artisan.offer.decide',
+  'artisan.batch.report',
+  'artisan.payment.read',
+];
+// Platform administrators govern accounts and organizations. They deliberately hold no
+// commerce, artisan-data or financial action: those never flow from user.role = ADMIN.
+export const platformAdminPermissions: readonly Permission[] = [
+  'platform.users.manage',
+  'platform.organizations.approve',
+  'platform.roles.manage',
+];
+// The commerce state machines are written in terms of capacities. A capacity is derived from
+// a held permission, never from a role name, so a revoked or disabled permission removes it.
+const capacityPermission: readonly (readonly [CommerceRole, Permission])[] = [
+  ['BUYER', 'buyer.rfq.read'],
+  ['PRODUCTION_MANAGER', 'production.manage'],
+  ['FINANCE_MANAGER', 'finance.payment.manage'],
+  ['QUALITY_INSPECTOR', 'quality.inspection.create'],
+  ['INVENTORY_LOGISTICS_COORDINATOR', 'inventory.manage'],
+];
+export function commerceCapacitiesFor(
+  permissions: readonly Permission[],
+  side: 'BUYER_SIDE' | 'OPERATOR_SIDE',
+): CommerceRole[] {
+  return capacityPermission
+    .filter(
+      ([capacity, permission]) =>
+        permissions.includes(permission) && (capacity === 'BUYER') === (side === 'BUYER_SIDE'),
+    )
+    .map(([capacity]) => capacity);
+}
 export function rolesForOrganization(type: string): BusinessRole[] {
   if (type === 'BUYER_BUSINESS') return ['BUYER_REPRESENTATIVE'];
   if (['ASSOCIATION', 'PARTNER_COOPERATIVE'].includes(type)) return ['ASSOCIATION_COORDINATOR'];

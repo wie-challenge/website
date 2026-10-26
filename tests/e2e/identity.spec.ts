@@ -336,7 +336,7 @@ test('independent artisan manages skills, capacity, association consent and limi
   await page.getByRole('button', { name: 'Revoke delegation', exact: true }).click();
   await expect(page.locator('#delegations').getByText('· Revoked', { exact: false })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Revoke delegation', exact: true })).toHaveCount(0);
-  expect((await coordinator.request.get(`/api/v1/artisans/${artisanId}`)).status()).toBe(403);
+  expect((await coordinator.request.get(`/api/v1/artisans/${artisanId}`)).status()).toBe(404);
   await page.reload();
   await expect(page.getByLabel('Display name', { exact: true })).toHaveValue(
     'Assisted Test Artisan',

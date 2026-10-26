@@ -11,6 +11,7 @@ import { replaySafe } from '../src/modules/foundation/idempotency.js';
 import { audit } from '../src/modules/foundation/audit.js';
 import { dispatchBatch, recordReceipt, MAX_ATTEMPTS, outboxStatus } from '../src/jobs/outbox.js';
 import type { Actor } from '../src/common/identity.js';
+import { pnpm } from './support.js';
 type Result = { status: number; body: unknown };
 type Client = {
   request(
@@ -102,7 +103,7 @@ export async function runE16Scenarios({ db, register, mutate, check, config }: H
         'POST',
         input,
       );
-      assert.equal(denied.status, 403);
+      assert.equal(denied.status, 404);
       assert.equal(JSON.stringify(denied.body).includes('4.25'), false);
       await db.consentRecord.updateMany({
         where: { userId: actor.id, purpose: 'artisan.profile' },
@@ -197,9 +198,9 @@ export async function runE16Scenarios({ db, register, mutate, check, config }: H
       env: { ...process.env, ...environment },
       timeout: 30000,
     };
-    await promisify(execFile)('pnpm', ['worker', '--once'], options);
-    const result = await promisify(execFile)('pnpm', ['worker', '--status'], options);
-    const status = JSON.parse(result.stdout.trim());
+    await pnpm(['worker', '--once'], options);
+    const result = await pnpm(['worker', '--status'], options);
+    const status = JSON.parse(result.stdout.toString().trim());
     assert.ok(Array.isArray(status.counts));
     assert.equal(typeof status.oldestPendingAgeMs, 'number');
     // Own the unhealthy endpoint: a developer's real API may already be healthy on port 3001.

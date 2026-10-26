@@ -56,7 +56,8 @@ try {
       durationMs: Math.round(performance.now() - started),
     }),
   );
-} catch {
+} catch (error) {
+  if (process.env.BACKUP_DEBUG) console.error(error);
   console.error(JSON.stringify({ code: 'BACKUP_FAILED' }));
   process.exitCode = 1;
 }

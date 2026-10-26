@@ -2,6 +2,7 @@ import { runProcurementScenarios } from './procurement.scenarios.js';
 import { runRoleUpgradeScenario } from './roles-upgrade.scenarios.js';
 import { runRoleScenarios } from './roles.scenarios.js';
 import { runCommerceScenarios } from './commerce.scenarios.js';
+import { runResourceAccessScenarios } from './resource-access.scenarios.js';
 import { runCatalogScenarios } from './catalog.scenarios.js';
 import { runRestoreScenario } from './restore.scenarios.js';
 import { runE16Scenarios } from './e16.scenarios.js';
@@ -14,14 +15,14 @@ import { runOrganizationScenarios } from './organizations.scenarios.js';
 import { runArtisanScenarios } from './artisans.integration.js';
 import 'reflect-metadata';
 import assert from 'node:assert/strict';
-import { execFile } from 'node:child_process';
+import { execFile, type ExecFileOptions } from 'node:child_process';
 import { promisify } from 'node:util';
 import { fileURLToPath } from 'node:url';
 import type { INestApplication } from '@nestjs/common';
 import { createApp } from '../src/app.js';
 import { PrismaService } from '../src/database/prisma.service.js';
 import { logger } from '../src/common/logging.js';
-import { captureMail, disposableDatabase, testConfig } from './support.js';
+import { captureMail, disposableDatabase, testConfig ,pnpm} from './support.js';
 logger.level = 'silent';
 const database = await disposableDatabase();
 const mail = await captureMail();
@@ -501,7 +502,8 @@ try {
           Array.isArray(value) ? value.join(',') : String(value ?? ''),
         ]),
       );
-      const exec = promisify(execFile);
+      const exec = (file: string, args: string[], opts: ExecFileOptions = {}) =>
+        file === 'pnpm' ? pnpm(args, opts) : promisify(execFile)(file, args, opts);
       const options = {
         cwd: fileURLToPath(new URL('../../../', import.meta.url)),
         env: { ...process.env, ...environment },
@@ -514,7 +516,7 @@ try {
         ['db:bootstrap-admin', '--', 'operator@example.com'],
         options,
       );
-      assert.match(result.stdout, /Administrator access granted/);
+      assert.match(result.stdout.toString(), /Administrator access granted/);
       assert.equal(
         (await db.user.findUniqueOrThrow({ where: { id: operator.me.user.id } })).role,
         'ADMIN',
@@ -531,6 +533,7 @@ try {
   await runMfaScenarios({ db, config, client, register, mutate, check, mail });
   await runE16Scenarios({ db, register, mutate, check, config });
   await runCommerceScenarios({ db, register, check, config });
+  await runResourceAccessScenarios({ db, register, check });
   await runCatalogScenarios({ db, register, check });
   await runProcurementScenarios({ db, register, check, config });
   await runUpgradeScenario(check);

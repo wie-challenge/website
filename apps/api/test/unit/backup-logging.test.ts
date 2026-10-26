@@ -15,6 +15,10 @@ import {
   writePrivateBackup,
 } from '../../src/operations/backup.js';
 import { createLogger } from '../../src/common/logging.js';
+
+// Modes, uid et symlinks POSIX : vérifiés uniquement hors Windows.
+const POSIX = process.platform !== 'win32';
+
 test('authenticated backup encryption rejects corruption, wrong keys and invalid archive bounds', () => {
   const key = randomBytes(32),
     raw = Buffer.from('PGDMP synthetic source');
@@ -38,18 +42,22 @@ test('backup files and keys require owner privacy, reject symlinks and never ove
       encrypted = encryptBackup(Buffer.from('synthetic'), key);
     await writeFile(keyPath, key, { mode: 0o600 });
     assert.deepEqual(await readBackupKey(keyPath), key);
-    await chmod(keyPath, 0o644);
-    await assert.rejects(readBackupKey(keyPath));
-    await chmod(keyPath, 0o600);
-    const link = join(directory, 'key-link');
-    await symlink(keyPath, link);
-    await assert.rejects(readBackupKey(link));
+    if (POSIX) {
+      await chmod(keyPath, 0o644);
+      await assert.rejects(readBackupKey(keyPath));
+      await chmod(keyPath, 0o600);
+      const link = join(directory, 'key-link');
+      await symlink(keyPath, link);
+      await assert.rejects(readBackupKey(link));
+    }
     await writePrivateBackup(output, encrypted);
-    assert.equal((await stat(output)).mode & 0o777, 0o600);
+    if (POSIX) assert.equal((await stat(output)).mode & 0o777, 0o600);
     await assert.rejects(writePrivateBackup(output, Buffer.from('replacement')));
     assert.deepEqual(await readFile(output), encrypted);
-    await chmod(directory, 0o755);
-    await assert.rejects(writePrivateBackup(join(directory, 'unsafe'), encrypted));
+    if (POSIX) {
+      await chmod(directory, 0o755);
+      await assert.rejects(writePrivateBackup(join(directory, 'unsafe'), encrypted));
+    }
   } finally {
     await rm(directory, { recursive: true, force: true });
   }

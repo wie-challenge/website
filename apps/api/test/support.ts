@@ -1,4 +1,4 @@
-import { execFile } from 'node:child_process';
+import { execFile, type ExecFileOptions } from 'node:child_process';
 import { promisify } from 'node:util';
 import { randomBytes } from 'node:crypto';
 import { fileURLToPath } from 'node:url';
@@ -6,6 +6,14 @@ import { Client } from 'pg';
 import { SMTPServer } from 'smtp-server';
 import { validateEnvironment } from '../src/config/env.js';
 const exec = promisify(execFile);
+
+// Sous Windows, pnpm est un shim .cmd : on passe par cmd.exe pour pouvoir le lancer.
+export function pnpm(args: string[], options: ExecFileOptions = {}) {
+  return process.platform === 'win32'
+    ? exec('cmd.exe', ['/d', '/s', '/c', 'pnpm', ...args], options)
+    : exec('pnpm', args, options);
+}
+
 export async function disposableDatabase(options: { foundationOnly?: boolean } = {}) {
   const name = `nasj-test-${randomBytes(8).toString('hex')}`;
   const password = randomBytes(24).toString('hex');
@@ -56,8 +64,7 @@ export async function disposableDatabase(options: { foundationOnly?: boolean } =
     };
     if (options.foundationOnly) {
       // Only in this newly created disposable container: establish the original migration baseline.
-      await exec(
-        'pnpm',
+      await pnpm(
         [
           'exec',
           'prisma',
@@ -68,12 +75,11 @@ export async function disposableDatabase(options: { foundationOnly?: boolean } =
         ],
         migrationOptions,
       );
-      await exec(
-        'pnpm',
+      await pnpm(
         ['exec', 'prisma', 'migrate', 'resolve', '--applied', '202610150001_foundation'],
         migrationOptions,
       );
-    } else await exec('pnpm', ['exec', 'prisma', 'migrate', 'deploy'], migrationOptions);
+    } else await pnpm(['exec', 'prisma', 'migrate', 'deploy'], migrationOptions);
     return { url, stop, containerName: name };
   } catch (error) {
     await stop();

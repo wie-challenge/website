@@ -9,6 +9,7 @@ import { APP_CONFIG, type AppConfig } from '../../config/env.js';
 import type { Actor } from '../../common/identity.js';
 import { fail } from '../../common/errors.js';
 import { iamTransaction, type Db } from '../foundation/transaction.js';
+import { ResourcePolicyService } from '../foundation/resource-policy.service.js';
 import { replaySafe, validateIdempotencyKey } from '../foundation/idempotency.js';
 import { procurementAudit, revision, specificationSnapshot } from './records.js';
 const take = 30;
@@ -18,110 +19,15 @@ function same(actual: number, expected: number) {
   if (actual !== expected)
     fail(409, 'VERSION_CONFLICT', 'This request changed. Reload before trying again.');
 }
-type Access = {
-  buyer: boolean;
-  operator: boolean;
-  purchasing: boolean;
-  negotiating: boolean;
-  approving: boolean;
-  coordinator: boolean;
-};
 @Injectable()
 export class ProcurementService {
   constructor(
     @Inject(PrismaService) private readonly db: PrismaService,
     @Inject(APP_CONFIG) private readonly config: AppConfig,
+    @Inject(ResourcePolicyService) private readonly policy: ResourcePolicyService,
   ) {}
-  private async access(tx: Db, actor: Actor, rfq: CommercialRfq, thread = false): Promise<Access> {
-    const members = await tx.organizationMember.findMany({
-      where: { userId: actor.id, status: 'ACTIVE', organization: { approvalStatus: 'APPROVED' } },
-      include: { roles: true, permissionGrants: true, organization: true },
-    });
-    const buyer = members.find(
-      (m) =>
-        m.organizationId === rfq.buyerOrganizationId &&
-        m.organization.type === 'BUYER_BUSINESS' &&
-        C.permissionsForMembership(m).includes('buyer.rfq.read'),
-    );
-    const internal = members.find(
-      (m) =>
-        m.organizationId === rfq.operatorOrganizationId &&
-        m.organization.type === 'INTERNAL' &&
-        (m.roles.some((r) => ['FINANCE_MANAGER'].includes(r.role)) ||
-          C.permissionsForMembership(m).includes('operator.quotation.prepare')),
-    );
-    const assigned =
-      internal?.roles.some((r) => ['FINANCE_MANAGER'].includes(r.role)) ||
-      Boolean(
-        internal &&
-          (await tx.operatorAssignment.findFirst({
-            where: {
-              operatorId: actor.id,
-              organizationId: rfq.buyerOrganizationId,
-              revokedAt: null,
-              organization: { approvalStatus: 'APPROVED' },
-            },
-          })),
-      );
-    const buyerAvailable = await tx.organization.findFirst({
-      where: { id: rfq.buyerOrganizationId, approvalStatus: 'APPROVED' },
-      select: { id: true },
-    });
-    const operator = Boolean(internal && assigned && buyerAvailable && rfq.status !== 'DRAFT');
-    const partnerScopeAvailable = Boolean(
-      await tx.commercialRfq.findFirst({
-        where: {
-          id: rfq.id,
-          buyerOrganization: { approvalStatus: 'APPROVED' },
-          operatorOrganization: { approvalStatus: 'APPROVED' },
-        },
-        select: { id: true },
-      }),
-    );
-    let coordinator = false;
-    if (thread && !buyer && !operator && partnerScopeAvailable) {
-      const member = members.find(
-        (m) =>
-          m.isCoordinator && ['ASSOCIATION', 'PARTNER_COOPERATIVE'].includes(m.organization.type),
-      );
-      coordinator = Boolean(
-        member &&
-          (await tx.commercialOffer.findFirst({
-            where: {
-              order: { rfqId: rfq.id },
-              status: 'ACCEPTED',
-              artisanProfile: {
-                authorizations: {
-                  some: { purpose: 'PARTICIPATION', withdrawnAt: null, policy: { active: true } },
-                },
-                assignments: {
-                  some: {
-                    coordinatorId: actor.id,
-                    organizationId: member.organizationId,
-                    endedAt: null,
-                  },
-                },
-                managements: { some: { organizationId: member.organizationId, endedAt: null } },
-              },
-            },
-          })),
-      );
-    }
-    if (!buyer && !operator && !coordinator) fail(404, 'NOT_FOUND', 'Request not found.');
-    const perms = buyer ? C.permissionsForMembership(buyer) : [];
-    return {
-      buyer: Boolean(buyer),
-      operator,
-      purchasing: perms.includes('buyer.rfq.create'),
-      negotiating: perms.includes('buyer.quotation.negotiate'),
-      approving: perms.includes('buyer.quotation.approve'),
-      coordinator,
-    };
-  }
-  private async scoped(tx: Db, actor: Actor, id: string, thread = false) {
-    const row = await tx.commercialRfq.findUnique({ where: { id } });
-    if (!row) fail(404, 'NOT_FOUND', 'Request not found.');
-    return { row, access: await this.access(tx, actor, row, thread) };
+  private scoped(tx: Db, actor: Actor, id: string, thread = false) {
+    return this.policy.procurementRfq(tx, actor, id, thread);
   }
   private command<T extends Prisma.InputJsonValue>(
     tx: Db,
@@ -601,13 +507,7 @@ export class ProcurementService {
   }
   async attachmentToken(actor: Actor, id: string, fileId: string) {
     return iamTransaction(this.db, actor, async (tx) => {
-      await this.scoped(tx, actor, id);
-      if (
-        !(await tx.procurementAttachment.findFirst({
-          where: { id: fileId, rfqId: id, removedAt: null },
-        }))
-      )
-        fail(404, 'NOT_FOUND', 'Image not found.');
+      await this.policy.attachment(tx, actor, id, fileId);
       const expires = Date.now() + 60000;
       const value = Buffer.from(
         JSON.stringify({
@@ -626,7 +526,7 @@ export class ProcurementService {
   }
   async attachment(actor: Actor, id: string, fileId: string, token: string) {
     return iamTransaction(this.db, actor, async (tx) => {
-      await this.scoped(tx, actor, id);
+      await this.policy.attachment(tx, actor, id, fileId);
       try {
         const [value, signature, ...extra] = token.split('.');
         const expected = this.signature(value);
@@ -649,10 +549,7 @@ export class ProcurementService {
       } catch {
         fail(403, 'DOWNLOAD_EXPIRED', 'Request a fresh image download.');
       }
-      const file = await tx.procurementAttachment.findFirst({
-        where: { id: fileId, rfqId: id, removedAt: null },
-      });
-      if (!file) fail(404, 'NOT_FOUND', 'Image not found.');
+      const file = await this.policy.attachment(tx, actor, id, fileId);
       return {
         filename: file.filename,
         mime: file.mime,
@@ -1096,19 +993,9 @@ export class ProcurementService {
   }
   async documents(actor: Actor, page: number) {
     return iamTransaction(this.db, actor, async (tx) => {
-      const memberships = await tx.organizationMember.findMany({
-        where: {
-          userId: actor.id,
-          status: 'ACTIVE',
-          organization: { type: 'BUYER_BUSINESS', approvalStatus: 'APPROVED' },
-        },
-        include: { roles: true, permissionGrants: true, organization: true },
-      });
-      const ids = memberships
-        .filter((m) => C.permissionsForMembership(m).includes('buyer.invoice.read'))
-        .map((m) => m.organizationId);
+      const scope = await this.policy.scope(actor, tx);
       const rows = await tx.procurementDocument.findMany({
-        where: { rfq: { buyerOrganizationId: { in: ids } } },
+        where: this.policy.documentWhere(scope),
         orderBy: { number: 'desc' },
         ...pageArgs(page),
         select: {
@@ -1137,9 +1024,7 @@ export class ProcurementService {
   }
   async downloadDocument(actor: Actor, id: string) {
     return iamTransaction(this.db, actor, async (tx) => {
-      const doc = await tx.procurementDocument.findUnique({ where: { id } });
-      if (!doc) fail(404, 'NOT_FOUND', 'Document not found.');
-      await this.scoped(tx, actor, doc.rfqId);
+      const doc = await this.policy.document(tx, actor, id);
       return {
         filename: `synthetic-${doc.kind.toLowerCase()}-${doc.number}-v${doc.version}.json`,
         document: json(doc),

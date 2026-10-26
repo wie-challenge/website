@@ -63,18 +63,22 @@ export async function runRestoreScenario(
           `BETTER_AUTH_SECRET=${randomBytes(48).toString('hex')}\n`,
         );
         await writeFile(configFile, configuration, { mode: 0o600 });
-        const command = await exec('node_modules/.bin/tsx', ['scripts/backup-database.ts'], {
-          cwd: fileURLToPath(new URL('../../../', import.meta.url)),
-          env: {
-            ...process.env,
-            BACKUP_CONTAINER: source.containerName,
-            BACKUP_DIRECTORY: directory,
-            BACKUP_KEY_FILE: keyFile,
-            BACKUP_CONFIG_FILE: configFile,
-            BACKUP_DATABASE_USER: 'foundation_test',
-            BACKUP_DATABASE_NAME: 'foundation_test',
+        const command = await exec(
+          process.execPath,
+          ['--import', 'tsx', 'scripts/backup-database.ts'],
+          {
+            cwd: fileURLToPath(new URL('../../../', import.meta.url)),
+            env: {
+              ...process.env,
+              BACKUP_CONTAINER: source.containerName,
+              BACKUP_DIRECTORY: directory,
+              BACKUP_KEY_FILE: keyFile,
+              BACKUP_CONFIG_FILE: configFile,
+              BACKUP_DATABASE_USER: 'foundation_test',
+              BACKUP_DATABASE_NAME: 'foundation_test',
+            },
           },
-        });
+        );
         const result = JSON.parse(command.stdout) as {
           code: string;
           filename: string;

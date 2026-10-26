@@ -1,8 +1,8 @@
 import { Inject, Injectable } from '@nestjs/common';
-import type { Prisma, CommercialRfq, CommercialOffer, SyntheticPayment } from '@prisma/client';
+import type { Prisma, CommercialOffer, SyntheticPayment } from '@prisma/client';
 import {
-  permissionsForMembership,
   type CommerceMetrics,
+  type BusinessRole,
   type CommerceRole,
   type CommerceWorkspaceView,
   type RfqCreate,
@@ -43,16 +43,18 @@ import {
 import { PrismaService } from '../../database/prisma.service.js';
 import type { Actor } from '../../common/identity.js';
 import { iamTransaction, type Db } from '../foundation/transaction.js';
+import {
+  ResourcePolicyService,
+  orderInclude,
+  type OrderRecord,
+} from '../foundation/resource-policy.service.js';
+import { actionForbidden } from '../../common/errors.js';
 import { replaySafe, validateIdempotencyKey } from '../foundation/idempotency.js';
 import { audit } from '../foundation/audit.js';
 import { findCatalogExample, projectBuyerCatalog } from './catalog.js';
 import { activity, revision } from '../procurement/records.js';
 
-type Order = Prisma.CommercialOrderGetPayload<{
-  include: { rfq: true; offers: true; batches: true; payments: true };
-}>;
-const orderInclude = { rfq: true, offers: true, batches: true, payments: true } as const;
-const operatorRoles: CommerceRole[] = [
+const operatorCapacities: CommerceRole[] = [
   'PRODUCTION_MANAGER',
   'FINANCE_MANAGER',
   'QUALITY_INSPECTOR',
@@ -68,12 +70,9 @@ function version(actual: number, expected: number) {
     'This record changed. Reload the workspace before trying again.',
   );
 }
-function permit(roles: CommerceRole[], allowed: readonly CommerceRole[]) {
-  requireRule(
-    allowed.some((role) => roles.includes(role)),
-    'FORBIDDEN',
-    'You do not have permission for this resource action.',
-  );
+// Capacities come from held permissions (see ResourcePolicyService), never from role names.
+function permit(capacities: readonly CommerceRole[], allowed: readonly CommerceRole[]) {
+  if (!allowed.some((capacity) => capacities.includes(capacity))) actionForbidden();
 }
 function roleForNext<S extends string>(
   roles: CommerceRole[],
@@ -94,7 +93,7 @@ function held(offer: CommercialOffer, now = new Date()) {
 function livePayment(payment: SyntheticPayment) {
   return !['FAILED', 'CANCELLED'].includes(payment.status);
 }
-function orderQuantities(order: Order) {
+function orderQuantities(order: OrderRecord) {
   const add = (name: 'produced' | 'submitted' | 'approved' | 'rejected' | 'pending') =>
     order.batches.reduce((n, b) => n + b[name], 0);
   return {
@@ -115,7 +114,10 @@ function orderQuantities(order: Order) {
 }
 @Injectable()
 export class CommerceService {
-  constructor(@Inject(PrismaService) private readonly db: PrismaService) {}
+  constructor(
+    @Inject(PrismaService) private readonly db: PrismaService,
+    @Inject(ResourcePolicyService) private readonly policy: ResourcePolicyService,
+  ) {}
   async catalog(actor: Actor) {
     return iamTransaction(this.db, actor, async (tx) =>
       projectBuyerCatalog(
@@ -128,55 +130,19 @@ export class CommerceService {
       ),
     );
   }
-  private async membership(actor: Actor, id: string, tx: Db) {
-    return tx.organizationMember.findFirst({
-      where: {
-        organizationId: id,
-        userId: actor.id,
-        status: 'ACTIVE',
-        organization: { approvalStatus: 'APPROVED' },
-      },
-      include: { roles: true, organization: true, permissionGrants: true },
-    });
-  }
-  private async roles(actor: Actor, rfq: CommercialRfq, tx: Db): Promise<CommerceRole[]> {
-    const buyer = await this.membership(actor, rfq.buyerOrganizationId, tx);
-    const operator = await this.membership(actor, rfq.operatorOrganizationId, tx);
-    return [
-      ...(buyer?.organization.type === 'BUYER_BUSINESS' &&
-      buyer.roles.some((r) => ['BUYER', 'BUYER_REPRESENTATIVE'].includes(r.role))
-        ? ['BUYER' as const]
-        : []),
-      ...(operator?.organization.type === 'INTERNAL'
-        ? operator.roles
-            .map((r) => r.role)
-            .filter((r): r is CommerceRole => operatorRoles.includes(r as CommerceRole))
-        : []),
-    ];
-  }
-  private async owner(actor: Actor, profileId: string, tx: Db, consent = false) {
-    const profile = await tx.artisanProfile.findFirst({
-      where: { id: profileId, userId: actor.id },
-    });
-    requireRule(profile, 'FORBIDDEN', 'Only the artisan can decide or report their own work.');
-    if (consent)
-      requireRule(
-        await tx.consentRecord.findFirst({
-          where: {
-            userId: actor.id,
-            purpose: 'artisan.profile',
-            decision: true,
-            withdrawnAt: null,
-          },
-        }),
-        'CONSENT_REQUIRED',
-        'Active artisan profile processing consent is required.',
-      );
-  }
-  private async order(tx: Db, id: string) {
-    const row = await tx.commercialOrder.findUnique({ where: { id }, include: orderInclude });
-    requireRule(row, 'NOT_FOUND', 'Commercial record not found.');
-    return row;
+  private async requireArtisanConsent(tx: Db, actor: Actor) {
+    requireRule(
+      await tx.consentRecord.findFirst({
+        where: {
+          userId: actor.id,
+          purpose: 'artisan.profile',
+          decision: true,
+          withdrawnAt: null,
+        },
+      }),
+      'CONSENT_REQUIRED',
+      'Active artisan profile processing consent is required.',
+    );
   }
   private command<T extends Prisma.InputJsonValue>(
     tx: Db,
@@ -199,7 +165,7 @@ export class CommerceService {
   private async event(
     tx: Db,
     actor: Actor,
-    rfq: CommercialRfq,
+    rfq: OrderRecord['rfq'],
     action: string,
     targetType: string,
     targetId: string,
@@ -225,9 +191,8 @@ export class CommerceService {
   }
   async report(actor: Actor, id: string) {
     return iamTransaction(this.db, actor, async (tx) => {
-      const order = await this.order(tx, id);
-      const roles = await this.roles(actor, order.rfq, tx);
-      permit(roles, ['BUYER', ...operatorRoles]);
+      const { row: order, scope, capacities } = await this.policy.order(actor, id, tx);
+      permit(capacities, ['BUYER', ...operatorCapacities]);
       const projection = await tx.commerceProjection.findUnique({ where: { orderId: id } });
       const pending = await tx.outboxEvent.count({
         where: {
@@ -240,9 +205,13 @@ export class CommerceService {
         return { orderId: id, status: 'PENDING', pendingEvents: pending, metrics: null };
       const metrics = projection.metrics as unknown as CommerceMetrics;
       // Buyer and quality/logistics projections never include individual artisan earnings.
-      const finance = roles.includes('FINANCE_MANAGER')
+      const finance = this.policy.has(
+        scope,
+        order.rfq.operatorOrganizationId,
+        'finance.payment.manage',
+      )
         ? metrics.finance
-        : roles.includes('BUYER')
+        : capacities.includes('BUYER')
           ? {
               currency: 'TND',
               unit: 'MILLIME',
@@ -276,29 +245,15 @@ export class CommerceService {
   }
   async inbox(actor: Actor) {
     return iamTransaction(this.db, actor, async (tx) => {
-      const memberships = await tx.organizationMember.findMany({
-        where: {
-          userId: actor.id,
-          status: 'ACTIVE',
-          organization: { approvalStatus: 'APPROVED' },
-        },
-        include: { roles: true, organization: true, permissionGrants: true },
-      });
-      const buyers = memberships
-        .filter(
-          (m) =>
-            m.organization.type === 'BUYER_BUSINESS' &&
-            m.roles.some((r) => ['BUYER', 'BUYER_REPRESENTATIVE'].includes(r.role)),
-        )
-        .map((m) => m.organizationId);
+      const scope = await this.policy.scope(actor, tx);
+      const buyers = this.policy.buyerOrganizationIds(scope);
       // Operator inbox event codes can reveal financial activity: limit them to finance/production.
-      const operators = memberships
-        .filter(
-          (m) =>
-            m.organization.type === 'INTERNAL' &&
-            m.roles.some((r) => ['FINANCE_MANAGER', 'PRODUCTION_MANAGER'].includes(r.role)),
-        )
-        .map((m) => m.organizationId);
+      const operators = [
+        ...new Set([
+          ...this.policy.operatorOrganizationIds(scope, 'FINANCE_MANAGER'),
+          ...this.policy.operatorOrganizationIds(scope, 'PRODUCTION_MANAGER'),
+        ]),
+      ];
       return tx.commerceNotice.findMany({
         where: {
           OR: [
@@ -315,13 +270,10 @@ export class CommerceService {
   }
   async createRfq(actor: Actor, input: RfqCreate, key?: string, managed = false) {
     return iamTransaction(this.db, actor, async (tx) => {
-      const member = await this.membership(actor, input.buyerOrganizationId, tx);
-      requireRule(
-        member?.organization.type === 'BUYER_BUSINESS' &&
-          member.roles.some((r) => ['BUYER', 'BUYER_REPRESENTATIVE'].includes(r.role)) &&
-          permissionsForMembership(member).includes('buyer.rfq.create'),
-        'FORBIDDEN',
-        'An approved buyer membership is required.',
+      const scope = await this.policy.scope(actor, tx);
+      this.policy.requirePermission(
+        this.policy.buyerOrganizationIds(scope).includes(input.buyerOrganizationId) &&
+          this.policy.has(scope, input.buyerOrganizationId, 'buyer.rfq.create'),
       );
       requireRule(
         await tx.organization.findFirst({
@@ -372,14 +324,10 @@ export class CommerceService {
   }
   async editRfq(actor: Actor, id: string, input: RfqEdit, key?: string) {
     return iamTransaction(this.db, actor, async (tx) => {
-      const row = await tx.commercialRfq.findUnique({ where: { id } });
-      requireRule(row, 'NOT_FOUND', 'Commercial record not found.');
-      permit(await this.roles(actor, row, tx), ['BUYER']);
-      const purchaser = await this.membership(actor, row.buyerOrganizationId, tx);
-      requireRule(
-        purchaser && permissionsForMembership(purchaser).includes('buyer.rfq.create'),
-        'FORBIDDEN',
-        'Purchasing authority is required to edit an RFQ.',
+      const { row, scope, capacities } = await this.policy.rfq(actor, id, tx);
+      permit(capacities, ['BUYER']);
+      this.policy.requirePermission(
+        this.policy.has(scope, row.buyerOrganizationId, 'buyer.rfq.create'),
       );
       return this.command(tx, actor, key, id, 'rfq.edit', input, async () => {
         version(row.version, input.version);
@@ -410,9 +358,7 @@ export class CommerceService {
   }
   async rfqAction(actor: Actor, id: string, input: RfqAction, key?: string) {
     return iamTransaction(this.db, actor, async (tx) => {
-      const row = await tx.commercialRfq.findUnique({ where: { id } });
-      requireRule(row, 'NOT_FOUND', 'Commercial record not found.');
-      const roles = await this.roles(actor, row, tx);
+      const { row, scope, capacities: roles } = await this.policy.rfq(actor, id, tx);
       if (row.procurementManaged && ['QUOTED', 'ACCEPTED'].includes(input.next))
         requireRule(
           false,
@@ -420,29 +366,14 @@ export class CommerceService {
           'Use the versioned procurement quotation and acceptance workflow.',
         );
       roleForNext(roles, input.next, rfqEdges);
-      if (input.next === 'SUBMITTED') {
-        const purchaser = await this.membership(actor, row.buyerOrganizationId, tx);
-        requireRule(
-          purchaser && permissionsForMembership(purchaser).includes('buyer.rfq.create'),
-          'FORBIDDEN',
-          'Purchasing authority is required to submit an RFQ.',
+      if (input.next === 'SUBMITTED')
+        this.policy.requirePermission(
+          this.policy.has(scope, row.buyerOrganizationId, 'buyer.rfq.create'),
         );
-      }
-      if (input.next === 'ACCEPTED') {
-        const member = await this.membership(actor, row.buyerOrganizationId, tx);
-        requireRule(
-          member &&
-            (await tx.membershipPermission.findFirst({
-              where: {
-                membershipId: member.id,
-                permission: 'buyer.quotation.approve',
-                enabled: true,
-              },
-            })),
-          'FORBIDDEN',
-          'Explicit buyer quotation approval authority is required.',
+      if (input.next === 'ACCEPTED')
+        this.policy.requirePermission(
+          this.policy.has(scope, row.buyerOrganizationId, 'buyer.quotation.approve'),
         );
-      }
       return this.command(tx, actor, key, id, 'rfq.action', input, async () => {
         version(row.version, input.version);
         transitionRfq(row.status as RfqState, input.next, roles, {
@@ -484,8 +415,8 @@ export class CommerceService {
   }
   async createOffer(actor: Actor, input: OfferCreate, key?: string) {
     return iamTransaction(this.db, actor, async (tx) => {
-      const order = await this.order(tx, input.orderId);
-      permit(await this.roles(actor, order.rfq, tx), ['PRODUCTION_MANAGER']);
+      const { row: order, capacities } = await this.policy.order(actor, input.orderId, tx);
+      permit(capacities, ['PRODUCTION_MANAGER']);
       const capacity = await tx.capacityDeclaration.findUnique({
         where: { id: input.capacityDeclarationId },
         include: { artisanProfile: { include: { user: true } } },
@@ -577,14 +508,9 @@ export class CommerceService {
   }
   async offerAction(actor: Actor, id: string, input: OfferAction, key?: string) {
     return iamTransaction(this.db, actor, async (tx) => {
-      const row = await tx.commercialOffer.findUnique({ where: { id } });
-      requireRule(row, 'NOT_FOUND', 'Commercial record not found.');
-      const order = await this.order(tx, row.orderId);
-      const roles = await this.roles(actor, order.rfq, tx);
-      if (['ACCEPTED', 'DECLINED'].includes(input.next)) {
-        await this.owner(actor, row.artisanProfileId, tx, input.next === 'ACCEPTED');
-        roles.push('ARTISAN');
-      }
+      const { row, order, capacities: roles } = await this.policy.offer(actor, id, tx);
+      if (input.next === 'ACCEPTED' && roles.includes('ARTISAN'))
+        await this.requireArtisanConsent(tx, actor);
       roleForNext(roles, input.next, offerEdges);
       return this.command(tx, actor, key, id, 'offer.action', input, async () => {
         version(row.version, input.version);
@@ -639,17 +565,7 @@ export class CommerceService {
   }
   async batchAction(actor: Actor, id: string, input: BatchAction, key?: string) {
     return iamTransaction(this.db, actor, async (tx) => {
-      const row = await tx.commercialBatch.findUnique({ where: { id }, include: { offer: true } });
-      requireRule(row, 'NOT_FOUND', 'Commercial record not found.');
-      const order = await this.order(tx, row.orderId);
-      const roles = await this.roles(actor, order.rfq, tx);
-      if (
-        ['IN_PROGRESS', 'SUBMITTED', 'DISPUTED'].includes(input.next) &&
-        (await tx.artisanProfile.findFirst({
-          where: { id: row.artisanProfileId, userId: actor.id },
-        }))
-      )
-        roles.push('ARTISAN');
+      const { row, order, capacities: roles } = await this.policy.batch(actor, id, tx);
       roleForNext(roles, input.next, batchEdges);
       return this.command(tx, actor, key, id, 'batch.action', input, async () => {
         version(row.version, input.version);
@@ -691,10 +607,8 @@ export class CommerceService {
   }
   async progress(actor: Actor, id: string, input: ProgressInput, key?: string) {
     return iamTransaction(this.db, actor, async (tx) => {
-      const row = await tx.commercialBatch.findUnique({ where: { id }, include: { offer: true } });
-      requireRule(row, 'NOT_FOUND', 'Commercial record not found.');
-      await this.owner(actor, row.artisanProfileId, tx);
-      const order = await this.order(tx, row.orderId);
+      const { row, order, capacities } = await this.policy.batch(actor, id, tx);
+      permit(capacities, ['ARTISAN']);
       return this.command(tx, actor, key, id, 'batch.progress', input, async () => {
         version(row.version, input.version);
         requireRule(
@@ -715,10 +629,8 @@ export class CommerceService {
   }
   async inspect(actor: Actor, id: string, input: InspectionInput, key?: string) {
     return iamTransaction(this.db, actor, async (tx) => {
-      const row = await tx.commercialBatch.findUnique({ where: { id } });
-      requireRule(row, 'NOT_FOUND', 'Commercial record not found.');
-      const order = await this.order(tx, row.orderId);
-      permit(await this.roles(actor, order.rfq, tx), ['QUALITY_INSPECTOR']);
+      const { row, order, capacities } = await this.policy.batch(actor, id, tx);
+      permit(capacities, ['QUALITY_INSPECTOR']);
       return this.command(tx, actor, key, id, 'batch.inspect', input, async () => {
         version(row.version, input.version);
         requireRule(
@@ -761,8 +673,7 @@ export class CommerceService {
   }
   async orderAction(actor: Actor, id: string, input: OrderAction, key?: string) {
     return iamTransaction(this.db, actor, async (tx) => {
-      const row = await this.order(tx, id);
-      const roles = await this.roles(actor, row.rfq, tx);
+      const { row, capacities: roles } = await this.policy.order(actor, id, tx);
       roleForNext(roles, input.next, orderEdges);
       return this.command(tx, actor, key, id, 'order.action', input, async () => {
         version(row.version, input.version);
@@ -834,8 +745,8 @@ export class CommerceService {
   }
   async createPayment(actor: Actor, input: PaymentCreate, key?: string) {
     return iamTransaction(this.db, actor, async (tx) => {
-      const order = await this.order(tx, input.orderId);
-      permit(await this.roles(actor, order.rfq, tx), ['FINANCE_MANAGER']);
+      const { row: order, capacities } = await this.policy.order(actor, input.orderId, tx);
+      permit(capacities, ['FINANCE_MANAGER']);
       return this.command(tx, actor, key, order.id, 'payment.create', input, async () => {
         requireRule(
           !['CLOSED', 'CANCELLED', 'SETTLED', 'DISPUTED'].includes(order.status),
@@ -886,10 +797,7 @@ export class CommerceService {
   }
   async paymentAction(actor: Actor, id: string, input: PaymentAction, key?: string) {
     return iamTransaction(this.db, actor, async (tx) => {
-      const row = await tx.syntheticPayment.findUnique({ where: { id } });
-      requireRule(row, 'NOT_FOUND', 'Commercial record not found.');
-      const order = await this.order(tx, row.orderId);
-      const roles = await this.roles(actor, order.rfq, tx);
+      const { row, order, capacities: roles } = await this.policy.payment(actor, id, tx);
       roleForNext(roles, input.next, paymentEdges);
       return this.command(tx, actor, key, id, 'payment.action', input, async () => {
         version(row.version, input.version);
@@ -925,93 +833,47 @@ export class CommerceService {
   async workspace(actor: Actor): Promise<CommerceWorkspaceView> {
     // A single transaction and the shared IAM locks keep these cross-table projections consistent.
     return iamTransaction(this.db, actor, async (tx) => {
-      const memberships = await tx.organizationMember.findMany({
-        where: { userId: actor.id, status: 'ACTIVE', organization: { approvalStatus: 'APPROVED' } },
-        include: { organization: true, roles: true, permissionGrants: true },
-      });
-      const buyerOrganizations = memberships
-        .filter(
-          (m) =>
-            m.organization.type === 'BUYER_BUSINESS' &&
-            m.roles.some((r) => ['BUYER', 'BUYER_REPRESENTATIVE'].includes(r.role)),
-        )
+      const scope = await this.policy.scope(actor, tx);
+      const buyers = this.policy.buyerOrganizationIds(scope);
+      const operators = this.policy.operatorOrganizationIds(scope);
+      const finance = this.policy.operatorOrganizationIds(scope, 'FINANCE_MANAGER');
+      const production = this.policy.operatorOrganizationIds(scope, 'PRODUCTION_MANAGER');
+      const buyerOrganizations = scope.memberships
+        .filter((m) => buyers.includes(m.organizationId))
+        .map((m) => ({ id: m.organizationId, name: m.name, permissions: m.permissions }));
+      const operatorOrganizations = scope.memberships
+        .filter((m) => operators.includes(m.organizationId))
         .map((m) => ({
           id: m.organizationId,
-          name: m.organization.name,
-          permissions: permissionsForMembership(m),
+          name: m.name,
+          roles: m.roleNames as BusinessRole[],
         }));
-      const operatorOrganizations = memberships
-        .filter(
-          (m) =>
-            m.organization.type === 'INTERNAL' &&
-            m.roles.some((r) => operatorRoles.includes(r.role as CommerceRole)),
-        )
-        .map((m) => ({
-          id: m.organizationId,
-          name: m.organization.name,
-          roles: m.roles.map((r) => r.role),
-        }));
-      const buyers = buyerOrganizations.map((o) => o.id),
-        operators = operatorOrganizations.map((o) => o.id);
-      const finance = operatorOrganizations
-        .filter((o) => o.roles.includes('FINANCE_MANAGER'))
-        .map((o) => o.id);
-      const production = operatorOrganizations
-        .filter((o) => o.roles.includes('PRODUCTION_MANAGER'))
-        .map((o) => o.id);
-      const own = await tx.artisanProfile.findUnique({
-        where: { userId: actor.id },
-        select: { id: true },
-      });
+      const own = scope.ownArtisanProfileId;
       const rfqs = await tx.commercialRfq.findMany({
-        where: {
-          OR: [
-            { buyerOrganizationId: { in: buyers } },
-            { operatorOrganizationId: { in: operators }, status: { not: 'DRAFT' } },
-          ],
-        },
+        where: this.policy.rfqWhere(scope),
         take: 100,
         orderBy: { createdAt: 'desc' },
       });
       const orders = await tx.commercialOrder.findMany({
-        where: {
-          rfq: {
-            OR: [
-              { buyerOrganizationId: { in: buyers } },
-              { operatorOrganizationId: { in: operators } },
-            ],
-          },
-        },
+        where: this.policy.orderWhere(scope),
         include: orderInclude,
         take: 100,
         orderBy: { createdAt: 'desc' },
       });
-      const privateWhere = {
-        OR: [
-          { artisanProfileId: own?.id ?? '__none__' },
-          { order: { rfq: { operatorOrganizationId: { in: operators } } } },
-        ],
-      };
       const offers = await tx.commercialOffer.findMany({
-        where: privateWhere,
+        where: this.policy.offerWhere(scope),
         include: { order: { include: { rfq: true } } },
         take: 100,
         orderBy: { createdAt: 'desc' },
       });
       const batches = await tx.commercialBatch.findMany({
-        where: privateWhere,
+        where: this.policy.batchWhere(scope),
         include: { offer: true },
         take: 100,
         orderBy: { createdAt: 'desc' },
       });
       const payments = await tx.syntheticPayment.findMany({
-        where: {
-          OR: [
-            { order: { rfq: { operatorOrganizationId: { in: finance } } } },
-            { kind: 'BUYER_RECEIPT', order: { rfq: { buyerOrganizationId: { in: buyers } } } },
-            { kind: 'ARTISAN_PAYOUT', batch: { artisanProfileId: own?.id ?? '__none__' } },
-          ],
-        },
+        where: this.policy.paymentWhere(scope),
         take: 100,
         orderBy: { createdAt: 'desc' },
       });
@@ -1038,7 +900,7 @@ export class CommerceService {
       return {
         buyerOrganizations,
         operatorOrganizations,
-        artisanProfileId: own?.id ?? null,
+        artisanProfileId: own,
         operatorCatalog: await tx.organization.findMany({
           where: { type: 'INTERNAL', approvalStatus: 'APPROVED' },
           select: { id: true, name: true },
@@ -1102,7 +964,7 @@ export class CommerceService {
         })),
         offers: offers.map((o) => {
           const pay =
-            o.artisanProfileId === own?.id ||
+            o.artisanProfileId === own ||
             finance.includes(o.order.rfq.operatorOrganizationId) ||
             production.includes(o.order.rfq.operatorOrganizationId);
           return {

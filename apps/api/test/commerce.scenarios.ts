@@ -153,7 +153,7 @@ export async function runCommerceScenarios({ db, register, check, config }: Harn
             'PATCH',
           )
         ).status,
-        403,
+        404,
       );
       const changed = await command(
         buyer,
@@ -298,7 +298,7 @@ export async function runCommerceScenarios({ db, register, check, config }: Harn
       assert.equal(
         (await command(outsider, `offers/${offerId}/actions`, { next: 'ACCEPTED', version: 1 }))
           .status,
-        403,
+        404,
       );
       const key = randomUUID();
       const decision = { next: 'ACCEPTED', version: 1 };
@@ -361,7 +361,7 @@ export async function runCommerceScenarios({ db, register, check, config }: Harn
             produced: 8,
           })
         ).status,
-        403,
+        404,
       );
       await ok(artisan, `batches/${batchId}/progress`, { version: batch.version, produced: 10 });
       await batchAction(artisan, 'SUBMITTED');
@@ -665,15 +665,15 @@ export async function runCommerceScenarios({ db, register, check, config }: Harn
       const visible = JSON.stringify(read.body);
       assert.ok(visible.includes('100001'));
       assert.ok(!visible.includes('artisanPaid'));
-      assert.equal((await outsider.client.request(report)).status, 403);
-      assert.equal((await artisan.client.request(report)).status, 403);
+      assert.equal((await outsider.client.request(report)).status, 404);
+      assert.equal((await artisan.client.request(report)).status, 404);
       const qa = await quality.client.request(report);
       assert.equal((qa.body as { metrics: { finance: unknown } }).metrics.finance, null);
       const csv = await buyer.client.request(`${report}.csv`);
       assert.equal(csv.status, 200);
       assert.ok(String(csv.body).includes('accepted,10,10,PIECES,SYNTHETIC'));
       assert.ok(!String(csv.body).includes('artisanPaid'));
-      assert.equal((await outsider.client.request(`${report}.csv`)).status, 403);
+      assert.equal((await outsider.client.request(`${report}.csv`)).status, 404);
       assert.equal(
         (
           await outsider.client.request(
@@ -695,8 +695,8 @@ export async function runCommerceScenarios({ db, register, check, config }: Harn
         },
         data: { status: 'REVOKED' },
       });
-      assert.equal((await buyer.client.request(report)).status, 403);
-      assert.equal((await buyer.client.request(`${report}.csv`)).status, 403);
+      assert.equal((await buyer.client.request(report)).status, 404);
+      assert.equal((await buyer.client.request(`${report}.csv`)).status, 404);
       assert.deepEqual((await buyer.client.request('/api/v1/commerce/inbox')).body, []);
     },
   );

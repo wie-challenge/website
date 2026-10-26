@@ -8,6 +8,10 @@ import {
   userUnits,
   writeOperationStatus,
 } from '../../src/operations/local-runner.js';
+
+// Modes, uid et symlinks POSIX : vérifiés uniquement hors Windows.
+const POSIX = process.platform !== 'win32';
+
 test('local operation summaries allow only fixed codes and never forward child output/secrets', () => {
   assert.equal(operationResult('backup', 0, '{"code":"BACKUP_CREATED"}').code, 'OPERATION_OK');
   assert.deepEqual(operationResult('health', 0, '{"alerts":[]}').alerts, []);
@@ -47,20 +51,23 @@ test('local status and alerts are private, safe and reject nonprivate directorie
   try {
     const healthy = operationResult('health', 0, '{"alerts":[]}');
     await writeOperationStatus(directory, healthy);
-    assert.equal((await stat(join(directory, 'health.json'))).mode & 0o777, 0o600);
+    if (POSIX) assert.equal((await stat(join(directory, 'health.json'))).mode & 0o777, 0o600);
     const failed = operationResult('health', 1, '{"alerts":["API_NOT_READY"]}');
     await writeOperationStatus(directory, failed);
     assert.equal(
       JSON.parse(await readFile(join(directory, 'health.json'), 'utf8')).code,
       'OPERATION_FAILED',
     );
-    assert.equal((await stat(join(directory, 'alerts.ndjson'))).mode & 0o777, 0o600);
-    await chmod(directory, 0o755);
-    await assert.rejects(writeOperationStatus(directory, failed));
-    await chmod(directory, 0o700);
-    await rm(join(directory, 'alerts.ndjson'));
-    await symlink(join(directory, 'health.json'), join(directory, 'alerts.ndjson'));
-    await assert.rejects(writeOperationStatus(directory, failed));
+    assert.ok((await stat(join(directory, 'alerts.ndjson'))).isFile());
+    if (POSIX) {
+      assert.equal((await stat(join(directory, 'alerts.ndjson'))).mode & 0o777, 0o600);
+      await chmod(directory, 0o755);
+      await assert.rejects(writeOperationStatus(directory, failed));
+      await chmod(directory, 0o700);
+      await rm(join(directory, 'alerts.ndjson'));
+      await symlink(join(directory, 'health.json'), join(directory, 'alerts.ndjson'));
+      await assert.rejects(writeOperationStatus(directory, failed));
+    }
   } finally {
     await rm(directory, { recursive: true, force: true });
   }

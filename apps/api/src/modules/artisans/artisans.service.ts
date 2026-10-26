@@ -16,6 +16,7 @@ import type { Actor } from '../../common/identity.js';
 import { fail } from '../../common/errors.js';
 import { iamTransaction, type Db } from '../foundation/transaction.js';
 import { audit } from '../foundation/audit.js';
+import { ResourcePolicyService } from '../foundation/resource-policy.service.js';
 import {
   profileSelect,
   profileView,
@@ -27,7 +28,10 @@ import {
 
 @Injectable()
 export class ArtisansService {
-  constructor(@Inject(PrismaService) private readonly db: PrismaService) {}
+  constructor(
+    @Inject(PrismaService) private readonly db: PrismaService,
+    @Inject(ResourcePolicyService) private readonly policy: ResourcePolicyService,
+  ) {}
   private async owner(actor: Actor, db: Db = this.db) {
     const profile = await db.artisanProfile.findUnique({
       where: { userId: actor.id },
@@ -36,80 +40,14 @@ export class ArtisansService {
     if (!profile) fail(404, 'ARTISAN_PROFILE_REQUIRED', 'Create your artisan profile first.');
     return profile;
   }
-  private async access(
+  private access(
     actor: Actor,
     id: string,
     scope: DelegationScope,
     db: Db = this.db,
     grantId?: string,
   ) {
-    const profile = await db.artisanProfile.findUnique({ where: { id }, select: profileSelect });
-    if (!profile) fail(404, 'NOT_FOUND', 'Artisan profile not found.');
-    if (!profile.userId)
-      fail(
-        403,
-        'ASSISTED_REGISTRY_REQUIRED',
-        'Use the assigned association registry for this participant.',
-      );
-    const owner = await db.user.findUnique({
-      where: { id: profile.userId },
-      select: { status: true, emailVerified: true },
-    });
-    if (owner?.status !== 'ACTIVE' || !owner.emailVerified)
-      fail(403, 'FORBIDDEN', 'This artisan profile is unavailable.');
-    if (profile.userId === actor.id) return { profile, delegation: null };
-    if (profile.createdById && profile.createdById !== profile.userId)
-      fail(
-        403,
-        'ASSISTED_REGISTRY_REQUIRED',
-        'Use the assigned registry and current worker authorization for assisted participants.',
-      );
-    await this.requireProfileConsent(profile.userId, db);
-    const grants = await db.delegationGrant.findMany({
-      where: {
-        id: grantId,
-        artisanProfileId: id,
-        delegateUserId: actor.id,
-        status: 'ACTIVE',
-        revokedAt: null,
-        expiresAt: { gt: new Date() },
-        scopes: { has: scopeMap[scope] },
-      },
-    });
-    for (const grant of grants) {
-      const relationship = await db.associationMembership.findFirst({
-        where: {
-          artisanProfileId: id,
-          organizationId: grant.organizationId,
-          status: 'ACTIVE',
-          endedAt: null,
-          consentRecord: { decision: true, withdrawnAt: null },
-          organization: { type: 'ASSOCIATION', approvalStatus: 'APPROVED' },
-        },
-      });
-      const membership = await db.organizationMember.findFirst({
-        where: {
-          organizationId: grant.organizationId,
-          userId: actor.id,
-          status: 'ACTIVE',
-          roles: { some: { role: 'ASSOCIATION_COORDINATOR' } },
-        },
-      });
-      const consent = await db.consentRecord.findFirst({
-        where: {
-          userId: profile.userId,
-          purpose: `delegation:${grant.id}`,
-          decision: true,
-          withdrawnAt: null,
-        },
-      });
-      if (relationship && membership && consent) return { profile, delegation: grant };
-    }
-    fail(
-      403,
-      'FORBIDDEN',
-      'An active association relationship and delegation for this action are required.',
-    );
+    return this.policy.artisanProfile(actor, id, scope, db, grantId);
   }
   private async requireProfileConsent(userId: string | null, db: Db) {
     if (!userId)

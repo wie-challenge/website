@@ -1,9 +1,10 @@
 import assert from 'node:assert/strict';
-import { execFile } from 'node:child_process';
+import { execFile, type ExecFileOptions } from 'node:child_process';
 import { promisify } from 'node:util';
 import { fileURLToPath } from 'node:url';
 import type { AppConfig } from '../src/config/env.js';
 import type { PrismaService } from '../src/database/prisma.service.js';
+import { pnpm } from './support.js';
 
 type Result = { status: number; body: unknown };
 type Client = {
@@ -252,7 +253,9 @@ export async function runLifecycleScenarios({
           Array.isArray(item) ? item.join(',') : String(item ?? ''),
         ]),
       );
-      const exec = promisify(execFile);
+      const exec = (file: string, args: string[], opts: ExecFileOptions = {}) =>
+        file === 'pnpm' ? pnpm(args, opts) : promisify(execFile)(file, args, opts);
+      
       const command = (args: string[]) =>
         exec(
           'pnpm',
@@ -303,8 +306,9 @@ export async function runLifecycleScenarios({
         data: { emailVerified: true },
       });
       const recovered = await command(argumentsFor('lifecycle-admin@example.com'));
-      assert.match(recovered.stdout, /Organization manager recovered/);
-      assert.equal(recovered.stdout.includes('lifecycle-replacement@example.com'), false);
+      const output = recovered.stdout.toString();
+      assert.match(output, /Organization manager recovered/);
+      assert.equal(output.includes('lifecycle-replacement@example.com'), false);
       const membership = await db.organizationMember.findUniqueOrThrow({
         where: {
           organizationId_userId: {

@@ -1,10 +1,8 @@
 import assert from 'node:assert/strict';
-import { execFile } from 'node:child_process';
-import { promisify } from 'node:util';
 import { fileURLToPath } from 'node:url';
 import { Client } from 'pg';
 import { hashPassword, verifyPassword } from 'better-auth/crypto';
-import { disposableDatabase } from './support.js';
+import { disposableDatabase ,pnpm} from './support.js';
 export async function runUpgradeScenario(
   check: (name: string, fn: () => Promise<void>) => Promise<void>,
 ) {
@@ -29,7 +27,7 @@ export async function runUpgradeScenario(
           'INSERT INTO "Session" (id,token,"userId","expiresAt","updatedAt") VALUES ($1,$2,$3,$4,now())',
           ['upgrade-session', 'synthetic-session-token', 'upgrade-user', expiry],
         );
-        await promisify(execFile)('pnpm', ['exec', 'prisma', 'migrate', 'deploy'], {
+        await pnpm(['exec', 'prisma', 'migrate', 'deploy'], {
           cwd: fileURLToPath(new URL('../', import.meta.url)),
           env: { ...process.env, DATABASE_URL: database.url, MIGRATION_DATABASE_URL: database.url },
         });

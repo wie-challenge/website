@@ -67,7 +67,7 @@ export async function runArtisanScenarios({ db, register, mutate, check }: Harne
         0,
       );
       assert.equal('email' in value<object>(created), false);
-      assert.equal((await outsider.client.request(`/api/v1/artisans/${artisanId}`)).status, 403);
+      assert.equal((await outsider.client.request(`/api/v1/artisans/${artisanId}`)).status, 404);
       const catalog = await artisan.client.request('/api/v1/craft-skills');
       assert.equal(catalog.status, 200);
       assert.ok(
@@ -100,7 +100,7 @@ export async function runArtisanScenarios({ db, register, mutate, check }: Harne
     assert.equal(
       (await mutate(outsider.client, `/api/v1/artisans/${artisanId}/skills`, 'PUT', { items: [] }))
         .status,
-      403,
+      404,
     );
   });
   const capacity = {
@@ -260,7 +260,7 @@ export async function runArtisanScenarios({ db, register, mutate, check }: Harne
       });
       assert.equal(linked.status, 201);
       relationshipId = value<{ items: { id: string }[] }>(linked).items[0].id;
-      assert.equal((await coordinator.client.request(`/api/v1/artisans/${artisanId}`)).status, 403);
+      assert.equal((await coordinator.client.request(`/api/v1/artisans/${artisanId}`)).status, 404);
       const choices = await artisan.client.request(
         `/api/v1/artisans/me/associations/${relationshipId}/coordinators`,
       );
@@ -329,7 +329,7 @@ export async function runArtisanScenarios({ db, register, mutate, check }: Harne
 
       assert.equal(
         (await coordinator.client.request(`/api/v1/artisans/${artisanId}/capacity`)).status,
-        403,
+        404,
       );
       assert.equal(
         (
@@ -337,7 +337,7 @@ export async function runArtisanScenarios({ db, register, mutate, check }: Harne
             items: [],
           })
         ).status,
-        403,
+        404,
       );
       const update = await mutate(
         coordinator.client,
@@ -366,7 +366,7 @@ export async function runArtisanScenarios({ db, register, mutate, check }: Harne
         where: { id: membership.id },
         data: { status: 'SUSPENDED' },
       });
-      assert.equal((await coordinator.client.request(`/api/v1/artisans/${artisanId}`)).status, 403);
+      assert.equal((await coordinator.client.request(`/api/v1/artisans/${artisanId}`)).status, 404);
       assert.equal((await artisan.client.request('/api/v1/artisans/me')).status, 200);
       await db.organizationMember.update({
         where: { id: membership.id },
@@ -377,7 +377,7 @@ export async function runArtisanScenarios({ db, register, mutate, check }: Harne
         where: { id: membership.id },
         data: { status: 'REVOKED' },
       });
-      assert.equal((await coordinator.client.request(`/api/v1/artisans/${artisanId}`)).status, 403);
+      assert.equal((await coordinator.client.request(`/api/v1/artisans/${artisanId}`)).status, 404);
       await db.organizationMember.update({
         where: { id: membership.id },
         data: { status: 'ACTIVE' },
@@ -386,7 +386,7 @@ export async function runArtisanScenarios({ db, register, mutate, check }: Harne
         where: { id: association.id },
         data: { approvalStatus: 'SUSPENDED' },
       });
-      assert.equal((await coordinator.client.request(`/api/v1/artisans/${artisanId}`)).status, 403);
+      assert.equal((await coordinator.client.request(`/api/v1/artisans/${artisanId}`)).status, 404);
       await db.organization.update({
         where: { id: association.id },
         data: { approvalStatus: 'APPROVED' },
@@ -399,7 +399,7 @@ export async function runArtisanScenarios({ db, register, mutate, check }: Harne
         .status,
       200,
     );
-    assert.equal((await coordinator.client.request(`/api/v1/artisans/${artisanId}`)).status, 403);
+    assert.equal((await coordinator.client.request(`/api/v1/artisans/${artisanId}`)).status, 404);
     const next = await mutate(
       artisan.client,
       '/api/v1/artisans/me/delegations',
@@ -408,7 +408,7 @@ export async function runArtisanScenarios({ db, register, mutate, check }: Harne
     );
     grantId = value<{ id: string }>(next).id;
     await db.delegationGrant.update({ where: { id: grantId }, data: { expiresAt: new Date(0) } });
-    assert.equal((await coordinator.client.request(`/api/v1/artisans/${artisanId}`)).status, 403);
+    assert.equal((await coordinator.client.request(`/api/v1/artisans/${artisanId}`)).status, 404);
     assert.equal(
       (
         await mutate(artisan.client, '/api/v1/artisans/me/delegations', 'POST', {
@@ -431,7 +431,7 @@ export async function runArtisanScenarios({ db, register, mutate, check }: Harne
       where: { userId: artisan.me.user.id, purpose: `delegation:${grantId}` },
       data: { withdrawnAt: new Date() },
     });
-    assert.equal((await coordinator.client.request(`/api/v1/artisans/${artisanId}`)).status, 403);
+    assert.equal((await coordinator.client.request(`/api/v1/artisans/${artisanId}`)).status, 404);
     const last = await mutate(
       artisan.client,
       '/api/v1/artisans/me/delegations',
@@ -451,7 +451,7 @@ export async function runArtisanScenarios({ db, register, mutate, check }: Harne
       ).status,
       200,
     );
-    assert.equal((await coordinator.client.request(`/api/v1/artisans/${artisanId}`)).status, 403);
+    assert.equal((await coordinator.client.request(`/api/v1/artisans/${artisanId}`)).status, 404);
     assert.equal(
       (await db.delegationGrant.findUniqueOrThrow({ where: { id: grantId } })).status,
       'REVOKED',
@@ -460,11 +460,11 @@ export async function runArtisanScenarios({ db, register, mutate, check }: Harne
   });
   await check('platform administrator has no implicit artisan or delegation access', async () => {
     await db.user.update({ where: { id: outsider.me.user.id }, data: { role: 'ADMIN' } });
-    assert.equal((await outsider.client.request(`/api/v1/artisans/${artisanId}`)).status, 403);
+    assert.equal((await outsider.client.request(`/api/v1/artisans/${artisanId}`)).status, 404);
     assert.equal(
       (await mutate(outsider.client, `/api/v1/artisans/${artisanId}/capacity`, 'POST', capacity))
         .status,
-      403,
+      404,
     );
     await db.user.update({ where: { id: outsider.me.user.id }, data: { role: 'USER' } });
   });
