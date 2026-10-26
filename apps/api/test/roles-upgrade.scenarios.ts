@@ -63,7 +63,7 @@ export async function runRoleUpgradeScenario(
         );
         const before = (
           await db.query(
-            `SELECT row_to_json(u) #- '{isDemo}' AS value FROM "User" u WHERE id='role-upgrade-user'`,
+            `SELECT json_build_object('id', u.id, 'name', u.name, 'email', u.email, 'emailVerified', u."emailVerified", 'image', u.image, 'createdAt', u."createdAt", 'updatedAt', u."updatedAt", 'role', u.role, 'status', u.status, 'preferredLanguage', u."preferredLanguage", 'twoFactorEnabled', u."twoFactorEnabled") AS value FROM "User" u WHERE id='role-upgrade-user'`,
           )
         ).rows[0].value;
         await db.query(sql);
@@ -96,7 +96,7 @@ export async function runRoleUpgradeScenario(
         assert.deepEqual(
           (
             await db.query(
-              `SELECT row_to_json(u) #- '{isDemo}' AS value FROM "User" u WHERE id='role-upgrade-user'`,
+              `SELECT json_build_object('id', u.id, 'name', u.name, 'email', u.email, 'emailVerified', u."emailVerified", 'image', u.image, 'createdAt', u."createdAt", 'updatedAt', u."updatedAt", 'role', u.role, 'status', u.status, 'preferredLanguage', u."preferredLanguage", 'twoFactorEnabled', u."twoFactorEnabled") AS value FROM "User" u WHERE id='role-upgrade-user'`,
             )
           ).rows[0].value,
           before,
