@@ -120,6 +120,7 @@ async function localServices() {
   }
   let mailpit = false;
   try {
+    // nosemgrep: typescript.react.security.react-insecure-request.react-insecure-request -- local Mailpit check on loopback
     const response = await fetch('http://127.0.0.1:8026/api/v1/info', {
       signal: AbortSignal.timeout(1500),
     });
