@@ -30,20 +30,20 @@ test('user timers are local, persistent daily backup and bounded five-minute hea
     '/usr/bin/node',
     '/project/website/.local/schedule.env',
   );
-  assert.match(units['hirfacare-local-backup.timer'], /OnCalendar=daily\nPersistent=true/);
-  assert.match(units['hirfacare-local-health.timer'], /OnCalendar=\*:0\/5/);
-  assert.match(units['hirfacare-local-backup.service'], /UMask=0077/);
+  assert.match(units['nasj-local-backup.timer'], /OnCalendar=daily\nPersistent=true/);
+  assert.match(units['nasj-local-health.timer'], /OnCalendar=\*:0\/5/);
+  assert.match(units['nasj-local-backup.service'], /UMask=0077/);
   assert.match(
-    units['hirfacare-local-health.service'],
+    units['nasj-local-health.service'],
     /ConditionPathExists=\/project\/website\/.local\/dev.lock/,
   );
-  assert.match(units['hirfacare-local-backup.service'], /TimeoutStartSec=150/);
-  assert.match(units['hirfacare-local-health.service'], /run-local-operation.ts health/);
+  assert.match(units['nasj-local-backup.service'], /TimeoutStartSec=150/);
+  assert.match(units['nasj-local-health.service'], /run-local-operation.ts health/);
   for (const path of ['/project/%n', '/project/$HOME', '/project/with space', '/project/\ninject'])
     assert.throws(() => userUnits(path, '/usr/bin/node', '/tmp/config'));
 });
 test('local status and alerts are private, safe and reject nonprivate directories/symlink logs', async () => {
-  const directory = await mkdtemp(join(tmpdir(), 'hirfacare-local-ops-'));
+  const directory = await mkdtemp(join(tmpdir(), 'nasj-local-ops-'));
   try {
     const healthy = operationResult('health', 0, '{"alerts":[]}');
     await writeOperationStatus(directory, healthy);

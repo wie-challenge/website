@@ -2,15 +2,15 @@ services:
   postgres:
     image: postgres:17.7-alpine
     environment:
-      POSTGRES_USER: hirfacare
+      POSTGRES_USER: nasj
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Run pnpm setup:local}
-      POSTGRES_DB: hirfacare
+      POSTGRES_DB: nasj
     ports:
       - '127.0.0.1:5442:5432'
     volumes:
       - foundation-postgres:/var/lib/postgresql/data
     healthcheck:
-      test: ['CMD-SHELL', 'pg_isready -U hirfacare -d hirfacare']
+      test: ['CMD-SHELL', 'pg_isready -U nasj -d nasj']
       interval: 2s
       timeout: 5s
       retries: 30

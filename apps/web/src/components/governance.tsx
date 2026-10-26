@@ -106,7 +106,7 @@ export function Privacy({ admin = false }: { admin?: boolean }) {
                 );
                 const link = document.createElement('a');
                 link.href = url;
-                link.download = 'hirfacare-personal-data.json';
+                link.download = 'nasj-personal-data.json';
                 link.click();
                 setTimeout(() => URL.revokeObjectURL(url), 1000);
               }}

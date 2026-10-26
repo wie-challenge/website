@@ -30,7 +30,7 @@ test('authenticated backup encryption rejects corruption, wrong keys and invalid
   assert.throws(() => encryptBackup(raw, Buffer.alloc(31)));
 });
 test('backup files and keys require owner privacy, reject symlinks and never overwrite archives', async () => {
-  const directory = await mkdtemp(join(tmpdir(), 'hirfacare-key-test-'));
+  const directory = await mkdtemp(join(tmpdir(), 'nasj-key-test-'));
   try {
     const keyPath = join(directory, 'key'),
       output = join(directory, 'archive.hcab');
@@ -87,7 +87,7 @@ test('real Pino redaction removes secrets, request bodies and signal fields from
 });
 
 test('seven-day retention removes only expired private tool archives', async () => {
-  const directory = await mkdtemp(join(tmpdir(), 'hirfacare-retention-test-'));
+  const directory = await mkdtemp(join(tmpdir(), 'nasj-retention-test-'));
   try {
     const name = 'backup-2026-10-01T00-00-00.000Z-12345678-1234-1234-1234-123456789abc.hcab';
     const archive = join(directory, name);

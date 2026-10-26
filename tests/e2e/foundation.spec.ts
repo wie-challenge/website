@@ -63,9 +63,7 @@ test('signup, email verification, profile, sessions and password changes work in
   await expect(page.getByLabel('Your name', { exact: true })).toHaveValue('UI Maker');
   await page.reload();
   await expect(page.getByLabel('Your name', { exact: true })).toHaveValue('UI Maker');
-  expect(await page.evaluate(() => document.cookie.includes('hirfacare.session_token'))).toBe(
-    false,
-  );
+  expect(await page.evaluate(() => document.cookie.includes('nasj.session_token'))).toBe(false);
   expect(await page.evaluate(() => localStorage.length)).toBe(0);
   await page.getByLabel('Your name', { exact: true }).fill('UI Maker Updated');
   await page.getByRole('button', { name: 'Save profile' }).click();

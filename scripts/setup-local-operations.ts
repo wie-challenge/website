@@ -14,10 +14,10 @@ const mode = process.argv[2] ?? '--prepare';
 if (!['--prepare', '--enable', '--disable'].includes(mode) || process.argv.length > 3)
   throw Error('Use --prepare, --enable or --disable.');
 const exec = promisify(execFile);
-const timers = ['hirfacare-local-backup.timer', 'hirfacare-local-health.timer'];
+const timers = ['nasj-local-backup.timer', 'nasj-local-health.timer'];
 if (mode === '--disable') {
   await exec('systemctl', ['--user', 'disable', '--now', ...timers]);
-  console.log('Local HirfaCare timers disabled; backups and keys preserved.');
+  console.log('Local NASJ timers disabled; backups and keys preserved.');
 } else {
   assertLocalDevelopment(parseEnv(await readFile(join(root, '.env'), 'utf8')));
   const operations = join(root, '.local', 'operations');
@@ -42,7 +42,7 @@ if (mode === '--disable') {
   }
   (await readBackupKey(key)).fill(0);
   const env = join(operations, 'schedule.env');
-  const config = `BACKUP_CONTAINER=hirfacare-foundation-postgres-1\nBACKUP_DIRECTORY=${backups}\nBACKUP_KEY_FILE=${key}\nBACKUP_DATABASE_USER=hirfacare\nBACKUP_DATABASE_NAME=hirfacare\nBACKUP_CONFIG_FILE=${root}/.env\n`;
+  const config = `BACKUP_CONTAINER=nasj-postgres-1\nBACKUP_DIRECTORY=${backups}\nBACKUP_KEY_FILE=${key}\nBACKUP_DATABASE_USER=nasj\nBACKUP_DATABASE_NAME=nasj\nBACKUP_CONFIG_FILE=${root}/.env\n`;
   const units = userUnits(root, process.execPath, env);
   // Keep preparation in the private project directory for review before host installation.
   const prepared = join(operations, 'units');
@@ -85,7 +85,7 @@ if (mode === '--disable') {
         if (!info.isFile() || info.isSymbolicLink() || info.uid !== process.getuid?.())
           throw Error('Owned regular user units required.');
         const existing = await readFile(path, 'utf8');
-        if (!existing.startsWith('# HirfaCare managed local-demo unit v1\n'))
+        if (!existing.startsWith('# NASJ managed local-demo unit v1\n'))
           throw Error('Refusing to replace an unmanaged user unit.');
       } catch (error) {
         if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error;

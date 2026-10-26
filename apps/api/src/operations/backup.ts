@@ -23,7 +23,9 @@ export function decryptBackup(envelope: Buffer, key: Buffer) {
     !envelope.subarray(0, 5).equals(MAGIC)
   )
     throw Error('Invalid encrypted backup.');
-  const decipher = createDecipheriv('aes-256-gcm', key, envelope.subarray(5, 17));
+  const decipher = createDecipheriv('aes-256-gcm', key, envelope.subarray(5, 17), {
+    authTagLength: 16,
+  });
   decipher.setAAD(MAGIC);
   decipher.setAuthTag(envelope.subarray(17, 33));
   return Buffer.concat([decipher.update(envelope.subarray(33)), decipher.final()]);

@@ -38,11 +38,10 @@ export class AccessService {
     if (
       approved.some(
         (m) =>
-          m.organization.type === 'INTERNAL' &&
-          m.roles.some((r) => r.role === 'HIRFACARE_OPERATOR'),
+          m.organization.type === 'INTERNAL' && m.roles.some((r) => r.role === 'NASJ_OPERATOR'),
       )
     )
-      personas.push('HIRFACARE_OPERATOR');
+      personas.push('NASJ_OPERATOR');
     if (
       approved.some(
         (m) =>
@@ -66,7 +65,7 @@ export class AccessService {
       coordinatorOrganizationId: coordinator?.organizationId ?? null,
       landingPath: personas.includes('PLATFORM_ADMIN')
         ? '/admin'
-        : personas.includes('HIRFACARE_OPERATOR')
+        : personas.includes('NASJ_OPERATOR')
           ? '/operator'
           : personas.includes('BUYER_REPRESENTATIVE')
             ? '/buyer'
@@ -111,7 +110,7 @@ export class AccessService {
         userId: actor.id,
         status: 'ACTIVE',
         organization: { type: 'INTERNAL', approvalStatus: 'APPROVED' },
-        roles: { some: { role: 'HIRFACARE_OPERATOR' } },
+        roles: { some: { role: 'NASJ_OPERATOR' } },
       },
       include: { organization: true, roles: true, permissionGrants: true },
     });
