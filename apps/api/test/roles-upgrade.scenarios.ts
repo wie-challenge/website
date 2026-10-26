@@ -63,7 +63,7 @@ export async function runRoleUpgradeScenario(
         );
         const before = (
           await db.query(
-            `SELECT row_to_json(u) AS value FROM "User" u WHERE id='role-upgrade-user'`,
+            `SELECT row_to_json(u) #- '{isDemo}' AS value FROM "User" u WHERE id='role-upgrade-user'`,
           )
         ).rows[0].value;
         await db.query(sql);
@@ -96,7 +96,7 @@ export async function runRoleUpgradeScenario(
         assert.deepEqual(
           (
             await db.query(
-              `SELECT row_to_json(u) AS value FROM "User" u WHERE id='role-upgrade-user'`,
+              `SELECT row_to_json(u) #- '{isDemo}' AS value FROM "User" u WHERE id='role-upgrade-user'`,
             )
           ).rows[0].value,
           before,
