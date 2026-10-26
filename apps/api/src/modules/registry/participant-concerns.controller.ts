@@ -13,6 +13,7 @@ import { RegistryService } from './registry.service.js';
 @Controller('api/v1')
 export class ParticipantConcernsController {
   constructor(@Inject(RegistryService) private readonly registry: RegistryService) {}
+  // nosemgrep: nasj-public-route -- anonymous concern intake by design; strict Zod schema, API rate limit
   @Public() @Post('participant-concerns') @HttpCode(202) intake(
     @Body(new ZodValidationPipe(participantConcernSchema)) input: z.infer<
       typeof participantConcernSchema

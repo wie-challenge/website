@@ -2,6 +2,7 @@ import { Controller, Get, Inject } from '@nestjs/common';
 import { PrismaService } from '../../database/prisma.service.js';
 import { Public } from '../../common/identity.js';
 import { fail } from '../../common/errors.js';
+// nosemgrep: nasj-public-route -- liveness/readiness probes for monitoring; status only, no data
 @Controller('api/health')
 @Public()
 export class HealthController {
