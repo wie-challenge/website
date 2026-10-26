@@ -7,6 +7,7 @@ allowBuilds:
   prisma: true
   esbuild: true
   sharp: true
+  pnpm: true
 minimumReleaseAgeExclude:
   - '@better-auth/core@1.7.10'
   - '@better-auth/drizzle-adapter@1.7.10'

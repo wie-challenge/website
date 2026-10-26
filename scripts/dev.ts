@@ -67,12 +67,17 @@ async function shutdown() {
 }
 function start(command: string, args: string[], cwd = root) {
   if (stopping) throw new Error('Startup cancelled.');
-  const child = spawn(command, args, {
-    cwd,
-    env: environment,
-    stdio: 'inherit',
-    detached: process.platform !== 'win32',
-  });
+  const windowsPnpm = process.platform === 'win32' && command === 'pnpm';
+  const child = spawn(
+    windowsPnpm ? (process.env.ComSpec ?? 'cmd.exe') : command,
+    windowsPnpm ? ['/d', '/s', '/c', 'pnpm.cmd', ...args] : args,
+    {
+      cwd,
+      env: environment,
+      stdio: 'inherit',
+      detached: process.platform !== 'win32',
+    },
+  );
   children.add(child);
   if (child.pid) processGroups.add(child.pid);
   child.once('exit', () => children.delete(child));
@@ -81,7 +86,9 @@ function start(command: string, args: string[], cwd = root) {
 async function run(command: string, args: string[], cwd = root) {
   const child = start(command, args, cwd);
   await new Promise<void>((resolve, reject) => {
-    child.once('error', () => reject(new Error(`Unable to start ${command}.`)));
+    child.once('error', (error) =>
+      reject(new Error(`Unable to start ${command}: ${error.message}`, { cause: error })),
+    );
     child.once('exit', (code) =>
       code === 0
         ? resolve()
