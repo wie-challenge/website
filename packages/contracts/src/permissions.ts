@@ -28,6 +28,7 @@ export const foundationPermissions = [
   'operator.production.manage',
   'operator.quality.approve',
   'operator.logistics.manage',
+  'operator.traceability.publish',
   'operator.payment.record',
   'operator.payout.initiate',
   'operator.payout.approve',
@@ -77,6 +78,22 @@ export const permissionCatalog = [
   'delegation.revoke',
   'finance.quotation.read',
   'finance.payout.read',
+  'finance.payable.reconcile',
+  'finance.deposit.record',
+  'finance.deposit.review',
+  'finance.payout.request',
+  'finance.payout.execute',
+  'finance.dispute.manage',
+  'finance.adjustment.propose',
+  'finance.adjustment.approve',
+  'finance.closure.assess',
+  'inventory.stock.read',
+  'inventory.stock.register',
+  'inventory.stock.reserve',
+  'inventory.stock.handover',
+  'inventory.stock.receive',
+  'inventory.stock.adjust',
+
   'finance.payout.approve',
   'quality.inspection.read',
   'quality.inspection.create',
@@ -116,10 +133,12 @@ export const rolePermissions: Record<BusinessRole, readonly Permission[]> = {
   NASJ_OPERATOR: [
     'organization.read',
     'operator.accounts.read',
+    'inventory.stock.read',
     'operator.quotation.prepare',
     'operator.production.manage',
     'operator.quality.approve',
     'operator.logistics.manage',
+    'operator.traceability.publish',
     'operator.payment.record',
     'audit.read.scoped',
   ],
@@ -142,6 +161,7 @@ export const rolePermissions: Record<BusinessRole, readonly Permission[]> = {
     'association.offer.recordDecision',
     'association.production.update',
     'association.handover.record',
+    'inventory.stock.receive',
     'artisan.consent.record',
   ],
   PRODUCTION_MANAGER: ['organization.read', 'production.manage'],
@@ -152,7 +172,15 @@ export const rolePermissions: Record<BusinessRole, readonly Permission[]> = {
     'finance.payout.approve',
   ],
   QUALITY_INSPECTOR: ['organization.read', 'quality.inspection.read', 'quality.inspection.create'],
-  INVENTORY_LOGISTICS_COORDINATOR: ['organization.read', 'inventory.manage'],
+  INVENTORY_LOGISTICS_COORDINATOR: [
+    'organization.read',
+    'inventory.manage',
+    'inventory.stock.read',
+    'inventory.stock.register',
+    'inventory.stock.reserve',
+    'inventory.stock.handover',
+    'inventory.stock.adjust',
+  ],
   SUPPORT: ['organization.read', 'support.case.read', 'support.case.manage'],
   RESEARCHER_ANALYST: ['organization.read', 'analytics.aggregate.read'],
   PRODUCT_DESIGNER: ['organization.read', 'product.specification.manage'],
@@ -171,7 +199,26 @@ export function grantAllowed(type: string, permission: string) {
         permission,
       )) ||
     (type === 'INTERNAL' &&
-      ['operator.payout.initiate', 'operator.payout.approve'].includes(permission))
+      [
+        'operator.payout.initiate',
+        'operator.payout.approve',
+        'finance.payout.approve',
+        'finance.payable.reconcile',
+        'finance.deposit.record',
+        'finance.deposit.review',
+        'finance.payout.request',
+        'finance.payout.execute',
+        'finance.dispute.manage',
+        'finance.adjustment.propose',
+        'finance.adjustment.approve',
+        'finance.closure.assess',
+        'inventory.stock.read',
+        'inventory.stock.register',
+        'inventory.stock.reserve',
+        'inventory.stock.handover',
+        'inventory.stock.receive',
+        'inventory.stock.adjust',
+      ].includes(permission))
   );
 }
 export function permissionsForMembership(member: {
@@ -202,7 +249,9 @@ export function permissionsForMembership(member: {
       member.roles.some((r) =>
         member.organization?.type === 'BUYER_BUSINESS'
           ? ['BUYER', 'BUYER_REPRESENTATIVE'].includes(r.role)
-          : r.role === 'NASJ_OPERATOR',
+          : ['NASJ_OPERATOR', 'FINANCE_MANAGER', 'INVENTORY_LOGISTICS_COORDINATOR'].includes(
+              r.role,
+            ),
       )
     ) {
       if (grant.enabled === false) permissions.delete(grant.permission as Permission);

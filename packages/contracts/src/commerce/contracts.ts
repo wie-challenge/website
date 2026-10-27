@@ -64,7 +64,16 @@ export const offerCreateSchema = z
     provenance: z.literal('SYNTHETIC'),
   })
   .strict();
-export const offerActionSchema = z.object({ next: z.enum(offerStates), version }).strict();
+export const offerActionSchema = z
+  .object({
+    next: z.enum(offerStates),
+    version,
+    termsSha256: z
+      .string()
+      .regex(/^[a-f0-9]{64}$/)
+      .optional(),
+  })
+  .strict();
 export const batchActionSchema = z
   .object({ next: z.enum(batchStates), version, reworkAccepted: z.literal(true).optional() })
   .strict();
@@ -172,6 +181,11 @@ export type CommercialOfferView = {
   status: (typeof offerStates)[number];
   version: number;
   provenance: 'SYNTHETIC';
+  termsSha256?: string | null;
+  compensationMethod?: string | null;
+  collectionArrangement?: string | null;
+  instructions?: string | null;
+  preferredLanguage?: string | null;
 };
 export type CommercialBatchView = {
   id: string;
@@ -210,6 +224,8 @@ export type CommerceWorkspaceView = {
     displayName: string;
     craftSkillId: string;
     quantity: string;
+    remaining: string;
+    availabilityKnown: boolean;
     effectiveFrom: string;
     effectiveTo: string;
   }[];

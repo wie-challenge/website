@@ -1,4 +1,5 @@
 'use client';
+import { EvidenceNotice } from './evidence-notice';
 import { useId, useRef, useState, type ReactNode } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -23,6 +24,10 @@ import { Badge } from './ui/badge';
 import { Label } from './ui/label';
 import { Textarea } from './ui/textarea';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
+import { ProductionPanel } from './production-offers';
+import { ExecutionOrder } from './execution-workspace';
+import { LogisticsOrder } from './logistics-workspace';
+import { OrderFinance } from './finance-workspace';
 const root = '/api/v1/procurement';
 function useCommand() {
   const keys = useRef(new Map<string, string>());
@@ -451,6 +456,8 @@ export function ProcurementDetail({ id }: { id: string }) {
                     'quotes',
                     'discussion',
                     'documents',
+                    ...(data.orderId && a.operator ? ['production'] : []),
+                    ...(data.orderId ? ['delivery', 'finances'] : []),
                   ].map((t) => (
                     <TabsTrigger key={t} value={t}>
                       {humanize(t)}
@@ -751,6 +758,83 @@ export function ProcurementDetail({ id }: { id: string }) {
                         />
                       </ActionForm>
                     )}
+                    {a.operator && ['UNDER_REVIEW', 'QUOTED'].includes(r.status) && (
+                      <CommercialAssessment
+                        id={id}
+                        version={r.version}
+                        send={send}
+                        reload={resource.reload}
+                      />
+                    )}
+                    {a.operator && data.feasibility.length > 0 && (
+                      <CommercialCosting
+                        id={id}
+                        version={r.version}
+                        feasibilityId={data.feasibility[0].id}
+                        send={send}
+                        reload={resource.reload}
+                      />
+                    )}
+                    {a.operator && data.costs.some((cost) => !cost.incomplete) && (
+                      <CommercialIssue
+                        id={id}
+                        version={r.version}
+                        costId={data.costs.find((cost) => !cost.incomplete)?.id ?? ''}
+                        send={send}
+                        reload={resource.reload}
+                      />
+                    )}
+                    {a.operator &&
+                      data.feasibility.map((item) => (
+                        <article key={item.id}>
+                          <h3>
+                            Feasibility v{item.version} · {item.result.replaceAll('_', ' ')}
+                          </h3>
+                          <EvidenceNotice
+                            compact
+                            claimId={`feasibility.${item.id}`}
+                            claimType="Feasibility projection"
+                            status="SYNTHETIC"
+                            sourceReference="/evidence#software"
+                            limitations={[
+                              'Synthetic assumptions and declared capacity support a projection; they are not measured production throughput or a delivery commitment.',
+                            ]}
+                          />
+                          <p>{item.explanation}</p>
+                          <p>
+                            Known remaining {item.knownRemaining ?? 'Unknown'} · Shortage{' '}
+                            {item.shortage ?? 'Unknown'} · Effort {item.effortMin ?? 'Unknown'} to{' '}
+                            {item.effortMax ?? 'Unknown'} hours
+                          </p>
+                          {item.constraints.length > 0 && (
+                            <p>Constraints: {item.constraints.map((c) => c.code).join(', ')}.</p>
+                          )}
+                        </article>
+                      ))}
+                    {a.operator &&
+                      data.costs.map((cost) => (
+                        <article key={cost.id}>
+                          <h3>
+                            Cost v{cost.version} ·{' '}
+                            {cost.incomplete ? 'Incomplete' : cost.sellingTnd}{' '}
+                            {cost.incomplete ? '' : 'TND'}
+                          </h3>
+                          <EvidenceNotice
+                            compact
+                            claimId={`costing.${cost.id}`}
+                            claimType="Costing example"
+                            status="SYNTHETIC"
+                            sourceReference="/evidence#software"
+                            limitations={[
+                              'Exact TND calculations use synthetic cost assumptions. Planned contribution is not realized profit; tax treatment remains unapproved.',
+                            ]}
+                          />
+                          <p>
+                            Subtotal {cost.subtotalTnd} TND · {cost.marginMethod} · Tax{' '}
+                            {cost.taxStatus}
+                          </p>
+                        </article>
+                      ))}
                     {!data.quotes.length && <p>No quotation issued yet.</p>}
                     {data.quotes.map((q) => (
                       <article key={q.id}>
@@ -758,9 +842,10 @@ export function ProcurementDetail({ id }: { id: string }) {
                           Quotation v{q.version} · {q.totalTnd} TND
                         </h3>
                         <p>
+                          {q.status.replaceAll('_', ' ')}.
                           {q.current
-                            ? 'Current quotation'
-                            : 'Historical, accepted or unavailable quotation'}
+                            ? ' Current quotation'
+                            : ' Historical, accepted or unavailable quotation'}
                           . Valid until {new Date(q.expiresAt).toLocaleString()}.
                         </p>
                         <p>
@@ -768,13 +853,20 @@ export function ProcurementDetail({ id }: { id: string }) {
                           · {String(q.snapshot.deliveryLocation)}
                         </p>
                         <p>
-                          Net {String(q.snapshot.netTnd)} TND · Tax {String(q.snapshot.taxTnd)} TND
-                          · Policy {String(q.snapshot.taxPolicyReference)}
+                          {q.snapshot.taxStatus === 'PENDING_LEGAL_REVIEW'
+                            ? 'Tax is pending legal review and is not included as a guessed rate.'
+                            : `Net ${String(q.snapshot.netTnd)} TND · Tax ${String(q.snapshot.taxTnd)} TND · Policy ${String(q.snapshot.taxPolicyReference)}`}
                         </p>
+                        {q.termsSha256 && (
+                          <p>
+                            Exact terms reference {q.termsSha256.slice(0, 12)}. Acceptance does not
+                            reserve capacity, accept artisan work, or collect payment.
+                          </p>
+                        )}
                         {a.approving && q.current && (
                           <ActionForm
                             label={`Accept quotation v${q.version}`}
-                            confirm={`Accept quotation v${q.version} for ${q.totalTnd} TND?`}
+                            confirm={`Accept quotation v${q.version} for ${q.totalTnd} TND? This does not reserve production capacity.`}
                             action={(f) =>
                               send(
                                 `/rfqs/${id}/accept`,
@@ -782,6 +874,7 @@ export function ProcurementDetail({ id }: { id: string }) {
                                   version: r.version,
                                   quoteId: q.id,
                                   confirm: f.get('confirm') === 'on',
+                                  ...(q.termsSha256 ? { termsSha256: q.termsSha256 } : {}),
                                 },
                                 C.procurementAcceptSchema,
                               )
@@ -794,10 +887,46 @@ export function ProcurementDetail({ id }: { id: string }) {
                             </label>
                           </ActionForm>
                         )}
+                        {a.approving && q.status === 'ISSUED' && (
+                          <ActionForm
+                            label={`Reject quotation v${q.version}`}
+                            confirm="Reject this quotation version?"
+                            action={(f) =>
+                              send(
+                                `/rfqs/${id}/quote-rejections`,
+                                {
+                                  version: r.version,
+                                  quoteId: q.id,
+                                  reason: text(f, 'reason'),
+                                },
+                                C.quoteRejectSchema,
+                              )
+                            }
+                            onSuccess={resource.reload}
+                          >
+                            <Input name="reason" label="Rejection reason" required />
+                          </ActionForm>
+                        )}
                       </article>
                     ))}
                   </Panel>
                 </TabsContent>
+                {data.orderId && a.operator && (
+                  <TabsContent value="production">
+                    <ProductionPanel orderId={data.orderId} />
+                    <ExecutionOrder orderId={data.orderId} />
+                  </TabsContent>
+                )}
+                {data.orderId && (
+                  <TabsContent value="delivery">
+                    <LogisticsOrder orderId={data.orderId} />
+                  </TabsContent>
+                )}
+                {data.orderId && (
+                  <TabsContent value="finances">
+                    <OrderFinance orderId={data.orderId} />
+                  </TabsContent>
+                )}
                 <TabsContent value="discussion">
                   <ProcurementDiscussion id={id} embedded />
                 </TabsContent>
@@ -1147,6 +1276,177 @@ export function ProcurementProducts() {
   );
 }
 
+type Send = (path: string, body: unknown, schema?: z.ZodType) => Promise<unknown>;
+const tunis = (value: string) => (value ? new Date(`${value}:00+01:00`).toISOString() : value);
+const costLines = [
+  ['MATERIALS', 'VARIABLE'],
+  ['ARTISAN_LABOR', 'VARIABLE'],
+  ['QUALITY_ASSURANCE', 'FIXED'],
+  ['LOGISTICS', 'FIXED'],
+  ['OVERHEAD', 'FIXED'],
+  ['CONTINGENCY', 'FIXED'],
+] as const;
+function CommercialAssessment({
+  id,
+  version,
+  send,
+  reload,
+}: {
+  id: string;
+  version: number;
+  send: Send;
+  reload(): void;
+}) {
+  return (
+    <ActionForm
+      label="Assess feasibility"
+      action={(f) =>
+        send(
+          `/rfqs/${id}/feasibility-assessments`,
+          {
+            version,
+            effectiveFrom: tunis(text(f, 'effectiveFrom')),
+            effectiveTo: tunis(text(f, 'effectiveTo')),
+            unit: text(f, 'unit'),
+            materialStatus: text(f, 'materialStatus'),
+            materialSource: text(f, 'materialSource') || undefined,
+            logisticsLeadDays: text(f, 'logisticsLeadDays')
+              ? Number(text(f, 'logisticsLeadDays'))
+              : undefined,
+            calendarCleared: f.get('calendarCleared') === 'on',
+            calendarSource: text(f, 'calendarSource') || undefined,
+          },
+          C.feasibilityRequestSchema,
+        )
+      }
+      onSuccess={reload}
+    >
+      <Input
+        name="effectiveFrom"
+        label="Production period start (Africa/Tunis)"
+        type="datetime-local"
+        required
+      />
+      <Input
+        name="effectiveTo"
+        label="Production period end (Africa/Tunis)"
+        type="datetime-local"
+        required
+      />
+      <Select name="unit" label="Capacity unit" options={['PIECES', 'HOURS']} />
+      <Select
+        name="materialStatus"
+        label="Material attestation"
+        options={['UNKNOWN', 'CONFIRMED_AVAILABLE', 'SHORT']}
+      />
+      <Input name="materialSource" label="Material source, when attested" />
+      <Input
+        name="logisticsLeadDays"
+        label="Logistics lead days, when known"
+        type="number"
+        min="0"
+        max="365"
+      />
+      <label>
+        <input name="calendarCleared" type="checkbox" /> Reviewed calendar shows no known conflict
+      </label>
+      <Input name="calendarSource" label="Calendar source, when cleared" />
+    </ActionForm>
+  );
+}
+function CommercialCosting({
+  id,
+  version,
+  feasibilityId,
+  send,
+  reload,
+}: {
+  id: string;
+  version: number;
+  feasibilityId: string;
+  send: Send;
+  reload(): void;
+}) {
+  return (
+    <ActionForm
+      label="Save cost version"
+      action={(f) =>
+        send(
+          `/rfqs/${id}/cost-estimates`,
+          {
+            version,
+            feasibilityId,
+            marginMethod: text(f, 'marginMethod'),
+            marginBasisPoints: Number(text(f, 'marginBasisPoints')),
+            lines: costLines.map(([category, basis]) => ({
+              category,
+              basis,
+              rateTnd: text(f, category),
+            })),
+          },
+          C.costEstimateSchema,
+        )
+      }
+      onSuccess={reload}
+    >
+      {costLines.map(([category]) => (
+        <Input key={category} name={category} label={`${category} rate in TND`} required />
+      ))}
+      <Select
+        name="marginMethod"
+        label="Margin rule"
+        options={['NONE', 'MARKUP_ON_COST', 'MARGIN_ON_SELLING_PRICE']}
+      />
+      <Input
+        name="marginBasisPoints"
+        label="Margin basis points"
+        type="number"
+        min="0"
+        max="10000"
+        value="0"
+        required
+      />
+    </ActionForm>
+  );
+}
+function CommercialIssue({
+  id,
+  version,
+  costId,
+  send,
+  reload,
+}: {
+  id: string;
+  version: number;
+  costId: string;
+  send: Send;
+  reload(): void;
+}) {
+  return (
+    <ActionForm
+      label="Issue costed quotation"
+      confirm="Issue this exact cost version? It does not reserve capacity."
+      action={(f) =>
+        send(
+          `/rfqs/${id}/costed-quotes`,
+          {
+            version,
+            costEstimateId: costId,
+            expiresAt: tunis(text(f, 'costedExpiresAt')),
+            paymentTerms: text(f, 'paymentTerms'),
+            deliveryConditions: text(f, 'deliveryConditions'),
+          },
+          C.costedQuoteSchema,
+        )
+      }
+      onSuccess={reload}
+    >
+      <Input name="costedExpiresAt" label="Costed quote expires" type="datetime-local" required />
+      <Input name="paymentTerms" label="Payment terms" required />
+      <Input name="deliveryConditions" label="Delivery conditions" required />
+    </ActionForm>
+  );
+}
 export function ProcurementDiscussions() {
   const [page, setPage] = useState(1),
     resource = useResource<{ items: { id: string; title: string }[]; hasMore: boolean }>(

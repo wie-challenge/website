@@ -1,0 +1,207 @@
+$ pnpm db:generate && pnpm --filter @nasj/contracts build && playwright test && playwright test --config playwright.demo.config.ts
+$ pnpm --filter @nasj/api db:generate
+$ prisma generate
+Loaded Prisma config from prisma.config.ts.
+
+Prisma schema loaded from prisma/schema.prisma.
+
+✔ Generated Prisma Client (v7.10.1) to ./../../node_modules/.pnpm/@prisma+client@7.10.1_prisma@7.10.1_@types+node@24.19.2_@types+react-dom@19.3.0_@types+_9e72caf218d3f522373b8e6c9536cf3f/node_modules/@prisma/client in 613ms
+
+Start by importing your Prisma Client (See: https://pris.ly/d/importing-client)
+
+
+$ tsc -p tsconfig.json
+
+Running 44 tests using 1 worker
+
+(node:494209) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓   1 tests/e2e/batch5.spec.ts:46:1 › Batch 5 real synthetic material custody, payout governance, dispute and blocked closure journeys (13.9s)
+  ✓   2 tests/e2e/batch5.spec.ts:175:1 › full synthetic material receipt confirms custody while physical verification remains unavailable (4.5s)
+  ✓   3 tests/e2e/batch7-simulator.spec.ts:3:1 › public financial model recalculates exact assumptions without commercial writes (517ms)
+  ✓   4 tests/e2e/batch7-simulator.spec.ts:42:1 › financial model remains readable and operable on a narrow screen (324ms)
+  ✓   5 tests/e2e/capacity.spec.ts:58:3 › capacity revisions preserve commitments for artisan and coordinator at 360px (7.8s)
+  ✓   6 tests/e2e/capacity.spec.ts:58:3 › capacity revisions preserve commitments for artisan and coordinator at 1280px (7.7s)
+  ✓   7 tests/e2e/catalog.spec.ts:47:3 › synthetic catalog browses safely and prefills a persisted RFQ on mobile (5.6s)
+  ✓   8 tests/e2e/catalog.spec.ts:47:3 › synthetic catalog browses safely and prefills a persisted RFQ on desktop (5.7s)
+  ✓   9 tests/e2e/catalog.spec.ts:147:1 › catalog loading, retry, empty and broken-image states remain usable (1.9s)
+  ✓  10 tests/e2e/commerce.spec.ts:76:3 › buyer RFQ, voluntary artisan decisions/progress and operator QA are accessible on mobile (55.8s)
+  ✓  11 tests/e2e/commerce.spec.ts:76:3 › buyer RFQ, voluntary artisan decisions/progress and operator QA are accessible on tablet (26.4s)
+  ✓  12 tests/e2e/commerce.spec.ts:76:3 › buyer RFQ, voluntary artisan decisions/progress and operator QA are accessible on desktop (26.4s)
+  ✓  13 tests/e2e/commercial.spec.ts:27:1 › buyer accepts the exact costed quotation after feasibility review (5.4s)
+  ✓  14 tests/e2e/directory.spec.ts:39:3 › production directory search stays private and responsive at 360px (5.0s)
+  ✓  15 tests/e2e/directory.spec.ts:39:3 › production directory search stays private and responsive at 1280px (5.3s)
+  ✓  16 tests/e2e/evidence.spec.ts:7:3 › truthful public concept and evidence navigation on mobile (837ms)
+  ✓  17 tests/e2e/evidence.spec.ts:7:3 › truthful public concept and evidence navigation on desktop (980ms)
+  ✓  18 tests/e2e/execution.spec.ts:27:1 › an accepted batch is prepared, collected, confirmed and published as synthetic traceability (18.7s)
+  ✓  19 tests/e2e/foundation.spec.ts:33:1 › protected routes redirect and authentication errors are accessible (530ms)
+  ✓  20 tests/e2e/foundation.spec.ts:42:1 › signup, email verification, profile, sessions and password changes work in the browser (5.5s)
+  ✓  21 tests/e2e/foundation.spec.ts:100:1 › password recovery token stays out of URLs after hydration and revokes sessions (1.6s)
+  ✓  22 tests/e2e/foundation.spec.ts:120:1 › admin user search and status controls work; last admin cannot be removed (1.6s)
+  ✓  23 tests/e2e/foundation.spec.ts:156:1 › mobile forms, reduced motion and validation do not overflow (372ms)
+  ✓  24 tests/e2e/foundation.spec.ts:171:1 › network failures show a recoverable message without exposing upstream details (494ms)
+  ✓  25 tests/e2e/foundation.spec.ts:183:1 › forms remain disabled without JavaScript and cannot fall back to credential-bearing GET requests (201ms)
+  ✓  26 tests/e2e/foundation.spec.ts:201:1 › pending authentication disables duplicate submissions and recovers after a failed response (389ms)
+  ✓  27 tests/e2e/foundation.spec.ts:236:1 › small-screen login supports keyboard focus, associated labels and direct API denials through the proxy (470ms)
+  ✓  28 tests/e2e/identity.spec.ts:88:1 › buyer onboarding, approval, invitation and scoped membership revocation work across organizations (12.0s)
+  ✓  29 tests/e2e/identity.spec.ts:211:1 › independent artisan manages skills, capacity, association consent and limited delegation (9.6s)
+  ✓  30 tests/e2e/identity.spec.ts:365:1 › authenticator enrollment and recovery-code sign-in work without persisting secrets (2.6s)
+  ✓  31 tests/e2e/nasj-rebrand.spec.ts:7:3 › NASJ landing, branding and account menu work on mobile (2.6s)
+  ✓  32 tests/e2e/nasj-rebrand.spec.ts:7:3 › NASJ landing, branding and account menu work on desktop (2.5s)
+  ✘  33 tests/e2e/presentation.spec.ts:9:3 › presentation navigation, notes, resume and evidence on mobile (935ms)
+(node:512692) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✘  34 tests/e2e/presentation.spec.ts:9:3 › presentation navigation, notes, resume and evidence on desktop (1.2s)
+(node:512849) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✘  35 tests/e2e/presentation.spec.ts:100:1 › presentation fullscreen uses the browser API, preserves progress and hides notes (5.5s)
+(node:513031) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✘  36 tests/e2e/presentation.spec.ts:120:1 › presentation ignores malformed resume data and prints evidence without notes (5.6s)
+(node:513188) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓  37 tests/e2e/procurement.spec.ts:70:3 › E02 buyer and operator complete versioned procurement on mobile (16.3s)
+  ✓  38 tests/e2e/procurement.spec.ts:70:3 › E02 buyer and operator complete versioned procurement on desktop (17.0s)
+  ✓  39 tests/e2e/procurement.spec.ts:328:1 › E02 shows field errors, empty records and a recoverable list failure (1.8s)
+  ✓  40 tests/e2e/production.spec.ts:39:1 › an artisan accepts issued work and an accountless report stays unverified (5.9s)
+  ✓  41 tests/e2e/revised-foundation.spec.ts:82:1 › coordinator onboards an artisan without login, records declared capacity and loses access immediately on suspension (6.1s)
+  ✓  42 tests/e2e/revised-foundation.spec.ts:184:1 › buyer and administrator default workspaces are distinct and participant concerns require no account (8.8s)
+  ✓  43 tests/e2e/workspace-ui.spec.ts:40:1 › desktop sidebar shows buyer work, active navigation and the current procurement workspace (3.1s)
+  ✓  44 tests/e2e/workspace-ui.spec.ts:69:1 › mobile drawer supports focus, escape, navigation and keyboard account tabs at 360px (5.0s)
+
+
+  1) tests/e2e/presentation.spec.ts:9:3 › presentation navigation, notes, resume and evidence on mobile 
+
+    Error: locator.evaluate: Error: strict mode violation: locator('article:not([hidden])') resolved to 5 elements:
+        1) <article class="xOMmiq_scene" aria-labelledby="scene-finance">…</article> aka getByRole('article', { name: 'Change an assumption. Inspect' })
+        2) <article aria-label="Custom scenario" class="rounded-2xl border border-current/15 p-4 min-w-0">…</article> aka getByRole('article', { name: 'Custom scenario' })
+        3) <article aria-label="Baseline scenario" class="rounded-2xl border border-current/15 p-4 min-w-0">…</article> aka getByLabel('Baseline scenario')
+        4) <article aria-label="Optimistic scenario" class="rounded-2xl border border-current/15 p-4 min-w-0">…</article> aka getByLabel('Optimistic scenario')
+        5) <article aria-label="Conservative scenario" class="rounded-2xl border border-current/15 p-4 min-w-0">…</article> aka getByLabel('Conservative scenario')
+
+    Call log:
+      - waiting for locator('article:not([hidden])')
+
+
+      75 |         /^\/evidence#/,
+      76 |       );
+    > 77 |       const animation = await scene.evaluate((node) => getComputedStyle(node).animationName);
+         |                                     ^
+      78 |       expect(animation).toBe('none');
+      79 |       expect(
+      80 |         await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth),
+        at /home/ashenix/Projects/wie-challenge/website/tests/e2e/presentation.spec.ts:77:37
+
+    Error Context: test-results/presentation-presentation--7b775-sume-and-evidence-on-mobile/error-context.md
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/presentation-presentation--7b775-sume-and-evidence-on-mobile/trace.zip
+    Usage:
+
+        pnpm exec playwright show-trace test-results/presentation-presentation--7b775-sume-and-evidence-on-mobile/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  2) tests/e2e/presentation.spec.ts:9:3 › presentation navigation, notes, resume and evidence on desktop 
+
+    Error: locator.evaluate: Error: strict mode violation: locator('article:not([hidden])') resolved to 5 elements:
+        1) <article class="xOMmiq_scene" aria-labelledby="scene-finance">…</article> aka getByRole('article', { name: 'Change an assumption. Inspect' })
+        2) <article aria-label="Custom scenario" class="rounded-2xl border border-current/15 p-4 min-w-0">…</article> aka getByRole('article', { name: 'Custom scenario' })
+        3) <article aria-label="Baseline scenario" class="rounded-2xl border border-current/15 p-4 min-w-0">…</article> aka getByLabel('Baseline scenario')
+        4) <article aria-label="Optimistic scenario" class="rounded-2xl border border-current/15 p-4 min-w-0">…</article> aka getByLabel('Optimistic scenario')
+        5) <article aria-label="Conservative scenario" class="rounded-2xl border border-current/15 p-4 min-w-0">…</article> aka getByLabel('Conservative scenario')
+
+    Call log:
+      - waiting for locator('article:not([hidden])')
+
+
+      75 |         /^\/evidence#/,
+      76 |       );
+    > 77 |       const animation = await scene.evaluate((node) => getComputedStyle(node).animationName);
+         |                                     ^
+      78 |       expect(animation).toBe('none');
+      79 |       expect(
+      80 |         await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth),
+        at /home/ashenix/Projects/wie-challenge/website/tests/e2e/presentation.spec.ts:77:37
+
+    Error Context: test-results/presentation-presentation--c99b5-ume-and-evidence-on-desktop/error-context.md
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/presentation-presentation--c99b5-ume-and-evidence-on-desktop/trace.zip
+    Usage:
+
+        pnpm exec playwright show-trace test-results/presentation-presentation--c99b5-ume-and-evidence-on-desktop/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  3) tests/e2e/presentation.spec.ts:100:1 › presentation fullscreen uses the browser API, preserves progress and hides notes 
+
+    Error: expect(received).toBe(expected) // Object.is equality
+
+    Expected: false
+    Received: true
+
+    Call Log:
+    - Timeout 5000ms exceeded while waiting on the predicate
+
+      110 |   await expect(page.locator('article:not([hidden]) [data-evidence-status]')).toBeVisible();
+      111 |   await page.keyboard.press('Escape');
+    > 112 |   await expect.poll(() => page.evaluate(() => Boolean(document.fullscreenElement))).toBe(false);
+          |                                                                                     ^
+      113 |   await expect(page.locator('[data-presentation-scene]')).toHaveAttribute(
+      114 |     'data-presentation-scene',
+      115 |     'technology',
+        at /home/ashenix/Projects/wie-challenge/website/tests/e2e/presentation.spec.ts:112:85
+
+    Error Context: test-results/presentation-presentation--44f6b-es-progress-and-hides-notes/error-context.md
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/presentation-presentation--44f6b-es-progress-and-hides-notes/trace.zip
+    Usage:
+
+        pnpm exec playwright show-trace test-results/presentation-presentation--44f6b-es-progress-and-hides-notes/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  4) tests/e2e/presentation.spec.ts:120:1 › presentation ignores malformed resume data and prints evidence without notes 
+
+    Error: expect(locator).toHaveCount(expected) failed
+
+    Locator:  locator('article:visible')
+    Expected: 10
+    Received: 1
+    Timeout:  5000ms
+
+    Call log:
+      - Expect "toHaveCount" locator('article:visible') with timeout 5000ms
+      - waiting for locator('article:visible')
+        14 × locator resolved to 1 element
+           - unexpected value "1"
+
+
+      133 |   await page.getByRole('button', { name: 'Show speaker notes on this screen' }).click();
+      134 |   await page.emulateMedia({ media: 'print' });
+    > 135 |   await expect(page.locator('article:visible')).toHaveCount(10);
+          |                                                 ^
+      136 |   await expect(page.locator('[data-claim-id="presentation.transparency"]')).toContainText(
+      137 |     'not field evidence',
+      138 |   );
+        at /home/ashenix/Projects/wie-challenge/website/tests/e2e/presentation.spec.ts:135:49
+
+    Error Context: test-results/presentation-presentation--61130-ints-evidence-without-notes/error-context.md
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/presentation-presentation--61130-ints-evidence-without-notes/trace.zip
+    Usage:
+
+        pnpm exec playwright show-trace test-results/presentation-presentation--61130-ints-evidence-without-notes/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  4 failed
+    tests/e2e/presentation.spec.ts:9:3 › presentation navigation, notes, resume and evidence on mobile 
+    tests/e2e/presentation.spec.ts:9:3 › presentation navigation, notes, resume and evidence on desktop 
+    tests/e2e/presentation.spec.ts:100:1 › presentation fullscreen uses the browser API, preserves progress and hides notes 
+    tests/e2e/presentation.spec.ts:120:1 › presentation ignores malformed resume data and prints evidence without notes 
+  40 passed (5.5m)
+[ELIFECYCLE] Command failed with exit code 1.

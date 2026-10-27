@@ -1,0 +1,73 @@
+$ pnpm db:generate && pnpm --filter @nasj/contracts build && pnpm --filter @nasj/api test:integration
+$ pnpm --filter @nasj/api db:generate
+$ prisma generate
+Loaded Prisma config from prisma.config.ts.
+
+Prisma schema loaded from prisma/schema.prisma.
+
+✔ Generated Prisma Client (v7.10.1) to ./../../node_modules/.pnpm/@prisma+client@7.10.1_prisma@7.10.1_@types+node@24.19.2_@types+react-dom@19.3.0_@types+_9e72caf218d3f522373b8e6c9536cf3f/node_modules/@prisma/client in 668ms
+
+Start by importing your Prisma Client (See: https://pris.ly/d/importing-client)
+
+
+$ tsc -p tsconfig.json
+$ tsx test/integration.ts
+node:internal/errors:986
+  const err = new Error(message);
+              ^
+
+Error: Command failed: pnpm exec prisma migrate deploy
+Loaded Prisma config from prisma.config.ts.
+
+Prisma schema loaded from prisma/schema.prisma.
+Error: P3015
+
+Could not find the migration file at migration.sql. Please delete the directory or restore the migration file.
+
+
+    at genericNodeError (node:internal/errors:986:15)
+    at wrappedFn (node:internal/errors:540:14)
+    at ChildProcess.exithandler (node:child_process:417:12)
+    at ChildProcess.emit (node:events:514:28)
+    at maybeClose (node:internal/child_process:1141:16)
+    at ChildProcess._handle.onexit (node:internal/child_process:306:5) {
+  code: 1,
+  killed: false,
+  signal: null,
+  cmd: 'pnpm exec prisma migrate deploy',
+  stdout: 'Datasource "db": PostgreSQL database "foundation_test", schema "public" at "127.0.0.1:32851"\n' +
+    '\n' +
+    '19 migrations found in prisma/migrations\n' +
+    '\n' +
+    'Applying migration `202610150001_foundation`\n' +
+    'Applying migration `202610170001_identity_organizations`\n' +
+    'Applying migration `202610170002_privileged_mfa`\n' +
+    'Applying migration `202610170003_capacity_revisions`\n' +
+    'Applying migration `202610200001_e16_reliability`\n' +
+    'Applying migration `202610200001_nasj_rename`\n' +
+    'Applying migration `202610200002_synthetic_commerce`\n' +
+    'Applying migration `202610200003_commerce_projections`\n' +
+    'Applying migration `20261021010000_revised_foundation`\n' +
+    'Applying migration `20261021020000_buyer_purchasing_authority`\n' +
+    'Applying migration `20261021030000_buyer_procurement`\n' +
+    'Applying migration `20261021040000_nasj_operator_role`\n' +
+    'Applying migration `20261027010000_capacity_revisions`\n' +
+    'Applying migration `20261027020000_commercial_decisions`\n' +
+    'Applying migration `20261027030000_production_offers`\n' +
+    'Applying migration `20261027040000_production_execution`\n' +
+    'Applying migration `20261027050000_logistics_traceability`\n' +
+    'Applying migration `20261027060000_shipment_cancel_damage`\n',
+  stderr: 'Loaded Prisma config from prisma.config.ts.\n' +
+    '\n' +
+    'Prisma schema loaded from prisma/schema.prisma.\n' +
+    'Error: P3015\n' +
+    '\n' +
+    'Could not find the migration file at migration.sql. Please delete the directory or restore the migration file.\n' +
+    '\n'
+}
+
+Node.js v24.20.0
+/home/ashenix/Projects/wie-challenge/website/apps/api:
+[ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL] @nasj/api@0.1.0 test:integration: `tsx test/integration.ts`
+Exit status 1
+[ELIFECYCLE] Command failed with exit code 1.

@@ -208,3 +208,11 @@ E16 follow-up adds durable scoped commerce notices, rebuildable synthetic report
 
 
 Run `pnpm verify:clean` for the full fresh-source quality pipeline. Local backup and health scheduling is available through `pnpm ops:setup --prepare` / `--enable`, with private local alerts and no external paging; see the operations guide. The simulator remains exclusively in the independent IoT repository, with communication deferred.
+
+## Competition showroom and evidence
+
+Batch 6 adds a visitor-owned isolated showroom at `/demo`, public `/evidence` methodology and `/presentation` views. Six fictional personas use real Better Auth sessions and existing scoped workspaces. Reset recreates only the visitor's generation, retains immutable history and does not affect other visitors. Global governance administration is not offered through visitor switching.
+
+Read [the scenario guide](docs/engineering/DEMO_SCENARIO_GUIDE.md), [reset runbook](docs/engineering/DEMO_RESET_RUNBOOK.md), [provenance policy](docs/engineering/EVIDENCE_PROVENANCE_POLICY.md) and [migration readiness](docs/engineering/MIGRATION_READINESS.md). Existing `demo:setup` deploys migrations to the separate persistent local demo DB and needs separate owner authorization; automated verification uses new disposable containers instead. Do not run `pnpm dev` or `demo:setup` as a read-only migration check.
+
+`pnpm test:e2e` runs normal browser regressions, then a separate isolated demo build and real commercial/reset journey. `pnpm test:e2e:demo` runs just that showroom suite; `pnpm --filter @nasj/api test:demo` runs real HTTP control/reset/isolation scenarios. `pnpm competition:validate` checks the editable [report source](docs/competition/PHASE1_TECHNICAL_REPORT.md) and [video storyboard](docs/competition/PHASE1_VIDEO_STORYBOARD.md); it does not certify an absent PDF/video or competition compliance. Official-format validation was skipped at owner request and remains a submission gate. No verified bank payments, physical stock or live pilot readiness is established by a synthetic showroom.

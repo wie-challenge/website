@@ -1,0 +1,3 @@
+$ tsx scripts/inspect-migration-status.ts
+{"scope":"EXISTING_LOCAL_DEVELOPMENT_STATUS_ONLY","status":"UNAVAILABLE","reason":"ECONNREFUSED","readOnly":true,"migrationsAppliedByThisCommand":false}
+[ELIFECYCLE] Command failed with exit code 1.

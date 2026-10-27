@@ -19,9 +19,9 @@ export function Weave({ className = '' }: { className?: string }) {
 export function SiteFooter() {
   return (
     <footer className="app-footer">
-      <span>NASJ · Weaving Connections. Creating Impact.</span>
+      <span>NASJ prototype · Evidence-labeled demonstration</span>
       <span lang="ar" dir="rtl">
-        نسج · ننسج الروابط، نصنع الأثر
+        نسج · نموذج أولي
       </span>
     </footer>
   );

@@ -1,3 +1,12 @@
+import { runMigrationReadinessScenario } from './migration-readiness.scenarios.js';
+import { runDemoScenarios } from './demo.scenarios.js';
+import { runInventoryScenarios } from './inventory.scenarios.js';
+import { runBatch5UpgradeScenario } from './batch5-upgrade.scenarios.js';
+import { runCommercialScenarios } from './commercial.scenarios.js';
+import { runExecutionScenarios } from './execution.scenarios.js';
+import { runDirectoryScenarios } from './directory.scenarios.js';
+import { runCapacityUpgradeScenario } from './capacity-upgrade.scenarios.js';
+import { runCapacityScenarios } from './capacity.scenarios.js';
 import { runProcurementScenarios } from './procurement.scenarios.js';
 import { runRoleUpgradeScenario } from './roles-upgrade.scenarios.js';
 import { runRoleScenarios } from './roles.scenarios.js';
@@ -25,7 +34,8 @@ import { captureMail, disposableDatabase, testConfig } from './support.js';
 logger.level = 'silent';
 const database = await disposableDatabase();
 const mail = await captureMail();
-const config = testConfig(database.url, mail.port);
+// Aggregate suite traffic shares one loopback client. Dedicated rate-limit scenarios use their own low limits.
+const config = testConfig(database.url, mail.port, { RATE_API_MAX: 3000 });
 let app: INestApplication | undefined,
   limited: INestApplication | undefined,
   proxied: INestApplication | undefined;
@@ -531,10 +541,19 @@ try {
   await runMfaScenarios({ db, config, client, register, mutate, check, mail });
   await runE16Scenarios({ db, register, mutate, check, config });
   await runCommerceScenarios({ db, register, check, config });
+  await runCapacityScenarios({ db, register, check });
+  await runDirectoryScenarios({ db, register, check });
+  await runCommercialScenarios({ db, register, check });
+  await runExecutionScenarios({ db, register, check });
+  await runInventoryScenarios({ db, register, check });
   await runCatalogScenarios({ db, register, check });
   await runProcurementScenarios({ db, register, check, config });
   await runUpgradeScenario(check);
+  await runCapacityUpgradeScenario(check);
+  await runBatch5UpgradeScenario(check);
   await runRestoreScenario(database, check);
+  await runDemoScenarios(check);
+  await runMigrationReadinessScenario(check);
   console.log(
     `Integration passed: ${assertions} scenarios against a newly created disposable PostgreSQL database and local SMTP capture.`,
   );

@@ -10,7 +10,7 @@ for (const viewport of [
   }) => {
     await page.setViewportSize(viewport);
     await page.goto('/');
-    await expect(page.getByRole('heading', { level: 1 })).toContainText('Meaningful gifts.');
+    await expect(page.getByRole('heading', { level: 1 })).toContainText('clearer path to market.');
     await expect(page.getByRole('link', { name: 'NASJ | نسج', exact: true }).first()).toBeVisible();
     let result = await new AxeBuilder({ page })
       .withTags(['wcag2a', 'wcag2aa', 'wcag21aa', 'wcag22aa'])

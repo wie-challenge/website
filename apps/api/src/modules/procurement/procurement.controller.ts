@@ -5,6 +5,8 @@ import { CurrentUser, type Actor } from '../../common/identity.js';
 import { ZodValidationPipe } from '../../common/validation.pipe.js';
 import { CommerceService } from '../commerce/commerce.service.js';
 import { ProcurementService } from './procurement.service.js';
+import { ProductionOfferService } from './production-offers.js';
+import { ProductionExecutionService } from './execution.js';
 const rid = new ZodValidationPipe(C.resourceIdSchema);
 const pages = new ZodValidationPipe(C.procurementPageSchema);
 @Controller('api/v1/procurement')
@@ -12,6 +14,8 @@ export class ProcurementController {
   constructor(
     @Inject(ProcurementService) private readonly service: ProcurementService,
     @Inject(CommerceService) private readonly commerce: CommerceService,
+    @Inject(ProductionOfferService) private readonly production: ProductionOfferService,
+    @Inject(ProductionExecutionService) private readonly execution: ProductionExecutionService,
   ) {}
   @Get('discussions') discussions(
     @CurrentUser() a: Actor,
@@ -175,6 +179,58 @@ export class ProcurementController {
   ) {
     return this.service.decideSample(a, id, i, k);
   }
+  @Post('effort-assumptions') effort(
+    @CurrentUser() a: Actor,
+    @Body(new ZodValidationPipe(C.effortAssumptionSchema)) i: z.infer<
+      typeof C.effortAssumptionSchema
+    >,
+    @Headers('idempotency-key') k?: string,
+  ) {
+    return this.service.assumeEffort(a, i, k);
+  }
+  @Post('rfqs/:id/feasibility-assessments') assess(
+    @CurrentUser() a: Actor,
+    @Param('id', rid) id: string,
+    @Body(new ZodValidationPipe(C.feasibilityRequestSchema)) i: z.infer<
+      typeof C.feasibilityRequestSchema
+    >,
+    @Headers('idempotency-key') k?: string,
+  ) {
+    return this.service.assess(a, id, i, k);
+  }
+  @Get('rfqs/:id/feasibility-assessments') assessments(
+    @CurrentUser() a: Actor,
+    @Param('id', rid) id: string,
+  ) {
+    return this.service.detail(a, id).then((detail) => ({ items: detail.feasibility }));
+  }
+  @Post('rfqs/:id/cost-estimates') estimate(
+    @CurrentUser() a: Actor,
+    @Param('id', rid) id: string,
+    @Body(new ZodValidationPipe(C.costEstimateSchema)) i: z.infer<typeof C.costEstimateSchema>,
+    @Headers('idempotency-key') k?: string,
+  ) {
+    return this.service.estimate(a, id, i, k);
+  }
+  @Get('rfqs/:id/cost-estimates') estimates(@CurrentUser() a: Actor, @Param('id', rid) id: string) {
+    return this.service.detail(a, id).then((detail) => ({ items: detail.costs }));
+  }
+  @Post('rfqs/:id/costed-quotes') costedQuote(
+    @CurrentUser() a: Actor,
+    @Param('id', rid) id: string,
+    @Body(new ZodValidationPipe(C.costedQuoteSchema)) i: z.infer<typeof C.costedQuoteSchema>,
+    @Headers('idempotency-key') k?: string,
+  ) {
+    return this.service.issueFromCost(a, id, i, k);
+  }
+  @Post('rfqs/:id/quote-rejections') rejectQuote(
+    @CurrentUser() a: Actor,
+    @Param('id', rid) id: string,
+    @Body(new ZodValidationPipe(C.quoteRejectSchema)) i: z.infer<typeof C.quoteRejectSchema>,
+    @Headers('idempotency-key') k?: string,
+  ) {
+    return this.service.rejectQuote(a, id, i, k);
+  }
   @Post('rfqs/:id/quotes') quote(
     @CurrentUser() a: Actor,
     @Param('id', rid) id: string,
@@ -252,5 +308,213 @@ export class ProcurementController {
     @Headers('idempotency-key') k?: string,
   ) {
     return this.service.reorder(a, id, i, k);
+  }
+  @Get('assigned-offers') assigned(@CurrentUser() a: Actor) {
+    return this.production.assigned(a);
+  }
+  @Get('orders/:id/production') orderProduction(
+    @CurrentUser() a: Actor,
+    @Param('id', rid) id: string,
+  ) {
+    return this.production.workspace(a, id);
+  }
+  @Get('orders/:id/eligibility-assessments') eligibility(
+    @CurrentUser() a: Actor,
+    @Param('id', rid) id: string,
+  ) {
+    return this.production.workspace(a, id).then((workspace) => ({
+      items: workspace.assessments,
+      truncated: workspace.truncated,
+      orderVersion: workspace.summary.orderVersion,
+    }));
+  }
+  @Post('orders/:id/eligibility-assessments') assessOrder(
+    @CurrentUser() a: Actor,
+    @Param('id', rid) id: string,
+    @Body(new ZodValidationPipe(C.eligibilityRequestSchema)) i: z.infer<
+      typeof C.eligibilityRequestSchema
+    >,
+    @Headers('idempotency-key') k?: string,
+  ) {
+    return this.production.assess(a, id, i, k);
+  }
+  @Get('orders/:id/offers') orderOffers(@CurrentUser() a: Actor, @Param('id', rid) id: string) {
+    return this.production.workspace(a, id).then((workspace) => ({ items: workspace.offers }));
+  }
+  @Post('orders/:id/offers') prepareOffer(
+    @CurrentUser() a: Actor,
+    @Param('id', rid) id: string,
+    @Body(new ZodValidationPipe(C.productionOfferSchema)) i: z.infer<
+      typeof C.productionOfferSchema
+    >,
+    @Headers('idempotency-key') k?: string,
+  ) {
+    return this.production.createOffer(a, id, i, k);
+  }
+  @Post('offers/:id/issue') issueOffer(
+    @CurrentUser() a: Actor,
+    @Param('id', rid) id: string,
+    @Body(new ZodValidationPipe(C.productionIssueSchema)) i: z.infer<
+      typeof C.productionIssueSchema
+    >,
+    @Headers('idempotency-key') k?: string,
+  ) {
+    return this.production.issue(a, id, i, k);
+  }
+  @Post('offers/:id/assisted-decisions') assisted(
+    @CurrentUser() a: Actor,
+    @Param('id', rid) id: string,
+    @Body(new ZodValidationPipe(C.assistedDecisionSchema)) i: z.infer<
+      typeof C.assistedDecisionSchema
+    >,
+    @Headers('idempotency-key') k?: string,
+  ) {
+    return this.production.assisted(a, id, i, k);
+  }
+  @Get('my-batches') myBatches(@CurrentUser() a: Actor) {
+    return this.execution.mine(a);
+  }
+  @Get('assigned-batches') assignedBatches(@CurrentUser() a: Actor) {
+    return this.execution.assigned(a);
+  }
+  @Get('orders/:id/execution') executionView(
+    @CurrentUser() a: Actor,
+    @Param('id', rid) id: string,
+  ) {
+    return this.execution.execution(a, id);
+  }
+  @Post('orders/:id/material-lines') materialLines(
+    @CurrentUser() a: Actor,
+    @Param('id', rid) id: string,
+    @Body(new ZodValidationPipe(C.materialLinesSchema)) i: z.infer<typeof C.materialLinesSchema>,
+    @Headers('idempotency-key') k?: string,
+  ) {
+    return this.execution.saveMaterials(a, id, i, k);
+  }
+  @Post('orders/:id/inspection-criteria') inspectionCriteria(
+    @CurrentUser() a: Actor,
+    @Param('id', rid) id: string,
+    @Body(new ZodValidationPipe(C.inspectionCriteriaSchema)) i: z.infer<
+      typeof C.inspectionCriteriaSchema
+    >,
+    @Headers('idempotency-key') k?: string,
+  ) {
+    return this.execution.saveCriteria(a, id, i, k);
+  }
+  @Post('orders/:id/consolidations') consolidate(
+    @CurrentUser() a: Actor,
+    @Param('id', rid) id: string,
+    @Body(new ZodValidationPipe(C.consolidationSchema)) i: z.infer<typeof C.consolidationSchema>,
+    @Headers('idempotency-key') k?: string,
+  ) {
+    return this.execution.consolidate(a, id, i, k);
+  }
+  @Get('orders/:id/consolidations') consolidations(
+    @CurrentUser() a: Actor,
+    @Param('id', rid) id: string,
+  ) {
+    return this.execution.execution(a, id).then((view) => ({ items: view.preparations }));
+  }
+  @Post('batches/:id/release') releaseBatch(
+    @CurrentUser() a: Actor,
+    @Param('id', rid) id: string,
+    @Body(new ZodValidationPipe(C.batchReleaseSchema)) i: z.infer<typeof C.batchReleaseSchema>,
+    @Headers('idempotency-key') k?: string,
+  ) {
+    return this.execution.release(a, id, i, k);
+  }
+  @Get('batches/:id/instructions') batchInstructions(
+    @CurrentUser() a: Actor,
+    @Param('id', rid) id: string,
+  ) {
+    return this.execution.instructions(a, id);
+  }
+  @Get('batches/:id/materials') batchMaterials(
+    @CurrentUser() a: Actor,
+    @Param('id', rid) id: string,
+  ) {
+    return this.execution.materials(a, id);
+  }
+  @Post('batches/:id/start') startBatch(
+    @CurrentUser() a: Actor,
+    @Param('id', rid) id: string,
+    @Body(new ZodValidationPipe(C.batchStartSchema)) i: z.infer<typeof C.batchStartSchema>,
+    @Headers('idempotency-key') k?: string,
+  ) {
+    return this.execution.start(a, id, i, k);
+  }
+  @Post('batches/:id/progress') reportProgress(
+    @CurrentUser() a: Actor,
+    @Param('id', rid) id: string,
+    @Body(new ZodValidationPipe(C.progressReportSchema)) i: z.infer<typeof C.progressReportSchema>,
+    @Headers('idempotency-key') k?: string,
+  ) {
+    return this.execution.report(a, id, i, k);
+  }
+  @Get('batches/:id/progress') progressHistory(
+    @CurrentUser() a: Actor,
+    @Param('id', rid) id: string,
+  ) {
+    return this.execution.progressList(a, id);
+  }
+  @Post('batches/:id/progress-corrections') correctProgress(
+    @CurrentUser() a: Actor,
+    @Param('id', rid) id: string,
+    @Body(new ZodValidationPipe(C.progressCorrectionSchema)) i: z.infer<
+      typeof C.progressCorrectionSchema
+    >,
+    @Headers('idempotency-key') k?: string,
+  ) {
+    return this.execution.correct(a, id, i, k);
+  }
+  @Post('batches/:id/progress-flags') flagProgress(
+    @CurrentUser() a: Actor,
+    @Param('id', rid) id: string,
+    @Body(new ZodValidationPipe(C.progressFlagSchema)) i: z.infer<typeof C.progressFlagSchema>,
+    @Headers('idempotency-key') k?: string,
+  ) {
+    return this.execution.flag(a, id, i, k);
+  }
+  @Post('batches/:id/submit') submitBatch(
+    @CurrentUser() a: Actor,
+    @Param('id', rid) id: string,
+    @Body(new ZodValidationPipe(C.batchStartSchema)) i: z.infer<typeof C.batchStartSchema>,
+    @Headers('idempotency-key') k?: string,
+  ) {
+    return this.execution.submit(a, id, i, k);
+  }
+  @Get('batches/:id/events') batchEvents(@CurrentUser() a: Actor, @Param('id', rid) id: string) {
+    return this.execution.events(a, id);
+  }
+  @Post('batches/:id/inspections') recordInspection(
+    @CurrentUser() a: Actor,
+    @Param('id', rid) id: string,
+    @Body(new ZodValidationPipe(C.executionInspectionSchema)) i: z.infer<
+      typeof C.executionInspectionSchema
+    >,
+    @Headers('idempotency-key') k?: string,
+  ) {
+    return this.execution.inspect(a, id, i, k);
+  }
+  @Get('batches/:id/inspections') inspectionHistory(
+    @CurrentUser() a: Actor,
+    @Param('id', rid) id: string,
+  ) {
+    return this.execution.inspections(a, id);
+  }
+  @Post('batches/:id/reinspections') reinspectBatch(
+    @CurrentUser() a: Actor,
+    @Param('id', rid) id: string,
+    @Body(new ZodValidationPipe(C.reinspectionSchema)) i: z.infer<typeof C.reinspectionSchema>,
+    @Headers('idempotency-key') k?: string,
+  ) {
+    return this.execution.reinspect(a, id, i, k);
+  }
+  @Post('offers/:id/assisted-decisions/:decisionId/verify') verify(
+    @CurrentUser() a: Actor,
+    @Param('id', rid) id: string,
+    @Param('decisionId', rid) decisionId: string,
+  ) {
+    return this.production.verify(a, id, decisionId);
   }
 }

@@ -1,0 +1,63 @@
+{
+  "output": "output/video/PHASE1_PROGRESS_REVIEW.mp4",
+  "method": "Actual browser screenshot montage, local espeak narration and burned captions; not continuous recording",
+  "scenes": [
+    {
+      "scene": 1,
+      "seconds": 20,
+      "speechSeconds": 18.8439,
+      "capture": "01-showroom.png",
+      "captureSha256": "58e082e6b861202deb747685711f058e15765ca232b0673df39f6c263c9237d2",
+      "narration": "We are investigating a managed production workflow for artisan networks in Tunisia. The starting hypothesis is that buyers need clear product terms and coordinated delivery, while artisans need understandable offers and voluntary participation. We have not yet validated this hypothesis through field interviews or a paid pilot."
+    },
+    {
+      "scene": 2,
+      "seconds": 25,
+      "speechSeconds": 21.760363,
+      "capture": "01-showroom.png",
+      "captureSha256": "58e082e6b861202deb747685711f058e15765ca232b0673df39f6c263c9237d2",
+      "narration": "The prototype connects buyers, internal operators, associations and artisans. A web interface calls an authenticated business API. PostgreSQL transactions, exact quantities and recorded history support traceable decisions. The showroom uses separate fictional accounts with real permissions. Choosing a persona does not grant unrestricted access."
+    },
+    {
+      "scene": 3,
+      "seconds": 30,
+      "speechSeconds": 21.960499,
+      "capture": "03-artisan-accepted.png",
+      "captureSha256": "9e7c163fda10095f0aa1fd79527f0c6953813f14b3bd88d727bd4430a65f566b",
+      "narration": "In one synthetic scenario, a buyer reviews a versioned quotation. The operator checks declared capacity and prepares a specific offer. The artisan sees the work, compensation and conditions, then decides independently. A coordinator's report for an accountless artisan remains pending because no approved acceptance method exists. It creates no confirmed commitment."
+    },
+    {
+      "scene": 4,
+      "seconds": 30,
+      "speechSeconds": 22.946168,
+      "capture": "05-quality-approved.png",
+      "captureSha256": "c5e11fd573a5ecf8344c5ea7552e2fdf5887cd6d1be2b57f0516a29f8a927be6",
+      "narration": "The production batch follows recorded material requirements. Progress is cumulative, and inspection separates approved, rejected and pending pieces. Only approved pieces can enter shipment preparation. Collection, hub receipt and dispatch are distinct custody events. These examples exercise the software; they do not certify physical stock, production quality or carrier delivery."
+    },
+    {
+      "scene": 5,
+      "seconds": 30,
+      "speechSeconds": 26.414059,
+      "capture": "07-public-traceability.png",
+      "captureSha256": "75858cf405e0f3bb2475611cfd3abfc1c29a5d85338dc6372ecd993ff0b11d55",
+      "narration": "Buyer confirmation records accepted, damaged and missing pieces separately. The public craft page exposes an approved story and limited provenance, while protecting private identities and commercial terms. Finance keeps recognized obligations separate from simulations. Independent approval is required, and verified paid remains zero without bank evidence. Delivery or a simulated payment cannot close unresolved financial obligations."
+    },
+    {
+      "scene": 6,
+      "seconds": 25,
+      "speechSeconds": 22.234785,
+      "capture": "08-finance-payable.png",
+      "captureSha256": "a41d947346c3893afd797372abc30f79ed010e4aed86f8da3a7baf0aea6a9683",
+      "narration": "Public claims distinguish proposals, synthetic data and evidence-backed observations. Health monitoring is outside the commercial data flow. A visitor can recreate their own scenario without deleting immutable history or affecting another visitor. Reset restores a documented initial state rather than rewriting a financial ledger. Our tests check isolation, replay and failure behavior."
+    },
+    {
+      "scene": 7,
+      "seconds": 20,
+      "speechSeconds": 19.748254,
+      "capture": "01-showroom.png",
+      "captureSha256": "58e082e6b861202deb747685711f058e15765ca232b0673df39f6c263c9237d2",
+      "narration": "The current result is a connected software prototype tested with synthetic records. It does not establish income gains, verified payments or injury prevention. Next are owner acceptance, ethical user research and reviewed operating policies. A live pilot requires independent inventory, financial, legal and deployment validation."
+    }
+  ],
+  "sha256": "33389ed3e54201186d31c08fec65c393acaf3608e16a27cd5432feffa5621ee5"
+}

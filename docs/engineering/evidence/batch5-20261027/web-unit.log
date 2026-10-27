@@ -1,0 +1,22 @@
+$ tsx --test test/*.test.ts
+✔ login redirect allowlist rejects external, encoded and unsupported destinations (2.740141ms)
+✔ browser mutations obtain a session-bound CSRF proof and never store session credentials (46.732876ms)
+✔ API failures and network errors become safe user-facing errors (1.466563ms)
+✔ workspace redirects allow scoped destinations and discard invitation secrets (0.570421ms)
+✔ PUT mutations use the same CSRF and credential protections as other writes (0.828528ms)
+✔ operator stock quantities preserve exact decimal values at the API boundary (7.823851ms)
+✔ stock quantity entry rejects rounding, exponent notation and ambiguous separators (0.784177ms)
+✔ pieces and units retain whole-quantity compatibility (3.618201ms)
+✔ a public traceability address becomes a stable QR matrix (164.298969ms)
+✔ admin navigation exposes people and governance requests without granting commercial or artisan work (1.312158ms)
+✔ operator navigation provides assigned-account coordination rather than user administration (0.344388ms)
+✔ buyer and association navigation keep purchasing and participant management separate (1.623489ms)
+✔ missing identity context never invents operational access from legacy capability flags (0.541959ms)
+ℹ tests 13
+ℹ suites 0
+ℹ pass 13
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 782.144485

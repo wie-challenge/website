@@ -1,0 +1,9 @@
+
+Running 2 tests using 1 worker
+
+(node:430228) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓  1 tests/e2e/nasj-rebrand.spec.ts:7:3 › NASJ landing, branding and account menu work on mobile (3.8s)
+  ✓  2 tests/e2e/nasj-rebrand.spec.ts:7:3 › NASJ landing, branding and account menu work on desktop (2.9s)
+
+  2 passed (27.5s)

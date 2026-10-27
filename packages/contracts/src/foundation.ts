@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import type { OperationalPersona, Permission } from './permissions.js';
+import { capacityFields, validCapacityPeriod } from './capacity.js';
 const id = z.string().min(1).max(128);
 const reason = z.string().trim().min(10).max(1000);
 export const authorizationMethods = [
@@ -50,18 +51,15 @@ export const registryCreateSchema = z
 export const registryUpdateSchema = z.object({ ...profileFields, reason }).strict();
 export const assistedCapacitySchema = z
   .object({
-    craftSkillId: id,
-    quantity: z.string().regex(/^\d{1,8}(\.\d{1,2})?$/),
-    unitType: z.string().min(1).max(30),
-    effectiveFrom: z.iso.datetime(),
-    effectiveTo: z.iso.datetime(),
+    ...capacityFields,
+    quantity: z
+      .string()
+      .regex(/^(0|[1-9]\d{0,5})(\.\d{1,2})?$/)
+      .refine((v) => Number(v) <= 100000, 'Capacity cannot exceed 100000.'),
     authorizationId: id,
   })
   .strict()
-  .refine(
-    (v) => new Date(v.effectiveTo) > new Date(v.effectiveFrom),
-    'Capacity period must increase.',
-  );
+  .refine(validCapacityPeriod, 'Capacity period must increase.');
 export const affiliationChangeSchema = z.object({ organizationId: id, reason }).strict();
 export const affiliationStatusSchema = z
   .object({
@@ -90,6 +88,22 @@ export const explicitGrantSchema = z
       'buyer.quotation.approve',
       'operator.payout.initiate',
       'operator.payout.approve',
+      'finance.payable.reconcile',
+      'finance.deposit.record',
+      'finance.deposit.review',
+      'finance.payout.request',
+      'finance.payout.approve',
+      'finance.payout.execute',
+      'finance.dispute.manage',
+      'finance.adjustment.propose',
+      'finance.adjustment.approve',
+      'finance.closure.assess',
+      'inventory.stock.read',
+      'inventory.stock.register',
+      'inventory.stock.reserve',
+      'inventory.stock.handover',
+      'inventory.stock.receive',
+      'inventory.stock.adjust',
     ]),
     enabled: z.boolean(),
     reason,

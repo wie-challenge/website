@@ -1,4 +1,11 @@
-import { seedBrowserCommerceFixture } from '../../apps/api/test/commerce.fixture';
+import { seedBrowserCommercialFixture } from '../../apps/api/test/commercial.fixture';
+import { seedBrowserProductionFixture } from '../../apps/api/test/production.fixture';
+import { seedBrowserBatch5Fixture } from '../../apps/api/test/batch5.fixture';
+import { seedBrowserDirectoryFixture } from '../../apps/api/test/directory.fixture';
+import {
+  seedBrowserCapacityFixture,
+  seedBrowserCommerceFixture,
+} from '../../apps/api/test/commerce.fixture';
 import { promisify } from 'node:util';
 import { spawn, execFile, type ChildProcess } from 'node:child_process';
 import { createServer } from 'node:http';
@@ -20,9 +27,12 @@ async function free(port: number) {
   });
 }
 export default async function setup() {
+  return runBrowserSetup();
+}
+export async function runBrowserSetup(options: { demo?: boolean } = {}) {
   await free(3100);
   await free(3101);
-  const database = await disposableDatabase();
+  const database = await disposableDatabase({ demo: options.demo });
   const mail = await captureMail();
   const children: ChildProcess[] = [];
   let log = '';
@@ -56,6 +66,41 @@ export default async function setup() {
         );
         res.setHeader('Content-Type', 'application/json');
         res.end(JSON.stringify(fixture));
+      } else if (url.pathname.endsWith('/directory-fixture') && req.method === 'POST') {
+        const fixture = await seedBrowserDirectoryFixture(
+          database.url,
+          url.searchParams.get('suffix') ?? '',
+        );
+        res.setHeader('Content-Type', 'application/json');
+        res.end(JSON.stringify(fixture));
+      } else if (url.pathname.endsWith('/batch5-fixture') && req.method === 'POST') {
+        const fixture = await seedBrowserBatch5Fixture(
+          database.url,
+          url.searchParams.get('suffix') ?? '',
+        );
+        res.setHeader('Content-Type', 'application/json');
+        res.end(JSON.stringify(fixture));
+      } else if (url.pathname.endsWith('/production-fixture') && req.method === 'POST') {
+        const fixture = await seedBrowserProductionFixture(
+          database.url,
+          url.searchParams.get('suffix') ?? '',
+        );
+        res.setHeader('Content-Type', 'application/json');
+        res.end(JSON.stringify(fixture));
+      } else if (url.pathname.endsWith('/commercial-fixture') && req.method === 'POST') {
+        const fixture = await seedBrowserCommercialFixture(
+          database.url,
+          url.searchParams.get('suffix') ?? '',
+        );
+        res.setHeader('Content-Type', 'application/json');
+        res.end(JSON.stringify(fixture));
+      } else if (url.pathname.endsWith('/capacity-fixture') && req.method === 'POST') {
+        const fixture = await seedBrowserCapacityFixture(
+          database.url,
+          url.searchParams.get('suffix') ?? '',
+        );
+        res.setHeader('Content-Type', 'application/json');
+        res.end(JSON.stringify(fixture));
       } else if (url.pathname.endsWith('/run-worker') && req.method === 'POST') {
         // Loopback nonce test control only; not registered in the production app.
         await promisify(execFile)(
@@ -72,7 +117,8 @@ export default async function setup() {
         res.setHeader('Content-Type', 'application/json');
         res.end('{}');
       } else res.writeHead(404).end();
-    } catch {
+    } catch (error) {
+      process.stderr.write(`Browser fixture failure: ${String(error)}\n`);
       res.writeHead(500).end('Test fixture failed.');
     }
   });
@@ -80,6 +126,7 @@ export default async function setup() {
   process.env.E2E_CONTROL_URL = `http://127.0.0.1:${(control.address() as { port: number }).port}/${nonce}`;
   const config = testConfig(database.url, mail.port, {
     PUBLIC_APP_URL: 'http://127.0.0.1:3100',
+    DEMO_MODE: options.demo ? 'true' : 'false',
     API_PORT: 3101,
     LOG_LEVEL: 'silent',
   });
@@ -143,7 +190,7 @@ export default async function setup() {
     const webEnv = {
       NODE_ENV: 'production',
       API_INTERNAL_URL: 'http://127.0.0.1:3101',
-      NEXT_DIST_DIR: '.next-e2e',
+      NEXT_DIST_DIR: options.demo ? '.next-showroom-e2e' : '.next-e2e',
     };
     const build = start(
       process.execPath,

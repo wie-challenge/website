@@ -25,3 +25,8 @@ __pycache__/
 # Protected backup artifacts
 *.hcab
 *.dump
+
+.next-showroom-e2e/
+
+# Generated narrated media exceeds the repository 500 KB commit limit.
+/output/

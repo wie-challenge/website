@@ -1,0 +1,151 @@
+{
+  "date": "2026-10-27",
+  "timezone": "Africa/Tunis",
+  "repository": "wie-challenge/website",
+  "scope": "Batch 5 inventory custody and finance control implementation",
+  "githubChanged": false,
+  "persistentMigrationsApplied": false,
+  "liveTransfersInitiated": false,
+  "verifiedPhysicalStockCreated": false,
+  "verifiedPaymentsCreated": false,
+  "checks": {
+    "lint": {
+      "status": "PASS",
+      "files": 318
+    },
+    "typecheck": {
+      "status": "PASS"
+    },
+    "apiUnit": {
+      "status": "PASS",
+      "passed": 70,
+      "failed": 0,
+      "skipped": 0
+    },
+    "webUnit": {
+      "status": "PASS",
+      "passed": 13,
+      "failed": 0,
+      "skipped": 0
+    },
+    "integration": {
+      "status": "PASS",
+      "scenarios": 110,
+      "database": "disposable PostgreSQL",
+      "restoreTables": 96,
+      "restoreRows": 2259
+    },
+    "batch5Focused": {
+      "status": "PASS",
+      "workflows": [
+        "production and finance governance",
+        "inventory custody and replacement",
+        "populated additive migration upgrade"
+      ]
+    },
+    "e2e": {
+      "status": "PASS",
+      "passed": 36,
+      "failed": 0,
+      "skipped": 0
+    },
+    "build": {
+      "status": "PASS"
+    },
+    "earlierMigrationHashes": {
+      "status": "PASS",
+      "unchanged": 6
+    }
+  },
+  "stories": [
+    {
+      "backlogId": "E07-02",
+      "issue": 68,
+      "githubState": "OPEN",
+      "projectStatus": "Proposed",
+      "implementationStatus": "Partially Implemented"
+    },
+    {
+      "backlogId": "E07-03",
+      "issue": 69,
+      "githubState": "OPEN",
+      "projectStatus": "Proposed",
+      "implementationStatus": "Implemented — Unverified"
+    },
+    {
+      "backlogId": "E07-04",
+      "issue": 70,
+      "githubState": "OPEN",
+      "projectStatus": "Proposed",
+      "implementationStatus": "Partially Implemented"
+    },
+    {
+      "backlogId": "E07-05",
+      "issue": 127,
+      "githubState": "OPEN",
+      "projectStatus": "Proposed",
+      "implementationStatus": "Partially Implemented"
+    },
+    {
+      "backlogId": "E07-06",
+      "issue": 71,
+      "githubState": "OPEN",
+      "projectStatus": "Proposed",
+      "implementationStatus": "Partially Implemented"
+    },
+    {
+      "backlogId": "E10-05",
+      "issue": 66,
+      "githubState": "OPEN",
+      "projectStatus": "Proposed",
+      "implementationStatus": "Partially Implemented"
+    },
+    {
+      "backlogId": "E10-07",
+      "issue": 62,
+      "githubState": "OPEN",
+      "projectStatus": "Proposed",
+      "implementationStatus": "Implemented — Unverified"
+    },
+    {
+      "backlogId": "E10-08",
+      "issue": 63,
+      "githubState": "OPEN",
+      "projectStatus": "Proposed",
+      "implementationStatus": "Partially Implemented"
+    },
+    {
+      "backlogId": "E10-09",
+      "issue": 145,
+      "githubState": "OPEN",
+      "projectStatus": "Proposed",
+      "implementationStatus": "Partially Implemented"
+    },
+    {
+      "backlogId": "E10-10",
+      "issue": 72,
+      "githubState": "OPEN",
+      "projectStatus": "Proposed",
+      "implementationStatus": "Partially Implemented"
+    },
+    {
+      "backlogId": "E10-14",
+      "issue": 73,
+      "githubState": "OPEN",
+      "projectStatus": "Proposed",
+      "implementationStatus": "Partially Implemented"
+    }
+  ],
+  "pilotReady": false,
+  "limitations": [
+    "Owner acceptance",
+    "Persistent deployment review",
+    "Physical receipt verification and valuation policy",
+    "Bank receipt authority",
+    "Payout verification/provider integration",
+    "Accountless assisted financial reporting",
+    "Cancellation entitlement policy",
+    "Invoice/tax policy",
+    "Lawful closure/exception policy"
+  ]
+}

@@ -1,7 +1,10 @@
 'use client';
+import { Pagination } from './governance';
+import { CapacityWorkspace } from './capacity-workspace';
 import Link from 'next/link';
-import { useRef, useState } from 'react';
+import { useState } from 'react';
 import type {
+  Page as DataPage,
   ArtisanProfileView,
   CraftSkillView,
   ArtisanSkillView,
@@ -277,83 +280,26 @@ function Skills({ path, onChanged }: { path: string; onChanged: () => void }) {
   );
 }
 function Capacity({ path, canUpdate }: { path: string; canUpdate: boolean }) {
-  const pending = useRef<{ payload: string; key: string } | null>(null);
-  const history = useResource<Items<CapacityDeclarationView>>(`${path}/capacity`);
+  const [page, setPage] = useState(1);
+  const history = useResource<DataPage<CapacityDeclarationView>>(
+    `${path}/capacity?page=${page}&pageSize=100`,
+  );
   const skills = useResource<Items<ArtisanSkillView>>(`${path}/skills`);
   return (
     <>
-      <h2>Voluntary weekly capacity</h2>
-      <p>
-        Declare capacity for a craft and date period. Revise the same exact period or choose a
-        non-overlapping period. Existing commitments remain intact. Wearable data is never used.
-      </p>
       <ResourceState {...history} retry={history.reload} />
-      {canUpdate &&
-        skills.data &&
-        (skills.data.items.length ? (
-          <ActionForm
-            label="Declare capacity"
-            onSuccess={history.reload}
-            action={async (data) => {
-              const body = {
-                craftSkillId: text(data, 'craftSkillId'),
-                unitType: text(data, 'unitType'),
-                quantity: Number(text(data, 'quantity')),
-                effectiveFrom: new Date(text(data, 'effectiveFrom')).toISOString(),
-                effectiveTo: new Date(text(data, 'effectiveTo')).toISOString(),
-              };
-              const payload = JSON.stringify({ path, body });
-              if (pending.current?.payload !== payload)
-                pending.current = { payload, key: crypto.randomUUID() };
-              const result = await apiFetch(`${path}/capacity`, {
-                method: 'POST',
-                body,
-                idempotencyKey: pending.current.key,
-              });
-              pending.current = null;
-              return result;
-            }}
-          >
-            <Select
-              name="craftSkillId"
-              label="Craft"
-              options={skills.data.items.map((item) => ({
-                value: item.craftSkillId,
-                label: item.craftSkill.name,
-              }))}
-            />
-            <Select name="unitType" label="Weekly capacity unit" options={['HOURS', 'PIECES']} />
-            <Input
-              name="quantity"
-              label="Quantity per week"
-              type="number"
-              min="0"
-              max="100000"
-              step="0.01"
-              required
-            />
-            <Input name="effectiveFrom" label="Effective from" type="datetime-local" required />
-            <Input name="effectiveTo" label="Effective until" type="datetime-local" required />
-          </ActionForm>
-        ) : (
-          <p>Add a craft skill before declaring capacity.</p>
-        ))}
-      <h3>Declaration history</h3>
-      {history.data?.items.length === 0 && <p>No capacity declarations yet.</p>}
-      <ul className="record-list">
-        {history.data?.items.map((item) => (
-          <li key={item.id}>
-            {item.supersededAt ? 'Superseded declaration · ' : 'Current declaration · '}
-            {item.quantity} {item.unitType.toLowerCase()} per week ·{' '}
-            {skills.data?.items.find((skill) => skill.craftSkillId === item.craftSkillId)
-              ?.craftSkill.name ?? item.craftSkillId}
-            <p>
-              {new Date(item.effectiveFrom).toLocaleString()} —{' '}
-              {new Date(item.effectiveTo).toLocaleString()}
-            </p>
-          </li>
-        ))}
-      </ul>
+      <ResourceState {...skills} retry={skills.reload} />
+      {history.data && skills.data && (
+        <CapacityWorkspace
+          key={`${path}-${page}`}
+          rows={history.data.items}
+          skills={skills.data.items}
+          path={path}
+          reload={history.reload}
+          canUpdate={canUpdate}
+        />
+      )}
+      <Pagination data={history.data} page={page} change={setPage} />
     </>
   );
 }

@@ -1,7 +1,9 @@
 'use client';
+import { EvidenceNotice } from './evidence-notice';
 import { useRef, useId } from 'react';
 import Link from 'next/link';
 import { CommerceReport } from './commerce-report';
+import { MyProduction } from './execution-workspace';
 import { CatalogRequestSelection } from './buyer-catalog';
 import { Card } from './ui/card';
 import { Textarea } from './ui/textarea';
@@ -307,12 +309,14 @@ export function CommerceWorkspace({
                   .filter(
                     (c) =>
                       c.craftSkillId === rfq?.craftSkillId &&
-                      new Date(c.effectiveTo) >= new Date(rfq!.deliveryAt) &&
+                      new Date(c.effectiveTo) > new Date(rfq!.deliveryAt) &&
                       new Date(c.effectiveFrom) <= new Date(rfq!.deliveryAt),
                   )
                   .map((c) => ({
                     value: c.capacityDeclarationId,
-                    label: `${c.displayName} · ${c.quantity} pieces declared`,
+                    label: c.availabilityKnown
+                      ? `${c.displayName} · ${c.remaining} of ${c.quantity} pieces remaining`
+                      : `${c.displayName} · availability unknown`,
                   }))}
                 required
               />
@@ -380,6 +384,7 @@ export function CommerceWorkspace({
     const order = data!.orders.find((o) => o.id === batch.orderId);
     const permission = order ? roles(order.operatorOrganizationId) : [];
     const own = batch.artisanProfileId === data!.artisanProfileId;
+    const legacy = order?.status !== 'APPROVED';
     return (
       <Card
         role="article"
@@ -404,21 +409,27 @@ export function CommerceWorkspace({
           <dt>Pending QA</dt>
           <dd>{batch.pending}</dd>
         </dl>
-        {permission.includes('PRODUCTION_MANAGER') && batch.status === 'ACCEPTED' && (
+        {!legacy && (
+          <p>
+            This order is commercially approved. Release, progress and inspection for this batch are
+            recorded in the production workspace.
+          </p>
+        )}
+        {legacy && permission.includes('PRODUCTION_MANAGER') && batch.status === 'ACCEPTED' && (
           <ActionForm
             label="Confirm synthetic material readiness"
             action={() => action(`batches/${batch.id}`, 'MATERIAL_READY', batch.version)}
             onSuccess={resource.reload}
           />
         )}
-        {own && batch.status === 'MATERIAL_READY' && (
+        {legacy && own && batch.status === 'MATERIAL_READY' && (
           <ActionForm
             label="Start accepted production"
             action={() => action(`batches/${batch.id}`, 'IN_PROGRESS', batch.version)}
             onSuccess={resource.reload}
           />
         )}
-        {own && batch.status === 'IN_PROGRESS' && (
+        {legacy && own && batch.status === 'IN_PROGRESS' && (
           <>
             <ActionForm
               label="Save cumulative progress"
@@ -449,14 +460,14 @@ export function CommerceWorkspace({
             />
           </>
         )}
-        {permission.includes('QUALITY_INSPECTOR') && batch.status === 'SUBMITTED' && (
+        {legacy && permission.includes('QUALITY_INSPECTOR') && batch.status === 'SUBMITTED' && (
           <ActionForm
             label="Start quality inspection"
             action={() => action(`batches/${batch.id}`, 'INSPECTION', batch.version)}
             onSuccess={resource.reload}
           />
         )}
-        {permission.includes('QUALITY_INSPECTOR') && batch.status === 'INSPECTION' && (
+        {legacy && permission.includes('QUALITY_INSPECTOR') && batch.status === 'INSPECTION' && (
           <>
             <ActionForm
               label="Save reconciled inspection"
@@ -511,7 +522,7 @@ export function CommerceWorkspace({
             />
           </>
         )}
-        {own && batch.status === 'REWORK_REQUESTED' && (
+        {legacy && own && batch.status === 'REWORK_REQUESTED' && (
           <>
             <ActionForm
               label="Accept agreed rework"
@@ -529,7 +540,7 @@ export function CommerceWorkspace({
             />
           </>
         )}
-        {permission.includes('PRODUCTION_MANAGER') && batch.status === 'APPROVED' && (
+        {legacy && permission.includes('PRODUCTION_MANAGER') && batch.status === 'APPROVED' && (
           <ActionForm
             label="Complete approved batch"
             action={() => action(`batches/${batch.id}`, 'COMPLETED', batch.version)}
@@ -550,6 +561,13 @@ export function CommerceWorkspace({
             : 'Manage requests, production and fulfillment. Records and payments in this demo are simulated.'
       }
     >
+      <EvidenceNotice
+        compact
+        claimId={`commerce.${mode}`}
+        claimType="Commercial workflow demonstration"
+        status="SYNTHETIC"
+        sourceReference="/evidence#scenario"
+      />
       <nav className="workspace-tabs" aria-label="Commerce journeys">
         {(mode === 'buyer' || Boolean(data?.buyerOrganizations.length)) && (
           <Link href="/commerce/buyer" aria-current={mode === 'buyer' ? 'page' : undefined}>
@@ -810,21 +828,59 @@ export function CommerceWorkspace({
                       <dd>{o.reworkTerms}</dd>
                       <dt>Payment conditions</dt>
                       <dd>{o.paymentConditions}</dd>
+                      {o.compensationMethod && (
+                        <>
+                          <dt>Compensation method</dt>
+                          <dd>{humanize(o.compensationMethod)}</dd>
+                        </>
+                      )}
+                      {o.collectionArrangement && (
+                        <>
+                          <dt>Collection</dt>
+                          <dd>{o.collectionArrangement}</dd>
+                        </>
+                      )}
+                      {o.instructions && (
+                        <>
+                          <dt>Instructions</dt>
+                          <dd>{o.instructions}</dd>
+                        </>
+                      )}
                       <dt>Offer expires</dt>
                       <dd>{new Date(o.expiresAt).toLocaleString()}</dd>
                       <dt>Delivery deadline</dt>
                       <dd>{new Date(o.deliveryAt).toLocaleString()}</dd>
                     </dl>
+                    {o.preferredLanguage && o.preferredLanguage !== 'en' && (
+                      <p>
+                        These terms are recorded in English. A reviewed translation is not
+                        available. Your preferred language is {o.preferredLanguage}.
+                      </p>
+                    )}
                     {o.artisanProfileId === data.artisanProfileId && o.status === 'OFFERED' && (
                       <>
                         <ActionForm
                           label="Accept this offer voluntarily"
-                          action={() => action(`offers/${o.id}`, 'ACCEPTED', o.version)}
+                          action={() =>
+                            action(
+                              `offers/${o.id}`,
+                              'ACCEPTED',
+                              o.version,
+                              o.termsSha256 ? { termsSha256: o.termsSha256 } : {},
+                            )
+                          }
                           onSuccess={resource.reload}
                         />
                         <ActionForm
                           label="Decline offer without penalty"
-                          action={() => action(`offers/${o.id}`, 'DECLINED', o.version)}
+                          action={() =>
+                            action(
+                              `offers/${o.id}`,
+                              'DECLINED',
+                              o.version,
+                              o.termsSha256 ? { termsSha256: o.termsSha256 } : {},
+                            )
+                          }
                           onSuccess={resource.reload}
                         />
                       </>
@@ -844,6 +900,7 @@ export function CommerceWorkspace({
                 .map(batchCard)}
             </section>
           )}
+          {mode === 'artisan' && <MyProduction />}
           <section aria-labelledby="payments-heading" className="section-gap">
             <details open={data.payments.length > 0}>
               <summary id="payments-heading">Simulated payment records</summary>

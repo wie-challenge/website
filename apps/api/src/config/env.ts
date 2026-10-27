@@ -89,12 +89,18 @@ export function validateEnvironment(values: Record<string, unknown>) {
     throw new Error('ARCJET_KEY is required when ARCJET_ENABLED=true.');
   if (
     config.DEMO_MODE &&
-    (new URL(config.DATABASE_URL).pathname !== '/nasj_demo' || config.NODE_ENV === 'production')
+    (new URL(config.DATABASE_URL).pathname !== '/nasj_demo' ||
+      config.NODE_ENV === 'production' ||
+      !['127.0.0.1', 'localhost', '[::1]'].includes(new URL(config.DATABASE_URL).hostname) ||
+      !['127.0.0.1', 'localhost', '[::1]'].includes(new URL(config.PUBLIC_APP_URL).hostname) ||
+      !['127.0.0.1', 'localhost', '::1'].includes(config.API_HOST))
   )
     throw new Error(
       'Demo mode requires the isolated nasj_demo database and nonproduction environment.',
     );
   if (config.NODE_ENV === 'production') {
+    if (new URL(config.DATABASE_URL).pathname === '/nasj_demo')
+      throw new Error('Production cannot use the synthetic showroom database.');
     if (!config.REQUIRE_PRIVILEGED_MFA)
       throw new Error('Production requires REQUIRE_PRIVILEGED_MFA=true.');
     if (!config.PUBLIC_APP_URL.startsWith('https://'))

@@ -35,7 +35,7 @@ export async function createApp(options: { config?: AppConfig; arcjet?: ArcjetNe
     origin: config.PUBLIC_APP_URL,
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'X-CSRF-Token', 'Idempotency-Key'],
+    allowedHeaders: ['Content-Type', 'X-CSRF-Token', 'X-Demo-CSRF', 'Idempotency-Key'],
     exposedHeaders: ['X-Request-ID', 'Retry-After'],
   });
   app.use((req: AppRequest, res: Response, next: NextFunction) => {

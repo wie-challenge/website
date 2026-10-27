@@ -1,0 +1,7 @@
+$ tsx test/batch5.ts
+(node:329392) DeprecationWarning: Calling client.query() when the client is already executing a query is deprecated and will be removed in pg@9.0. Use async/await or an external async flow control mechanism instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+  ✓ Batch 5 deposit, payout, execution, claim and closure governance scenarios
+PASS production release through buyer confirmation, traceability and simulated settlement stay isolated
+PASS inventory custody, concurrency, discrepancies, quarantine and current authorization
+PASS Batch 5 additive chain preserves populated identity, sessions and commercial records

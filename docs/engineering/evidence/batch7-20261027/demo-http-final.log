@@ -1,0 +1,8 @@
+$ tsx test/demo.ts
+(node:494630) DeprecationWarning: Calling client.query() when the client is already executing a query is deprecated and will be removed in pg@9.0. Use async/await or an external async flow control mechanism instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+PASS showroom uses six real scoped authenticated accounts without exposing credentials
+PASS accountless showroom reports remain pending and revoked memberships cannot be restored by switching
+{"level":50,"time":1793136848948,"pid":494630,"hostname":"ashenix-crawlere40","requestId":"17fbde36-fb7e-4046-8522-d3b458ee1fc6","errorType":"PrismaClientKnownRequestError","msg":"Request failed"}
+PASS showroom reset archives only owned scope, replays safely and rolls back interrupted recreation
+PASS ordinary mode denies anonymous showroom mutations without creating scenarios

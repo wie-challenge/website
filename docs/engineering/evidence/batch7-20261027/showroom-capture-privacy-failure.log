@@ -1,0 +1,54 @@
+$ pnpm db:generate && pnpm --filter @nasj/contracts build && playwright test --config playwright.demo.config.ts
+$ pnpm --filter @nasj/api db:generate
+$ prisma generate
+Loaded Prisma config from prisma.config.ts.
+
+Prisma schema loaded from prisma/schema.prisma.
+
+✔ Generated Prisma Client (v7.10.1) to ./../../node_modules/.pnpm/@prisma+client@7.10.1_prisma@7.10.1_@types+node@24.19.2_@types+react-dom@19.3.0_@types+_9e72caf218d3f522373b8e6c9536cf3f/node_modules/@prisma/client in 652ms
+
+Start by importing your Prisma Client (See: https://pris.ly/d/importing-client)
+
+
+$ tsc -p tsconfig.json
+
+Running 2 tests using 1 worker
+
+(node:485690) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✘  1 tests/demo-e2e/showroom.spec.ts:39:1 › visitor showroom completes real synthetic commercial workflow and resets without affecting another visitor (13.2s)
+(node:486769) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓  2 tests/demo-e2e/showroom.spec.ts:339:1 › showroom is responsive, keyboard reachable and preserves scenario across persona navigation (912ms)
+
+
+  1) tests/demo-e2e/showroom.spec.ts:39:1 › visitor showroom completes real synthetic commercial workflow and resets without affecting another visitor 
+
+    Error: expect(received).toBe(expected) // Object.is equality
+
+    Expected: "0"
+    Received: "80000"
+
+      309 |   for (const persona of ['buyer', 'artisan', 'coordinator']) {
+      310 |     const restricted = await switchShared(persona);
+    > 311 |     expect(restricted.scenario!.totals.payableMillimes).toBe('0');
+          |                                                         ^
+      312 |     expect(restricted.scenario!.totals.simulatedMillimes).toBe('0');
+      313 |   }
+      314 |   await page.goto('/demo');
+        at /home/ashenix/Projects/wie-challenge/website/tests/demo-e2e/showroom.spec.ts:311:57
+
+    Error Context: test-results/showroom-visitor-showroom--af6cd-t-affecting-another-visitor/error-context.md
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/showroom-visitor-showroom--af6cd-t-affecting-another-visitor/trace.zip
+    Usage:
+
+        pnpm exec playwright show-trace test-results/showroom-visitor-showroom--af6cd-t-affecting-another-visitor/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  1 failed
+    tests/demo-e2e/showroom.spec.ts:39:1 › visitor showroom completes real synthetic commercial workflow and resets without affecting another visitor 
+  1 passed (31.7s)
+[ELIFECYCLE] Command failed with exit code 1.

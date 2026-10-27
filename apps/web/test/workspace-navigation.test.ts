@@ -33,7 +33,13 @@ test('admin navigation exposes people and governance requests without granting c
 });
 test('operator navigation provides assigned-account coordination rather than user administration', () => {
   const links = routes('NASJ_OPERATOR');
-  for (const path of ['/operator', '/operator/activity', '/procurement'])
+  for (const path of [
+    '/operator',
+    '/operator/activity',
+    '/operator/inventory',
+    '/operator/finance',
+    '/procurement',
+  ])
     assert(links.includes(path));
   assert(!links.some((p) => p.startsWith('/admin') || p.startsWith('/association')));
 });
@@ -41,8 +47,12 @@ test('buyer and association navigation keep purchasing and participant managemen
   const buyer = routes('BUYER_REPRESENTATIVE'),
     coordinator = routes('ASSOCIATION_COORDINATOR');
   assert(buyer.includes('/procurement/documents'));
+  assert(buyer.includes('/directory'));
   assert(!buyer.includes('/association/artisans'));
   assert(coordinator.includes('/association/artisans'));
+  assert(coordinator.includes('/directory'));
+  assert(coordinator.includes('/association/materials'));
+  assert(!buyer.includes('/operator/finance') && !buyer.includes('/operator/inventory'));
   assert(coordinator.includes('/procurement/discussions'));
   assert(!coordinator.includes('/procurement') && !coordinator.includes('/procurement/documents'));
 });

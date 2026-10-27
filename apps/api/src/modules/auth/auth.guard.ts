@@ -1,3 +1,4 @@
+import { assertDemoSession } from '../demo/demo-access.js';
 import { requireMfa } from '../foundation/mfa.js';
 import { Inject, Injectable, type CanActivate, type ExecutionContext } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
@@ -29,6 +30,7 @@ export class AuthGuard implements CanActivate {
     const user = await this.db.user.findUnique({ where: { id: session.user.id } });
     if (user?.status !== 'ACTIVE' || !user.emailVerified)
       fail(403, 'ACCOUNT_UNAVAILABLE', 'This account is unavailable.');
+    await assertDemoSession(this.db, user.id, req.headers.cookie, this.config.DEMO_MODE);
     req.actor = {
       id: user.id,
       requestId: req.requestId,

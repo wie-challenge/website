@@ -1,0 +1,58 @@
+$ pnpm db:generate && pnpm --filter @nasj/contracts build && playwright test --config playwright.demo.config.ts
+$ pnpm --filter @nasj/api db:generate
+$ prisma generate
+Loaded Prisma config from prisma.config.ts.
+
+Prisma schema loaded from prisma/schema.prisma.
+
+✔ Generated Prisma Client (v7.10.1) to ./../../node_modules/.pnpm/@prisma+client@7.10.1_prisma@7.10.1_@types+node@24.19.2_@types+react-dom@19.3.0_@types+_9e72caf218d3f522373b8e6c9536cf3f/node_modules/@prisma/client in 647ms
+
+Start by importing your Prisma Client (See: https://pris.ly/d/importing-client)
+
+
+$ tsc -p tsconfig.json
+
+Running 2 tests using 1 worker
+
+(node:477219) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✘  1 tests/demo-e2e/showroom.spec.ts:39:1 › visitor showroom completes real synthetic commercial workflow and resets without affecting another visitor (13.4s)
+(node:477934) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓  2 tests/demo-e2e/showroom.spec.ts:336:1 › showroom is responsive, keyboard reachable and preserves scenario across persona navigation (1.0s)
+
+
+  1) tests/demo-e2e/showroom.spec.ts:39:1 › visitor showroom completes real synthetic commercial workflow and resets without affecting another visitor 
+
+    Error: locator.fill: Error: strict mode violation: getByLabel('Commercial order reference', { exact: true }) resolved to 2 elements:
+        1) <input value="" type="text" required="" name="orderId" data-slot="input" id="_R_2rav5ubt9flb_" class="h-9 w-full min-w-0 rounded-md border border-input bg-transparent px-3 py-1 text-base shadow-xs transition-[color,box-shadow] outline-none selection:bg-primary selection:text-primary-foreground file:inline-flex file:h-7 file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground disabled:pointer-events-none disabled:cursor-not-allowed disabled…/> aka getByLabel('Commercial order reference').first()
+        2) <input value="" id="_r_5_" required="" type="text" name="orderId" data-slot="input" class="h-9 w-full min-w-0 rounded-md border border-input bg-transparent px-3 py-1 text-base shadow-xs transition-[color,box-shadow] outline-none selection:bg-primary selection:text-primary-foreground file:inline-flex file:h-7 file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50…/> aka getByRole('textbox', { name: 'Commercial order reference' })
+
+    Call log:
+      - waiting for getByLabel('Commercial order reference', { exact: true })
+
+
+      62 |       await page
+      63 |         .getByLabel('Commercial order reference', { exact: true })
+    > 64 |         .fill(current.scenario!.orderId!);
+         |          ^
+      65 |       await page.getByRole('button', { name: 'Open order finances', exact: true }).click();
+      66 |       await expect(
+      67 |         page.getByRole('heading', { name: 'Financial controls and closure', exact: true }),
+        at capture (/home/ashenix/Projects/wie-challenge/website/tests/demo-e2e/showroom.spec.ts:64:10)
+        at /home/ashenix/Projects/wie-challenge/website/tests/demo-e2e/showroom.spec.ts:290:3
+
+    Error Context: test-results/showroom-visitor-showroom--af6cd-t-affecting-another-visitor/error-context.md
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/showroom-visitor-showroom--af6cd-t-affecting-another-visitor/trace.zip
+    Usage:
+
+        pnpm exec playwright show-trace test-results/showroom-visitor-showroom--af6cd-t-affecting-another-visitor/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  1 failed
+    tests/demo-e2e/showroom.spec.ts:39:1 › visitor showroom completes real synthetic commercial workflow and resets without affecting another visitor 
+  1 passed (38.3s)
+[ELIFECYCLE] Command failed with exit code 1.

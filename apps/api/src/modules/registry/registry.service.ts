@@ -15,6 +15,8 @@ import { iamTransaction, type Db } from '../foundation/transaction.js';
 import { audit } from '../foundation/audit.js';
 import type { Actor } from '../../common/identity.js';
 import { fail } from '../../common/errors.js';
+import { capacityViews, writeCapacity } from '../artisans/capacity.js';
+import { validateIdempotencyKey } from '../foundation/idempotency.js';
 const paging = (q: PageInput) => ({ skip: (q.page - 1) * q.pageSize, take: q.pageSize });
 @Injectable()
 export class RegistryService {
@@ -245,48 +247,55 @@ export class RegistryService {
     return { items, total, page: q.page, pageSize: q.pageSize };
   }
   async detail(actor: Actor, id: string) {
-    const { profile, member } = await this.access.artisan(actor, id, 'association.artisan.read');
-    const [skills, capacity, authorizations, assignments] = await Promise.all([
-      this.db.artisanSkill.findMany({
-        where: { artisanProfileId: id },
-        include: { craftSkill: true },
-        take: 30,
-      }),
-      this.db.capacityDeclaration.findMany({
-        where: { artisanProfileId: id },
-        orderBy: { createdAt: 'desc' },
-        take: 100,
-      }),
-      this.db.onboardingAuthorization.findMany({
-        where: { artisanProfileId: id },
-        include: { policy: { select: { version: true, active: true } } },
-        orderBy: { createdAt: 'desc' },
-        take: 100,
-      }),
-      this.db.artisanAssignment.findMany({
-        where: { artisanProfileId: id, organizationId: member.organizationId },
-        orderBy: { startedAt: 'desc' },
-        take: 100,
-      }),
-    ]);
-    return {
-      profile: {
-        ...profile,
-        contactPhone:
-          profile.participantStatus === 'ACTIVE' &&
-          authorizations.some(
-            (a) => a.purpose === 'PARTICIPATION' && !a.withdrawnAt && a.policy.active,
-          )
-            ? profile.contactPhone
-            : null,
-      },
-      skills,
-      capacity: capacity.map((c) => ({ ...c, quantity: c.quantity.toString() })),
-      authorizations,
-      assignments,
-      independentContactPath: '/participant-support',
-      historyLimit: 100,
-    };
+    return iamTransaction(this.db, actor, async (tx) => {
+      const { profile, member } = await this.access.artisan(
+        actor,
+        id,
+        'association.artisan.read',
+        tx,
+      );
+      const [skills, capacity, authorizations, assignments] = await Promise.all([
+        tx.artisanSkill.findMany({
+          where: { artisanProfileId: id },
+          include: { craftSkill: true },
+          take: 30,
+        }),
+        tx.capacityDeclaration.findMany({
+          where: { artisanProfileId: id },
+          orderBy: { createdAt: 'desc' },
+          take: 100,
+        }),
+        tx.onboardingAuthorization.findMany({
+          where: { artisanProfileId: id },
+          include: { policy: { select: { version: true, active: true } } },
+          orderBy: { createdAt: 'desc' },
+          take: 100,
+        }),
+        tx.artisanAssignment.findMany({
+          where: { artisanProfileId: id, organizationId: member.organizationId },
+          orderBy: { startedAt: 'desc' },
+          take: 100,
+        }),
+      ]);
+      return {
+        profile: {
+          ...profile,
+          contactPhone:
+            profile.participantStatus === 'ACTIVE' &&
+            authorizations.some(
+              (a) => a.purpose === 'PARTICIPATION' && !a.withdrawnAt && a.policy.active,
+            )
+              ? profile.contactPhone
+              : null,
+        },
+        skills,
+        capacity: await capacityViews(tx, capacity),
+        authorizations,
+        assignments,
+        independentContactPath: '/participant-support',
+        historyLimit: 100,
+      };
+    });
   }
   async history(
     actor: Actor,
@@ -297,20 +306,20 @@ export class RegistryService {
     const { member } = await this.access.artisan(actor, id, 'association.artisan.read');
     const where = { artisanProfileId: id };
     if (kind === 'capacity') {
-      const [items, total] = await this.db.$transaction([
-        this.db.capacityDeclaration.findMany({
+      return iamTransaction(this.db, actor, async (tx) => {
+        await this.access.artisan(actor, id, 'association.artisan.read', tx);
+        const items = await tx.capacityDeclaration.findMany({
           where,
           ...paging(q),
           orderBy: { createdAt: 'desc' },
-        }),
-        this.db.capacityDeclaration.count({ where }),
-      ]);
-      return {
-        items: items.map((c) => ({ ...c, quantity: c.quantity.toString() })),
-        total,
-        page: q.page,
-        pageSize: q.pageSize,
-      };
+        });
+        return {
+          items: await capacityViews(tx, items),
+          total: await tx.capacityDeclaration.count({ where }),
+          page: q.page,
+          pageSize: q.pageSize,
+        };
+      });
     }
     if (kind === 'authorization') {
       const [items, total] = await this.db.$transaction([
@@ -471,7 +480,8 @@ export class RegistryService {
       return { id: evidenceId };
     });
   }
-  async capacity(actor: Actor, id: string, input: AssistedCapacity) {
+  async capacity(actor: Actor, id: string, input: AssistedCapacity, key?: string) {
+    validateIdempotencyKey(key);
     return iamTransaction(this.db, actor, async (tx) => {
       const { member, profile } = await this.access.artisan(
         actor,
@@ -493,12 +503,16 @@ export class RegistryService {
         }))
       )
         fail(400, 'INVALID_SKILL', 'Capacity requires a current craft skill.');
-      const { authorizationId, ...fields } = input;
-      const record = await tx.capacityDeclaration.create({
-        data: { ...fields, authorizationId, artisanProfileId: id, declaredByUserId: actor.id },
-      });
-      await this.event(tx, actor, 'association.capacity.record', record.id, member.organizationId);
-      return { id: record.id, quantity: record.quantity.toString(), authorizationId };
+      return writeCapacity(
+        tx,
+        actor,
+        {
+          ...input,
+          artisanProfileId: id,
+          organizationId: member.organizationId,
+        },
+        key,
+      );
     });
   }
   async assign(actor: Actor, id: string, coordinatorId: string, reason: string) {
@@ -863,7 +877,9 @@ export class RegistryService {
         (input.enabled &&
           !member.roles.some((r) =>
             org.type === 'INTERNAL'
-              ? r.role === 'NASJ_OPERATOR'
+              ? ['NASJ_OPERATOR', 'FINANCE_MANAGER', 'INVENTORY_LOGISTICS_COORDINATOR'].includes(
+                  r.role,
+                )
               : ['BUYER', 'BUYER_REPRESENTATIVE'].includes(r.role),
           ))
       )

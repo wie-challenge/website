@@ -32,10 +32,14 @@ function isWorkspacePath(path: string) {
       '/admin',
       '/operator',
       '/operator/activity',
+      '/operator/inventory',
+      '/operator/finance',
       '/buyer',
       '/buyer/company',
       '/buyer/representatives',
       '/association',
+      '/association/pickups',
+      '/association/materials',
       '/association/artisans',
       '/association/artisans/new',
       '/association/coordinators',
@@ -48,6 +52,7 @@ function isWorkspacePath(path: string) {
       '/commerce/catalog',
       '/commerce/artisan',
       '/commerce/operator',
+      '/directory',
       '/settings/profile',
       '/settings/account',
       '/settings/security',
@@ -58,6 +63,8 @@ function isWorkspacePath(path: string) {
       '/artisan/profile',
       '/artisan/skills',
       '/artisan/capacity',
+      '/artisan/compensation',
+      '/artisan/materials',
       '/artisan/associations',
       '/artisan/delegations',
       '/invitations/accept',
@@ -71,6 +78,7 @@ function isWorkspacePath(path: string) {
     ].includes(path) ||
     /^\/procurement(?:\/[a-zA-Z0-9_-]+(?:\/discussion)?)?$/.test(path) ||
     /^\/association\/artisans\/[a-zA-Z0-9_-]+(?:\/history)?$/.test(path) ||
+    /^\/directory\/[A-Za-z0-9_-]+$/.test(path) ||
     /^\/operator\/partners\/[a-zA-Z0-9_-]+$/.test(path) ||
     /^\/organizations\/[a-zA-Z0-9_-]+\/settings$/.test(path) ||
     /^\/artisan\/assisted\/[a-zA-Z0-9_-]+$/.test(path) ||

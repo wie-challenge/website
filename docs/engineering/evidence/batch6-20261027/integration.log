@@ -1,0 +1,212 @@
+$ pnpm db:generate && pnpm --filter @nasj/contracts build && pnpm --filter @nasj/api test:integration
+$ pnpm --filter @nasj/api db:generate
+$ prisma generate
+Loaded Prisma config from prisma.config.ts.
+
+Prisma schema loaded from prisma/schema.prisma.
+
+✔ Generated Prisma Client (v7.10.1) to ./../../node_modules/.pnpm/@prisma+client@7.10.1_prisma@7.10.1_@types+node@24.19.2_@types+react-dom@19.3.0_@types+_9e72caf218d3f522373b8e6c9536cf3f/node_modules/@prisma/client in 703ms
+
+Start by importing your Prisma Client (See: https://pris.ly/d/importing-client)
+
+
+$ tsc -p tsconfig.json
+$ tsx test/integration.ts
+PASS startup, migrations, readiness and unauthenticated API denial
+PASS real signup, SMTP verification, login and safe cookie/session projections
+PASS generic registration and failed login avoid account enumeration
+PASS origin, CSRF, validation and object ownership protect profile and admin routes
+PASS parser and size errors use safe envelopes and request tracing
+PASS sessions are ownership-bound and revocation/logout invalidate access
+PASS password recovery is generic, single-use and revokes existing sessions
+PASS expired sessions and invalid verification links are rejected
+PASS admin pagination, role changes and last-administrator race protection
+PASS self-deactivation ends sessions and prevents future login without deleting history
+PASS atomic rate limits resist concurrent requests and spoofed forwarded IP headers
+PASS explicit proxy trust resolves independent clients while ignoring private identity header spoofing
+PASS operator bootstrap promotes only an existing verified account and revokes its sessions
+PASS role migration reports conflicting affiliations, preserves old identities and backfills explicit authority without deleting records
+PASS revised roles resolve four personas, three coordinators share one association, unassigned access is denied
+PASS four-role API matrix separates platform governance, operator coordination and association registry
+(node:429342) DeprecationWarning: Calling client.query() when the client is already executing a query is deprecated and will be removed in pg@9.0. Use async/await or an external async flow control mechanism instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+PASS assisted policies require administrator review and independent witness evidence
+PASS second active coordinator affiliation is rejected through concurrent database writes and invitation acceptance
+PASS privileged invitations recheck administrator authority even when the former administrator remains an organization manager
+PASS coordinator creates an authorized artisan without an account; scope mass assignment and duplicate creation are rejected
+PASS unassigned same-association coordinators, other associations, buyers and administrators cannot read private artisan fields
+PASS assisted capacity requires worker authorization, rejects wearable inputs and preserves accepted work and declaration history
+PASS operator account assignments scope duplicate review without contact or financial disclosure
+PASS revoked participation and suspended organizations or affiliations immediately deny assisted activity
+PASS concurrent coordinator reassignment leaves one responsible person and blocks the previous coordinator
+PASS reviewed optional account linking preserves profile, authorization, capacity and accepted production references
+PASS coordinator and artisan transfers preserve affiliation history and remove previous association access
+PASS buyer representatives share only their own company; approval requires a separately audited permission
+PASS sensitive payout grants require separate people; administrator governance never enables real payouts
+PASS coordinators cannot self-assign affiliation, approve organizations, invite privileged personnel or read audit governance
+PASS revoking coordinator access immediately removes assigned registry access while preserving all historical records
+PASS participants without accounts can independently dispute records without an identity oracle or coordinator disclosure
+PASS organization onboarding denies public internal-operator creation, mass assignment and cross-tenant access
+PASS invitation email binding, hashed secrets, type-specific roles and concurrent single-use acceptance
+PASS expired, cancelled and rotated invitations deny stale links
+PASS invitation acceptance rechecks suspended organization, inviter status and current manager authority
+PASS membership revocation is immediate and isolated while last manager and self role changes are protected
+PASS concurrent manager departures preserve a verified organization manager
+PASS independent artisan profile, safe projection and strict mass assignment
+PASS artisan skill replacement validates catalog, duplicates and ownership
+PASS voluntary capacity preserves history and rejects wearable or health fields
+PASS association participation requires explicit consent and an approved association
+PASS delegation is precise, audited, email-private and restricted to linked association
+PASS delegate membership suspension removes access immediately and leaves owner access
+PASS revoked delegation and expired delegation lose access immediately
+PASS consent withdrawal and relationship withdrawal revoke assisted access
+PASS platform administrator has no implicit artisan or delegation access
+PASS personal preferences and privacy requests are owner-bound and reviewed with retention reasons
+PASS self data export excludes credentials and other users, with immutable redacted audits
+PASS consent withdrawal is ownership-bound and records purpose/version without deleting history
+PASS support cases enforce resource ownership, assignment and opt-in SMTP submission
+PASS organization responsibility summary blocks last-manager self-deactivation
+PASS emergency administrator suspension remains possible and audits unmanaged organizations
+PASS profile updates record field names without recording submitted personal values
+PASS revoke-other-sessions preserves current login and writes safe audit atomically
+PASS reassigned organization responsibility permits deactivation and retains memberships/audit
+PASS individual session revocation records safe durable history before ending current access
+PASS trusted recovery CLI validates operator and target before scoped audited handover
+PASS privileged MFA is enforced before approval/admin access and verified enrollment invalidates older sessions
+PASS verified email change keeps old identity until confirmations and blocks ordinary email profile editing
+PASS unverified accounts cannot sign in and expired recovery records cannot reset credentials
+PASS E16 concurrent capacity replay has one persisted revision, audit, outcome and event
+PASS E16 replay rechecks privacy consent, resource ownership and session expiry
+PASS E16 transaction failure rolls back mutation, command outcome, audit and outbox then retries safely
+PASS E16 operator worker CLI processes and reports the disposable queue
+PASS E16 failed local delivery rolls back consumer effects, exhausts bounded retries and recovers
+PASS commerce draft persistence, tenant privacy, strict validation and concurrent keyed creation
+PASS commerce exact quote acceptance creates one order and requires reconciled simulated funding
+PASS commerce offer reservations reconcile concurrent allocation, decline, expiry and explicit owner acceptance
+PASS commerce cumulative progress, inspection attempts and rework reject excess and preserve quantities
+PASS commerce fulfillment and separate exact synthetic ledgers block unpaid closure and duplicate settlement
+PASS E16 useful outbox consumer rebuilds metrics and inbox atomically without changing ledgers
+PASS E16 analytics transient failure rolls back projection/inbox/receipt and replay recovers once
+PASS E16 killed worker rolls back its claim and effects; restarted worker recovers
+PASS E16 reports, downloadable CSV and inbox enforce tenant, role and current membership
+PASS capacity exact projection agrees for self and assigned coordinator without exposing terms
+PASS assisted revision preserves predecessor commitments, exact deficit, replay and actor audit
+PASS expired reservations release once while accepted work remains; completed throughput stays consumed
+PASS concurrent offers and concurrent expected-version revisions cannot oversubscribe
+PASS capacity validates zero, overlap, craft, units and forbidden fields on both write paths
+PASS half-open boundaries accept start and reject end; adjacent periods do not overlap
+PASS incompatible units and legacy cross-week allocations expose unknown rather than false availability
+PASS assisted scope, membership suspension and authorization withdrawal deny writes without mutation
+PASS directory aggregates compatible capacity and withholds small groups and private fields
+PASS directory releases only unproduced cancellations and keeps completed throughput
+PASS commercial feasibility, costing and exact acceptance stay isolated
+PASS production eligibility, offers and voluntary decisions stay isolated
+  ✓ Batch 5 deposit, payout, execution, claim and closure governance scenarios
+PASS production release through buyer confirmation, traceability and simulated settlement stay isolated
+PASS inventory custody, concurrency, discrepancies, quarantine and current authorization
+PASS buyer-safe catalog exposes bounded synthetic examples, assumptions and empty categories
+PASS catalog RFQ selection rejects forged and unavailable examples atomically; valid prefill stays replay-safe
+PASS inactive crafts invalidate catalog links and API selection; no active crafts yields a safe empty catalog
+PASS E02 draft creation validates fields, persists a revision and replays atomically
+PASS E02 references are inspected, re-encoded and session scoped; unsafe input leaves the draft intact
+PASS E02 attachment count and stale-write limits hold under concurrent commands
+PASS E02 submission is versioned and replay safe; submitted content and references cannot be silently edited
+PASS E02 current internal operators need assigned buyer scope and buyer approval remains an explicit grant
+PASS E02 clarifications are attributable and internal notes never enter buyer threads or timelines
+PASS E02 revised specifications preserve quote history and invalidate old acceptance
+PASS E02 sample decisions retain exact specification, signatory and renewed approval for each version
+PASS E02 exact quote acceptance creates one order and immutable contract under concurrent replay
+PASS E02 managed production is blocked by missing current sample sign-off after sample replacement
+PASS E02 documents use immutable numbered accepted snapshots and independently authorize every download
+PASS E02 approved-product reorder clones versioned specs and requires new confirmations, feasibility and approval
+PASS E02 assigned coordinators can discuss their participant orders without seeing prices or internal notes
+PASS E02 membership and account-assignment revocation apply immediately to history, images and documents
+PASS additive migrations preserve preexisting identity, credential and session records
+PASS capacity migration backfills lineage while preserving declarations, accepted work, identities and sessions
+PASS Batch 5 additive chain preserves populated identity, sessions and commercial records
+{"evidence":"DISPOSABLE_ENCRYPTED_SYNTHETIC_RESTORE","configurationRestored":true,"encryptedBytes":553410,"tables":100,"rows":2260,"backupMs":343,"restoreAndVerifyMs":3980,"archiveBytes":553249}
+PASS E16 real pg_dump/pg_restore preserves every table in an isolated synthetic database
+PASS showroom uses six real scoped authenticated accounts without exposing credentials
+PASS accountless showroom reports remain pending and revoked memberships cannot be restored by switching
+PASS showroom reset archives only owned scope, replays safely and rolls back interrupted recreation
+SCHEMA_DRIFT_REVIEW_BEGIN
+[*] Changed the `BuyerDepositRecord` table
+  [-] Removed foreign key on columns (actorId)
+  [-] Removed foreign key on columns (buyerOrganizationId)
+  [-] Removed foreign key on columns (orderId)
+  [-] Removed foreign key on columns (reviewerId)
+
+[*] Changed the `FinanceRecordEvent` table
+  [-] Removed foreign key on columns (actorId)
+
+[*] Changed the `FinancialAdjustment` table
+  [-] Removed foreign key on columns (checkerId)
+  [-] Removed foreign key on columns (makerId)
+  [-] Removed foreign key on columns (orderId)
+
+[*] Changed the `InventoryMovement` table
+  [-] Removed foreign key on columns (actorId)
+  [-] Removed foreign key on columns (lotId)
+
+[*] Changed the `MaterialHandover` table
+  [-] Removed foreign key on columns (actorId)
+  [-] Removed foreign key on columns (artisanProfileId)
+  [-] Removed foreign key on columns (batchId)
+  [-] Removed foreign key on columns (lotId)
+  [-] Removed foreign key on columns (receiverOrganizationId)
+  [-] Removed foreign key on columns (reservationId)
+
+[*] Changed the `MaterialLot` table
+  [-] Removed foreign key on columns (actorId)
+  [-] Removed foreign key on columns (organizationId)
+
+[*] Changed the `MaterialReadiness` table
+  [-] Removed foreign key on columns (batchId)
+  [-] Removed foreign key on columns (requirementId)
+
+[*] Changed the `MaterialReceipt` table
+  [-] Removed foreign key on columns (actorId)
+  [-] Removed foreign key on columns (artisanProfileId)
+  [-] Removed foreign key on columns (handoverId)
+
+[*] Changed the `MaterialReconciliation` table
+  [-] Removed foreign key on columns (actorId)
+  [-] Removed foreign key on columns (handoverId)
+
+[*] Changed the `MaterialReservation` table
+  [-] Removed foreign key on columns (actorId)
+  [-] Removed foreign key on columns (batchId)
+  [-] Removed foreign key on columns (lotId)
+  [-] Removed foreign key on columns (requirementId)
+
+[*] Changed the `MaterialReturn` table
+  [-] Removed foreign key on columns (actorId)
+  [-] Removed foreign key on columns (dispositionActorId)
+  [-] Removed foreign key on columns (handoverId)
+  [-] Removed foreign key on columns (lotId)
+
+[*] Changed the `OrderClosureAssessment` table
+  [-] Removed foreign key on columns (actorId)
+  [-] Removed foreign key on columns (orderId)
+
+[*] Changed the `PaymentDispute` table
+  [-] Removed foreign key on columns (actorId)
+  [-] Removed foreign key on columns (artisanProfileId)
+  [-] Removed foreign key on columns (batchId)
+  [-] Removed foreign key on columns (handlerId)
+  [-] Removed foreign key on columns (orderId)
+  [-] Removed foreign key on columns (payableId)
+
+[*] Changed the `PayoutExecutionRecord` table
+  [-] Removed foreign key on columns (actorId)
+  [-] Removed foreign key on columns (payoutId)
+
+[*] Changed the `PayoutRequest` table
+  [-] Removed foreign key on columns (approverId)
+  [-] Removed foreign key on columns (orderId)
+  [-] Removed foreign key on columns (payableId)
+  [-] Removed foreign key on columns (requesterId)
+SCHEMA_DRIFT_REVIEW_END
+{"evidence":"DISPOSABLE_PRE_BATCH6_BACKUP_UPGRADE","oldTables":96,"tableHashesPreserved":true,"backupAuthenticated":true,"normalMigrateDeploy":true,"persistentMigration":false}
+PASS pre-Batch6 populated backup restores before normal additive migrate deploy with preserved business history
+Integration passed: 114 scenarios against a newly created disposable PostgreSQL database and local SMTP capture.
