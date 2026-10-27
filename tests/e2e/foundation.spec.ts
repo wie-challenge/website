@@ -148,7 +148,7 @@ test('admin user search and status controls work; last admin cannot be removed',
   await expect(page.getByRole('status')).toContainText('Account access updated');
   await page.getByLabel('Search by name or email').fill('ui-admin@example.com');
   await page.getByRole('button', { name: 'Search', exact: true }).click();
-  await page.getByRole('combobox', { name: 'Role for UI Admin' }).selectOption('USER');
+  await page.getByRole('combobox', { name: 'Platform access for UI Admin' }).selectOption('USER');
   await expect(page.locator('main').getByRole('alert')).toContainText(
     'at least one active verified administrator',
   );

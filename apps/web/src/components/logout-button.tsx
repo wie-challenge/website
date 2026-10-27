@@ -5,7 +5,13 @@ import { apiFetch } from '@/lib/api';
 import { Button } from './ui/button';
 import { LogOut } from 'lucide-react';
 import { DropdownMenu } from 'radix-ui';
-export function LogoutButton({ menuItem = false }: { menuItem?: boolean }) {
+export function LogoutButton({
+  menuItem = false,
+  iconOnly = false,
+}: {
+  menuItem?: boolean;
+  iconOnly?: boolean;
+}) {
   const router = useRouter();
   const [pending, setPending] = useState(false);
   const [error, setError] = useState('');
@@ -13,7 +19,13 @@ export function LogoutButton({ menuItem = false }: { menuItem?: boolean }) {
     <Button
       type="button"
       variant="ghost"
-      className="w-full justify-start text-muted-foreground"
+      size={iconOnly ? 'icon' : 'default'}
+      className={
+        iconOnly
+          ? 'min-h-11 min-w-11 shrink-0 text-muted-foreground'
+          : 'w-full justify-start text-muted-foreground'
+      }
+      aria-label={iconOnly ? (pending ? 'Signing out…' : 'Sign out') : undefined}
       disabled={pending}
       onClick={async () => {
         setPending(true);
@@ -29,11 +41,11 @@ export function LogoutButton({ menuItem = false }: { menuItem?: boolean }) {
       }}
     >
       <LogOut size={16} aria-hidden="true" />
-      {pending ? 'Signing out…' : 'Sign out'}
+      {!iconOnly && (pending ? 'Signing out…' : 'Sign out')}
     </Button>
   );
   return (
-    <span>
+    <span className={iconOnly ? 'logout-control' : undefined}>
       {menuItem ? (
         <DropdownMenu.Item asChild onSelect={(event) => event.preventDefault()}>
           {button}

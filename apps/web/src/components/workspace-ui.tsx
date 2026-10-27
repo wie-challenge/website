@@ -13,12 +13,15 @@ import type { ReactNode, FormEvent } from 'react';
 import { apiFetch, ApiError } from '@/lib/api';
 import Link from 'next/link';
 import { useHydrated } from '@/lib/use-hydrated';
+import type { WorkspaceAction } from '@/lib/app-navigation';
+import { Icon } from './icons';
+import { Card } from './ui/card';
 import { Button } from './ui/button';
 import { Input as ShadcnInput } from './ui/input';
 import { Label } from './ui/label';
 import { NativeSelect } from './ui/native-select';
 import { Alert, AlertDescription } from './ui/alert';
-import { CircleCheck, LoaderCircle } from 'lucide-react';
+import { CircleCheck, LoaderCircle, ArrowUpRight } from 'lucide-react';
 
 const FieldErrors = createContext<Record<string, string[]>>({});
 export function useFieldError(name: string) {
@@ -95,6 +98,32 @@ export function Workspace({
       )}
       {children}
     </FeedbackContext.Provider>
+  );
+}
+export function WorkspaceActions({
+  actions,
+  label = 'Workspace actions',
+}: {
+  actions: WorkspaceAction[];
+  label?: string;
+}) {
+  return (
+    <nav aria-label={label} className="workspace-actions">
+      {actions.map((action) => (
+        <Card key={action.href} className="workspace-action-card gap-0 p-0">
+          <Link href={action.href} aria-label={action.label} className="workspace-action">
+            <span className="workspace-action-icon">
+              <Icon name={action.icon} />
+            </span>
+            <div>
+              <h2>{action.label}</h2>
+              <p>{action.description}</p>
+            </div>
+            <ArrowUpRight className="size-4 shrink-0" aria-hidden="true" />
+          </Link>
+        </Card>
+      ))}
+    </nav>
   );
 }
 export function ResourceState({

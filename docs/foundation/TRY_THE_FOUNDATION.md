@@ -1,6 +1,6 @@
 # Try the revised foundation locally
 
-Open `http://localhost:3000`. Existing local accounts, credentials and sessions were preserved. Keep `.local/dev-credentials.json` private; no password changes are needed for this migration.
+Open `http://localhost:3000`. Run `pnpm db:seed` from `website/` for the four current role accounts: admin, operator, buyer and coordinator at `@nasj-demo.invalid`. Keep their generated passwords in `.local/dev-credentials.json` private. Existing historical users and records are preserved. See [role and story access](ROLE_STORY_ACCESS_MATRIX.md) for the complete responsibility inventory.
 
 ## Administrator
 
@@ -36,7 +36,7 @@ The existing craft catalog and synthetic buyer request flow remain available wit
 
 After an administrator invitation is accepted, sign-in opens `/operator`. Only assigned approved buyer/partner accounts appear. Assigned-account activity exposes safe audit metadata; private snapshots and user-entered reasons are excluded. Partner review exposes minimal participant references and independent duplicate review, without contact or financial records.
 
-Pricing, assisted offers, production and actual payments are explicitly upcoming for the new persona. The foundation does not pretend to implement a full new commercial workflow. Real payouts remain disabled.
+Assigned operators can use `/procurement` for E02 local-demo RFQ review, clarifications, sample references and quotations. Assisted offers, full production planning and actual payments retain their separate backlog prerequisites. Real payouts remain disabled.
 
 ## Participant without an account
 
