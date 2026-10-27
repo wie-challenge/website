@@ -1,0 +1,2 @@
+$ tsx scripts/validate-competition.ts
+{"status":"PASS_ARTIFACT_TECHNICAL_CHECKS","abstractWords":204,"keywords":5,"pdfPages":6,"videoSeconds":180.04644,"videoAudioPresent":true,"ownerApproved":false,"eligibilityVerified":false,"submitted":false}

@@ -1,0 +1,98 @@
+{
+  "date": "2026-10-27",
+  "timezone": "Africa/Tunis",
+  "scope": "Batch 6 competition showroom and engineering review",
+  "remoteGitHubChanged": false,
+  "persistentMigrationsApplied": false,
+  "productionDeployed": false,
+  "liveTransfers": false,
+  "officialBriefRetrieval": "SKIPPED_AT_OWNER_REQUEST",
+  "competitionSubmission": false,
+  "checks": {
+    "lint": {
+      "status": "PASS",
+      "files": 343
+    },
+    "typecheck": {
+      "status": "PASS"
+    },
+    "apiUnit": {
+      "passed": 74,
+      "failed": 0,
+      "skipped": 0
+    },
+    "webUnit": {
+      "passed": 19,
+      "failed": 0,
+      "skipped": 0
+    },
+    "integration": {
+      "status": "PASS",
+      "scenarios": 114,
+      "restoreTables": 100,
+      "restoreRows": 2260
+    },
+    "e2e": {
+      "status": "PASS",
+      "standardPassed": 38,
+      "showroomPassed": 2,
+      "totalPassed": 40,
+      "failed": 0,
+      "skipped": 0
+    },
+    "build": {
+      "status": "PASS"
+    },
+    "migrationUpgrade": {
+      "status": "PASS",
+      "priorTables": 96,
+      "oldBusinessHashesPreserved": true,
+      "migrationCount": 21,
+      "oldForeignKeyMetadataDrift": "REVIEW_REQUIRED",
+      "newDemoRelationsMatchSQL": true
+    },
+    "localPersistentStatus": {
+      "status": "UNAVAILABLE",
+      "reason": "ECONNREFUSED",
+      "readOnly": true
+    },
+    "competitionSource": {
+      "status": "PASS_SOURCE_CHECKS_ONLY",
+      "abstractWords": 204,
+      "keywords": 5,
+      "plannedVideoSeconds": 180,
+      "pdfVerified": false,
+      "renderedVideo": false
+    },
+    "previousMigrationHashesUnchanged": 8
+  },
+  "stories": [
+    {
+      "issue": 82,
+      "status": "IMPLEMENTED_UNVERIFIED"
+    },
+    {
+      "issue": 190,
+      "status": "PARTIALLY_IMPLEMENTED"
+    },
+    {
+      "issue": 193,
+      "status": "IMPLEMENTED_UNVERIFIED"
+    },
+    {
+      "issue": 187,
+      "status": "PARTIALLY_IMPLEMENTED"
+    },
+    {
+      "issue": 199,
+      "status": "PARTIALLY_IMPLEMENTED"
+    },
+    {
+      "issue": 200,
+      "status": "PARTIALLY_IMPLEMENTED"
+    }
+  ],
+  "ownerAcceptanceRecorded": false,
+  "pilotReady": false,
+  "stagingDeployed": false
+}

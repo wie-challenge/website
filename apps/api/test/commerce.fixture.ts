@@ -151,3 +151,131 @@ export async function seedBrowserCommerceFixture(url: string, suffix: string) {
     await db.$disconnect();
   }
 }
+
+// Loopback browser control only: synthetic obligations for the capacity screens.
+export async function seedBrowserCapacityFixture(url: string, suffix: string) {
+  const fixture = await seedBrowserCommerceFixture(url, suffix);
+  const db = new PrismaClient({ adapter: new PrismaPg({ connectionString: url }) });
+  try {
+    const coordinator = await db.user.findUniqueOrThrow({
+      where: { email: `commerce-coordinator-${suffix}@example.com` },
+    });
+    const artisan = await db.artisanProfile.findUniqueOrThrow({
+      where: { id: fixture.artisanProfileId },
+    });
+    const association = await db.organization.create({
+      data: {
+        name: `Synthetic capacity association ${suffix}`,
+        slug: `capacity-${suffix}`,
+        type: 'ASSOCIATION',
+        approvalStatus: 'APPROVED',
+        region: 'Tunis',
+        description: 'Synthetic browser capacity fixture',
+        contactEmail: 'fictional-capacity@example.com',
+        representativeName: 'Synthetic coordinator',
+        createdByUserId: coordinator.id,
+        members: {
+          create: {
+            userId: coordinator.id,
+            roles: {
+              create: { role: 'ASSOCIATION_COORDINATOR', assignedByUserId: coordinator.id },
+            },
+          },
+        },
+      },
+    });
+    await db.artisanManagement.create({
+      data: {
+        artisanProfileId: artisan.id,
+        organizationId: association.id,
+        recordedById: coordinator.id,
+        reason: 'Synthetic browser management fixture',
+      },
+    });
+    await db.artisanAssignment.create({
+      data: {
+        artisanProfileId: artisan.id,
+        organizationId: association.id,
+        coordinatorId: coordinator.id,
+        assignedById: coordinator.id,
+        reason: 'Synthetic browser assignment fixture',
+      },
+    });
+    const policy = await db.authorizationPolicy.create({
+      data: {
+        version: `capacity-browser-${suffix}`,
+        methods: ['SIGNED'],
+        reviewReference: 'Synthetic reviewed method fixture',
+        reviewedById: coordinator.id,
+      },
+    });
+    const authorizations = [];
+    for (const purpose of ['PARTICIPATION', 'CAPACITY'] as const)
+      authorizations.push(
+        await db.onboardingAuthorization.create({
+          data: {
+            artisanProfileId: artisan.id,
+            policyId: policy.id,
+            purpose,
+            method: 'SIGNED',
+            occurredAt: new Date(),
+            language: 'fr',
+            evidenceReference: 'Synthetic worker confirmation fixture',
+            recordedById: coordinator.id,
+          },
+        }),
+      );
+    const period = {
+      effectiveFrom: new Date('2027-04-05T00:00:00+01:00'),
+      effectiveTo: new Date('2027-04-12T00:00:00+01:00'),
+    };
+    await db.capacityDeclaration.update({
+      where: { id: fixture.capacityDeclarationId },
+      data: { ...period, quantity: 100 },
+    });
+    const rfq = await db.commercialRfq.create({
+      data: {
+        buyerOrganizationId: fixture.buyerOrganizationId,
+        operatorOrganizationId: fixture.operatorOrganizationId,
+        craftSkillId: 'weaving',
+        title: 'Synthetic capacity demonstration',
+        specification: 'Synthetic only',
+        designRequirements: 'Synthetic only',
+        quantity: 100,
+        deliveryAt: new Date('2027-04-08T12:00:00+01:00'),
+        deliveryLocation: 'Synthetic site',
+        status: 'ACCEPTED',
+        order: { create: { status: 'PLANNING' } },
+      },
+      include: { order: true },
+    });
+    for (const [status, quantity] of [
+      ['OFFERED', 20],
+      ['ACCEPTED', 30],
+    ] as const)
+      await db.commercialOffer.create({
+        data: {
+          orderId: rfq.order!.id,
+          artisanProfileId: artisan.id,
+          capacityDeclarationId: fixture.capacityDeclarationId,
+          status,
+          quantity,
+          unitPayMillimes: 1000n,
+          estimatedHours: 'Synthetic range',
+          expiresAt: new Date(Date.now() + 86400000),
+          materials: 'Synthetic only',
+          reworkTerms: 'Synthetic only',
+          paymentConditions: 'Simulated only',
+          ...(status === 'ACCEPTED'
+            ? {
+                acceptedAt: new Date(),
+                batch: { create: { orderId: rfq.order!.id, artisanProfileId: artisan.id } },
+              }
+            : {}),
+        },
+      });
+    return { artisanProfileId: artisan.id, authorizationId: authorizations[1].id };
+  } finally {
+    await db.$disconnect();
+  }
+}

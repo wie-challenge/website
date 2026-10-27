@@ -1,0 +1,2 @@
+$ tsx scripts/validate-competition.ts
+{"status":"PASS_SOURCE_CHECKS_ONLY","abstractWords":204,"keywords":5,"plannedVideoSeconds":180,"pdfVerified":false,"videoRendered":false,"officialFormatVerified":false,"submitted":false}

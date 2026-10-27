@@ -1,10 +1,5 @@
 import type { Prisma, DelegationScope as DbDelegationScope } from '@prisma/client';
-import type {
-  ArtisanProfileView,
-  CapacityDeclarationView,
-  DelegationGrantView,
-  DelegationScope,
-} from '@nasj/contracts';
+import type { ArtisanProfileView, DelegationGrantView, DelegationScope } from '@nasj/contracts';
 export const profileSelect = {
   id: true,
   createdById: true,
@@ -53,22 +48,6 @@ const scopeActions: Record<DbDelegationScope, DelegationScope> = {
 };
 export function scopeView(scope: DbDelegationScope): DelegationScope {
   return scopeActions[scope];
-}
-export function capacityView(
-  p: Prisma.CapacityDeclarationGetPayload<object>,
-): CapacityDeclarationView {
-  return {
-    id: p.id,
-    artisanProfileId: p.artisanProfileId,
-    craftSkillId: p.craftSkillId,
-    unitType: p.unitType,
-    quantity: p.quantity.toString(),
-    supersededAt: p.supersededAt?.toISOString() ?? null,
-    effectiveFrom: p.effectiveFrom.toISOString(),
-    effectiveTo: p.effectiveTo.toISOString(),
-    declaredByUserId: p.declaredByUserId,
-    createdAt: p.createdAt.toISOString(),
-  };
 }
 export function delegationView(
   p: Prisma.DelegationGrantGetPayload<object> & { delegate?: { name: string } },

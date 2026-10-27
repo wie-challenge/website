@@ -11,13 +11,15 @@
       "tests/**",
       "scripts/*.ts",
       "playwright.config.ts",
+      "playwright.demo.config.ts",
       "!**/node_modules",
       "!**/.next",
       "!**/dist",
       "!**/generated",
       "!**/next-env.d.ts",
       "!**/.next-e2e",
-      "!**/.next-demo"
+      "!**/.next-demo",
+      "!**/.next-showroom-e2e"
     ]
   },
   "formatter": {

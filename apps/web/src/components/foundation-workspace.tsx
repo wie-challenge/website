@@ -1,7 +1,8 @@
 'use client';
+import { CapacityWorkspace } from './capacity-workspace';
 import Link from 'next/link';
 import { useState } from 'react';
-import type { IdentityContext, Page as PageData } from '@nasj/contracts';
+import type { CapacityDeclarationView, IdentityContext, Page as PageData } from '@nasj/contracts';
 import { apiFetch } from '@/lib/api';
 import { dashboardActions } from '@/lib/app-navigation';
 import { Card } from './ui/card';
@@ -38,13 +39,7 @@ type Detail = {
     experienceDescription: string;
   };
   skills: { craftSkillId: string; craftSkill: Skill }[];
-  capacity: {
-    id: string;
-    quantity: string;
-    unitType: string;
-    effectiveFrom: string;
-    effectiveTo: string;
-  }[];
+  capacity: CapacityDeclarationView[];
   authorizations: {
     id: string;
     purpose: string;
@@ -315,6 +310,7 @@ export function AddArtisan() {
 }
 export function ArtisanRecord({ id }: { id: string }) {
   const resource = useResource<Detail>(`/api/v1/associations/me/artisans/${id}`);
+  const association = useResource<{ permissions: string[] }>('/api/v1/associations/me');
   const policies = useResource<Policy[]>('/api/v1/authorization-policies');
   const value = resource.data;
   return (
@@ -355,67 +351,18 @@ export function ArtisanRecord({ id }: { id: string }) {
             />
           </Card>
           <Card className="panel block p-5">
-            <h2>Declared capacity</h2>
-            <p>
-              Record the artisan’s stated availability. Wearable data is never used. Existing
-              accepted work is retained when a declaration changes.
-            </p>
-            <ActionForm
-              label="Record declared capacity"
-              action={(data) =>
-                post(`associations/me/artisans/${id}/capacity`, {
-                  craftSkillId: text(data, 'craftSkillId'),
-                  quantity: text(data, 'quantity'),
-                  unitType: text(data, 'unitType'),
-                  effectiveFrom: new Date(text(data, 'effectiveFrom')).toISOString(),
-                  effectiveTo: new Date(text(data, 'effectiveTo')).toISOString(),
-                  authorizationId: text(data, 'authorizationId'),
-                })
-              }
-              onSuccess={resource.reload}
-            >
-              <Select
-                name="craftSkillId"
-                label="Craft"
-                options={value.skills.map((s) => ({
-                  value: s.craftSkillId,
-                  label: s.craftSkill.name,
-                }))}
-              />
-              <Input
-                name="quantity"
-                label="Weekly declared quantity"
-                type="number"
-                min="0"
-                step="0.01"
-                required
-              />
-              <Select name="unitType" label="Capacity unit" options={['HOURS', 'PIECES']} />
-              <Input name="effectiveFrom" label="Effective from" type="datetime-local" required />
-              <Input name="effectiveTo" label="Effective to" type="datetime-local" required />
-              <Select
-                name="authorizationId"
-                label="Worker capacity authorization"
-                required
-                options={[
-                  { value: '', label: 'Choose current worker authorization' },
-                  ...value.authorizations
-                    .filter((a) => !a.withdrawnAt && a.policy.active && a.purpose === 'CAPACITY')
-                    .map((a) => ({
-                      value: a.id,
-                      label: `${humanize(a.purpose)} · ${a.policy.version}`,
-                    })),
-                ]}
-              />
-            </ActionForm>
-            <ul>
-              {value.capacity.map((c) => (
-                <li key={c.id}>
-                  {c.quantity} {c.unitType} · {new Date(c.effectiveFrom).toLocaleDateString()} –{' '}
-                  {new Date(c.effectiveTo).toLocaleDateString()}
-                </li>
-              ))}
-            </ul>
+            <CapacityWorkspace
+              rows={value.capacity}
+              skills={value.skills}
+              path={`/api/v1/associations/me/artisans/${id}`}
+              reload={resource.reload}
+              canUpdate={Boolean(
+                association.data?.permissions.includes('association.capacity.record'),
+              )}
+              authorizations={value.authorizations
+                .filter((a) => !a.withdrawnAt && a.policy.active && a.purpose === 'CAPACITY')
+                .map((a) => ({ id: a.id, label: `${humanize(a.purpose)} · ${a.policy.version}` }))}
+            />
           </Card>
           <Card className="panel block p-5">
             <h2>Authorization history</h2>
@@ -639,6 +586,8 @@ export function RegistryHistory({ id }: { id: string }) {
       createdAt?: string;
       quantity?: string;
       unitType?: string;
+      version?: number;
+      recordingMode?: CapacityDeclarationView['recordingMode'];
       coordinatorId?: string;
       startedAt?: string;
       endedAt?: string | null;
@@ -682,9 +631,17 @@ export function RegistryHistory({ id }: { id: string }) {
               </p>
             </>
           ) : kind === 'capacity' ? (
-            <h2>
-              {row.quantity} {row.unitType}
-            </h2>
+            <>
+              <h2>
+                {row.quantity} {row.unitType}
+              </h2>
+              {row.version != null && (
+                <p>
+                  Version {row.version} ·{' '}
+                  {row.recordingMode === 'SELF' ? 'Artisan self-recorded' : 'Coordinator-assisted'}
+                </p>
+              )}
+            </>
           ) : (
             <>
               <h2>Coordinator: {row.coordinatorId}</h2>

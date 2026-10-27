@@ -1,7 +1,8 @@
-import { exactCapacityQuantity, isCapacityRevision } from '@nasj/contracts';
-import { replaySafe, validateIdempotencyKey } from '../foundation/idempotency.js';
+import { exactCapacityQuantity } from '@nasj/contracts';
+import { validateIdempotencyKey } from '../foundation/idempotency.js';
 import { HttpException, Inject, Injectable } from '@nestjs/common';
 import type {
+  PageInput,
   ArtisanProfileInput,
   AssistedProfileInput,
   ArtisanSkillsInput,
@@ -21,9 +22,10 @@ import {
   profileView,
   scopeMap,
   scopeView,
-  capacityView,
   delegationView,
 } from './artisan.projection.js';
+
+import { capacityViews, writeCapacity } from './capacity.js';
 
 @Injectable()
 export class ArtisansService {
@@ -289,89 +291,55 @@ export class ArtisansService {
     });
     return this.skills(actor, id);
   }
-  async capacity(actor: Actor, id?: string) {
-    const { profile } = await this.target(actor, id, 'artisan.capacity.read');
-    return {
-      items: (
-        await this.db.capacityDeclaration.findMany({
-          where: { artisanProfileId: profile.id },
-          orderBy: [{ effectiveFrom: 'desc' }, { createdAt: 'desc' }],
-          take: 100,
-        })
-      ).map(capacityView),
-    };
+  async capacity(
+    actor: Actor,
+    id?: string,
+    q: Pick<PageInput, 'page' | 'pageSize'> = { page: 1, pageSize: 100 },
+  ) {
+    return iamTransaction(this.db, actor, async (tx) => {
+      const { profile } = await this.target(actor, id, 'artisan.capacity.read', tx);
+      const rows = await tx.capacityDeclaration.findMany({
+        where: { artisanProfileId: profile.id },
+        orderBy: [{ effectiveFrom: 'desc' }, { createdAt: 'desc' }],
+        skip: (q.page - 1) * q.pageSize,
+        take: q.pageSize,
+      });
+      return {
+        items: await capacityViews(tx, rows),
+        total: await tx.capacityDeclaration.count({ where: { artisanProfileId: profile.id } }),
+        page: q.page,
+        pageSize: q.pageSize,
+      };
+    });
   }
   async declare(actor: Actor, input: CapacityDeclarationInput, id?: string, key?: string) {
     validateIdempotencyKey(key);
     return iamTransaction(this.db, actor, async (tx) => {
       const { profile, delegation } = await this.target(actor, id, 'artisan.capacity.update', tx);
       await this.requireProfileConsent(profile.userId, tx);
-      const skill = await tx.artisanSkill.findUnique({
+      const skill = await tx.artisanSkill.findFirst({
         where: {
-          artisanProfileId_craftSkillId: {
-            artisanProfileId: profile.id,
-            craftSkillId: input.craftSkillId,
-          },
+          artisanProfileId: profile.id,
+          craftSkillId: input.craftSkillId,
+          craftSkill: { isActive: true },
         },
-        include: { craftSkill: true },
       });
-      if (!skill?.craftSkill.isActive)
+      if (!skill)
         fail(400, 'INVALID_SKILL', 'Declare capacity for one of your active craft skills.');
-      return replaySafe(
+      return writeCapacity(
         tx,
-        { actorId: actor.id, resourceId: profile.id, operation: 'capacity.declare', key },
-        input,
-        async () => {
-          const quantity = exactCapacityQuantity(input.quantity);
-          const effectiveFrom = new Date(input.effectiveFrom),
-            effectiveTo = new Date(input.effectiveTo);
-          const overlaps = await tx.capacityDeclaration.findMany({
-            where: {
-              artisanProfileId: profile.id,
-              craftSkillId: input.craftSkillId,
-              unitType: input.unitType,
-              supersededAt: null,
-              effectiveFrom: { lt: effectiveTo },
-              effectiveTo: { gt: effectiveFrom },
-            },
-            select: { id: true, effectiveFrom: true, effectiveTo: true },
-          });
-          if (!isCapacityRevision({ effectiveFrom, effectiveTo }, overlaps))
-            fail(
-              409,
-              'CAPACITY_OVERLAP',
-              'This period overlaps an existing declaration. Revise the same exact period or choose a non-overlapping period.',
-            );
-          if (overlaps.length)
-            await tx.capacityDeclaration.updateMany({
-              where: { id: { in: overlaps.map((row) => row.id) } },
-              data: { supersededAt: new Date() },
-            });
-          const row = await tx.capacityDeclaration.create({
-            data: {
-              artisanProfileId: profile.id,
-              craftSkillId: input.craftSkillId,
-              unitType: input.unitType,
-              quantity,
-              effectiveFrom: new Date(input.effectiveFrom),
-              effectiveTo: new Date(input.effectiveTo),
-              declaredByUserId: actor.id,
-            },
-          });
-          await audit(tx, actor, {
-            action: 'artisan.capacity.update',
-            targetType: 'CapacityDeclaration',
-            targetId: row.id,
-            organizationId: delegation?.organizationId,
-            after: {
-              artisanProfileId: profile.id,
-              declaredByUserId: actor.id,
-              delegationId: delegation?.id ?? null,
-              source: 'VOLUNTARY_DECLARATION',
-            },
-          });
-          return capacityView(row);
+        actor,
+        {
+          ...input,
+          quantity: exactCapacityQuantity(input.quantity),
+          artisanProfileId: profile.id,
+          delegationId: delegation?.id,
+          organizationId: delegation?.organizationId,
         },
+        key,
+        Object.fromEntries(
+          Object.entries(input).filter(([, value]) => value !== undefined),
+        ) as Prisma.InputJsonObject,
       );
     });
   }

@@ -1,35 +1,36 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { SiteFooter, Weave, Wordmark } from '@/components/brand';
+import { EvidenceNotice } from '@/components/evidence-notice';
+
 const ecosystem = [
   {
     tone: 'light',
-    title: 'Companies',
-    text: 'Need employee gifts, event gifts and CSR initiatives that mean something.',
+    title: 'Commercial buyers',
+    text: 'The proposal starts with a product brief, quantities, delivery needs and an explicit quotation rather than a promise of available supply.',
   },
   {
     tone: 'dark',
-    title: 'NASJ, the connector',
-    text: 'Verifies every organization and connects buyers with the associations and artisans behind each craft.',
+    title: 'A managed production workflow',
+    text: 'Scoped operators assess declared capacity, prepare costed offers and track production, quality and custody in a synthetic software demonstration.',
   },
   {
     tone: 'light',
-    title: 'Associations & cooperatives',
-    text: 'Bring their artisans together and coordinate access to handmade products.',
+    title: 'Association coordinators',
+    text: 'Coordinators can assist assigned artisans within consent and organization permissions. A coordinator report is separate from an artisan’s direct decision.',
   },
   {
     tone: 'light',
-    title: 'Rural women artisans',
-    text: 'Gain new customers, paid work and recognition for their craftsmanship.',
+    title: 'Artisan choice',
+    text: 'Authenticated artisans review work, compensation and terms before accepting. Unverified accountless acceptance remains pending and cannot create a commitment.',
   },
 ];
-// Mirrors the reference craft vocabulary seeded by the API (CraftSkill).
 const crafts = [
-  { name: 'Embroidery', detail: 'Embroidery and decorative stitching', swatch: 'forest' },
-  { name: 'Textile weaving', detail: 'Traditional textile weaving', swatch: 'terracotta' },
-  { name: 'Basket making', detail: 'Basketry and woven plant fibers', swatch: 'gold' },
-  { name: 'Pottery', detail: 'Traditional pottery', swatch: 'charcoal' },
-  { name: 'Other crafts', detail: 'Other traditional craft skills', swatch: 'ring' },
+  { name: 'Embroidery', detail: 'Initial product and production hypothesis', swatch: 'forest' },
+  { name: 'Textile weaving', detail: 'Reference craft vocabulary', swatch: 'terracotta' },
+  { name: 'Basket making', detail: 'Reference craft vocabulary', swatch: 'gold' },
+  { name: 'Pottery', detail: 'Reference craft vocabulary', swatch: 'charcoal' },
+  { name: 'Other crafts', detail: 'Reference craft vocabulary', swatch: 'ring' },
 ];
 export default function Home() {
   return (
@@ -37,53 +38,59 @@ export default function Home() {
       <header className="site-header">
         <Wordmark />
         <nav aria-label="Main">
-          <a href="#how">How it works</a>
-          <a href="#start">Get started</a>
-          <a href="#crafts">Crafts</a>
+          <a href="#how">Workflow</a>
+          <Link href="/evidence">Evidence</Link>
+          <Link href="/presentation">Presentation</Link>
         </nav>
         <div className="site-header-actions">
           <Link className="button secondary" href="/auth/login">
             Sign in
           </Link>
-          <Link className="button" href="/auth/register">
-            Create an account
+          <Link className="button" href="/demo">
+            Explore demo
           </Link>
         </div>
       </header>
       <main id="main-content">
         <section className="hero">
           <div className="hero-copy">
-            <p className="kicker">Social-impact gifting platform</p>
+            <p className="kicker">NASJ · a Tunisian artisan-production concept</p>
             <h1>
-              Meaningful gifts.
-              <br />
-              Greater impact.
+              Craft, with
+              <br />a clearer path to market.
             </h1>
             <p className="lead">
-              NASJ connects companies with rural women artisans and the associations that support
-              them, turning employee gifts, event gifts and CSR budgets into paid work and
-              visibility for handmade craft.
+              A managed B2B approach to connect commercial product requests with artisan production
+              networks. Our starting hypothesis is Tunisian embroidery, coordinated through
+              associations while preserving each artisan’s voluntary decision.
             </p>
+            <EvidenceNotice
+              claimId="landing.market-hypothesis"
+              claimType="Market-access hypothesis"
+              status="PROPOSED"
+              limitations={[
+                'Buyer demand, artisan income benefits and production economics require field research. No verified field outcomes are claimed.',
+              ]}
+            />
             <div className="action-row">
-              <Link className="button large" href="/auth/register">
-                Create an account <span aria-hidden="true">→</span>
+              <Link className="button large" href="/demo">
+                Explore the synthetic demo <span aria-hidden="true">→</span>
               </Link>
-              <Link className="button secondary large" href="/auth/login">
-                Sign in
+              <Link className="button secondary large" href="/evidence">
+                Evidence and limitations
               </Link>
             </div>
-            <ul className="values" aria-label="Our values">
-              <li>Authenticity</li>
-              <li>Community</li>
-              <li>Sustainability</li>
-              <li>Growth</li>
+            <ul className="values" aria-label="Design intentions">
+              <li>Voluntary participation</li>
+              <li>Scoped coordination</li>
+              <li>Traceable decisions</li>
             </ul>
           </div>
           <div className="hero-visual">
             <div className="arch">
               <Image
                 src="/brand/artisan-weaving.jpg"
-                alt="Hands of a woman artisan weaving a patterned textile"
+                alt="Illustrative photograph of hands weaving a patterned textile; not a documented NASJ participant"
                 width={685}
                 height={753}
                 fetchPriority="high"
@@ -93,8 +100,8 @@ export default function Home() {
             <p className="story-card">
               <Image src="/brand/nasj-mark.png" alt="" width={36} height={38} />
               <span>
-                <strong>Every thread tells a story.</strong> Behind each piece is a woman artisan
-                and her community.
+                <strong>A craft-inspired concept.</strong> This representative image is not
+                participant or field-validation evidence.
               </span>
             </p>
           </div>
@@ -102,13 +109,23 @@ export default function Home() {
         <Weave />
         <section className="section" id="how">
           <div className="section-intro">
-            <p className="kicker">The NASJ ecosystem</p>
-            <h2>One order, woven through three communities.</h2>
+            <p className="kicker">The managed supply-chain track</p>
+            <h2>From a product request to accountable production.</h2>
             <p className="lead">
-              NASJ isn’t about donating money or buying generic merchandise. It turns purchasing
-              companies already do into practical, paid opportunities for women artisans.
+              The software connects quotation, artisan offers, production tracking, quality checks
+              and logistics. The demonstration uses fictional organizations and synthetic commercial
+              records.
             </p>
           </div>
+          <EvidenceNotice
+            claimId="landing.software-workflow"
+            claimType="Implemented software workflow"
+            status="SYNTHETIC"
+            sourceReference="/evidence#software"
+            limitations={[
+              'Working application workflows are demonstrated with controlled synthetic inputs. Software checks do not establish live operational readiness, partner endorsement or delivery reliability.',
+            ]}
+          />
           <div className="card-grid">
             {ecosystem.map((item) => (
               <article key={item.title} className={`eco-card eco-${item.tone}`}>
@@ -120,58 +137,99 @@ export default function Home() {
         </section>
         <section className="section" id="start">
           <div className="section-intro">
-            <p className="kicker">Get started</p>
-            <h2>What you can set up today.</h2>
+            <p className="kicker">What the prototype can demonstrate</p>
+            <h2>Follow decisions, quantities and obligations.</h2>
           </div>
           <div className="paths">
             <article className="path">
-              <h3>Companies &amp; associations</h3>
+              <h3>A commercial production journey</h3>
+              <EvidenceNotice
+                compact
+                claimId="landing.commercial-journey"
+                claimType="Commercial demonstration"
+                status="SYNTHETIC"
+                sourceReference="/evidence#scenario"
+              />
               <ol className="steps">
                 <li>
-                  <strong>Create and verify your account.</strong> Sign up with your email address.
+                  <strong>Define and quote the work.</strong> Review product requirements, declared
+                  capacity, feasibility assumptions and exact TND costing.
                 </li>
                 <li>
-                  <strong>Register your organization.</strong> Choose a buyer business or an
-                  association, complete the profile and submit it for approval.
+                  <strong>Offer work voluntarily.</strong> Authenticated artisans review
+                  compensation and accept their own offers. Accountless reports stay blocked pending
+                  an approved method.
                 </li>
                 <li>
-                  <strong>Invite your team.</strong> Approved managers invite staff and assign roles
-                  within the organization.
+                  <strong>Track production and custody.</strong> Record progress, quality-approved
+                  quantities, material handovers, shipments and buyer-confirmed receipt through
+                  scoped workspaces.
                 </li>
               </ol>
             </article>
             <article className="path">
-              <h3>Artisans</h3>
+              <h3>Financial transparency and public traceability</h3>
+              <EvidenceNotice
+                compact
+                claimId="landing.finance-traceability"
+                claimType="Financial and traceability demonstration"
+                status="SYNTHETIC"
+                sourceReference="/evidence#payments"
+                limitations={[
+                  'Simulations are not bank transfers. Manual material records are not independently verified physical stock. Agreed producer share is not verified paid income.',
+                ]}
+              />
               <ol className="steps">
                 <li>
-                  <strong>Create and verify your account.</strong> A trusted association can also
-                  assist you, only with your explicit consent.
+                  <strong>Keep obligations visible.</strong> Recognized payables, separate payout
+                  approvals and dispute history preserve unresolved artisan claims.
                 </li>
                 <li>
-                  <strong>Build your artisan profile.</strong> Add your crafts, skills and the
-                  capacity you choose to offer.
+                  <strong>Review the QR story.</strong> Published craft summaries and privacy-aware
+                  producer-share calculations retain their synthetic label.
                 </li>
                 <li>
-                  <strong>Join an association, or stay independent.</strong> Association
-                  participation is always optional.
+                  <strong>Show the blockers.</strong> Deposits and payout reports stay unverified
+                  without approved evidence. Financial closure remains blocked while required
+                  evidence or obligations are missing.
                 </li>
               </ol>
             </article>
           </div>
           <div className="coming-next">
-            <span className="badge">Coming next</span>
-            <p>
-              Gifting orders, production coordination and fair payments for artisans, built on the
-              verified organizations and artisan profiles above.
-            </p>
+            <div>
+              <h3>What still needs validation</h3>
+              <EvidenceNotice
+                compact
+                claimId="landing.future-validation"
+                claimType="Field-validation and rollout plans"
+                status="PROPOSED"
+                sourceReference="/evidence#limitations"
+                limitations={[
+                  'No validated partner network, verified artisan-count metric, income uplift, delivery guarantee, approved live bank settlement or pilot readiness is claimed.',
+                ]}
+              />
+              <p>
+                Field research, commercial agreements, physical-stock verification, payment
+                evidence, tax policy and owner acceptance remain separate gates.
+              </p>
+            </div>
           </div>
         </section>
         <section className="crafts" id="crafts">
           <div className="section">
             <div className="section-intro">
-              <p className="kicker">Handmade by women artisans</p>
-              <h2>Crafts your team will keep.</h2>
+              <p className="kicker">A focused starting point</p>
+              <h2>Embroidery first, broader crafts as a hypothesis.</h2>
             </div>
+            <EvidenceNotice
+              claimId="landing.craft-scope"
+              claimType="Product-scope hypothesis"
+              status="PROPOSED"
+              limitations={[
+                'The craft list is reference vocabulary, not a count of active producers or a catalogue of verified supply.',
+              ]}
+            />
             <ul className="craft-grid">
               {crafts.map((craft) => (
                 <li key={craft.name}>
@@ -183,18 +241,41 @@ export default function Home() {
             </ul>
           </div>
         </section>
+        <section className="section" id="safety">
+          <div className="section-intro">
+            <p className="kicker">Optional, separate research track</p>
+            <h2>A local safety companion concept.</h2>
+            <p>
+              Wearable safety support is a separate proposed research direction. Any local safety
+              simulation remains outside the commerce API; individual health or monitoring data must
+              not determine work eligibility, pay or public traceability.
+            </p>
+          </div>
+          <EvidenceNotice
+            claimId="landing.local-safety"
+            claimType="Optional local safety concept"
+            status="PROPOSED"
+            sourceReference="/evidence#safety"
+            limitations={[
+              'No clinical injury-prevention result, certified device, hardware deployment or health-effectiveness claim is established.',
+            ]}
+          />
+        </section>
         <section className="cta-band">
           <div className="section">
             <div>
-              <h2>Together for greater impact.</h2>
-              <p>Create your account to register an organization or an artisan profile.</p>
+              <h2>Explore the implementation, with its limits.</h2>
+              <p>
+                The demo is synthetic. Review sources and blockers before drawing conclusions about
+                real-world use.
+              </p>
             </div>
             <div className="action-row">
-              <Link className="button gold large" href="/auth/register">
-                Create an account
+              <Link className="button gold large" href="/demo">
+                Open demo
               </Link>
-              <Link className="button outline-light large" href="/auth/login">
-                Sign in
+              <Link className="button outline-light large" href="/presentation">
+                Presentation mode
               </Link>
             </div>
           </div>

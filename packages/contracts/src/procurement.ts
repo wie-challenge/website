@@ -65,7 +65,15 @@ export const procurementQuoteSchema = z
   })
   .strict();
 export const procurementAcceptSchema = z
-  .object({ version, quoteId: id, confirm: z.literal(true) })
+  .object({
+    version,
+    quoteId: id,
+    confirm: z.literal(true),
+    termsSha256: z
+      .string()
+      .regex(/^[a-f0-9]{64}$/)
+      .optional(),
+  })
   .strict();
 export const procurementProductSchema = z
   .object({
@@ -147,7 +155,35 @@ export type ProcurementDetail = {
     totalTnd: string;
     expiresAt: string;
     current: boolean;
+    status: string;
+    termsSha256: string | null;
     snapshot: Record<string, unknown>;
+  }[];
+  feasibility: {
+    id: string;
+    version: number;
+    result: string;
+    knownRemaining: string | null;
+    shortage: string | null;
+    effortMin: string | null;
+    effortMax: string | null;
+    constraints: { code: string; known: boolean; detail: string }[];
+    explanation: string;
+    reservation: false;
+    createdAt: string;
+  }[];
+  costs: {
+    id: string;
+    version: number;
+    feasibilityId: string;
+    incomplete: boolean;
+    status: string;
+    subtotalTnd: string;
+    sellingTnd: string | null;
+    taxStatus: string;
+    marginMethod: string;
+    components: Record<string, unknown>[] | null;
+    createdAt: string;
   }[];
   documents: ProcurementDocumentView[];
   products: { id: string; productCode: string; version: number; status: string }[];

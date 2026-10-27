@@ -1,4 +1,15 @@
-import { Body, Controller, Get, Inject, Param, Patch, Post, Put, Query } from '@nestjs/common';
+import {
+  Headers,
+  Body,
+  Controller,
+  Get,
+  Inject,
+  Param,
+  Patch,
+  Post,
+  Put,
+  Query,
+} from '@nestjs/common';
 import { z } from 'zod';
 import {
   duplicateReviewSchema,
@@ -145,8 +156,9 @@ export class RegistryController {
     @Body(new ZodValidationPipe(assistedCapacitySchema)) input: z.infer<
       typeof assistedCapacitySchema
     >,
+    @Headers('idempotency-key') key?: string,
   ) {
-    return this.registry.capacity(actor, id, input);
+    return this.registry.capacity(actor, id, input, key);
   }
   @AdminOnly() @Get('admin/access-report') diagnostics(
     @CurrentUser() actor: Actor,

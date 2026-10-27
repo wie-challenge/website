@@ -1,3 +1,6 @@
+import { mkdtemp, readdir, cp, writeFile, rm } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
 import { randomBytes } from 'node:crypto';
@@ -6,8 +9,11 @@ import { Client } from 'pg';
 import { SMTPServer } from 'smtp-server';
 import { validateEnvironment } from '../src/config/env.js';
 const exec = promisify(execFile);
-export async function disposableDatabase(options: { foundationOnly?: boolean } = {}) {
+export async function disposableDatabase(
+  options: { foundationOnly?: boolean; demo?: boolean; throughMigration?: string } = {},
+) {
   const name = `nasj-test-${randomBytes(8).toString('hex')}`;
+  const databaseName = options.demo ? 'nasj_demo' : 'foundation_test';
   const password = randomBytes(24).toString('hex');
   await exec('docker', [
     '--context',
@@ -22,7 +28,7 @@ export async function disposableDatabase(options: { foundationOnly?: boolean } =
     '-e',
     `POSTGRES_PASSWORD=${password}`,
     '-e',
-    'POSTGRES_DB=foundation_test',
+    `POSTGRES_DB=${databaseName}`,
     '-p',
     '127.0.0.1::5432',
     'postgres:17.7-alpine',
@@ -33,7 +39,7 @@ export async function disposableDatabase(options: { foundationOnly?: boolean } =
   try {
     const { stdout } = await exec('docker', ['--context', 'default', 'port', name, '5432']);
     const port = Number(stdout.trim().split(':').at(-1));
-    const url = `postgresql://foundation_test:${password}@127.0.0.1:${port}/foundation_test`;
+    const url = `postgresql://foundation_test:${password}@127.0.0.1:${port}/${databaseName}`;
     let ready = false;
     for (let attempt = 0; attempt < 60; attempt++) {
       const client = new Client({ connectionString: url, connectionTimeoutMillis: 1000 });
@@ -73,6 +79,28 @@ export async function disposableDatabase(options: { foundationOnly?: boolean } =
         ['exec', 'prisma', 'migrate', 'resolve', '--applied', '202610150001_foundation'],
         migrationOptions,
       );
+    } else if (options.throughMigration) {
+      const directory = await mkdtemp(join(tmpdir(), 'nasj-migration-baseline-'));
+      const migrationRoot = fileURLToPath(new URL('../prisma/migrations/', import.meta.url));
+      const configPath = fileURLToPath(new URL(`../.migration-${name}.config.ts`, import.meta.url));
+      try {
+        for (const entry of await readdir(migrationRoot)) {
+          if (entry === 'migration_lock.toml' || entry <= options.throughMigration)
+            await cp(join(migrationRoot, entry), join(directory, entry), { recursive: true });
+        }
+        await writeFile(
+          configPath,
+          `import { defineConfig } from 'prisma/config'; export default defineConfig({schema:'prisma/schema.prisma',migrations:{path:${JSON.stringify(directory)}},datasource:{url:process.env.DATABASE_URL!}});`,
+        );
+        await exec(
+          'pnpm',
+          ['exec', 'prisma', 'migrate', 'deploy', '--config', configPath],
+          migrationOptions,
+        );
+      } finally {
+        await rm(configPath, { force: true });
+        await rm(directory, { recursive: true, force: true });
+      }
     } else await exec('pnpm', ['exec', 'prisma', 'migrate', 'deploy'], migrationOptions);
     return { url, stop, containerName: name };
   } catch (error) {

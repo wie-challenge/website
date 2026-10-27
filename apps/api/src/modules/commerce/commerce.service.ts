@@ -2,6 +2,8 @@ import { Inject, Injectable } from '@nestjs/common';
 import type { Prisma, CommercialRfq, CommercialOffer, SyntheticPayment } from '@prisma/client';
 import {
   permissionsForMembership,
+  syntheticEvidence,
+  evidenceExportFields,
   type CommerceMetrics,
   type CommerceRole,
   type CommerceWorkspaceView,
@@ -23,6 +25,7 @@ import {
   type PaymentState,
   parseTnd,
   formatTnd,
+  capacityHundredths,
   requireRule,
   transitionRfq,
   transitionOffer,
@@ -46,6 +49,7 @@ import { iamTransaction, type Db } from '../foundation/transaction.js';
 import { replaySafe, validateIdempotencyKey } from '../foundation/idempotency.js';
 import { audit } from '../foundation/audit.js';
 import { findCatalogExample, projectBuyerCatalog } from './catalog.js';
+import { projectCapacity } from '../artisans/capacity.js';
 import { activity, revision } from '../procurement/records.js';
 
 type Order = Prisma.CommercialOrderGetPayload<{
@@ -237,7 +241,13 @@ export class CommerceService {
         },
       });
       if (!projection)
-        return { orderId: id, status: 'PENDING', pendingEvents: pending, metrics: null };
+        return {
+          orderId: id,
+          status: 'PENDING',
+          pendingEvents: pending,
+          metrics: null,
+          evidence: syntheticEvidence('commerce.report', 'Commercial report', '/evidence#software'),
+        };
       const metrics = projection.metrics as unknown as CommerceMetrics;
       // Buyer and quality/logistics projections never include individual artisan earnings.
       const finance = roles.includes('FINANCE_MANAGER')
@@ -257,19 +267,34 @@ export class CommerceService {
         pendingEvents: pending,
         asOf: projection.asOf.toISOString(),
         definitionVersion: projection.definitionVersion,
+        evidence: syntheticEvidence('commerce.report', 'Commercial report', '/evidence#software'),
         metrics: { ...metrics, finance },
       };
     });
   }
   async reportCsv(actor: Actor, id: string) {
     const report = await this.report(actor, id);
-    const lines = ['metric,numerator,denominator,unit,provenance'];
+    const evidence = syntheticEvidence(
+      'commerce.report-export',
+      'Commercial report export',
+      '/evidence#software',
+      ['Synthetic records are not field measurements or verified payments.'],
+    );
+    const metadata = evidenceExportFields(evidence);
+    const csvCell = (value: string) => `"${value.replaceAll('"', '""')}"`;
+    const suffix = [metadata.evidenceLabel, metadata.sourceReference, metadata.evidenceLimitations]
+      .map(csvCell)
+      .join(',');
+    const lines = [
+      'metric,numerator,denominator,unit,provenance,evidence_label,source_reference,evidence_limitations',
+      `evidence_notice,0,0,NOTICE,SYNTHETIC,${suffix}`,
+    ];
     if (report.metrics) {
       for (const [name, value] of Object.entries(report.metrics.fulfillment))
-        lines.push(`${name},${value.numerator},${value.denominator},PIECES,SYNTHETIC`);
+        lines.push(`${name},${value.numerator},${value.denominator},PIECES,SYNTHETIC,${suffix}`);
       for (const [name, value] of Object.entries(report.metrics.finance ?? {}))
         if (typeof value === 'string' && /^\d+$/.test(value))
-          lines.push(`${name},${value},,MILLIME,SYNTHETIC`);
+          lines.push(`${name},${value},,MILLIME,SYNTHETIC,${suffix}`);
     }
     // Every cell comes from the fixed registry or integers, never user-entered CSV formulas.
     return `${lines.join('\r\n')}\r\n`;
@@ -496,7 +521,8 @@ export class CommerceService {
           capacity.unitType === 'PIECES' &&
           capacity.craftSkillId === order.rfq.craftSkillId &&
           capacity.effectiveFrom <= order.rfq.deliveryAt &&
-          capacity.effectiveTo >= order.rfq.deliveryAt &&
+          capacity.effectiveTo > order.rfq.deliveryAt &&
+          capacity.artisanProfile.availabilityStatus === 'AVAILABLE' &&
           capacity.artisanProfile.user?.status === 'ACTIVE' &&
           capacity.artisanProfile.user.emailVerified,
         'CAPACITY_UNAVAILABLE',
@@ -525,6 +551,11 @@ export class CommerceService {
         'INVALID_CRAFT',
         'The artisan must have this active craft skill.',
       );
+      requireRule(
+        !order.rfq.procurementManaged,
+        'ELIGIBILITY_REQUIRED',
+        'Procurement orders require an eligibility assessment before an offer.',
+      );
       return this.command(tx, actor, key, order.id, 'offer.create', input, async () => {
         requireRule(
           order.status === 'PLANNING',
@@ -540,14 +571,12 @@ export class CommerceService {
         const pay = parseTnd(input.unitPayTnd);
         requireRule(pay > 0n, 'INVALID_AMOUNT', 'Unit pay must be positive.');
         payableForUnits(pay, input.quantity);
-        const others = await tx.commercialOffer.findMany({
-          where: { capacityDeclarationId: capacity.id },
-        });
-        const used = others.filter((o) => held(o)).reduce((n, o) => n + o.quantity, 0);
+        const available = await projectCapacity(tx, capacity);
         requireRule(
-          BigInt(used + input.quantity) * 100n <= BigInt(capacity.quantity.mul(100).toFixed(0)),
+          available.availabilityKnown &&
+            capacityHundredths(available.remaining) >= BigInt(input.quantity) * 100n,
           'CAPACITY_EXCEEDED',
-          "This offer exceeds the artisan's remaining declared capacity.",
+          'This offer exceeds known remaining capacity for this production period.',
         );
         const quantities = orderQuantities(order);
         reconcileFulfillment({ ...quantities, reserved: quantities.reserved + input.quantity });
@@ -588,26 +617,45 @@ export class CommerceService {
       roleForNext(roles, input.next, offerEdges);
       return this.command(tx, actor, key, id, 'offer.action', input, async () => {
         version(row.version, input.version);
+        if (row.termsSha256 && ['ACCEPTED', 'DECLINED'].includes(input.next))
+          requireRule(
+            input.termsSha256 === row.termsSha256,
+            'STALE_TERMS',
+            'Accept or decline the exact offer version shown to you.',
+          );
         transitionOffer(row.status as OfferState, input.next, roles, {
           expiresAt: row.expiresAt.getTime(),
           now: Date.now(),
         });
         requireRule(
-          order.status === 'PLANNING',
+          order.rfq.procurementManaged
+            ? ['APPROVED', 'PLANNING'].includes(order.status)
+            : order.status === 'PLANNING',
           'INVALID_TRANSITION',
-          'Offer decisions require an order still in planning.',
+          'Offer decisions require an open production order.',
         );
+        if (input.next === 'ACCEPTED') {
+          const profile = await tx.artisanProfile.findFirst({
+            where: {
+              id: row.artisanProfileId,
+              userId: actor.id,
+              participantStatus: 'ACTIVE',
+              availabilityStatus: 'AVAILABLE',
+            },
+          });
+          requireRule(
+            profile,
+            'PARTICIPATION_INACTIVE',
+            'Active, available participation is required to accept this offer.',
+          );
+        }
         if (input.next === 'ACCEPTED') {
           const capacity = await tx.capacityDeclaration.findUniqueOrThrow({
             where: { id: row.capacityDeclarationId },
           });
-          const offers = await tx.commercialOffer.findMany({
-            where: { capacityDeclarationId: capacity.id },
-          });
+          const available = await projectCapacity(tx, capacity);
           requireRule(
-            !capacity.supersededAt &&
-              BigInt(offers.filter((o) => held(o)).reduce((n, o) => n + o.quantity, 0)) * 100n <=
-                BigInt(capacity.quantity.mul(100).toFixed(0)),
+            available.availabilityKnown && available.reservationShortfall === '0.00',
             'CAPACITY_UNAVAILABLE',
             'Capacity changed; request a revised offer.',
           );
@@ -766,6 +814,14 @@ export class CommerceService {
       roleForNext(roles, input.next, orderEdges);
       return this.command(tx, actor, key, id, 'order.action', input, async () => {
         version(row.version, input.version);
+        // Managed procurement uses buyer confirmations and the reviewed finance ledger.
+        // The legacy synthetic state machine must not overwrite accepted quantities or close it.
+        requireRule(
+          !row.rfq.procurementManaged ||
+            !['DELIVERED', 'BUYER_ACCEPTED', 'SETTLED', 'CLOSED'].includes(input.next),
+          'MANAGED_FINANCIAL_WORKFLOW_REQUIRED',
+          'Managed procurement requires buyer delivery confirmation and financial closure assessment.',
+        );
         const q = orderQuantities(row);
         const buyerSettled = sums(
           row.payments.filter((p) => p.kind === 'BUYER_RECEIPT' && p.status === 'SETTLED'),
@@ -994,7 +1050,10 @@ export class CommerceService {
       };
       const offers = await tx.commercialOffer.findMany({
         where: privateWhere,
-        include: { order: { include: { rfq: true } } },
+        include: {
+          order: { include: { rfq: true } },
+          artisanProfile: { select: { preferredLanguage: true } },
+        },
         take: 100,
         orderBy: { createdAt: 'desc' },
       });
@@ -1049,15 +1108,22 @@ export class CommerceService {
           select: { id: true, name: true },
           take: 100,
         }),
-        candidates: candidates.map((c) => ({
-          capacityDeclarationId: c.id,
-          artisanProfileId: c.artisanProfileId,
-          displayName: c.artisanProfile.displayName,
-          craftSkillId: c.craftSkillId,
-          quantity: c.quantity.toString(),
-          effectiveFrom: c.effectiveFrom.toISOString(),
-          effectiveTo: c.effectiveTo.toISOString(),
-        })),
+        candidates: await Promise.all(
+          candidates.map(async (c) => {
+            const summary = await projectCapacity(tx, c);
+            return {
+              capacityDeclarationId: c.id,
+              artisanProfileId: c.artisanProfileId,
+              displayName: c.artisanProfile.displayName,
+              craftSkillId: c.craftSkillId,
+              quantity: summary.declared,
+              remaining: summary.remaining,
+              availabilityKnown: summary.availabilityKnown,
+              effectiveFrom: c.effectiveFrom.toISOString(),
+              effectiveTo: c.effectiveTo.toISOString(),
+            };
+          }),
+        ),
         rfqs: rfqs.map((r) => ({
           id: r.id,
           buyerOrganizationId: r.buyerOrganizationId,
@@ -1122,6 +1188,11 @@ export class CommerceService {
             status: o.status as OfferState,
             version: o.version,
             provenance: 'SYNTHETIC',
+            termsSha256: o.termsSha256,
+            compensationMethod: o.compensationMethod,
+            collectionArrangement: o.collectionArrangement,
+            instructions: o.instructions,
+            preferredLanguage: o.artisanProfile.preferredLanguage,
           };
         }),
         batches: batches.map((b) => ({

@@ -1,0 +1,2747 @@
+{
+  "date": "2026-10-27",
+  "timezone": "Africa/Tunis",
+  "scope": "Main implementation assessment and owner development recommendations",
+  "repository": "wie-challenge/website",
+  "defaultBranch": {
+    "name": "main",
+    "target": {
+      "oid": "6a8b8540e228066a7abc43792b85a639fc49db00"
+    }
+  },
+  "counts": {
+    "issues": 213,
+    "stories": 192,
+    "epics": 21,
+    "closedStories": 30,
+    "closedEpics": 1,
+    "openStories": 162,
+    "openEpics": 20,
+    "board": {
+      "Proposed": 178,
+      "Done": 31,
+      "In Review": 1,
+      "Ready": 2,
+      "In Progress": 1
+    }
+  },
+  "remoteMutations": false,
+  "newStoryClosuresRecommended": [
+    83
+  ],
+  "closureReviewRequired": [
+    43,
+    85,
+    187
+  ],
+  "parentChildCheckboxSyncRecommended": [
+    3
+  ],
+  "verification": {
+    "websiteUnit": {
+      "status": "PASS",
+      "apiPassed": 44,
+      "webPassed": 9,
+      "totalPassed": 53,
+      "failed": 0,
+      "setup": "Regenerated Prisma client after dependency setup; initial run failed to import ungenerated exports. Rerun passed."
+    },
+    "iotSimulator": {
+      "status": "PASS",
+      "passed": 12,
+      "failed": 0
+    },
+    "aiPytest": {
+      "status": "BLOCKED_COLLECTION",
+      "error": "ModuleNotFoundError: nasj_ai",
+      "sourceDirectory": "src/hirfacare_ai",
+      "declaredPackageDirectory": "src/nasj_ai"
+    },
+    "freshIntegrationRun": false,
+    "freshBrowserRun": false
+  },
+  "issues": [
+    {
+      "number": 1,
+      "title": "[E00] Discovery, evidence, business validation & legal gates",
+      "state": "OPEN",
+      "projectStatus": "Proposed",
+      "url": "https://github.com/wie-challenge/website/issues/1",
+      "dependencyNumbers": [],
+      "closedAt": null,
+      "updatedAt": "2026-10-15T17:06:58Z"
+    },
+    {
+      "number": 2,
+      "title": "[E01] Identity, organization access & artisan profiles",
+      "state": "OPEN",
+      "projectStatus": "Proposed",
+      "url": "https://github.com/wie-challenge/website/issues/2",
+      "dependencyNumbers": [],
+      "closedAt": null,
+      "updatedAt": "2026-10-15T17:07:04Z"
+    },
+    {
+      "number": 3,
+      "title": "[E02] Buyer procurement & RFQ",
+      "state": "CLOSED",
+      "projectStatus": "Done",
+      "url": "https://github.com/wie-challenge/website/issues/3",
+      "dependencyNumbers": [],
+      "closedAt": "2026-10-21T23:31:54Z",
+      "updatedAt": "2026-10-21T23:31:54Z"
+    },
+    {
+      "number": 4,
+      "title": "[E03] Feasibility, fair-pricing, quotations & contracts",
+      "state": "OPEN",
+      "projectStatus": "Proposed",
+      "url": "https://github.com/wie-challenge/website/issues/4",
+      "dependencyNumbers": [],
+      "closedAt": null,
+      "updatedAt": "2026-10-15T17:07:10Z"
+    },
+    {
+      "number": 5,
+      "title": "[E04] Artisan and association network",
+      "state": "OPEN",
+      "projectStatus": "Proposed",
+      "url": "https://github.com/wie-challenge/website/issues/5",
+      "dependencyNumbers": [],
+      "closedAt": null,
+      "updatedAt": "2026-10-15T17:07:12Z"
+    },
+    {
+      "number": 6,
+      "title": "[E05] Matching, opportunity offers & allocation",
+      "state": "OPEN",
+      "projectStatus": "Proposed",
+      "url": "https://github.com/wie-challenge/website/issues/6",
+      "dependencyNumbers": [],
+      "closedAt": null,
+      "updatedAt": "2026-10-15T17:07:15Z"
+    },
+    {
+      "number": 7,
+      "title": "[E06] Production execution, progress & exceptions",
+      "state": "OPEN",
+      "projectStatus": "Proposed",
+      "url": "https://github.com/wie-challenge/website/issues/7",
+      "dependencyNumbers": [],
+      "closedAt": null,
+      "updatedAt": "2026-10-15T17:07:18Z"
+    },
+    {
+      "number": 8,
+      "title": "[E07] Materials, procurement & inventory",
+      "state": "OPEN",
+      "projectStatus": "Proposed",
+      "url": "https://github.com/wie-challenge/website/issues/8",
+      "dependencyNumbers": [],
+      "closedAt": null,
+      "updatedAt": "2026-10-15T17:07:21Z"
+    },
+    {
+      "number": 9,
+      "title": "[E08] Quality assurance, rejection, rework & appeal",
+      "state": "OPEN",
+      "projectStatus": "Proposed",
+      "url": "https://github.com/wie-challenge/website/issues/9",
+      "dependencyNumbers": [],
+      "closedAt": null,
+      "updatedAt": "2026-10-15T17:07:23Z"
+    },
+    {
+      "number": 10,
+      "title": "[E09] Collection, delivery & QR traceability",
+      "state": "OPEN",
+      "projectStatus": "Proposed",
+      "url": "https://github.com/wie-challenge/website/issues/10",
+      "dependencyNumbers": [],
+      "closedAt": null,
+      "updatedAt": "2026-10-15T17:07:25Z"
+    },
+    {
+      "number": 11,
+      "title": "[E10] Buyer finance, artisan payables, payouts & settlement",
+      "state": "OPEN",
+      "projectStatus": "Proposed",
+      "url": "https://github.com/wie-challenge/website/issues/11",
+      "dependencyNumbers": [],
+      "closedAt": null,
+      "updatedAt": "2026-10-15T17:07:30Z"
+    },
+    {
+      "number": 12,
+      "title": "[E11] Explainable AI & decision intelligence",
+      "state": "OPEN",
+      "projectStatus": "Proposed",
+      "url": "https://github.com/wie-challenge/website/issues/12",
+      "dependencyNumbers": [],
+      "closedAt": null,
+      "updatedAt": "2026-10-15T17:07:34Z"
+    },
+    {
+      "number": 13,
+      "title": "[E12] Optional wearable safety, firmware & privacy",
+      "state": "OPEN",
+      "projectStatus": "Proposed",
+      "url": "https://github.com/wie-challenge/website/issues/13",
+      "dependencyNumbers": [],
+      "closedAt": null,
+      "updatedAt": "2026-10-15T17:07:39Z"
+    },
+    {
+      "number": 14,
+      "title": "[E13] Worker outcomes, producer share & impact reporting",
+      "state": "OPEN",
+      "projectStatus": "Proposed",
+      "url": "https://github.com/wie-challenge/website/issues/14",
+      "dependencyNumbers": [],
+      "closedAt": null,
+      "updatedAt": "2026-10-15T17:07:43Z"
+    },
+    {
+      "number": 15,
+      "title": "[E14] Administration, consent, disputes & governance",
+      "state": "OPEN",
+      "projectStatus": "Proposed",
+      "url": "https://github.com/wie-challenge/website/issues/15",
+      "dependencyNumbers": [],
+      "closedAt": null,
+      "updatedAt": "2026-10-15T17:07:48Z"
+    },
+    {
+      "number": 16,
+      "title": "[E15] Interactive Next.js showroom & team collaboration",
+      "state": "OPEN",
+      "projectStatus": "Proposed",
+      "url": "https://github.com/wie-challenge/website/issues/16",
+      "dependencyNumbers": [],
+      "closedAt": null,
+      "updatedAt": "2026-10-15T17:07:50Z"
+    },
+    {
+      "number": 17,
+      "title": "[E16] Architecture, security, tests, deployment & operations",
+      "state": "OPEN",
+      "projectStatus": "Proposed",
+      "url": "https://github.com/wie-challenge/website/issues/17",
+      "dependencyNumbers": [],
+      "closedAt": null,
+      "updatedAt": "2026-10-15T17:07:54Z"
+    },
+    {
+      "number": 18,
+      "title": "[E17] TSYP14 challenge evidence, submissions & demo",
+      "state": "OPEN",
+      "projectStatus": "Proposed",
+      "url": "https://github.com/wie-challenge/website/issues/18",
+      "dependencyNumbers": [],
+      "closedAt": null,
+      "updatedAt": "2026-10-15T17:07:58Z"
+    },
+    {
+      "number": 19,
+      "title": "[E18] B2B sales, customer success & commercialization",
+      "state": "OPEN",
+      "projectStatus": "Proposed",
+      "url": "https://github.com/wie-challenge/website/issues/19",
+      "dependencyNumbers": [],
+      "closedAt": null,
+      "updatedAt": "2026-10-15T17:08:05Z"
+    },
+    {
+      "number": 20,
+      "title": "[E19] Artisan training, accessibility & community adoption",
+      "state": "OPEN",
+      "projectStatus": "Proposed",
+      "url": "https://github.com/wie-challenge/website/issues/20",
+      "dependencyNumbers": [],
+      "closedAt": null,
+      "updatedAt": "2026-10-15T17:08:08Z"
+    },
+    {
+      "number": 21,
+      "title": "[E20] Product catalog, sampling & design lifecycle",
+      "state": "OPEN",
+      "projectStatus": "Proposed",
+      "url": "https://github.com/wie-challenge/website/issues/21",
+      "dependencyNumbers": [],
+      "closedAt": null,
+      "updatedAt": "2026-10-15T17:08:11Z"
+    },
+    {
+      "number": 22,
+      "title": "[E00-01] Artisan Workflow Interviews and Evidence Register",
+      "state": "OPEN",
+      "projectStatus": "Proposed",
+      "url": "https://github.com/wie-challenge/website/issues/22",
+      "dependencyNumbers": [],
+      "closedAt": null,
+      "updatedAt": "2026-10-15T16:53:46Z"
+    },
+    {
+      "number": 23,
+      "title": "[E00-02] Buyer Demand and Procurement Interviews",
+      "state": "OPEN",
+      "projectStatus": "Proposed",
+      "url": "https://github.com/wie-challenge/website/issues/23",
+      "dependencyNumbers": [],
+      "closedAt": null,
+      "updatedAt": "2026-10-15T16:53:50Z"
+    },
+    {
+      "number": 24,
+      "title": "[E00-03] Initial Craft and Product Feasibility Selection",
+      "state": "OPEN",
+      "projectStatus": "Proposed",
+      "url": "https://github.com/wie-challenge/website/issues/24",
+      "dependencyNumbers": [
+        22,
+        23
+      ],
+      "closedAt": null,
+      "updatedAt": "2026-10-15T16:53:54Z"
+    },
+    {
+      "number": 25,
+      "title": "[E00-04] Embroidery Time Study and Compensation Baseline",
+      "state": "OPEN",
+      "projectStatus": "Proposed",
+      "url": "https://github.com/wie-challenge/website/issues/25",
+      "dependencyNumbers": [
+        22
+      ],
+      "closedAt": null,
+      "updatedAt": "2026-10-15T16:53:59Z"
+    },
+    {
+      "number": 26,
+      "title": "[E00-10] Association Partner Assessment and Coordination Model",
+      "state": "OPEN",
+      "projectStatus": "Proposed",
+      "url": "https://github.com/wie-challenge/website/issues/26",
+      "dependencyNumbers": [
+        22
+      ],
+      "closedAt": null,
+      "updatedAt": "2026-10-15T16:54:04Z"
+    },
+    {
+      "number": 27,
+      "title": "[E00-05] Product Supply and Artisan Agreement Legal Review",
+      "state": "OPEN",
+      "projectStatus": "Proposed",
+      "url": "https://github.com/wie-challenge/website/issues/27",
+      "dependencyNumbers": [
+        24,
+        26
+      ],
+      "closedAt": null,
+      "updatedAt": "2026-10-15T16:54:08Z"
+    },
+    {
+      "number": 28,
+      "title": "[E00-06] Tax, Invoicing and Contribution Policy Review",
+      "state": "OPEN",
+      "projectStatus": "Proposed",
+      "url": "https://github.com/wie-challenge/website/issues/28",
+      "dependencyNumbers": [
+        24
+      ],
+      "closedAt": null,
+      "updatedAt": "2026-10-15T16:54:12Z"
+    },
+    {
+      "number": 29,
+      "title": "[E00-07] Personal Data Inventory and Privacy Review",
+      "state": "OPEN",
+      "projectStatus": "Proposed",
+      "url": "https://github.com/wie-challenge/website/issues/29",
+      "dependencyNumbers": [
+        22,
+        23
+      ],
+      "closedAt": null,
+      "updatedAt": "2026-10-15T16:54:17Z"
+    },
+    {
+      "number": 30,
+      "title": "[E16-11] Reproducible TypeScript Monorepo and Database Foundation",
+      "state": "CLOSED",
+      "projectStatus": "Done",
+      "url": "https://github.com/wie-challenge/website/issues/30",
+      "dependencyNumbers": [],
+      "closedAt": "2026-10-19T14:07:11Z",
+      "updatedAt": "2026-10-19T14:07:11Z"
+    },
+    {
+      "number": 31,
+      "title": "[E02-01] Buyer Craft and Example Product Catalog",
+      "state": "CLOSED",
+      "projectStatus": "Done",
+      "url": "https://github.com/wie-challenge/website/issues/31",
+      "dependencyNumbers": [
+        30
+      ],
+      "closedAt": "2026-10-21T22:31:23Z",
+      "updatedAt": "2026-10-21T22:31:23Z"
+    },
+    {
+      "number": 32,
+      "title": "[E16-01] Pure Domain State, Money and Quantity Invariants",
+      "state": "CLOSED",
+      "projectStatus": "Done",
+      "url": "https://github.com/wie-challenge/website/issues/32",
+      "dependencyNumbers": [],
+      "closedAt": "2026-10-20T10:30:12Z",
+      "updatedAt": "2026-10-20T10:30:12Z"
+    },
+    {
+      "number": 33,
+      "title": "[E02-02] RFQ Draft Creation, Validation and Submission",
+      "state": "CLOSED",
+      "projectStatus": "Done",
+      "url": "https://github.com/wie-challenge/website/issues/33",
+      "dependencyNumbers": [
+        31,
+        32
+      ],
+      "closedAt": "2026-10-21T22:31:21Z",
+      "updatedAt": "2026-10-21T22:31:21Z"
+    },
+    {
+      "number": 34,
+      "title": "[E01-04] Artisan Capacity Editing and Commitment Visibility",
+      "state": "OPEN",
+      "projectStatus": "Proposed",
+      "url": "https://github.com/wie-challenge/website/issues/34",
+      "dependencyNumbers": [
+        30
+      ],
+      "closedAt": null,
+      "updatedAt": "2026-10-15T16:54:42Z"
+    },
+    {
+      "number": 35,
+      "title": "[E03-01] Production Effort and Deadline Feasibility Calculator",
+      "state": "OPEN",
+      "projectStatus": "Proposed",
+      "url": "https://github.com/wie-challenge/website/issues/35",
+      "dependencyNumbers": [
+        33,
+        34
+      ],
+      "closedAt": null,
+      "updatedAt": "2026-10-15T16:54:47Z"
+    },
+    {
+      "number": 36,
+      "title": "[E03-02] Versioned Detailed Order Cost Builder",
+      "state": "OPEN",
+      "projectStatus": "Proposed",
+      "url": "https://github.com/wie-challenge/website/issues/36",
+      "dependencyNumbers": [
+        35
+      ],
+      "closedAt": null,
+      "updatedAt": "2026-10-15T16:54:50Z"
+    },
+    {
+      "number": 37,
+      "title": "[E03-03] Transparent Buyer Quote Summary",
+      "state": "OPEN",
+      "projectStatus": "Proposed",
+      "url": "https://github.com/wie-challenge/website/issues/37",
+      "dependencyNumbers": [
+        36
+      ],
+      "closedAt": null,
+      "updatedAt": "2026-10-15T16:54:54Z"
+    },
+    {
+      "number": 38,
+      "title": "[E01-10] Secure Sign-In, Sign-Out and Session Lifecycle",
+      "state": "CLOSED",
+      "projectStatus": "Done",
+      "url": "https://github.com/wie-challenge/website/issues/38",
+      "dependencyNumbers": [
+        30
+      ],
+      "closedAt": "2026-10-19T14:08:38Z",
+      "updatedAt": "2026-10-19T14:08:38Z"
+    },
+    {
+      "number": 39,
+      "title": "[E01-11] Resource-Scoped Backend Authorization",
+      "state": "CLOSED",
+      "projectStatus": "Done",
+      "url": "https://github.com/wie-challenge/website/issues/39",
+      "dependencyNumbers": [
+        38
+      ],
+      "closedAt": "2026-10-26T20:36:24Z",
+      "updatedAt": "2026-10-26T20:36:24Z"
+    },
+    {
+      "number": 40,
+      "title": "[E03-06] Authorized Acceptance of Exact Quote Terms",
+      "state": "OPEN",
+      "projectStatus": "Proposed",
+      "url": "https://github.com/wie-challenge/website/issues/40",
+      "dependencyNumbers": [
+        37,
+        39
+      ],
+      "closedAt": null,
+      "updatedAt": "2026-10-15T16:55:05Z"
+    },
+    {
+      "number": 41,
+      "title": "[E03-07] Buyer Funding Milestones and Release Policy",
+      "state": "OPEN",
+      "projectStatus": "Proposed",
+      "url": "https://github.com/wie-challenge/website/issues/41",
+      "dependencyNumbers": [
+        36
+      ],
+      "closedAt": null,
+      "updatedAt": "2026-10-15T16:55:10Z"
+    },
+    {
+      "number": 42,
+      "title": "[E03-08] Reviewed Finished-Product Supply Contracts",
+      "state": "OPEN",
+      "projectStatus": "Proposed",
+      "url": "https://github.com/wie-challenge/website/issues/42",
+      "dependencyNumbers": [
+        27,
+        28,
+        40,
+        41
+      ],
+      "closedAt": null,
+      "updatedAt": "2026-10-15T16:55:15Z"
+    },
+    {
+      "number": 43,
+      "title": "[E04-01] Seeded Artisan Group and Capacity Directory",
+      "state": "CLOSED",
+      "projectStatus": "Done",
+      "url": "https://github.com/wie-challenge/website/issues/43",
+      "dependencyNumbers": [
+        30
+      ],
+      "closedAt": "2026-10-26T17:28:50Z",
+      "updatedAt": "2026-10-26T17:28:50Z"
+    },
+    {
+      "number": 44,
+      "title": "[E04-02] Complete Artisan Offer Review",
+      "state": "OPEN",
+      "projectStatus": "Proposed",
+      "url": "https://github.com/wie-challenge/website/issues/44",
+      "dependencyNumbers": [
+        43
+      ],
+      "closedAt": null,
+      "updatedAt": "2026-10-15T16:55:23Z"
+    },
+    {
+      "number": 45,
+      "title": "[E04-03] Explicit Offer Acceptance, Decline and Expiry",
+      "state": "OPEN",
+      "projectStatus": "Proposed",
+      "url": "https://github.com/wie-challenge/website/issues/45",
+      "dependencyNumbers": [
+        44,
+        32
+      ],
+      "closedAt": null,
+      "updatedAt": "2026-10-15T16:55:26Z"
+    },
+    {
+      "number": 46,
+      "title": "[E04-11] Independent Weekly Capacity Publication Contract",
+      "state": "OPEN",
+      "projectStatus": "Proposed",
+      "url": "https://github.com/wie-challenge/website/issues/46",
+      "dependencyNumbers": [
+        32
+      ],
+      "closedAt": null,
+      "updatedAt": "2026-10-15T16:55:29Z"
+    },
+    {
+      "number": 47,
+      "title": "[E05-01] Craft, Availability and Capacity Eligibility Filters",
+      "state": "OPEN",
+      "projectStatus": "Proposed",
+      "url": "https://github.com/wie-challenge/website/issues/47",
+      "dependencyNumbers": [
+        43,
+        46
+      ],
+      "closedAt": null,
+      "updatedAt": "2026-10-15T16:55:34Z"
+    },
+    {
+      "number": 48,
+      "title": "[E05-03] Multi-Group Batch Planning and Quantity Reconciliation",
+      "state": "OPEN",
+      "projectStatus": "Proposed",
+      "url": "https://github.com/wie-challenge/website/issues/48",
+      "dependencyNumbers": [
+        47,
+        32
+      ],
+      "closedAt": null,
+      "updatedAt": "2026-10-15T16:55:39Z"
+    },
+    {
+      "number": 49,
+      "title": "[E05-09] Atomic Capacity Reservation and Concurrent Offer Safety",
+      "state": "OPEN",
+      "projectStatus": "Proposed",
+      "url": "https://github.com/wie-challenge/website/issues/49",
+      "dependencyNumbers": [
+        48,
+        46
+      ],
+      "closedAt": null,
+      "updatedAt": "2026-10-15T16:55:42Z"
+    },
+    {
+      "number": 50,
+      "title": "[E05-04] Manager Offer Creation from Allocation Plans",
+      "state": "OPEN",
+      "projectStatus": "Proposed",
+      "url": "https://github.com/wie-challenge/website/issues/50",
+      "dependencyNumbers": [
+        48,
+        44,
+        49
+      ],
+      "closedAt": null,
+      "updatedAt": "2026-10-15T16:55:46Z"
+    },
+    {
+      "number": 51,
+      "title": "[E07-01] Batch Bill of Materials and Readiness View",
+      "state": "OPEN",
+      "projectStatus": "Proposed",
+      "url": "https://github.com/wie-challenge/website/issues/51",
+      "dependencyNumbers": [
+        48
+      ],
+      "closedAt": null,
+      "updatedAt": "2026-10-15T16:55:50Z"
+    },
+    {
+      "number": 52,
+      "title": "[E06-01] Guarded Release of Accepted Production Batches",
+      "state": "OPEN",
+      "projectStatus": "Proposed",
+      "url": "https://github.com/wie-challenge/website/issues/52",
+      "dependencyNumbers": [
+        45,
+        50,
+        51,
+        32
+      ],
+      "closedAt": null,
+      "updatedAt": "2026-10-15T16:55:53Z"
+    },
+    {
+      "number": 53,
+      "title": "[E06-02] Artisan Active Work and Versioned Instructions",
+      "state": "OPEN",
+      "projectStatus": "Proposed",
+      "url": "https://github.com/wie-challenge/website/issues/53",
+      "dependencyNumbers": [
+        45
+      ],
+      "closedAt": null,
+      "updatedAt": "2026-10-15T16:55:57Z"
+    },
+    {
+      "number": 54,
+      "title": "[E06-03] Validated Production Quantity Reporting",
+      "state": "OPEN",
+      "projectStatus": "Proposed",
+      "url": "https://github.com/wie-challenge/website/issues/54",
+      "dependencyNumbers": [
+        52,
+        53
+      ],
+      "closedAt": null,
+      "updatedAt": "2026-10-15T16:56:01Z"
+    },
+    {
+      "number": 55,
+      "title": "[E08-01] Inspection Checklist Bound to Approved Specification",
+      "state": "OPEN",
+      "projectStatus": "Proposed",
+      "url": "https://github.com/wie-challenge/website/issues/55",
+      "dependencyNumbers": [
+        53
+      ],
+      "closedAt": null,
+      "updatedAt": "2026-10-15T16:56:06Z"
+    },
+    {
+      "number": 56,
+      "title": "[E08-02] Reconciled Quality Inspection and Quantity Decisions",
+      "state": "OPEN",
+      "projectStatus": "Proposed",
+      "url": "https://github.com/wie-challenge/website/issues/56",
+      "dependencyNumbers": [
+        54,
+        55
+      ],
+      "closedAt": null,
+      "updatedAt": "2026-10-15T16:56:09Z"
+    },
+    {
+      "number": 57,
+      "title": "[E08-03] Verified Shippable Quantity Projection",
+      "state": "OPEN",
+      "projectStatus": "Proposed",
+      "url": "https://github.com/wie-challenge/website/issues/57",
+      "dependencyNumbers": [
+        56
+      ],
+      "closedAt": null,
+      "updatedAt": "2026-10-15T16:56:14Z"
+    },
+    {
+      "number": 58,
+      "title": "[E09-01] QA-Approved Shipment Consolidation",
+      "state": "OPEN",
+      "projectStatus": "Proposed",
+      "url": "https://github.com/wie-challenge/website/issues/58",
+      "dependencyNumbers": [
+        56,
+        57
+      ],
+      "closedAt": null,
+      "updatedAt": "2026-10-15T16:56:19Z"
+    },
+    {
+      "number": 59,
+      "title": "[E09-04] Shipment Custody and Quantity Handover Ledger",
+      "state": "OPEN",
+      "projectStatus": "Proposed",
+      "url": "https://github.com/wie-challenge/website/issues/59",
+      "dependencyNumbers": [
+        58
+      ],
+      "closedAt": null,
+      "updatedAt": "2026-10-15T16:56:22Z"
+    },
+    {
+      "number": 60,
+      "title": "[E09-05] Buyer Receipt Confirmation and Delivery Differences",
+      "state": "OPEN",
+      "projectStatus": "Proposed",
+      "url": "https://github.com/wie-challenge/website/issues/60",
+      "dependencyNumbers": [
+        59
+      ],
+      "closedAt": null,
+      "updatedAt": "2026-10-15T16:56:25Z"
+    },
+    {
+      "number": 61,
+      "title": "[E10-06] Idempotent Artisan Payable Recognition",
+      "state": "OPEN",
+      "projectStatus": "Proposed",
+      "url": "https://github.com/wie-challenge/website/issues/61",
+      "dependencyNumbers": [
+        45,
+        56,
+        42
+      ],
+      "closedAt": null,
+      "updatedAt": "2026-10-15T16:56:29Z"
+    },
+    {
+      "number": 62,
+      "title": "[E10-07] Authorized Payout Approval and Maker-Checker Controls",
+      "state": "OPEN",
+      "projectStatus": "Proposed",
+      "url": "https://github.com/wie-challenge/website/issues/62",
+      "dependencyNumbers": [
+        61,
+        39
+      ],
+      "closedAt": null,
+      "updatedAt": "2026-10-15T16:56:33Z"
+    },
+    {
+      "number": 63,
+      "title": "[E10-08] Payout Execution, Failure and Verified Receipt",
+      "state": "OPEN",
+      "projectStatus": "Proposed",
+      "url": "https://github.com/wie-challenge/website/issues/63",
+      "dependencyNumbers": [
+        61,
+        62
+      ],
+      "closedAt": null,
+      "updatedAt": "2026-10-15T16:56:37Z"
+    },
+    {
+      "number": 64,
+      "title": "[E03-10] Versioned Finance Tax Configuration",
+      "state": "OPEN",
+      "projectStatus": "Proposed",
+      "url": "https://github.com/wie-challenge/website/issues/64",
+      "dependencyNumbers": [
+        28,
+        39
+      ],
+      "closedAt": null,
+      "updatedAt": "2026-10-15T16:56:41Z"
+    },
+    {
+      "number": 65,
+      "title": "[E10-04] Reviewed Buyer Invoice and Billing Documents",
+      "state": "OPEN",
+      "projectStatus": "Proposed",
+      "url": "https://github.com/wie-challenge/website/issues/65",
+      "dependencyNumbers": [
+        28,
+        42,
+        64
+      ],
+      "closedAt": null,
+      "updatedAt": "2026-10-15T16:56:44Z"
+    },
+    {
+      "number": 66,
+      "title": "[E10-05] Buyer Deposit Recording and Reconciliation",
+      "state": "OPEN",
+      "projectStatus": "Proposed",
+      "url": "https://github.com/wie-challenge/website/issues/66",
+      "dependencyNumbers": [
+        41,
+        65
+      ],
+      "closedAt": null,
+      "updatedAt": "2026-10-15T16:56:48Z"
+    },
+    {
+      "number": 67,
+      "title": "[E06-08] Batch Cancellation and Preserved Obligations",
+      "state": "OPEN",
+      "projectStatus": "Proposed",
+      "url": "https://github.com/wie-challenge/website/issues/67",
+      "dependencyNumbers": [
+        52
+      ],
+      "closedAt": null,
+      "updatedAt": "2026-10-15T16:56:52Z"
+    },
+    {
+      "number": 68,
+      "title": "[E07-02] Material Lot Registration and Stock Ledger",
+      "state": "OPEN",
+      "projectStatus": "Proposed",
+      "url": "https://github.com/wie-challenge/website/issues/68",
+      "dependencyNumbers": [
+        39
+      ],
+      "closedAt": null,
+      "updatedAt": "2026-10-15T16:56:58Z"
+    },
+    {
+      "number": 69,
+      "title": "[E07-03] Atomic Material Reservations",
+      "state": "OPEN",
+      "projectStatus": "Proposed",
+      "url": "https://github.com/wie-challenge/website/issues/69",
+      "dependencyNumbers": [
+        51,
+        68
+      ],
+      "closedAt": null,
+      "updatedAt": "2026-10-15T16:57:02Z"
+    },
+    {
+      "number": 70,
+      "title": "[E07-04] Material Distribution and Custody Handover",
+      "state": "OPEN",
+      "projectStatus": "Proposed",
+      "url": "https://github.com/wie-challenge/website/issues/70",
+      "dependencyNumbers": [
+        69
+      ],
+      "closedAt": null,
+      "updatedAt": "2026-10-15T16:57:05Z"
+    },
+    {
+      "number": 71,
+      "title": "[E07-06] Returned, Damaged and Waste Material Dispositions",
+      "state": "OPEN",
+      "projectStatus": "Proposed",
+      "url": "https://github.com/wie-challenge/website/issues/71",
+      "dependencyNumbers": [
+        68,
+        70
+      ],
+      "closedAt": null,
+      "updatedAt": "2026-10-15T16:57:09Z"
+    },
+    {
+      "number": 72,
+      "title": "[E10-10] Partial Fulfillment and Cancellation Settlement",
+      "state": "OPEN",
+      "projectStatus": "Proposed",
+      "url": "https://github.com/wie-challenge/website/issues/72",
+      "dependencyNumbers": [
+        67,
+        61,
+        71
+      ],
+      "closedAt": null,
+      "updatedAt": "2026-10-15T16:57:12Z"
+    },
+    {
+      "number": 73,
+      "title": "[E10-14] Guarded Financial Order Closure",
+      "state": "OPEN",
+      "projectStatus": "Proposed",
+      "url": "https://github.com/wie-challenge/website/issues/73",
+      "dependencyNumbers": [
+        60,
+        63,
+        66,
+        72
+      ],
+      "closedAt": null,
+      "updatedAt": "2026-10-15T16:57:16Z"
+    },
+    {
+      "number": 74,
+      "title": "[E14-09] Dataset Retention, Purpose Limits and Incident Ownership",
+      "state": "OPEN",
+      "projectStatus": "Proposed",
+      "url": "https://github.com/wie-challenge/website/issues/74",
+      "dependencyNumbers": [
+        29
+      ],
+      "closedAt": null,
+      "updatedAt": "2026-10-15T16:57:21Z"
+    },
+    {
+      "number": 75,
+      "title": "[E16-06] Idempotent Commands and Replay-Safe Mutations",
+      "state": "CLOSED",
+      "projectStatus": "Done",
+      "url": "https://github.com/wie-challenge/website/issues/75",
+      "dependencyNumbers": [
+        30,
+        32
+      ],
+      "closedAt": "2026-10-20T19:00:17Z",
+      "updatedAt": "2026-10-20T19:00:17Z"
+    },
+    {
+      "number": 76,
+      "title": "[E16-07] Transactional Audit and Reliable Outbox Events",
+      "state": "CLOSED",
+      "projectStatus": "Done",
+      "url": "https://github.com/wie-challenge/website/issues/76",
+      "dependencyNumbers": [
+        30,
+        32
+      ],
+      "closedAt": "2026-10-20T19:00:09Z",
+      "updatedAt": "2026-10-20T19:00:09Z"
+    },
+    {
+      "number": 77,
+      "title": "[E16-08] Backups, Restore Drills and Operational Observability",
+      "state": "CLOSED",
+      "projectStatus": "Done",
+      "url": "https://github.com/wie-challenge/website/issues/77",
+      "dependencyNumbers": [
+        30
+      ],
+      "closedAt": "2026-10-20T19:00:05Z",
+      "updatedAt": "2026-10-20T19:00:05Z"
+    },
+    {
+      "number": 78,
+      "title": "[E16-05] Authenticated Web and NestJS API Boundaries",
+      "state": "CLOSED",
+      "projectStatus": "Done",
+      "url": "https://github.com/wie-challenge/website/issues/78",
+      "dependencyNumbers": [
+        38,
+        39
+      ],
+      "closedAt": "2026-10-19T14:10:10Z",
+      "updatedAt": "2026-10-19T14:10:11Z"
+    },
+    {
+      "number": 79,
+      "title": "[E16-09] Tenant Isolation and Object Reference Security Tests",
+      "state": "CLOSED",
+      "projectStatus": "Done",
+      "url": "https://github.com/wie-challenge/website/issues/79",
+      "dependencyNumbers": [
+        39,
+        78
+      ],
+      "closedAt": "2026-10-20T19:00:01Z",
+      "updatedAt": "2026-10-20T19:00:01Z"
+    },
+    {
+      "number": 80,
+      "title": "[E00-08] Controlled Paid Order Pilot and Learning Report",
+      "state": "OPEN",
+      "projectStatus": "Proposed",
+      "url": "https://github.com/wie-challenge/website/issues/80",
+      "dependencyNumbers": [
+        27,
+        28,
+        29,
+        26,
+        42,
+        73,
+        74,
+        75,
+        76,
+        77,
+        79
+      ],
+      "closedAt": null,
+      "updatedAt": "2026-10-15T16:57:43Z"
+    },
+    {
+      "number": 81,
+      "title": "[E00-09] Buyer, Hardware and Demonstration Assumption Register",
+      "state": "OPEN",
+      "projectStatus": "Proposed",
+      "url": "https://github.com/wie-challenge/website/issues/81",
+      "dependencyNumbers": [
+        23
+      ],
+      "closedAt": null,
+      "updatedAt": "2026-10-15T16:57:49Z"
+    },
+    {
+      "number": 82,
+      "title": "[E01-01] Isolated Role-Based Demo Entry",
+      "state": "OPEN",
+      "projectStatus": "In Review",
+      "url": "https://github.com/wie-challenge/website/issues/82",
+      "dependencyNumbers": [
+        30
+      ],
+      "closedAt": null,
+      "updatedAt": "2026-10-26T01:20:24Z"
+    },
+    {
+      "number": 83,
+      "title": "[E01-02] Buyer Organization Registration and Verification",
+      "state": "OPEN",
+      "projectStatus": "Proposed",
+      "url": "https://github.com/wie-challenge/website/issues/83",
+      "dependencyNumbers": [
+        78
+      ],
+      "closedAt": null,
+      "updatedAt": "2026-10-23T18:58:22Z"
+    },
+    {
+      "number": 84,
+      "title": "[E01-03] Artisan Registration, Skills and Language Preferences",
+      "state": "CLOSED",
+      "projectStatus": "Done",
+      "url": "https://github.com/wie-challenge/website/issues/84",
+      "dependencyNumbers": [
+        78
+      ],
+      "closedAt": "2026-10-19T14:10:37Z",
+      "updatedAt": "2026-10-19T14:10:37Z"
+    },
+    {
+      "number": 85,
+      "title": "[E01-05] Assisted Onboarding with Recorded Authorization",
+      "state": "CLOSED",
+      "projectStatus": "Done",
+      "url": "https://github.com/wie-challenge/website/issues/85",
+      "dependencyNumbers": [
+        84
+      ],
+      "closedAt": "2026-10-26T22:12:45Z",
+      "updatedAt": "2026-10-26T22:14:20Z"
+    },
+    {
+      "number": 86,
+      "title": "[E01-06] Scoped Staff Invitations and Role Assignment",
+      "state": "CLOSED",
+      "projectStatus": "Done",
+      "url": "https://github.com/wie-challenge/website/issues/86",
+      "dependencyNumbers": [
+        78
+      ],
+      "closedAt": "2026-10-19T14:10:44Z",
+      "updatedAt": "2026-10-19T14:10:44Z"
+    },
+    {
+      "number": 87,
+      "title": "[E01-07] Credential Recovery and Secure Account Changes",
+      "state": "CLOSED",
+      "projectStatus": "Done",
+      "url": "https://github.com/wie-challenge/website/issues/87",
+      "dependencyNumbers": [
+        38
+      ],
+      "closedAt": "2026-10-19T14:10:55Z",
+      "updatedAt": "2026-10-19T14:10:55Z"
+    },
+    {
+      "number": 88,
+      "title": "[E16-02] Responsive Accessible Critical User Journeys",
+      "state": "CLOSED",
+      "projectStatus": "Done",
+      "url": "https://github.com/wie-challenge/website/issues/88",
+      "dependencyNumbers": [
+        30
+      ],
+      "closedAt": "2026-10-20T10:30:13Z",
+      "updatedAt": "2026-10-20T10:30:13Z"
+    },
+    {
+      "number": 89,
+      "title": "[E01-08] Low-Bandwidth Artisan PWA and Safe Offline Updates",
+      "state": "OPEN",
+      "projectStatus": "Proposed",
+      "url": "https://github.com/wie-challenge/website/issues/89",
+      "dependencyNumbers": [
+        54,
+        88
+      ],
+      "closedAt": null,
+      "updatedAt": "2026-10-15T16:58:20Z"
+    },
+    {
+      "number": 90,
+      "title": "[E04-10] Opt-In Verified Artisan Portfolio",
+      "state": "OPEN",
+      "projectStatus": "Proposed",
+      "url": "https://github.com/wie-challenge/website/issues/90",
+      "dependencyNumbers": [
+        56,
+        84
+      ],
+      "closedAt": null,
+      "updatedAt": "2026-10-15T16:58:24Z"
+    },
+    {
+      "number": 91,
+      "title": "[E20-01] Immutable Product Specification and Manufacturing Standard",
+      "state": "OPEN",
+      "projectStatus": "Proposed",
+      "url": "https://github.com/wie-challenge/website/issues/91",
+      "dependencyNumbers": [
+        24
+      ],
+      "closedAt": null,
+      "updatedAt": "2026-10-15T16:58:28Z"
+    },
+    {
+      "number": 92,
+      "title": "[E19-01] Accessible Versioned Craft Work Instructions",
+      "state": "OPEN",
+      "projectStatus": "Proposed",
+      "url": "https://github.com/wie-challenge/website/issues/92",
+      "dependencyNumbers": [
+        91
+      ],
+      "closedAt": null,
+      "updatedAt": "2026-10-15T16:58:32Z"
+    },
+    {
+      "number": 93,
+      "title": "[E19-05] Voluntary Verified Skills Progress Record",
+      "state": "OPEN",
+      "projectStatus": "Proposed",
+      "url": "https://github.com/wie-challenge/website/issues/93",
+      "dependencyNumbers": [
+        92,
+        56
+      ],
+      "closedAt": null,
+      "updatedAt": "2026-10-15T16:58:36Z"
+    },
+    {
+      "number": 94,
+      "title": "[E01-09] Portable Artisan Skills and Work History Export",
+      "state": "OPEN",
+      "projectStatus": "Proposed",
+      "url": "https://github.com/wie-challenge/website/issues/94",
+      "dependencyNumbers": [
+        90,
+        93
+      ],
+      "closedAt": null,
+      "updatedAt": "2026-10-15T16:58:39Z"
+    },
+    {
+      "number": 95,
+      "title": "[E02-03] RFQ Design Reference Attachments",
+      "state": "CLOSED",
+      "projectStatus": "Done",
+      "url": "https://github.com/wie-challenge/website/issues/95",
+      "dependencyNumbers": [
+        33
+      ],
+      "closedAt": "2026-10-21T22:31:27Z",
+      "updatedAt": "2026-10-21T22:31:27Z"
+    },
+    {
+      "number": 96,
+      "title": "[E02-04] RFQ Status and Attributable Activity Timeline",
+      "state": "CLOSED",
+      "projectStatus": "Done",
+      "url": "https://github.com/wie-challenge/website/issues/96",
+      "dependencyNumbers": [
+        33
+      ],
+      "closedAt": "2026-10-21T22:31:28Z",
+      "updatedAt": "2026-10-21T22:31:28Z"
+    },
+    {
+      "number": 97,
+      "title": "[E02-05] RFQ Revisions and Feasibility Clarifications",
+      "state": "CLOSED",
+      "projectStatus": "Done",
+      "url": "https://github.com/wie-challenge/website/issues/97",
+      "dependencyNumbers": [
+        96
+      ],
+      "closedAt": "2026-10-21T22:31:31Z",
+      "updatedAt": "2026-10-21T22:31:31Z"
+    },
+    {
+      "number": 98,
+      "title": "[E20-02] Paid Sample Request, Production and Evaluation",
+      "state": "OPEN",
+      "projectStatus": "Proposed",
+      "url": "https://github.com/wie-challenge/website/issues/98",
+      "dependencyNumbers": [
+        91,
+        25
+      ],
+      "closedAt": null,
+      "updatedAt": "2026-10-15T16:58:54Z"
+    },
+    {
+      "number": 99,
+      "title": "[E20-03] Buyer Sample Sign-Off and Approval Lineage",
+      "state": "OPEN",
+      "projectStatus": "Proposed",
+      "url": "https://github.com/wie-challenge/website/issues/99",
+      "dependencyNumbers": [
+        98
+      ],
+      "closedAt": null,
+      "updatedAt": "2026-10-15T16:58:57Z"
+    },
+    {
+      "number": 100,
+      "title": "[E02-06] Buyer Sample Review and Preproduction Approval",
+      "state": "CLOSED",
+      "projectStatus": "Done",
+      "url": "https://github.com/wie-challenge/website/issues/100",
+      "dependencyNumbers": [
+        98,
+        99
+      ],
+      "closedAt": "2026-10-21T22:31:42Z",
+      "updatedAt": "2026-10-21T22:31:42Z"
+    },
+    {
+      "number": 101,
+      "title": "[E02-07] Permission-Scoped Order Discussions",
+      "state": "CLOSED",
+      "projectStatus": "Done",
+      "url": "https://github.com/wie-challenge/website/issues/101",
+      "dependencyNumbers": [
+        40
+      ],
+      "closedAt": "2026-10-21T22:31:39Z",
+      "updatedAt": "2026-10-21T22:31:39Z"
+    },
+    {
+      "number": 102,
+      "title": "[E02-08] Buyer Procurement Document Center",
+      "state": "CLOSED",
+      "projectStatus": "Done",
+      "url": "https://github.com/wie-challenge/website/issues/102",
+      "dependencyNumbers": [
+        65,
+        60
+      ],
+      "closedAt": "2026-10-21T22:31:44Z",
+      "updatedAt": "2026-10-21T22:31:44Z"
+    },
+    {
+      "number": 103,
+      "title": "[E20-04] Reusable Approved SKU and Manufacturing Catalog",
+      "state": "OPEN",
+      "projectStatus": "Proposed",
+      "url": "https://github.com/wie-challenge/website/issues/103",
+      "dependencyNumbers": [
+        91,
+        99
+      ],
+      "closedAt": null,
+      "updatedAt": "2026-10-15T16:59:12Z"
+    },
+    {
+      "number": 104,
+      "title": "[E02-09] Reorder from an Approved Product",
+      "state": "CLOSED",
+      "projectStatus": "Done",
+      "url": "https://github.com/wie-challenge/website/issues/104",
+      "dependencyNumbers": [
+        103,
+        40
+      ],
+      "closedAt": "2026-10-21T22:31:46Z",
+      "updatedAt": "2026-10-21T22:31:46Z"
+    },
+    {
+      "number": 105,
+      "title": "[E03-04] Contribution and Effective Artisan Earnings Calculator",
+      "state": "OPEN",
+      "projectStatus": "Proposed",
+      "url": "https://github.com/wie-challenge/website/issues/105",
+      "dependencyNumbers": [
+        36
+      ],
+      "closedAt": null,
+      "updatedAt": "2026-10-15T16:59:19Z"
+    },
+    {
+      "number": 106,
+      "title": "[E03-05] Quote Revision Requests and Immutable Versions",
+      "state": "OPEN",
+      "projectStatus": "Proposed",
+      "url": "https://github.com/wie-challenge/website/issues/106",
+      "dependencyNumbers": [
+        37
+      ],
+      "closedAt": null,
+      "updatedAt": "2026-10-15T16:59:22Z"
+    },
+    {
+      "number": 107,
+      "title": "[E03-09] Contract Amendments and Reapproval Workflow",
+      "state": "OPEN",
+      "projectStatus": "Proposed",
+      "url": "https://github.com/wie-challenge/website/issues/107",
+      "dependencyNumbers": [
+        42
+      ],
+      "closedAt": null,
+      "updatedAt": "2026-10-15T16:59:26Z"
+    },
+    {
+      "number": 108,
+      "title": "[E03-11] Time Study Provenance and Rate Policy Snapshots",
+      "state": "OPEN",
+      "projectStatus": "Proposed",
+      "url": "https://github.com/wie-challenge/website/issues/108",
+      "dependencyNumbers": [
+        25,
+        36
+      ],
+      "closedAt": null,
+      "updatedAt": "2026-10-15T16:59:29Z"
+    },
+    {
+      "number": 109,
+      "title": "[E04-04] Association Registration and Verification Request",
+      "state": "OPEN",
+      "projectStatus": "Proposed",
+      "url": "https://github.com/wie-challenge/website/issues/109",
+      "dependencyNumbers": [
+        39
+      ],
+      "closedAt": null,
+      "updatedAt": "2026-10-15T16:59:33Z"
+    },
+    {
+      "number": 110,
+      "title": "[E04-05] Revocable Association Membership and Delegation",
+      "state": "OPEN",
+      "projectStatus": "Proposed",
+      "url": "https://github.com/wie-challenge/website/issues/110",
+      "dependencyNumbers": [
+        109,
+        84
+      ],
+      "closedAt": null,
+      "updatedAt": "2026-10-15T16:59:36Z"
+    },
+    {
+      "number": 111,
+      "title": "[E04-06] Craft, Equipment and Language Profile Preferences",
+      "state": "OPEN",
+      "projectStatus": "Proposed",
+      "url": "https://github.com/wie-challenge/website/issues/111",
+      "dependencyNumbers": [
+        84
+      ],
+      "closedAt": null,
+      "updatedAt": "2026-10-15T16:59:39Z"
+    },
+    {
+      "number": 112,
+      "title": "[E04-07] Quantity and Deadline Counteroffers",
+      "state": "OPEN",
+      "projectStatus": "Proposed",
+      "url": "https://github.com/wie-challenge/website/issues/112",
+      "dependencyNumbers": [
+        44
+      ],
+      "closedAt": null,
+      "updatedAt": "2026-10-15T16:59:42Z"
+    },
+    {
+      "number": 113,
+      "title": "[E04-08] Pause and Resume New Work Availability",
+      "state": "OPEN",
+      "projectStatus": "Proposed",
+      "url": "https://github.com/wie-challenge/website/issues/113",
+      "dependencyNumbers": [
+        34
+      ],
+      "closedAt": null,
+      "updatedAt": "2026-10-15T16:59:45Z"
+    },
+    {
+      "number": 114,
+      "title": "[E04-09] Delegation-Scoped Aggregate Association Capacity",
+      "state": "OPEN",
+      "projectStatus": "Proposed",
+      "url": "https://github.com/wie-challenge/website/issues/114",
+      "dependencyNumbers": [
+        110,
+        46
+      ],
+      "closedAt": null,
+      "updatedAt": "2026-10-15T16:59:50Z"
+    },
+    {
+      "number": 115,
+      "title": "[E05-02] Explainable Candidate Ranking and Weights",
+      "state": "OPEN",
+      "projectStatus": "Proposed",
+      "url": "https://github.com/wie-challenge/website/issues/115",
+      "dependencyNumbers": [
+        47
+      ],
+      "closedAt": null,
+      "updatedAt": "2026-10-15T16:59:56Z"
+    },
+    {
+      "number": 116,
+      "title": "[E05-05] Declined and Expired Offer Reallocation",
+      "state": "OPEN",
+      "projectStatus": "Proposed",
+      "url": "https://github.com/wie-challenge/website/issues/116",
+      "dependencyNumbers": [
+        45,
+        50
+      ],
+      "closedAt": null,
+      "updatedAt": "2026-10-15T16:59:59Z"
+    },
+    {
+      "number": 117,
+      "title": "[E05-06] Fair Offer Distribution Review",
+      "state": "OPEN",
+      "projectStatus": "Proposed",
+      "url": "https://github.com/wie-challenge/website/issues/117",
+      "dependencyNumbers": [
+        50
+      ],
+      "closedAt": null,
+      "updatedAt": "2026-10-15T17:00:02Z"
+    },
+    {
+      "number": 118,
+      "title": "[E05-07] Audited Human Override of Recommendations",
+      "state": "OPEN",
+      "projectStatus": "Proposed",
+      "url": "https://github.com/wie-challenge/website/issues/118",
+      "dependencyNumbers": [
+        115
+      ],
+      "closedAt": null,
+      "updatedAt": "2026-10-15T17:00:06Z"
+    },
+    {
+      "number": 119,
+      "title": "[E06-04] Production Dashboard with Distinct Fulfillment Quantities",
+      "state": "OPEN",
+      "projectStatus": "Proposed",
+      "url": "https://github.com/wie-challenge/website/issues/119",
+      "dependencyNumbers": [
+        54
+      ],
+      "closedAt": null,
+      "updatedAt": "2026-10-15T17:00:12Z"
+    },
+    {
+      "number": 120,
+      "title": "[E05-08] Joint Scheduling Across Multiple Orders",
+      "state": "OPEN",
+      "projectStatus": "Proposed",
+      "url": "https://github.com/wie-challenge/website/issues/120",
+      "dependencyNumbers": [
+        49,
+        119,
+        69
+      ],
+      "closedAt": null,
+      "updatedAt": "2026-10-15T17:00:15Z"
+    },
+    {
+      "number": 121,
+      "title": "[E06-05] Material Shortage and Production Exception Cases",
+      "state": "OPEN",
+      "projectStatus": "Proposed",
+      "url": "https://github.com/wie-challenge/website/issues/121",
+      "dependencyNumbers": [
+        52
+      ],
+      "closedAt": null,
+      "updatedAt": "2026-10-15T17:00:18Z"
+    },
+    {
+      "number": 122,
+      "title": "[E06-06] Disruption Rescheduling and Commitment Reapproval",
+      "state": "OPEN",
+      "projectStatus": "Proposed",
+      "url": "https://github.com/wie-challenge/website/issues/122",
+      "dependencyNumbers": [
+        121,
+        107
+      ],
+      "closedAt": null,
+      "updatedAt": "2026-10-15T17:00:22Z"
+    },
+    {
+      "number": 123,
+      "title": "[E06-07] Explainable Overdue and At-Risk Batch Alerts",
+      "state": "OPEN",
+      "projectStatus": "Proposed",
+      "url": "https://github.com/wie-challenge/website/issues/123",
+      "dependencyNumbers": [
+        119
+      ],
+      "closedAt": null,
+      "updatedAt": "2026-10-15T17:00:26Z"
+    },
+    {
+      "number": 124,
+      "title": "[E06-09] Delegated Progress Reporting for Offline Artisans",
+      "state": "OPEN",
+      "projectStatus": "Proposed",
+      "url": "https://github.com/wie-challenge/website/issues/124",
+      "dependencyNumbers": [
+        110,
+        54
+      ],
+      "closedAt": null,
+      "updatedAt": "2026-10-15T17:00:31Z"
+    },
+    {
+      "number": 125,
+      "title": "[E06-10] Optional Private Progress Evidence Uploads",
+      "state": "OPEN",
+      "projectStatus": "Proposed",
+      "url": "https://github.com/wie-challenge/website/issues/125",
+      "dependencyNumbers": [
+        54,
+        95
+      ],
+      "closedAt": null,
+      "updatedAt": "2026-10-15T17:00:35Z"
+    },
+    {
+      "number": 126,
+      "title": "[E06-11] Attributable Production and Handover Event Ledger",
+      "state": "OPEN",
+      "projectStatus": "Proposed",
+      "url": "https://github.com/wie-challenge/website/issues/126",
+      "dependencyNumbers": [
+        32
+      ],
+      "closedAt": null,
+      "updatedAt": "2026-10-15T17:00:38Z"
+    },
+    {
+      "number": 127,
+      "title": "[E07-05] Artisan Supply Receipt and Discrepancies",
+      "state": "OPEN",
+      "projectStatus": "Proposed",
+      "url": "https://github.com/wie-challenge/website/issues/127",
+      "dependencyNumbers": [
+        70
+      ],
+      "closedAt": null,
+      "updatedAt": "2026-10-15T17:00:41Z"
+    },
+    {
+      "number": 128,
+      "title": "[E07-07] Approved Supplier and Lead-Time Comparison",
+      "state": "OPEN",
+      "projectStatus": "Proposed",
+      "url": "https://github.com/wie-challenge/website/issues/128",
+      "dependencyNumbers": [
+        68
+      ],
+      "closedAt": null,
+      "updatedAt": "2026-10-15T17:00:45Z"
+    },
+    {
+      "number": 129,
+      "title": "[E08-04] Restricted Quality Evidence and Defect Codes",
+      "state": "OPEN",
+      "projectStatus": "Proposed",
+      "url": "https://github.com/wie-challenge/website/issues/129",
+      "dependencyNumbers": [
+        56,
+        95
+      ],
+      "closedAt": null,
+      "updatedAt": "2026-10-15T17:00:50Z"
+    },
+    {
+      "number": 130,
+      "title": "[E08-05] Artisan Rework Review and Fair-Term Acceptance",
+      "state": "OPEN",
+      "projectStatus": "Proposed",
+      "url": "https://github.com/wie-challenge/website/issues/130",
+      "dependencyNumbers": [
+        56
+      ],
+      "closedAt": null,
+      "updatedAt": "2026-10-15T17:00:54Z"
+    },
+    {
+      "number": 131,
+      "title": "[E08-06] Artisan Quality Rejection Appeals",
+      "state": "OPEN",
+      "projectStatus": "Proposed",
+      "url": "https://github.com/wie-challenge/website/issues/131",
+      "dependencyNumbers": [
+        56
+      ],
+      "closedAt": null,
+      "updatedAt": "2026-10-15T17:00:58Z"
+    },
+    {
+      "number": 132,
+      "title": "[E08-07] Approved Rework, Replacement and Quality Remedies",
+      "state": "OPEN",
+      "projectStatus": "Proposed",
+      "url": "https://github.com/wie-challenge/website/issues/132",
+      "dependencyNumbers": [
+        130,
+        131
+      ],
+      "closedAt": null,
+      "updatedAt": "2026-10-15T17:01:01Z"
+    },
+    {
+      "number": 133,
+      "title": "[E08-08] Aggregate Defect and Process Improvement Analysis",
+      "state": "OPEN",
+      "projectStatus": "Proposed",
+      "url": "https://github.com/wie-challenge/website/issues/133",
+      "dependencyNumbers": [
+        56
+      ],
+      "closedAt": null,
+      "updatedAt": "2026-10-15T17:01:06Z"
+    },
+    {
+      "number": 134,
+      "title": "[E08-09] Reinspection and Controlled Rejected-Unit Disposition",
+      "state": "OPEN",
+      "projectStatus": "Proposed",
+      "url": "https://github.com/wie-challenge/website/issues/134",
+      "dependencyNumbers": [
+        56
+      ],
+      "closedAt": null,
+      "updatedAt": "2026-10-15T17:01:10Z"
+    },
+    {
+      "number": 135,
+      "title": "[E09-02] Distinct Shipment, Delivery and Acceptance Milestones",
+      "state": "OPEN",
+      "projectStatus": "Proposed",
+      "url": "https://github.com/wie-challenge/website/issues/135",
+      "dependencyNumbers": [
+        58
+      ],
+      "closedAt": null,
+      "updatedAt": "2026-10-15T17:01:14Z"
+    },
+    {
+      "number": 136,
+      "title": "[E09-03] Group Pickup and Collection Scheduling",
+      "state": "OPEN",
+      "projectStatus": "Proposed",
+      "url": "https://github.com/wie-challenge/website/issues/136",
+      "dependencyNumbers": [
+        57
+      ],
+      "closedAt": null,
+      "updatedAt": "2026-10-15T17:01:19Z"
+    },
+    {
+      "number": 137,
+      "title": "[E09-06] Reviewed Privacy-Safe Batch QR Publication",
+      "state": "OPEN",
+      "projectStatus": "Proposed",
+      "url": "https://github.com/wie-challenge/website/issues/137",
+      "dependencyNumbers": [
+        57
+      ],
+      "closedAt": null,
+      "updatedAt": "2026-10-15T17:01:22Z"
+    },
+    {
+      "number": 138,
+      "title": "[E09-07] Versioned Buyer Shipment Manifest Downloads",
+      "state": "OPEN",
+      "projectStatus": "Proposed",
+      "url": "https://github.com/wie-challenge/website/issues/138",
+      "dependencyNumbers": [
+        60
+      ],
+      "closedAt": null,
+      "updatedAt": "2026-10-15T17:01:26Z"
+    },
+    {
+      "number": 139,
+      "title": "[E13-07] Auditable Aggregate Producer-Share Definition",
+      "state": "OPEN",
+      "projectStatus": "Proposed",
+      "url": "https://github.com/wie-challenge/website/issues/139",
+      "dependencyNumbers": [
+        36,
+        105
+      ],
+      "closedAt": null,
+      "updatedAt": "2026-10-15T17:01:29Z"
+    },
+    {
+      "number": 140,
+      "title": "[E09-08] Public Craft Story and Aggregate Producer Share Page",
+      "state": "OPEN",
+      "projectStatus": "Proposed",
+      "url": "https://github.com/wie-challenge/website/issues/140",
+      "dependencyNumbers": [
+        137,
+        139
+      ],
+      "closedAt": null,
+      "updatedAt": "2026-10-15T17:01:32Z"
+    },
+    {
+      "number": 141,
+      "title": "[E09-09] Traceability Review, Correction and Revocation",
+      "state": "OPEN",
+      "projectStatus": "Proposed",
+      "url": "https://github.com/wie-challenge/website/issues/141",
+      "dependencyNumbers": [
+        137
+      ],
+      "closedAt": null,
+      "updatedAt": "2026-10-15T17:01:39Z"
+    },
+    {
+      "number": 142,
+      "title": "[E10-01] Order Revenue, Cost and Contribution Dashboard",
+      "state": "OPEN",
+      "projectStatus": "Proposed",
+      "url": "https://github.com/wie-challenge/website/issues/142",
+      "dependencyNumbers": [
+        36,
+        105
+      ],
+      "closedAt": null,
+      "updatedAt": "2026-10-15T17:01:44Z"
+    },
+    {
+      "number": 143,
+      "title": "[E10-02] Artisan Compensation Statement and Payment Status",
+      "state": "OPEN",
+      "projectStatus": "Proposed",
+      "url": "https://github.com/wie-challenge/website/issues/143",
+      "dependencyNumbers": [
+        45
+      ],
+      "closedAt": null,
+      "updatedAt": "2026-10-15T17:01:47Z"
+    },
+    {
+      "number": 144,
+      "title": "[E10-03] Isolated Simulated Payment Milestones",
+      "state": "OPEN",
+      "projectStatus": "Proposed",
+      "url": "https://github.com/wie-challenge/website/issues/144",
+      "dependencyNumbers": [
+        32
+      ],
+      "closedAt": null,
+      "updatedAt": "2026-10-15T17:01:51Z"
+    },
+    {
+      "number": 145,
+      "title": "[E10-09] Artisan Payment Disputes and Response Tracking",
+      "state": "OPEN",
+      "projectStatus": "Proposed",
+      "url": "https://github.com/wie-challenge/website/issues/145",
+      "dependencyNumbers": [
+        143,
+        61
+      ],
+      "closedAt": null,
+      "updatedAt": "2026-10-15T17:01:53Z"
+    },
+    {
+      "number": 146,
+      "title": "[E10-11] Reconciled Accounting Transaction Export",
+      "state": "OPEN",
+      "projectStatus": "Proposed",
+      "url": "https://github.com/wie-challenge/website/issues/146",
+      "dependencyNumbers": [
+        65,
+        66,
+        63
+      ],
+      "closedAt": null,
+      "updatedAt": "2026-10-15T17:01:57Z"
+    },
+    {
+      "number": 147,
+      "title": "[E10-12] Approved Payment Provider Integration",
+      "state": "OPEN",
+      "projectStatus": "Proposed",
+      "url": "https://github.com/wie-challenge/website/issues/147",
+      "dependencyNumbers": [
+        63,
+        75,
+        76
+      ],
+      "closedAt": null,
+      "updatedAt": "2026-10-15T17:01:59Z"
+    },
+    {
+      "number": 148,
+      "title": "[E10-13] Contract-Based Payment Timeliness Metrics",
+      "state": "OPEN",
+      "projectStatus": "Proposed",
+      "url": "https://github.com/wie-challenge/website/issues/148",
+      "dependencyNumbers": [
+        61,
+        63
+      ],
+      "closedAt": null,
+      "updatedAt": "2026-10-15T17:02:04Z"
+    },
+    {
+      "number": 149,
+      "title": "[E11-01] Recommendation Explanations from Recorded Evidence",
+      "state": "OPEN",
+      "projectStatus": "Proposed",
+      "url": "https://github.com/wie-challenge/website/issues/149",
+      "dependencyNumbers": [
+        115
+      ],
+      "closedAt": null,
+      "updatedAt": "2026-10-15T17:02:08Z"
+    },
+    {
+      "number": 150,
+      "title": "[E11-02] Editable Pricing Suggestions and Assumption Disclosure",
+      "state": "OPEN",
+      "projectStatus": "Proposed",
+      "url": "https://github.com/wie-challenge/website/issues/150",
+      "dependencyNumbers": [
+        36,
+        105
+      ],
+      "closedAt": null,
+      "updatedAt": "2026-10-15T17:02:11Z"
+    },
+    {
+      "number": 151,
+      "title": "[E11-03] Deterministic Delivery Capacity Scenario Comparison",
+      "state": "OPEN",
+      "projectStatus": "Proposed",
+      "url": "https://github.com/wie-challenge/website/issues/151",
+      "dependencyNumbers": [
+        35,
+        48
+      ],
+      "closedAt": null,
+      "updatedAt": "2026-10-15T17:02:16Z"
+    },
+    {
+      "number": 152,
+      "title": "[E11-04] Explainable Production Delay Risk Indicators",
+      "state": "OPEN",
+      "projectStatus": "Proposed",
+      "url": "https://github.com/wie-challenge/website/issues/152",
+      "dependencyNumbers": [
+        123,
+        126
+      ],
+      "closedAt": null,
+      "updatedAt": "2026-10-15T17:02:21Z"
+    },
+    {
+      "number": 153,
+      "title": "[E11-05] Forecast Versus Observed Completion Evaluation",
+      "state": "OPEN",
+      "projectStatus": "Proposed",
+      "url": "https://github.com/wie-challenge/website/issues/153",
+      "dependencyNumbers": [
+        126,
+        151
+      ],
+      "closedAt": null,
+      "updatedAt": "2026-10-15T17:02:26Z"
+    },
+    {
+      "number": 154,
+      "title": "[E11-06] Privacy-Scoped Ranking and Override Audits",
+      "state": "OPEN",
+      "projectStatus": "Proposed",
+      "url": "https://github.com/wie-challenge/website/issues/154",
+      "dependencyNumbers": [
+        117,
+        118
+      ],
+      "closedAt": null,
+      "updatedAt": "2026-10-15T17:02:29Z"
+    },
+    {
+      "number": 155,
+      "title": "[E11-07] Human-Reviewed Image-Assisted Defect Suggestions",
+      "state": "OPEN",
+      "projectStatus": "Proposed",
+      "url": "https://github.com/wie-challenge/website/issues/155",
+      "dependencyNumbers": [
+        129,
+        133
+      ],
+      "closedAt": null,
+      "updatedAt": "2026-10-15T17:02:33Z"
+    },
+    {
+      "number": 156,
+      "title": "[E11-08] Validated Production-Time Prediction Model",
+      "state": "OPEN",
+      "projectStatus": "Proposed",
+      "url": "https://github.com/wie-challenge/website/issues/156",
+      "dependencyNumbers": [
+        153,
+        25
+      ],
+      "closedAt": null,
+      "updatedAt": "2026-10-15T17:02:37Z"
+    },
+    {
+      "number": 157,
+      "title": "[E12-01] Voluntary Wearable Enrollment and Independent Work Access",
+      "state": "OPEN",
+      "projectStatus": "Proposed",
+      "url": "https://github.com/wie-challenge/website/issues/157",
+      "dependencyNumbers": [
+        30
+      ],
+      "closedAt": null,
+      "updatedAt": "2026-10-15T17:02:40Z"
+    },
+    {
+      "number": 158,
+      "title": "[E12-02] Reproducible Repetitive-Motion Simulator",
+      "state": "OPEN",
+      "projectStatus": "Proposed",
+      "url": "https://github.com/wie-challenge/website/issues/158",
+      "dependencyNumbers": [
+        30
+      ],
+      "closedAt": null,
+      "updatedAt": "2026-10-15T17:02:45Z"
+    },
+    {
+      "number": 159,
+      "title": "[E12-03] Local Reminder Threshold and Comfort Settings",
+      "state": "OPEN",
+      "projectStatus": "Proposed",
+      "url": "https://github.com/wie-challenge/website/issues/159",
+      "dependencyNumbers": [
+        158
+      ],
+      "closedAt": null,
+      "updatedAt": "2026-10-15T17:02:48Z"
+    },
+    {
+      "number": 160,
+      "title": "[E12-04] Participant-Only Local Activity Summary View",
+      "state": "OPEN",
+      "projectStatus": "Proposed",
+      "url": "https://github.com/wie-challenge/website/issues/160",
+      "dependencyNumbers": [
+        158
+      ],
+      "closedAt": null,
+      "updatedAt": "2026-10-15T17:02:55Z"
+    },
+    {
+      "number": 161,
+      "title": "[E12-05] Stop Monitoring and Delete Local Data",
+      "state": "OPEN",
+      "projectStatus": "Proposed",
+      "url": "https://github.com/wie-challenge/website/issues/161",
+      "dependencyNumbers": [
+        158
+      ],
+      "closedAt": null,
+      "updatedAt": "2026-10-15T17:02:59Z"
+    },
+    {
+      "number": 162,
+      "title": "[E12-11] ESP32 IMU Sampling and Invalid-Reading Recovery",
+      "state": "OPEN",
+      "projectStatus": "Proposed",
+      "url": "https://github.com/wie-challenge/website/issues/162",
+      "dependencyNumbers": [
+        81
+      ],
+      "closedAt": null,
+      "updatedAt": "2026-10-15T17:03:03Z"
+    },
+    {
+      "number": 163,
+      "title": "[E12-13] Configurable Activity Threshold and Rest State Machine",
+      "state": "OPEN",
+      "projectStatus": "Proposed",
+      "url": "https://github.com/wie-challenge/website/issues/163",
+      "dependencyNumbers": [
+        162
+      ],
+      "closedAt": null,
+      "updatedAt": "2026-10-15T17:03:07Z"
+    },
+    {
+      "number": 164,
+      "title": "[E12-12] Controllable Physical Vibration Reminders",
+      "state": "OPEN",
+      "projectStatus": "Proposed",
+      "url": "https://github.com/wie-challenge/website/issues/164",
+      "dependencyNumbers": [
+        162,
+        163
+      ],
+      "closedAt": null,
+      "updatedAt": "2026-10-15T17:03:11Z"
+    },
+    {
+      "number": 165,
+      "title": "[E12-06] Integrated Physical IMU and Vibration Prototype",
+      "state": "OPEN",
+      "projectStatus": "Proposed",
+      "url": "https://github.com/wie-challenge/website/issues/165",
+      "dependencyNumbers": [
+        81,
+        162,
+        164,
+        163
+      ],
+      "closedAt": null,
+      "updatedAt": "2026-10-15T17:03:16Z"
+    },
+    {
+      "number": 166,
+      "title": "[E12-07] Controlled False-Reminder and Missed-Reminder Evaluation",
+      "state": "OPEN",
+      "projectStatus": "Proposed",
+      "url": "https://github.com/wie-challenge/website/issues/166",
+      "dependencyNumbers": [
+        165
+      ],
+      "closedAt": null,
+      "updatedAt": "2026-10-15T17:03:21Z"
+    },
+    {
+      "number": 167,
+      "title": "[E12-08] Accessible Non-Diagnostic Ergonomic Guidance",
+      "state": "OPEN",
+      "projectStatus": "Proposed",
+      "url": "https://github.com/wie-challenge/website/issues/167",
+      "dependencyNumbers": [
+        22,
+        157
+      ],
+      "closedAt": null,
+      "updatedAt": "2026-10-15T17:03:24Z"
+    },
+    {
+      "number": 168,
+      "title": "[E12-09] Technical Separation of Safety and Commerce Data",
+      "state": "OPEN",
+      "projectStatus": "Proposed",
+      "url": "https://github.com/wie-challenge/website/issues/168",
+      "dependencyNumbers": [
+        46,
+        158
+      ],
+      "closedAt": null,
+      "updatedAt": "2026-10-15T17:03:28Z"
+    },
+    {
+      "number": 169,
+      "title": "[E12-10] Supervised Wearable Usefulness Study Protocol",
+      "state": "OPEN",
+      "projectStatus": "Proposed",
+      "url": "https://github.com/wie-challenge/website/issues/169",
+      "dependencyNumbers": [
+        166,
+        29
+      ],
+      "closedAt": null,
+      "updatedAt": "2026-10-15T17:03:31Z"
+    },
+    {
+      "number": 170,
+      "title": "[E12-14] Private Local Weekly Device Summary",
+      "state": "OPEN",
+      "projectStatus": "Proposed",
+      "url": "https://github.com/wie-challenge/website/issues/170",
+      "dependencyNumbers": [
+        163
+      ],
+      "closedAt": null,
+      "updatedAt": "2026-10-15T17:03:34Z"
+    },
+    {
+      "number": 171,
+      "title": "[E12-15] Wearable Network and API Non-Upload Verification",
+      "state": "OPEN",
+      "projectStatus": "Proposed",
+      "url": "https://github.com/wie-challenge/website/issues/171",
+      "dependencyNumbers": [
+        162,
+        170,
+        168
+      ],
+      "closedAt": null,
+      "updatedAt": "2026-10-15T17:03:41Z"
+    },
+    {
+      "number": 172,
+      "title": "[E12-16] Optional Local Tunisian-Arabic Voice Prompts",
+      "state": "OPEN",
+      "projectStatus": "Proposed",
+      "url": "https://github.com/wie-challenge/website/issues/172",
+      "dependencyNumbers": [
+        164,
+        163
+      ],
+      "closedAt": null,
+      "updatedAt": "2026-10-15T17:03:45Z"
+    },
+    {
+      "number": 173,
+      "title": "[E13-02] Defined Payment, Fulfillment and Cost Metrics",
+      "state": "OPEN",
+      "projectStatus": "Proposed",
+      "url": "https://github.com/wie-challenge/website/issues/173",
+      "dependencyNumbers": [
+        119,
+        142
+      ],
+      "closedAt": null,
+      "updatedAt": "2026-10-15T17:03:58Z"
+    },
+    {
+      "number": 174,
+      "title": "[E13-01] Clearly Labeled Demonstration Impact Dashboard",
+      "state": "OPEN",
+      "projectStatus": "Proposed",
+      "url": "https://github.com/wie-challenge/website/issues/174",
+      "dependencyNumbers": [
+        173,
+        139
+      ],
+      "closedAt": null,
+      "updatedAt": "2026-10-15T17:04:01Z"
+    },
+    {
+      "number": 175,
+      "title": "[E13-03] Actual Paid Artisan Participation Metrics",
+      "state": "OPEN",
+      "projectStatus": "Proposed",
+      "url": "https://github.com/wie-challenge/website/issues/175",
+      "dependencyNumbers": [
+        63,
+        148
+      ],
+      "closedAt": null,
+      "updatedAt": "2026-10-15T17:04:04Z"
+    },
+    {
+      "number": 176,
+      "title": "[E13-04] Effective Earnings and Observed Hours Reporting",
+      "state": "OPEN",
+      "projectStatus": "Proposed",
+      "url": "https://github.com/wie-challenge/website/issues/176",
+      "dependencyNumbers": [
+        25,
+        63
+      ],
+      "closedAt": null,
+      "updatedAt": "2026-10-15T17:04:08Z"
+    },
+    {
+      "number": 177,
+      "title": "[E13-05] Privacy-Safe Association Outcome Aggregates",
+      "state": "OPEN",
+      "projectStatus": "Proposed",
+      "url": "https://github.com/wie-challenge/website/issues/177",
+      "dependencyNumbers": [
+        110,
+        175
+      ],
+      "closedAt": null,
+      "updatedAt": "2026-10-15T17:04:12Z"
+    },
+    {
+      "number": 178,
+      "title": "[E13-06] Comparable Regional and Craft Performance Analysis",
+      "state": "OPEN",
+      "projectStatus": "Proposed",
+      "url": "https://github.com/wie-challenge/website/issues/178",
+      "dependencyNumbers": [
+        173,
+        175
+      ],
+      "closedAt": null,
+      "updatedAt": "2026-10-15T17:04:16Z"
+    },
+    {
+      "number": 179,
+      "title": "[E14-01] Partner Organization Approval and Review History",
+      "state": "OPEN",
+      "projectStatus": "Proposed",
+      "url": "https://github.com/wie-challenge/website/issues/179",
+      "dependencyNumbers": [
+        39
+      ],
+      "closedAt": null,
+      "updatedAt": "2026-10-15T17:04:20Z"
+    },
+    {
+      "number": 180,
+      "title": "[E14-02] Least-Privilege Permission Administration",
+      "state": "CLOSED",
+      "projectStatus": "Done",
+      "url": "https://github.com/wie-challenge/website/issues/180",
+      "dependencyNumbers": [
+        39
+      ],
+      "closedAt": "2026-10-19T14:11:11Z",
+      "updatedAt": "2026-10-19T14:11:11Z"
+    },
+    {
+      "number": 181,
+      "title": "[E14-03] Complaint and Dispute Case Management",
+      "state": "OPEN",
+      "projectStatus": "Proposed",
+      "url": "https://github.com/wie-challenge/website/issues/181",
+      "dependencyNumbers": [
+        39
+      ],
+      "closedAt": null,
+      "updatedAt": "2026-10-15T17:04:30Z"
+    },
+    {
+      "number": 182,
+      "title": "[E14-04] Data Correction, Export and Deletion Requests",
+      "state": "OPEN",
+      "projectStatus": "Proposed",
+      "url": "https://github.com/wie-challenge/website/issues/182",
+      "dependencyNumbers": [
+        29,
+        74
+      ],
+      "closedAt": null,
+      "updatedAt": "2026-10-15T17:04:34Z"
+    },
+    {
+      "number": 183,
+      "title": "[E14-05] Attributable Critical Action Audit History",
+      "state": "CLOSED",
+      "projectStatus": "Done",
+      "url": "https://github.com/wie-challenge/website/issues/183",
+      "dependencyNumbers": [
+        76
+      ],
+      "closedAt": "2026-10-19T14:11:26Z",
+      "updatedAt": "2026-10-19T14:11:26Z"
+    },
+    {
+      "number": 184,
+      "title": "[E14-06] Consented Localized Participant Notifications",
+      "state": "OPEN",
+      "projectStatus": "Proposed",
+      "url": "https://github.com/wie-challenge/website/issues/184",
+      "dependencyNumbers": [
+        84,
+        181
+      ],
+      "closedAt": null,
+      "updatedAt": "2026-10-15T17:04:41Z"
+    },
+    {
+      "number": 185,
+      "title": "[E14-07] Account Access and Session Revocation",
+      "state": "OPEN",
+      "projectStatus": "Proposed",
+      "url": "https://github.com/wie-challenge/website/issues/185",
+      "dependencyNumbers": [
+        38,
+        180
+      ],
+      "closedAt": null,
+      "updatedAt": "2026-10-15T17:04:45Z"
+    },
+    {
+      "number": 186,
+      "title": "[E14-08] Versioned Regional Hub and Craft Configuration",
+      "state": "OPEN",
+      "projectStatus": "Proposed",
+      "url": "https://github.com/wie-challenge/website/issues/186",
+      "dependencyNumbers": [
+        180,
+        103
+      ],
+      "closedAt": null,
+      "updatedAt": "2026-10-15T17:04:49Z"
+    },
+    {
+      "number": 187,
+      "title": "[E15-01] Evidence-Labeled HirfaCare Concept Landing Page",
+      "state": "CLOSED",
+      "projectStatus": "Done",
+      "url": "https://github.com/wie-challenge/website/issues/187",
+      "dependencyNumbers": [
+        30
+      ],
+      "closedAt": "2026-10-26T17:10:10Z",
+      "updatedAt": "2026-10-26T17:10:10Z"
+    },
+    {
+      "number": 188,
+      "title": "[E15-02] Shared Cross-Role Simulated Order Journey",
+      "state": "OPEN",
+      "projectStatus": "Proposed",
+      "url": "https://github.com/wie-challenge/website/issues/188",
+      "dependencyNumbers": [
+        82,
+        33,
+        37,
+        45,
+        54
+      ],
+      "closedAt": null,
+      "updatedAt": "2026-10-15T17:05:02Z"
+    },
+    {
+      "number": 189,
+      "title": "[E15-03] Accessible Full-Screen Pitch and Presentation Mode",
+      "state": "OPEN",
+      "projectStatus": "Proposed",
+      "url": "https://github.com/wie-challenge/website/issues/189",
+      "dependencyNumbers": [
+        187
+      ],
+      "closedAt": null,
+      "updatedAt": "2026-10-15T17:05:08Z"
+    },
+    {
+      "number": 190,
+      "title": "[E15-04] Deterministic Isolated Demo Reset",
+      "state": "OPEN",
+      "projectStatus": "Ready",
+      "url": "https://github.com/wie-challenge/website/issues/190",
+      "dependencyNumbers": [
+        30
+      ],
+      "closedAt": null,
+      "updatedAt": "2026-10-19T18:21:03Z"
+    },
+    {
+      "number": 191,
+      "title": "[E15-05] Financial Assumption and Scenario Comparison Controls",
+      "state": "OPEN",
+      "projectStatus": "Proposed",
+      "url": "https://github.com/wie-challenge/website/issues/191",
+      "dependencyNumbers": [
+        36,
+        105
+      ],
+      "closedAt": null,
+      "updatedAt": "2026-10-15T17:05:16Z"
+    },
+    {
+      "number": 192,
+      "title": "[E15-06] Persistent Structured Team Feedback",
+      "state": "OPEN",
+      "projectStatus": "Proposed",
+      "url": "https://github.com/wie-challenge/website/issues/192",
+      "dependencyNumbers": [
+        38,
+        78
+      ],
+      "closedAt": null,
+      "updatedAt": "2026-10-15T17:05:21Z"
+    },
+    {
+      "number": 193,
+      "title": "[E15-07] Consistent Proposed, Synthetic and Verified Evidence Labels",
+      "state": "OPEN",
+      "projectStatus": "Ready",
+      "url": "https://github.com/wie-challenge/website/issues/193",
+      "dependencyNumbers": [
+        30
+      ],
+      "closedAt": null,
+      "updatedAt": "2026-10-20T08:59:43Z"
+    },
+    {
+      "number": 194,
+      "title": "[E16-03] Seeded End-to-End Business and Failure Regression Suite",
+      "state": "CLOSED",
+      "projectStatus": "Done",
+      "url": "https://github.com/wie-challenge/website/issues/194",
+      "dependencyNumbers": [
+        188,
+        190,
+        56,
+        58,
+        144
+      ],
+      "closedAt": "2026-10-20T18:59:59Z",
+      "updatedAt": "2026-10-20T18:59:59Z"
+    },
+    {
+      "number": 195,
+      "title": "[E16-04] Reproducible Setup, API and Firmware Documentation",
+      "state": "CLOSED",
+      "projectStatus": "Done",
+      "url": "https://github.com/wie-challenge/website/issues/195",
+      "dependencyNumbers": [
+        30
+      ],
+      "closedAt": "2026-10-20T10:30:19Z",
+      "updatedAt": "2026-10-20T10:30:19Z"
+    },
+    {
+      "number": 196,
+      "title": "[E16-10] Observable Background Jobs and Analytics ETL",
+      "state": "CLOSED",
+      "projectStatus": "Done",
+      "url": "https://github.com/wie-challenge/website/issues/196",
+      "dependencyNumbers": [
+        75,
+        76,
+        173
+      ],
+      "closedAt": "2026-10-20T18:59:55Z",
+      "updatedAt": "2026-10-20T18:59:55Z"
+    },
+    {
+      "number": 197,
+      "title": "[E16-12] Firmware, Local Summary and Privacy Test Matrix",
+      "state": "OPEN",
+      "projectStatus": "In Progress",
+      "url": "https://github.com/wie-challenge/website/issues/197",
+      "dependencyNumbers": [
+        162,
+        163,
+        164,
+        170,
+        171
+      ],
+      "closedAt": null,
+      "updatedAt": "2026-10-15T17:05:42Z"
+    },
+    {
+      "number": 198,
+      "title": "[E17-01] Team Eligibility and Primary Track Evidence",
+      "state": "OPEN",
+      "projectStatus": "Proposed",
+      "url": "https://github.com/wie-challenge/website/issues/198",
+      "dependencyNumbers": [
+        81
+      ],
+      "closedAt": null,
+      "updatedAt": "2026-10-15T17:05:46Z"
+    },
+    {
+      "number": 199,
+      "title": "[E17-02] Phase 1 Technical Report and Evidence References",
+      "state": "OPEN",
+      "projectStatus": "Proposed",
+      "url": "https://github.com/wie-challenge/website/issues/199",
+      "dependencyNumbers": [
+        22,
+        25,
+        23,
+        193
+      ],
+      "closedAt": null,
+      "updatedAt": "2026-10-15T17:05:52Z"
+    },
+    {
+      "number": 200,
+      "title": "[E17-03] Anonymous Three-Minute Phase 1 Progress Video",
+      "state": "OPEN",
+      "projectStatus": "Proposed",
+      "url": "https://github.com/wie-challenge/website/issues/200",
+      "dependencyNumbers": [
+        187,
+        193
+      ],
+      "closedAt": null,
+      "updatedAt": "2026-10-15T17:05:57Z"
+    },
+    {
+      "number": 201,
+      "title": "[E17-04] Phase 2 Deployment and Reproducibility Evidence Pack",
+      "state": "OPEN",
+      "projectStatus": "Proposed",
+      "url": "https://github.com/wie-challenge/website/issues/201",
+      "dependencyNumbers": [
+        194,
+        195,
+        79,
+        197
+      ],
+      "closedAt": null,
+      "updatedAt": "2026-10-15T17:06:01Z"
+    },
+    {
+      "number": 202,
+      "title": "[E17-05] Four-Minute Pitch PDF and Two-Minute Demo Video",
+      "state": "OPEN",
+      "projectStatus": "Proposed",
+      "url": "https://github.com/wie-challenge/website/issues/202",
+      "dependencyNumbers": [
+        201,
+        189
+      ],
+      "closedAt": null,
+      "updatedAt": "2026-10-15T17:06:04Z"
+    },
+    {
+      "number": 203,
+      "title": "[E17-06] Final Submission Artifact and Compliance Review",
+      "state": "OPEN",
+      "projectStatus": "Proposed",
+      "url": "https://github.com/wie-challenge/website/issues/203",
+      "dependencyNumbers": [
+        198,
+        199,
+        200,
+        202
+      ],
+      "closedAt": null,
+      "updatedAt": "2026-10-15T17:06:08Z"
+    },
+    {
+      "number": 204,
+      "title": "[E18-01] Qualified B2B Prospect and Follow-Up Pipeline",
+      "state": "OPEN",
+      "projectStatus": "Proposed",
+      "url": "https://github.com/wie-challenge/website/issues/204",
+      "dependencyNumbers": [
+        23,
+        39
+      ],
+      "closedAt": null,
+      "updatedAt": "2026-10-15T17:06:12Z"
+    },
+    {
+      "number": 205,
+      "title": "[E18-02] Pilot Sample Proposals and Win-Loss Learning",
+      "state": "OPEN",
+      "projectStatus": "Proposed",
+      "url": "https://github.com/wie-challenge/website/issues/205",
+      "dependencyNumbers": [
+        204,
+        98
+      ],
+      "closedAt": null,
+      "updatedAt": "2026-10-15T17:06:16Z"
+    },
+    {
+      "number": 206,
+      "title": "[E18-03] Actual Contribution and Working-Capital Review",
+      "state": "OPEN",
+      "projectStatus": "Proposed",
+      "url": "https://github.com/wie-challenge/website/issues/206",
+      "dependencyNumbers": [
+        142,
+        66,
+        63
+      ],
+      "closedAt": null,
+      "updatedAt": "2026-10-15T17:06:22Z"
+    },
+    {
+      "number": 207,
+      "title": "[E18-04] Recurring Buyer Agreements and Replenishment Planning",
+      "state": "OPEN",
+      "projectStatus": "Proposed",
+      "url": "https://github.com/wie-challenge/website/issues/207",
+      "dependencyNumbers": [
+        104,
+        42,
+        103
+      ],
+      "closedAt": null,
+      "updatedAt": "2026-10-15T17:06:27Z"
+    },
+    {
+      "number": 208,
+      "title": "[E18-05] Segment Acquisition and Retention Economics",
+      "state": "OPEN",
+      "projectStatus": "Proposed",
+      "url": "https://github.com/wie-challenge/website/issues/208",
+      "dependencyNumbers": [
+        204,
+        66,
+        206
+      ],
+      "closedAt": null,
+      "updatedAt": "2026-10-15T17:06:31Z"
+    },
+    {
+      "number": 209,
+      "title": "[E18-06] Buyer Satisfaction and Claims Resolution History",
+      "state": "OPEN",
+      "projectStatus": "Proposed",
+      "url": "https://github.com/wie-challenge/website/issues/209",
+      "dependencyNumbers": [
+        60,
+        181
+      ],
+      "closedAt": null,
+      "updatedAt": "2026-10-15T17:06:36Z"
+    },
+    {
+      "number": 210,
+      "title": "[E19-02] Consented Craft and Ergonomic Training Sessions",
+      "state": "OPEN",
+      "projectStatus": "Proposed",
+      "url": "https://github.com/wie-challenge/website/issues/210",
+      "dependencyNumbers": [
+        92,
+        167
+      ],
+      "closedAt": null,
+      "updatedAt": "2026-10-15T17:06:40Z"
+    },
+    {
+      "number": 211,
+      "title": "[E19-03] Voluntary Private Training and Support Requests",
+      "state": "OPEN",
+      "projectStatus": "Proposed",
+      "url": "https://github.com/wie-challenge/website/issues/211",
+      "dependencyNumbers": [
+        84,
+        181
+      ],
+      "closedAt": null,
+      "updatedAt": "2026-10-15T17:06:43Z"
+    },
+    {
+      "number": 212,
+      "title": "[E19-04] Low-End Device and Assisted-Use Accessibility Research",
+      "state": "OPEN",
+      "projectStatus": "Proposed",
+      "url": "https://github.com/wie-challenge/website/issues/212",
+      "dependencyNumbers": [
+        89,
+        88
+      ],
+      "closedAt": null,
+      "updatedAt": "2026-10-15T17:06:47Z"
+    },
+    {
+      "number": 213,
+      "title": "[E20-05] Design Ownership, Reuse and Publication Permissions",
+      "state": "OPEN",
+      "projectStatus": "Proposed",
+      "url": "https://github.com/wie-challenge/website/issues/213",
+      "dependencyNumbers": [
+        91,
+        27
+      ],
+      "closedAt": null,
+      "updatedAt": "2026-10-15T17:06:55Z"
+    }
+  ],
+  "completionRecommendationBasis": "Shared organization schemas, organization service/UI, approval-scoped procurement and existing authorization/onboarding scenarios in main; acceptance review remains required.",
+  "implementedAlreadyClosedStories": [
+    30,
+    31,
+    32,
+    33,
+    38,
+    39,
+    75,
+    76,
+    77,
+    78,
+    79,
+    84,
+    86,
+    87,
+    88,
+    95,
+    96,
+    97,
+    100,
+    101,
+    102,
+    104,
+    180,
+    183,
+    194,
+    195,
+    196
+  ]
+}

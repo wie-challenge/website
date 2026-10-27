@@ -91,6 +91,12 @@ export const dashboardActions: Record<
       description: 'Explore craft categories and example products for your next request.',
     },
     {
+      href: '/directory',
+      label: 'Production directory',
+      icon: 'artisan',
+      description: 'Search privacy-safe declared capacity by craft, region and period.',
+    },
+    {
       href: '/procurement/documents',
       label: 'Procurement documents',
       icon: 'audit',
@@ -110,6 +116,36 @@ export const dashboardActions: Record<
     },
   ],
   association: [
+    {
+      href: '/association/materials',
+      label: 'Materials and receipts',
+      icon: 'artisan',
+      description: 'Review assigned materials and report receipt discrepancies.',
+    },
+    {
+      href: '/directory',
+      label: 'Production directory',
+      icon: 'artisan',
+      description: 'Review your group capacity and search other declared production periods.',
+    },
+    {
+      href: '/association/pickups',
+      label: 'Assigned pickups',
+      icon: 'artisan',
+      description: 'See collection windows and record handover for your association.',
+    },
+    {
+      href: '/association/production',
+      label: 'Assigned production work',
+      icon: 'artisan',
+      description: 'Record progress for assigned artisans without accepting work for them.',
+    },
+    {
+      href: '/association/offers',
+      label: 'Assigned production offers',
+      icon: 'artisan',
+      description: 'Explain issued work and record a reported decision for an assigned artisan.',
+    },
     {
       href: '/association/artisans',
       label: 'Assigned artisan registry',
@@ -137,10 +173,28 @@ export const dashboardActions: Record<
   ],
   operator: [
     {
+      href: '/operator/inventory',
+      label: 'Materials inventory',
+      icon: 'organization',
+      description: 'Manage scoped material lots, reservations and custody.',
+    },
+    {
+      href: '/operator/finance',
+      label: 'Finance and closure',
+      icon: 'audit',
+      description: 'Review deposits, payout approvals, disputes and closure blockers.',
+    },
+    {
       href: '/procurement',
       label: 'Procurement requests',
       icon: 'organization',
       description: 'Review assigned buyer requests, clarify specifications and prepare quotations.',
+    },
+    {
+      href: '/directory',
+      label: 'Production directory',
+      icon: 'artisan',
+      description: 'Search privacy-safe declared capacity by craft, region and period.',
     },
     {
       href: '/operator/activity',
@@ -193,7 +247,11 @@ export function workspaceNavigation(
     items: [
       { href: '/settings/organizations', label: 'Organizations', icon: 'organization' },
       ...(context?.linkedArtisanProfileId
-        ? [{ href: '/artisan/profile', label: 'Your artisan profile', icon: 'artisan' as const }]
+        ? [
+            { href: '/artisan/profile', label: 'Your artisan profile', icon: 'artisan' as const },
+            { href: '/artisan/materials', label: 'Your materials', icon: 'artisan' as const },
+            { href: '/artisan/compensation', label: 'Your compensation', icon: 'audit' as const },
+          ]
         : []),
       { href: '/settings/profile', label: 'Your account', icon: 'users' },
       { href: '/settings/security', label: 'Security', icon: 'privacy' },

@@ -1,0 +1,36 @@
+{
+  "applied": false,
+  "repository": "wie-challenge/website",
+  "proposals": [
+    {
+      "issueNumber": 3,
+      "url": "https://github.com/wie-challenge/website/issues/3",
+      "kind": "synchronize_existing_closed_child_links",
+      "expectedState": "CLOSED",
+      "expectedUpdatedAt": "2026-10-21T23:31:54Z",
+      "originalBody": "<!-- hirfacare-backlog:E02 -->\n\nParent epic for **Buyer procurement & RFQ**.\n\n**Owner role:** Frontend/Backend  \n**Status:** Proposed  \n**Stories:** 9  \n**Provisional story points:** 31\n\nAll child stories preserve the detailed backlog acceptance criteria, technical deliverables and verification evidence. Estimates and assignees remain unconfirmed. Synthetic transactions and individual wearable data remain separate from live commerce.\n\n### User stories\n\n\n- [ ] [E02-01 — Buyer Craft and Example Product Catalog](https://github.com/wie-challenge/website/issues/31)\n- [ ] [E02-02 — RFQ Draft Creation, Validation and Submission](https://github.com/wie-challenge/website/issues/33)\n- [ ] [E02-03 — RFQ Design Reference Attachments](https://github.com/wie-challenge/website/issues/95)\n- [ ] [E02-04 — RFQ Status and Attributable Activity Timeline](https://github.com/wie-challenge/website/issues/96)\n- [ ] [E02-05 — RFQ Revisions and Feasibility Clarifications](https://github.com/wie-challenge/website/issues/97)\n- [ ] [E02-06 — Buyer Sample Review and Preproduction Approval](https://github.com/wie-challenge/website/issues/100)\n- [ ] [E02-07 — Permission-Scoped Order Discussions](https://github.com/wie-challenge/website/issues/101)\n- [ ] [E02-08 — Buyer Procurement Document Center](https://github.com/wie-challenge/website/issues/102)\n- [ ] [E02-09 — Reorder from an Approved Product](https://github.com/wie-challenge/website/issues/104)\n\n### Epic completion criteria\n\n- [ ] Every child story has acceptance evidence and review.\n- [ ] Relevant release gates, permissions and domain invariants are verified.\n- [ ] Synthetic, observed and verified results are clearly identified.",
+      "proposedBody": "<!-- hirfacare-backlog:E02 -->\n\nParent epic for **Buyer procurement & RFQ**.\n\n**Owner role:** Frontend/Backend  \n**Status:** Done — accepted local synthetic delivery  \n**Stories:** 9  \n**Provisional story points:** 31\n\nAll child stories preserve the detailed backlog acceptance criteria, technical deliverables and verification evidence. Estimates and assignees remain unconfirmed. Synthetic transactions and individual wearable data remain separate from live commerce.\n\n### User stories\n\n\n- [x] [E02-01 — Buyer Craft and Example Product Catalog](https://github.com/wie-challenge/website/issues/31)\n- [x] [E02-02 — RFQ Draft Creation, Validation and Submission](https://github.com/wie-challenge/website/issues/33)\n- [x] [E02-03 — RFQ Design Reference Attachments](https://github.com/wie-challenge/website/issues/95)\n- [x] [E02-04 — RFQ Status and Attributable Activity Timeline](https://github.com/wie-challenge/website/issues/96)\n- [x] [E02-05 — RFQ Revisions and Feasibility Clarifications](https://github.com/wie-challenge/website/issues/97)\n- [x] [E02-06 — Buyer Sample Review and Preproduction Approval](https://github.com/wie-challenge/website/issues/100)\n- [x] [E02-07 — Permission-Scoped Order Discussions](https://github.com/wie-challenge/website/issues/101)\n- [x] [E02-08 — Buyer Procurement Document Center](https://github.com/wie-challenge/website/issues/102)\n- [x] [E02-09 — Reorder from an Approved Product](https://github.com/wie-challenge/website/issues/104)\n\n### Epic completion criteria\n\n- [ ] Every child story has acceptance evidence and review.\n- [ ] Relevant release gates, permissions and domain invariants are verified.\n- [ ] Synthetic, observed and verified results are clearly identified.\n\n### Accepted delivery scope\n\nAll nine child stories are closed for the local synthetic procurement workflow implemented in main. Real paid-sample production, reviewed legal/tax documents, physical logistics, provider reconciliation and production pilot authorization remain upstream backlog gates. This checklist synchronization does not mark those upstream stories complete.\n",
+      "checkedChildIssues": [
+        31,
+        33,
+        95,
+        96,
+        97,
+        100,
+        101,
+        102,
+        104
+      ],
+      "aggregateEpicEvidenceCriteriaChanged": false
+    }
+  ],
+  "requiresEvidenceReviewBeforeAnyStateChange": [
+    43,
+    85,
+    187
+  ],
+  "note": "Re-fetch before applying; compare original body and update timestamp to preserve concurrent edits. No story closure or board mutation is authorized by this proposal artifact.",
+  "additionalStoryReadyForCompletionReview": [
+    83
+  ]
+}

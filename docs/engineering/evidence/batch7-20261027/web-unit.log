@@ -1,0 +1,34 @@
+$ tsx --test test/*.test.ts
+✔ anonymous demo bootstrap uses only same-origin visitor cookies, without commercial credentials (26.876355ms)
+✔ demo switching forwards its visitor CSRF proof and retry key, never a password or role grant (0.756906ms)
+✔ demo errors retain useful safe API messages and redact non-JSON upstream failures (1.787018ms)
+✔ overlapping showroom effects bootstrap one visitor session and proof (0.575156ms)
+✔ login redirect allowlist rejects external, encoded and unsupported destinations (1.771103ms)
+✔ browser mutations obtain a session-bound CSRF proof and never store session credentials (25.452026ms)
+✔ API failures and network errors become safe user-facing errors (1.488998ms)
+✔ workspace redirects allow scoped destinations and discard invitation secrets (0.695098ms)
+✔ PUT mutations use the same CSRF and credential protections as other writes (1.029393ms)
+✔ presentation and screenshot labels distinguish hypotheses from synthetic software records (2.687926ms)
+✔ export metadata cannot retain a forged verification label (0.290383ms)
+✔ scenario exact baseline, rejection protection and producer-share policy agree (1.016096ms)
+✔ effort changes effective pay, hourly mode changes compensation with half-up millime rounding (0.190871ms)
+✔ losses, zero quantity, zero revenue and nonpositive margins remain honest (0.24087ms)
+✔ precise decimal rounding, extreme ratios and inputs retain valid totals (0.141992ms)
+✔ missing, malformed, unsupported and out-of-range assumptions fail without mutating inputs (0.329375ms)
+✔ switching compensation modes ignores the inactive input and still validates the active amount (0.319573ms)
+✔ operator stock quantities preserve exact decimal values at the API boundary (1.231104ms)
+✔ stock quantity entry rejects rounding, exponent notation and ambiguous separators (0.476079ms)
+✔ pieces and units retain whole-quantity compatibility (0.2025ms)
+✔ a public traceability address becomes a stable QR matrix (23.276012ms)
+✔ admin navigation exposes people and governance requests without granting commercial or artisan work (0.838498ms)
+✔ operator navigation provides assigned-account coordination rather than user administration (0.258455ms)
+✔ buyer and association navigation keep purchasing and participant management separate (0.246781ms)
+✔ missing identity context never invents operational access from legacy capability flags (0.300131ms)
+ℹ tests 25
+ℹ suites 0
+ℹ pass 25
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 237.591378

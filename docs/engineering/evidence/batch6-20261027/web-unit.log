@@ -1,0 +1,28 @@
+$ tsx --test test/*.test.ts
+✔ anonymous demo bootstrap uses only same-origin visitor cookies, without commercial credentials (16.633796ms)
+✔ demo switching forwards its visitor CSRF proof and retry key, never a password or role grant (0.46985ms)
+✔ demo errors retain useful safe API messages and redact non-JSON upstream failures (1.288913ms)
+✔ overlapping showroom effects bootstrap one visitor session and proof (0.475491ms)
+✔ login redirect allowlist rejects external, encoded and unsupported destinations (1.168707ms)
+✔ browser mutations obtain a session-bound CSRF proof and never store session credentials (25.12281ms)
+✔ API failures and network errors become safe user-facing errors (1.411324ms)
+✔ workspace redirects allow scoped destinations and discard invitation secrets (0.637895ms)
+✔ PUT mutations use the same CSRF and credential protections as other writes (0.991869ms)
+✔ presentation and screenshot labels distinguish hypotheses from synthetic software records (2.714618ms)
+✔ export metadata cannot retain a forged verification label (0.288963ms)
+✔ operator stock quantities preserve exact decimal values at the API boundary (1.219532ms)
+✔ stock quantity entry rejects rounding, exponent notation and ambiguous separators (1.0612ms)
+✔ pieces and units retain whole-quantity compatibility (0.473716ms)
+✔ a public traceability address becomes a stable QR matrix (22.71829ms)
+✔ admin navigation exposes people and governance requests without granting commercial or artisan work (1.398823ms)
+✔ operator navigation provides assigned-account coordination rather than user administration (0.315309ms)
+✔ buyer and association navigation keep purchasing and participant management separate (0.351398ms)
+✔ missing identity context never invents operational access from legacy capability flags (0.346533ms)
+ℹ tests 19
+ℹ suites 0
+ℹ pass 19
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 256.069269

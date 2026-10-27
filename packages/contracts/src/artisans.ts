@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { capacityFields, validCapacityPeriod, type CapacitySummary } from './capacity.js';
 
 const id = z
   .string()
@@ -44,17 +45,11 @@ export const artisanSkillsSchema = z
   );
 export const capacityDeclarationSchema = z
   .object({
-    craftSkillId: id,
-    unitType: z.enum(['HOURS', 'PIECES']),
+    ...capacityFields,
     quantity: z.number().finite().min(0).max(100000).multipleOf(0.01),
-    effectiveFrom: z.iso.datetime({ offset: true }),
-    effectiveTo: z.iso.datetime({ offset: true }),
   })
   .strict()
-  .refine(
-    (v) => new Date(v.effectiveTo) > new Date(v.effectiveFrom),
-    'The end date must follow the start date.',
-  );
+  .refine(validCapacityPeriod, 'The end date must follow the start date.');
 export const associationLinkSchema = z
   .object({
     organizationId: id,
@@ -108,6 +103,12 @@ export type ArtisanSkillView = {
   craftSkill: CraftSkillView;
 };
 export type CapacityDeclarationView = {
+  version: number;
+  previousDeclarationId: string | null;
+  authorizationId: string | null;
+  recordingMode: 'SELF' | 'ASSISTED';
+  recordedByName: string;
+  summary: CapacitySummary;
   supersededAt: string | null;
   id: string;
   artisanProfileId: string;

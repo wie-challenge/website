@@ -1,0 +1,49 @@
+{
+  "batch": 7,
+  "completedAt": "2026-10-28",
+  "product": "NASJ",
+  "lint": {
+    "pass": true,
+    "files": 352
+  },
+  "typecheck": "PASS",
+  "apiUnit": {
+    "passed": 74,
+    "failed": 0,
+    "skipped": 0
+  },
+  "webUnit": {
+    "passed": 25,
+    "failed": 0,
+    "skipped": 0
+  },
+  "integration": {
+    "passed": 115,
+    "persistentDatabase": false
+  },
+  "browser": {
+    "applicationPassed": 44,
+    "showroomPassed": 2,
+    "failed": 0,
+    "skipped": 0
+  },
+  "standaloneShowroomPassed": 2,
+  "build": "PASS",
+  "schemaValidation": "PASS",
+  "preservedMigrationHashes": 9,
+  "artifactValidation": "PASS_TECHNICAL_CHECKS_ONLY",
+  "originalSoftwareCriteriaVerified": [
+    "E15-02",
+    "E15-03",
+    "E15-05"
+  ],
+  "partialPendingIndependentEvidenceOrReview": [
+    "E17-01",
+    "E17-02",
+    "E17-03",
+    "E17-06"
+  ],
+  "ownerApproved": false,
+  "eligibilityVerified": false,
+  "submitted": false
+}

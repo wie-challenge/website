@@ -1,0 +1,42 @@
+Input #0, mov,mp4,m4a,3gp,3g2,mj2, from 'output/video/PHASE1_PROGRESS_REVIEW.mp4':
+  Metadata:
+    major_brand     : isom
+    minor_version   : 512
+    compatible_brands: isomiso2avc1mp41
+    encoder         : Lavf63.1.102
+  Duration: 00:03:00.05, start: 0.000000, bitrate: 150 kb/s
+  Stream #0:0[0x1](und): Video: h264 (High) (avc1 / 0x31637661), yuv420p(progressive), 1280x720, 59 kb/s, 15 fps, 15 tbr, 15360 tbn, start 0.046419 (default)
+    Metadata:
+      handler_name    : VideoHandler
+  Stream #0:1[0x2](und): Audio: aac (LC) (mp4a / 0x6134706D), 22050 Hz, mono, fltp, 87 kb/s (default)
+    Metadata:
+      handler_name    : SoundHandler
+[Parsed_volumedetect_0 @ 0x564393c6d600] n_samples: 0
+Stream mapping:
+  Stream #0:0 -> #0:0 (h264 (native) -> wrapped_avframe (native))
+  Stream #0:1 -> #0:1 (aac (native) -> pcm_s16le (native))
+Press [q] to stop, [?] for help
+Output #0, null, to '/dev/null':
+  Metadata:
+    major_brand     : isom
+    minor_version   : 512
+    compatible_brands: isomiso2avc1mp41
+    encoder         : Lavf63.1.102
+  Stream #0:0(und): Video: wrapped_avframe, yuv420p(progressive), 1280x720, q=2-31, 200 kb/s, 15 fps, 15 tbn (default)
+    Metadata:
+      encoder         : Lavc63.1.102 wrapped_avframe
+      handler_name    : VideoHandler
+  Stream #0:1(und): Audio: pcm_s16le, 22050 Hz, mono, s16, 352 kb/s (default)
+    Metadata:
+      encoder         : Lavc63.1.102 pcm_s16le
+      handler_name    : SoundHandler
+frame= 2600 fps=0.0 q=-0.0 size=N/A time=00:02:54.76 bitrate=N/A speed= 349x elapsed=0:00:00.50    [Parsed_volumedetect_0 @ 0x7fdc2c003440] n_samples: 3977896
+[Parsed_volumedetect_0 @ 0x7fdc2c003440] mean_volume: -21.4 dB
+[Parsed_volumedetect_0 @ 0x7fdc2c003440] max_volume: -0.1 dB
+[Parsed_volumedetect_0 @ 0x7fdc2c003440] histogram_0db: 61
+[Parsed_volumedetect_0 @ 0x7fdc2c003440] histogram_1db: 167
+[Parsed_volumedetect_0 @ 0x7fdc2c003440] histogram_2db: 867
+[Parsed_volumedetect_0 @ 0x7fdc2c003440] histogram_3db: 1925
+[Parsed_volumedetect_0 @ 0x7fdc2c003440] histogram_4db: 3718
+[out#0/null @ 0x564393bea5c0] video:1118KiB audio:7769KiB subtitle:0KiB other streams:0KiB global headers:0KiB muxing overhead: unknown
+frame= 2700 fps=0.0 q=-0.0 Lsize=N/A time=00:03:00.06 bitrate=N/A speed= 343x elapsed=0:00:00.52    

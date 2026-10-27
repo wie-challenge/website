@@ -426,6 +426,22 @@
     border-top: 1px solid var(--border);
     padding: 20px 32px;
   }
+  .trace-sheet {
+    display: grid;
+    gap: 0.75rem;
+    max-width: 40rem;
+  }
+  .trace-sheet p,
+  .trace-sheet h1,
+  .trace-sheet h2,
+  .trace-sheet figcaption {
+    overflow-wrap: anywhere;
+  }
+  .trace-qr {
+    width: min(11rem, 100%);
+    height: auto;
+    display: block;
+  }
   .workspace {
     width: 100%;
     max-width: 1280px;
@@ -567,6 +583,10 @@
     border-color: #b8dfcf;
     background: #f0faf5;
     color: #225c45;
+  }
+  .capacity-warning {
+    font-weight: 600;
+    border-left-width: 4px;
   }
   .resource-loading {
     display: flex;
@@ -941,6 +961,7 @@
     inset-inline-start: 0;
   }
   .demo-banner {
+    overflow-wrap: anywhere;
     padding: 10px 20px;
     font-size: 12px;
     text-align: center;
@@ -2248,4 +2269,83 @@
       grid-column: 2;
     }
   }
+}
+
+/* Provenance stays in normal document flow, including printed evidence. */
+.evidence-notice {
+  border-inline-start: 3px solid var(--color-forest, #254f43);
+  background: #f4f2e9;
+  color: #243b31;
+  padding: 0.85rem 1rem;
+  margin-block: 1rem;
+  font-size: 0.9rem;
+  overflow-wrap: anywhere;
+}
+.evidence-notice p {
+  margin: 0.5rem 0;
+  max-width: 80ch;
+}
+.evidence-notice a {
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+}
+.evidence-notice .badge {
+  display: inline-block;
+  white-space: normal;
+}
+.evidence-compact {
+  padding: 0.65rem 0.85rem;
+}
+.public-reading {
+  max-width: 76rem;
+  margin-inline: auto;
+  padding: 2rem clamp(1rem, 4vw, 4rem);
+}
+.public-reading section {
+  margin-block: 2rem;
+  scroll-margin-top: 5rem;
+}
+.public-reading p,
+.public-reading li {
+  max-width: 78ch;
+}
+.public-reading h1 {
+  font-size: clamp(2rem, 5vw, 3.4rem);
+  line-height: 1.15;
+}
+.public-reading .action-row {
+  flex-wrap: wrap;
+}
+.presentation-step {
+  border-top: 1px solid #d9dfd2;
+  padding-block: 1.5rem;
+}
+@media print {
+  .evidence-notice {
+    display: block;
+    break-inside: avoid;
+    border: 1px solid #243b31;
+    background: white;
+    color: black;
+  }
+  .evidence-notice a::after {
+    content: " (" attr(href) ")";
+  }
+}
+
+/* Long visitor-owned IDs must not force presentation cards wider than mobile screens. */
+.demo-showroom {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.demo-showroom > * {
+  min-width: 0;
+  max-width: 100%;
+}
+.demo-showroom .grid > * {
+  min-width: 0;
+}
+.demo-showroom [data-slot="badge"] {
+  white-space: normal;
+  max-width: 100%;
 }

@@ -1,0 +1,54 @@
+{
+  "date": "2026-10-27",
+  "timezone": "Africa/Tunis",
+  "scope": "GitHub #46 capacity contract and #34 capacity visibility",
+  "baseline": "6a8b8540e228066a7abc43792b85a639fc49db00",
+  "githubIssues": {
+    "34": "https://github.com/wie-challenge/website/issues/34",
+    "46": "https://github.com/wie-challenge/website/issues/46",
+    "liveFetch": "HTTP 404; private repository. Criteria taken from local detailed backlog E01-04/E04-11 and the 2026-10-27 snapshot."
+  },
+  "commands": {
+    "lint": { "command": "pnpm lint", "status": "PASS", "files": 253 },
+    "typecheck": { "command": "pnpm typecheck", "status": "PASS" },
+    "unit": {
+      "command": "pnpm test",
+      "status": "PASS",
+      "apiPassed": 47,
+      "webPassed": 9,
+      "totalPassed": 56,
+      "failed": 0
+    },
+    "integration": {
+      "command": "pnpm test:integration",
+      "status": "PASS",
+      "scenarios": 103,
+      "failed": 0,
+      "database": "newly created disposable PostgreSQL",
+      "capacityScenarios": [
+        "capacity exact projection agrees for self and assigned coordinator without exposing terms",
+        "assisted revision preserves predecessor commitments, exact deficit, replay and actor audit",
+        "expired reservations release once while accepted work remains; completed work releases capacity",
+        "concurrent offers and concurrent expected-version revisions cannot oversubscribe",
+        "capacity validates zero, overlap, craft, units and forbidden fields on both write paths",
+        "half-open boundaries accept start and reject end; adjacent periods do not overlap",
+        "incompatible units and legacy cross-week allocations expose unknown rather than false availability",
+        "assisted scope, membership suspension and authorization withdrawal deny writes without mutation",
+        "capacity migration backfills lineage while preserving declarations, accepted work, identities and sessions"
+      ]
+    },
+    "e2e": {
+      "command": "pnpm test:e2e",
+      "status": "PASS",
+      "passed": 29,
+      "failed": 0,
+      "capacity": [
+        "capacity revisions preserve commitments for artisan and coordinator at 360px",
+        "capacity revisions preserve commitments for artisan and coordinator at 1280px"
+      ]
+    },
+    "build": { "command": "pnpm build", "status": "PASS" }
+  },
+  "githubStatusUnchanged": true,
+  "existingDatabasesMigrated": false
+}

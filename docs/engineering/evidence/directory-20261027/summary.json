@@ -1,0 +1,32 @@
+{
+  "date": "2026-10-27",
+  "timezone": "Africa/Tunis",
+  "scope": "GitHub #43 production directory, after the completed-throughput correction to the #34/#46 projection",
+  "baseline": "6a8b8540e228066a7abc43792b85a639fc49db00",
+  "acceptance": {
+    "43": "implemented, not accepted, GitHub not updated",
+    "34": "implemented, not accepted",
+    "46": "implemented, not accepted"
+  },
+  "commands": {
+    "lint": { "command": "pnpm lint", "status": "PASS", "files": 264 },
+    "typecheck": { "command": "pnpm typecheck", "status": "PASS" },
+    "unit": {
+      "command": "pnpm test",
+      "status": "PASS",
+      "apiPassed": 50,
+      "webPassed": 9,
+      "failed": 0
+    },
+    "integration": {
+      "command": "pnpm test:integration",
+      "status": "PASS",
+      "scenarios": 105,
+      "failed": 0,
+      "database": "newly created disposable PostgreSQL"
+    },
+    "e2e": { "command": "pnpm test:e2e", "status": "PASS", "passed": 31, "failed": 0 },
+    "build": { "command": "pnpm build", "status": "PASS" }
+  },
+  "accounting": "Accepted completed and closed production stays committed for the declared period. Unproduced cancellation releases. Directory aggregation does not refill a consumed weekly budget."
+}

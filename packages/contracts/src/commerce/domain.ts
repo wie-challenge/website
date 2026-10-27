@@ -20,7 +20,14 @@ export const rfqStates = [
   'DECLINED',
   'EXPIRED',
 ] as const;
-export const offerStates = ['PLANNED', 'OFFERED', 'ACCEPTED', 'DECLINED', 'EXPIRED'] as const;
+export const offerStates = [
+  'PLANNED',
+  'PREPARED',
+  'OFFERED',
+  'ACCEPTED',
+  'DECLINED',
+  'EXPIRED',
+] as const;
 export const batchStates = [
   'ACCEPTED',
   'MATERIAL_READY',
@@ -80,6 +87,7 @@ export const rfqEdges: readonly Edge<RfqState>[] = [
 ];
 export const offerEdges: readonly Edge<OfferState>[] = [
   ['PLANNED', 'OFFERED', ['PRODUCTION_MANAGER']],
+  ['PREPARED', 'OFFERED', ['PRODUCTION_MANAGER']],
   ['OFFERED', 'ACCEPTED', ['ARTISAN']],
   ['OFFERED', 'DECLINED', ['ARTISAN']],
   ['OFFERED', 'EXPIRED', ['PRODUCTION_MANAGER']],

@@ -72,6 +72,8 @@ export type ApiFailure = {
 export * from './permissions.js';
 export * from './organizations.js';
 export * from './artisans.js';
+export * from './capacity.js';
+export * from './directory.js';
 export * from './governance.js';
 
 export * from './domain.js';
@@ -83,3 +85,15 @@ export * from './commerce/catalog.js';
 export * from './foundation.js';
 
 export * from './procurement.js';
+export * from './commercial.js';
+export * from './eligibility.js';
+export * from './execution.js';
+export * from './logistics.js';
+export * from './inventory.js';
+
+export * from './finance.js';
+
+export * from './provenance.js';
+export * from './demo.js';
+
+export * from './scenario-finance.js';

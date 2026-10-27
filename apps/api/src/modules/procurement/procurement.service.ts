@@ -10,6 +10,15 @@ import type { Actor } from '../../common/identity.js';
 import { fail } from '../../common/errors.js';
 import { iamTransaction, type Db } from '../foundation/transaction.js';
 import { replaySafe, validateIdempotencyKey } from '../foundation/idempotency.js';
+import { DirectoryService } from '../directory/directory.service.js';
+import {
+  issueCostedQuote,
+  recordCost,
+  recordEffort,
+  recordFeasibility,
+  viewAssessment,
+  viewCost,
+} from './commercial-decision.js';
 import { procurementAudit, revision, specificationSnapshot } from './records.js';
 const take = 30;
 const pageArgs = (page: number) => ({ skip: (page - 1) * take, take: take + 1 });
@@ -31,6 +40,7 @@ export class ProcurementService {
   constructor(
     @Inject(PrismaService) private readonly db: PrismaService,
     @Inject(APP_CONFIG) private readonly config: AppConfig,
+    @Inject(DirectoryService) private readonly directory: DirectoryService,
   ) {}
   private async access(tx: Db, actor: Actor, rfq: CommercialRfq, thread = false): Promise<Access> {
     const members = await tx.organizationMember.findMany({
@@ -304,6 +314,31 @@ export class ProcurementService {
         orderBy: { version: 'desc' },
         take: 100,
       });
+      const [acceptances, rejections] = await Promise.all([
+        tx.procurementAcceptance.findMany({
+          where: { quote: { rfqId: id } },
+          select: { quoteId: true },
+        }),
+        tx.procurementQuoteRejection.findMany({
+          where: { quote: { rfqId: id } },
+          select: { quoteId: true },
+        }),
+      ]);
+      const acceptedIds = new Set(acceptances.map((item) => item.quoteId));
+      const rejectedIds = new Set(rejections.map((item) => item.quoteId));
+      const latestVersion = quotes[0]?.version ?? 0;
+      const feasibility = access.operator
+        ? await tx.feasibilityAssessment.findMany({
+            where: { rfqId: id },
+            orderBy: { version: 'desc' },
+            take: 20,
+          })
+        : [];
+      const costs = await tx.costEstimate.findMany({
+        where: { rfqId: id },
+        orderBy: { version: 'desc' },
+        take: 20,
+      });
       const samples = await tx.procurementSample.findMany({
         where: { rfqId: id },
         include: { decision: true },
@@ -344,19 +379,29 @@ export class ProcurementService {
         attachments,
         questions,
         samples,
-        quotes: quotes.map((q) => ({
-          id: q.id,
-          version: q.version,
-          revisionId: q.revisionId,
-          totalTnd: C.formatTnd(q.totalMillimes),
-          expiresAt: q.expiresAt,
-          snapshot: q.snapshot,
-          current:
-            q.id === quotes[0]?.id &&
-            q.revisionId === revisions[0]?.id &&
-            q.expiresAt > new Date() &&
-            row.status === 'QUOTED',
-        })),
+        quotes: quotes.map((q) => {
+          const status = C.quoteStanding({
+            version: q.version,
+            expiresAt: q.expiresAt,
+            accepted: acceptedIds.has(q.id),
+            rejected: rejectedIds.has(q.id),
+            latestVersion,
+          });
+          return {
+            id: q.id,
+            version: q.version,
+            revisionId: q.revisionId,
+            totalTnd: C.formatTnd(q.totalMillimes),
+            expiresAt: q.expiresAt,
+            status,
+            termsSha256: q.termsSha256,
+            snapshot: buyerSnapshot(q.snapshot, access.operator),
+            current:
+              status === 'ISSUED' && q.revisionId === revisions[0]?.id && row.status === 'QUOTED',
+          };
+        }),
+        feasibility: feasibility.map(viewAssessment),
+        costs: access.operator ? costs.map((cost) => viewCost(cost, true)) : [],
         documents: docs.map((d) => ({
           ...d,
           content: undefined,
@@ -902,6 +947,15 @@ export class ProcurementService {
           fail(409, 'INVALID_TRANSITION', 'Start review before issuing a quote.');
         if (await tx.procurementQuestion.count({ where: { rfqId: id, answeredAt: null } }))
           fail(409, 'UNANSWERED_QUESTIONS', 'Resolve the feasibility questions first.');
+        if (
+          (await tx.feasibilityAssessment.count({ where: { rfqId: id } })) > 0 ||
+          (await tx.costEstimate.count({ where: { rfqId: id } })) > 0
+        )
+          fail(
+            409,
+            'COSTED_QUOTATION_REQUIRED',
+            'Issue the versioned costed quotation. A free-typed quote cannot replace it.',
+          );
         if (row.sourceProductId) {
           const product = await tx.approvedProductVersion.findUnique({
             where: { id: row.sourceProductId },
@@ -968,6 +1022,7 @@ export class ProcurementService {
             totalMillimes: total,
             expiresAt: expires,
             snapshot: json(snapshot),
+            status: 'ISSUED',
           },
         });
         const r = await tx.commercialRfq.update({
@@ -1009,17 +1064,33 @@ export class ProcurementService {
             orderBy: { version: 'desc' },
           }),
           rev = await this.currentRevision(tx, actor, row);
+        const rejected = quote
+          ? await tx.procurementQuoteRejection.findUnique({ where: { quoteId: quote.id } })
+          : null;
         if (
           row.status !== 'QUOTED' ||
-          quote?.id !== input.quoteId ||
+          !quote ||
+          quote.id !== input.quoteId ||
+          rejected ||
           quote.revisionId !== rev.id ||
           quote.expiresAt <= new Date() ||
-          row.deliveryAt <= new Date()
+          row.deliveryAt <= new Date() ||
+          (quote.termsSha256 !== null && quote.termsSha256 !== input.termsSha256)
         )
           fail(
             409,
             'STALE_QUOTE',
             'Only the current unexpired quote for this specification can be accepted.',
+          );
+        if (
+          quote.termsSha256 === null &&
+          ((await tx.feasibilityAssessment.count({ where: { rfqId: id } })) > 0 ||
+            (await tx.costEstimate.count({ where: { rfqId: id } })) > 0)
+        )
+          fail(
+            409,
+            'COSTED_QUOTATION_REQUIRED',
+            'Accept the versioned costed quotation. A free-typed quote cannot authorize production.',
           );
         const order = await tx.commercialOrder.create({ data: { rfqId: id } });
         const acceptance = await tx.procurementAcceptance.create({
@@ -1030,7 +1101,12 @@ export class ProcurementService {
             snapshot: json({
               quoteId: quote.id,
               quoteVersion: quote.version,
+              termsSha256: quote.termsSha256,
               terms: quote.snapshot,
+              capacityReserved: false,
+              artisanAccepted: false,
+              paymentReceived: false,
+              legalSignature: false,
             }),
           },
         });
@@ -1319,4 +1395,122 @@ export class ProcurementService {
       });
     });
   }
+  async assess(
+    actor: Actor,
+    id: string,
+    input: z.infer<typeof C.feasibilityRequestSchema>,
+    key?: string,
+  ) {
+    return iamTransaction(this.db, actor, async (tx) => {
+      const { row, access } = await this.scoped(tx, actor, id);
+      if (!access.operator) fail(403, 'FORBIDDEN', 'An assigned operator is required.');
+      return this.command(tx, actor, id, 'feasibility.assess', key, json(input), async () => {
+        same(row.version, input.version);
+        return recordFeasibility(tx, this.directory, actor, row, input);
+      });
+    });
+  }
+  async assumeEffort(actor: Actor, input: z.infer<typeof C.effortAssumptionSchema>, key?: string) {
+    return iamTransaction(this.db, actor, async (tx) => {
+      const member = await tx.organizationMember.findFirst({
+        where: {
+          userId: actor.id,
+          status: 'ACTIVE',
+          organization: { type: 'INTERNAL', approvalStatus: 'APPROVED' },
+        },
+        include: { roles: true, permissionGrants: true, organization: true },
+      });
+      if (
+        !member ||
+        !C.permissionsForMembership(member).some(
+          (permission) => permission === 'operator.quotation.prepare',
+        )
+      )
+        fail(403, 'FORBIDDEN', 'An internal commercial role is required to record effort.');
+      return this.command(tx, actor, input.craftSkillId, 'effort.record', key, json(input), () =>
+        recordEffort(tx, actor, input),
+      );
+    });
+  }
+  async estimate(
+    actor: Actor,
+    id: string,
+    input: z.infer<typeof C.costEstimateSchema>,
+    key?: string,
+  ) {
+    return iamTransaction(this.db, actor, async (tx) => {
+      const { row, access } = await this.scoped(tx, actor, id);
+      if (!access.operator) fail(403, 'FORBIDDEN', 'An assigned operator is required.');
+      return this.command(tx, actor, id, 'cost.record', key, json(input), async () => {
+        same(row.version, input.version);
+        return recordCost(tx, actor, row, input);
+      });
+    });
+  }
+  async issueFromCost(
+    actor: Actor,
+    id: string,
+    input: z.infer<typeof C.costedQuoteSchema>,
+    key?: string,
+  ) {
+    return iamTransaction(this.db, actor, async (tx) => {
+      const { row, access } = await this.scoped(tx, actor, id);
+      if (!access.operator) fail(403, 'FORBIDDEN', 'An assigned quotation operator is required.');
+      return this.command(tx, actor, id, 'quote.costed', key, json(input), async () => {
+        same(row.version, input.version);
+        return issueCostedQuote(tx, this.directory, actor, row, input);
+      });
+    });
+  }
+  async rejectQuote(
+    actor: Actor,
+    id: string,
+    input: z.infer<typeof C.quoteRejectSchema>,
+    key?: string,
+  ) {
+    return iamTransaction(this.db, actor, async (tx) => {
+      const { row, access } = await this.scoped(tx, actor, id);
+      if (!access.approving)
+        fail(403, 'FORBIDDEN', 'Explicit buyer quotation approval authority is required.');
+      return this.command(tx, actor, id, 'quote.reject', key, json(input), async () => {
+        same(row.version, input.version);
+        const quote = await tx.procurementQuote.findFirst({
+          where: { id: input.quoteId, rfqId: id },
+        });
+        const latest = await tx.procurementQuote.findFirst({
+          where: { rfqId: id },
+          orderBy: { version: 'desc' },
+        });
+        const accepted = quote
+          ? await tx.procurementAcceptance.findUnique({ where: { quoteId: quote.id } })
+          : null;
+        const rejected = quote
+          ? await tx.procurementQuoteRejection.findUnique({ where: { quoteId: quote.id } })
+          : null;
+        if (
+          row.status !== 'QUOTED' ||
+          !quote ||
+          quote.id !== latest?.id ||
+          accepted ||
+          rejected ||
+          quote.expiresAt <= new Date()
+        )
+          fail(409, 'STALE_QUOTE', 'Only the current issued quotation can be rejected.');
+        await tx.procurementQuoteRejection.create({
+          data: { quoteId: quote.id, actorId: actor.id, reason: input.reason },
+        });
+        await procurementAudit(tx, actor, row, 'quote.rejected', quote.id, input.reason);
+        return { id: quote.id, version: row.version };
+      });
+    });
+  }
+}
+function buyerSnapshot(snapshot: Prisma.JsonValue, operator: boolean) {
+  if (operator || !snapshot || typeof snapshot !== 'object' || Array.isArray(snapshot))
+    return snapshot;
+  const record = snapshot as Record<string, unknown>;
+  if (!('internal' in record)) return snapshot;
+  const { internal, ...rest } = record;
+  void internal;
+  return rest;
 }

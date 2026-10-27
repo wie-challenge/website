@@ -1,4 +1,5 @@
 import {
+  Query,
   Headers,
   Body,
   Controller,
@@ -11,6 +12,8 @@ import {
   Put,
 } from '@nestjs/common';
 import {
+  pageSchema,
+  type PageInput,
   artisanProfileSchema,
   artisanSkillsSchema,
   capacityDeclarationSchema,
@@ -59,8 +62,14 @@ export class ArtisansController {
   ) {
     return this.artisans.replaceSkills(actor, input);
   }
-  @Get('artisans/me/capacity') capacity(@CurrentUser() actor: Actor) {
-    return this.artisans.capacity(actor);
+  @Get('artisans/me/capacity') capacity(
+    @CurrentUser() actor: Actor,
+    @Query(new ZodValidationPipe(pageSchema.omit({ q: true }))) q: Pick<
+      PageInput,
+      'page' | 'pageSize'
+    >,
+  ) {
+    return this.artisans.capacity(actor, undefined, q);
   }
   @Post('artisans/me/capacity') declare(
     @CurrentUser() actor: Actor,
@@ -136,8 +145,12 @@ export class ArtisansController {
   @Get('artisans/:id/capacity') assistedCapacity(
     @CurrentUser() actor: Actor,
     @Param('id', new ZodValidationPipe(resourceIdSchema)) id: string,
+    @Query(new ZodValidationPipe(pageSchema.omit({ q: true }))) q: Pick<
+      PageInput,
+      'page' | 'pageSize'
+    >,
   ) {
-    return this.artisans.capacity(actor, id);
+    return this.artisans.capacity(actor, id, q);
   }
   @Post('artisans/:id/capacity') assistedDeclare(
     @CurrentUser() actor: Actor,

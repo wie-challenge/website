@@ -111,7 +111,19 @@ export async function seedFoundation(mode: 'demo' | 'development') {
         `${key}@hirfacare-demo.invalid`,
       ]),
     ];
-    if (demo && (await db.user.count({ where: { email: { notIn: allowedEmails } } })))
+    if (
+      demo &&
+      (await db.user.count({
+        where: {
+          email: { notIn: allowedEmails },
+          id: {
+            notIn: (
+              await db.demoIdentity.findMany({ select: { userId: true } })
+            ).map((identity) => identity.userId),
+          },
+        },
+      }))
+    )
       throw new Error('Non-demo identities detected; refusing to seed this database.');
     await writeFile(credentialsFile, `${JSON.stringify(generated, null, 2)}\n`, {
       flag: 'w',

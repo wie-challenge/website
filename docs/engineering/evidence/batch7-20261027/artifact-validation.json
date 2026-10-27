@@ -1,0 +1,36 @@
+{
+  "reviewedAt": "2026-10-28",
+  "reviewer": "Coding agent engineering inspection; independent human reviewer pending",
+  "ownerApproved": false,
+  "eligibilityVerified": false,
+  "submitted": false,
+  "pdf": {
+    "path": "output/pdf/PHASE1_TECHNICAL_REPORT.pdf",
+    "sha256": "2513d864bae1bac59b9e0c716f271dc4afbeed46662e8cbe994468c604a35536",
+    "sourceSha256": "88550812900eba42d35fde4349019d58ef6b16df808f296de6260f59ba8bdc04",
+    "pages": 6,
+    "visualReviewPages": 6,
+    "abstractWords": 204,
+    "keywords": 5,
+    "metadataAuthor": "",
+    "namedOwnerReview": "PENDING"
+  },
+  "video": {
+    "path": "output/video/PHASE1_PROGRESS_REVIEW.mp4",
+    "sha256": "33389ed3e54201186d31c08fec65c393acaf3608e16a27cd5432feffa5621ee5",
+    "sourceSha256": "f0f112954f0434596379f7a3836380195805d4e39db039201e6a872402315b6d",
+    "durationSeconds": 180.04644,
+    "width": 1280,
+    "height": 720,
+    "videoCodec": "h264",
+    "audioCodec": "aac",
+    "audioChannels": 1,
+    "sampledScenes": 7,
+    "fullDecode": "PASS",
+    "meanVolumeDb": -21.4,
+    "peakVolumeDb": -0.1,
+    "method": "Actual synthetic showroom screenshot montage; local TTS narration and burned captions",
+    "humanFullPlaybackAndAudioClarity": "PENDING",
+    "anonymityApproval": "PENDING; product branding and fictional initials retained"
+  }
+}

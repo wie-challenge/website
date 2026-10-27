@@ -13,6 +13,8 @@
     "bootstrap-admin": "tsx --env-file=../../.env src/bootstrap-admin.ts",
     "test": "tsx --test test/unit/*.test.ts",
     "test:integration": "tsx test/integration.ts",
+    "test:demo": "tsx test/demo.ts",
+    "test:batch5": "tsx test/batch5.ts",
     "typecheck:test": "tsc -p tsconfig.test.json",
     "worker": "node --env-file-if-exists=../../.env dist/jobs/main.js"
   },

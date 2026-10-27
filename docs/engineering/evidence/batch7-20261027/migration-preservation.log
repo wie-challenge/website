@@ -1,0 +1,9 @@
+apps/api/prisma/migrations/20261027010000_capacity_revisions/migration.sql: OK
+apps/api/prisma/migrations/20261027020000_commercial_decisions/migration.sql: OK
+apps/api/prisma/migrations/20261027030000_production_offers/migration.sql: OK
+apps/api/prisma/migrations/20261027040000_production_execution/migration.sql: OK
+apps/api/prisma/migrations/20261027050000_logistics_traceability/migration.sql: OK
+apps/api/prisma/migrations/20261027060000_shipment_cancel_damage/migration.sql: OK
+apps/api/prisma/migrations/20261027070000_inventory_controls/migration.sql: OK
+apps/api/prisma/migrations/20261027080000_financial_controls/migration.sql: OK
+apps/api/prisma/migrations/20261027090000_demo_scenarios/migration.sql: OK

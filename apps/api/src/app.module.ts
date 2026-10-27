@@ -1,3 +1,6 @@
+import { DemoModule } from './modules/demo/demo.module.js';
+import { InventoryModule } from './modules/inventory/inventory.module.js';
+import { DirectoryModule } from './modules/directory/directory.module.js';
 import { RegistryModule } from './modules/registry/registry.module.js';
 import { CommerceModule } from './modules/commerce/commerce.module.js';
 import { OrganizationsModule } from './modules/organizations/organizations.module.js';
@@ -28,6 +31,9 @@ export class AppModule {
         GovernanceModule,
         CommerceModule,
         RegistryModule,
+        DirectoryModule,
+        InventoryModule,
+        DemoModule,
       ],
       controllers: [HealthController],
     };

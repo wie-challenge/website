@@ -1,3 +1,4 @@
+import { assertDemoSession } from '../demo/demo-access.js';
 import { fromNodeHeaders } from 'better-auth/node';
 import type { RequestHandler } from 'express';
 import { z } from 'zod';
@@ -40,6 +41,8 @@ export function authGateway(auth: AuthService, config: AppConfig): RequestHandle
       if (path === '/get-session' && req.method === 'GET') {
         z.object({}).strict().parse(req.query);
         const session = await auth.session(req.headers);
+        if (session)
+          await assertDemoSession(auth.db, session.user.id, req.headers.cookie, config.DEMO_MODE);
         const user = session
           ? await auth.db.user.findUnique({ where: { id: session.user.id } })
           : null;
@@ -96,6 +99,22 @@ export function authGateway(auth: AuthService, config: AppConfig): RequestHandle
           ...(body === undefined ? {} : { body: JSON.stringify(body) }),
         }),
       );
+      if (path === '/sign-in/email' && response.ok) {
+        const issued = await auth.session({
+          cookie: response.headers
+            .getSetCookie()
+            .map((value) => value.split(';')[0])
+            .join('; '),
+        });
+        if (issued) {
+          try {
+            await assertDemoSession(auth.db, issued.user.id, req.headers.cookie, config.DEMO_MODE);
+          } catch (error) {
+            await auth.db.session.deleteMany({ where: { id: issued.session.id } });
+            throw error;
+          }
+        }
+      }
       for (const cookie of response.headers.getSetCookie()) res.append('Set-Cookie', cookie);
       const data = (await response.json().catch(() => ({}))) as {
         code?: string;
