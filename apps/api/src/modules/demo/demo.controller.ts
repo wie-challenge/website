@@ -4,6 +4,7 @@ import * as C from '@nasj/contracts';
 import { Public } from '../../common/identity.js';
 import { ZodValidationPipe } from '../../common/validation.pipe.js';
 import { DemoService } from './demo.service.js';
+// nosemgrep: nasj-public-route -- Anonymous showroom entry by design; DEMO_MODE denies live use and service enforces visitor ownership, origin/CSRF and idempotency.
 @Public()
 @Controller('api/v1/demo')
 export class DemoController {

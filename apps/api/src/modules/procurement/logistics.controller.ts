@@ -167,6 +167,7 @@ export class LogisticsController {
 @Controller('api/v1/public')
 export class PublicTraceController {
   constructor(@Inject(LogisticsService) private readonly logistics: LogisticsService) {}
+  // nosemgrep: nasj-public-route -- Anonymous QR read by design; service permits only published privacy-safe snapshots and revocations, never private worker or finance data.
   @Public()
   @Get('traceability/:token')
   @Header('Cache-Control', 'no-store')
