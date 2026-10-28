@@ -8,6 +8,7 @@ import { ProcurementController } from '../procurement/procurement.controller.js'
 import { ProcurementService } from '../procurement/procurement.service.js';
 import { ProductionOfferService } from '../procurement/production-offers.js';
 import { ProductionExecutionService } from '../procurement/execution.js';
+import { ProductionPlanningService } from '../procurement/planning.js';
 import { LogisticsService } from '../procurement/logistics.js';
 import { LogisticsController, PublicTraceController } from '../procurement/logistics.controller.js';
 @Module({
@@ -19,12 +20,14 @@ import { LogisticsController, PublicTraceController } from '../procurement/logis
     LogisticsController,
     PublicTraceController,
   ],
+  exports: [CommerceService, ProductionOfferService],
   providers: [
     FinanceService,
     CommerceService,
     ProcurementService,
     ProductionOfferService,
     ProductionExecutionService,
+    ProductionPlanningService,
     LogisticsService,
   ],
 })

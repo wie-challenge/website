@@ -1,3 +1,9 @@
+import {
+  runPlanningCompletionScenarios,
+  runIntelligenceCompletionScenarios,
+  runIntelligenceLifecycleScenarios,
+  runPlanningOfferLifecycleScenarios,
+} from './planning-intelligence.scenarios.js';
 import { runFinanceScenarios } from './finance.scenarios.js';
 import assert from 'node:assert/strict';
 import { randomUUID } from 'node:crypto';
@@ -294,6 +300,16 @@ export async function runExecutionScenarios({ db, register, check }: Harness) {
       );
       assert.equal(linkedAssessment?.decision, 'ELIGIBLE');
       assert.equal(accountlessAssessment?.decision, 'ELIGIBLE');
+      await runPlanningCompletionScenarios({
+        db,
+        operator,
+        buyer,
+        artisan,
+        stranger,
+        orderId,
+        send,
+        check,
+      });
       const offerBody = {
         version: workspace.summary.orderVersion,
         quantity: 40,
@@ -322,6 +338,17 @@ export async function runExecutionScenarios({ db, register, check }: Harness) {
       });
       assert.equal(accepted.status, 201, JSON.stringify(accepted.body));
       const batch = await db.commercialBatch.findFirstOrThrow({ where: { offerId: offer.id } });
+      await runIntelligenceCompletionScenarios({
+        db,
+        operator,
+        buyer,
+        artisan,
+        stranger,
+        orderId,
+        batchId: batch.id,
+        send,
+        check,
+      });
       const pendingOffer = await send(operator, `${root}/orders/${orderId}/offers`, {
         ...offerBody,
         version: (await db.commercialOrder.findUniqueOrThrow({ where: { id: orderId } })).version,
@@ -474,6 +501,17 @@ export async function runExecutionScenarios({ db, register, check }: Harness) {
         await db.productionProgressEvent.count({ where: { batchId: batch.id, kind: 'REPORT' } }),
         1,
       );
+      await runIntelligenceLifecycleScenarios({
+        db,
+        operator,
+        buyer,
+        artisan,
+        stranger,
+        orderId,
+        batchId: batch.id,
+        send,
+        check,
+      });
       const assisted = await send(coordinator, `${root}/batches/${batch.id}/progress`, {
         version: (started.body as { version: number }).version + 1,
         produced: 30,
@@ -1090,6 +1128,16 @@ export async function runExecutionScenarios({ db, register, check }: Harness) {
       ).assessments.find((row) => row.displayName === 'Execution linked');
       assert.equal(remaining?.knownRemaining, '10.00');
       assert.equal(JSON.stringify(view.body).includes('health'), false);
+      await runPlanningOfferLifecycleScenarios({
+        db,
+        operator,
+        buyer,
+        artisan,
+        stranger,
+        orderId,
+        send,
+        check,
+      });
       await db.organizationMember.updateMany({
         where: { userId: operator.me.user.id },
         data: { status: 'SUSPENDED' },

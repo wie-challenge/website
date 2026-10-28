@@ -2349,3 +2349,31 @@
   white-space: normal;
   max-width: 100%;
 }
+
+/* Approved instruction figures remain readable on mobile and in an offline PDF/print copy. */
+.instruction-figure img {
+  max-width: 100%;
+  height: auto;
+  object-fit: contain;
+}
+@media print {
+  .instruction-print,
+  .production-time-report {
+    display: none;
+  }
+  .instruction-figure {
+    break-inside: avoid;
+  }
+  .instruction-figure img {
+    max-height: 16cm;
+  }
+}
+
+/* Financial source/evidence codes must remain readable on narrow screens. */
+.financial-order-workspace {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.financial-order-workspace dd {
+  margin-inline-start: 1rem;
+}

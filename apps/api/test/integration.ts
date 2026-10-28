@@ -1,3 +1,6 @@
+import { runNotificationDeliveryScenarios } from './notification-delivery.scenarios.js';
+import { runProductAuthorityScenarios } from './product-authority.scenarios.js';
+import { runBatch811MigrationScenarios } from './batch811-migrations.scenarios.js';
 import { runMigrationReadinessScenario } from './migration-readiness.scenarios.js';
 import { runDemoScenarios } from './demo.scenarios.js';
 import { runInventoryScenarios } from './inventory.scenarios.js';
@@ -8,6 +11,7 @@ import { runDirectoryScenarios } from './directory.scenarios.js';
 import { runCapacityUpgradeScenario } from './capacity-upgrade.scenarios.js';
 import { runCapacityScenarios } from './capacity.scenarios.js';
 import { runProcurementScenarios } from './procurement.scenarios.js';
+import { runBatch12Scenarios } from './batch12.scenarios.js';
 import { runRoleUpgradeScenario } from './roles-upgrade.scenarios.js';
 import { runRoleScenarios } from './roles.scenarios.js';
 import { runCommerceScenarios } from './commerce.scenarios.js';
@@ -532,28 +536,35 @@ try {
       assert.equal((await operator.client.request('/api/v1/me')).status, 401);
     },
   );
-  await runRoleUpgradeScenario(check);
-  await runRoleScenarios({ db, register, mutate, check, mail });
-  await runOrganizationScenarios({ db, register, mutate, check, mail });
-  await runArtisanScenarios({ db, register, mutate, check });
-  await runGovernanceScenarios({ db, register, mutate, check, mail });
-  await runLifecycleScenarios({ db, client, register, mutate, check, config });
-  await runMfaScenarios({ db, config, client, register, mutate, check, mail });
-  await runE16Scenarios({ db, register, mutate, check, config });
-  await runCommerceScenarios({ db, register, check, config });
-  await runCapacityScenarios({ db, register, check });
-  await runDirectoryScenarios({ db, register, check });
-  await runCommercialScenarios({ db, register, check });
-  await runExecutionScenarios({ db, register, check });
-  await runInventoryScenarios({ db, register, check });
-  await runCatalogScenarios({ db, register, check });
-  await runProcurementScenarios({ db, register, check, config });
-  await runUpgradeScenario(check);
-  await runCapacityUpgradeScenario(check);
-  await runBatch5UpgradeScenario(check);
-  await runRestoreScenario(database, check);
-  await runDemoScenarios(check);
-  await runMigrationReadinessScenario(check);
+  if (process.env.BATCH12_FOCUSED !== '1') {
+    await runRoleUpgradeScenario(check);
+    await runRoleScenarios({ db, register, mutate, check, mail });
+    await runOrganizationScenarios({ db, register, mutate, check, mail });
+    await runArtisanScenarios({ db, register, mutate, check });
+    await runGovernanceScenarios({ db, register, mutate, check, mail });
+    await runLifecycleScenarios({ db, client, register, mutate, check, config });
+    await runMfaScenarios({ db, config, client, register, mutate, check, mail });
+    await runE16Scenarios({ db, register, mutate, check, config });
+    await runCommerceScenarios({ db, register, check, config });
+    await runCapacityScenarios({ db, register, check });
+    await runDirectoryScenarios({ db, register, check });
+    await runCommercialScenarios({ db, register, check });
+    await runExecutionScenarios({ db, register, check });
+    await runInventoryScenarios({ db, register, check });
+    await runCatalogScenarios({ db, register, check });
+    await runProcurementScenarios({ db, register, check, config });
+    await runProductAuthorityScenarios({ db, register, check });
+    await runNotificationDeliveryScenarios({ db, register, check, config, mail });
+    await runUpgradeScenario(check);
+    await runCapacityUpgradeScenario(check);
+    await runBatch5UpgradeScenario(check);
+    await runBatch12Scenarios({ db, register, check });
+    await runRestoreScenario(database, check);
+    await runDemoScenarios(check);
+    await runMigrationReadinessScenario(check);
+    await runBatch811MigrationScenarios(check);
+  }
+  if (process.env.BATCH12_FOCUSED === '1') await runBatch12Scenarios({ db, register, check });
   console.log(
     `Integration passed: ${assertions} scenarios against a newly created disposable PostgreSQL database and local SMTP capture.`,
   );

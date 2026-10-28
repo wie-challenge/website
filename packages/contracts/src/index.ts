@@ -87,6 +87,10 @@ export * from './foundation.js';
 export * from './procurement.js';
 export * from './commercial.js';
 export * from './eligibility.js';
+export * from './planning.js';
+export * from './catalog.js';
+export * from './intelligence.js';
+export * from './collaboration.js';
 export * from './execution.js';
 export * from './logistics.js';
 export * from './inventory.js';
@@ -97,3 +101,5 @@ export * from './provenance.js';
 export * from './demo.js';
 
 export * from './scenario-finance.js';
+
+export * from './batch12.js';

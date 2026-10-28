@@ -286,11 +286,14 @@ for (const profile of [
         .fill('Synthetic materials and returns reconciled in browser fixture.');
       await keyboardButton(operator, 'Close reconciled synthetic order');
       expect((await workspace(operator)).orders[0].status).toBe('CLOSED');
-      for (let batch = 0; batch < 4; batch++)
-        expect((await request.post(`${process.env.E2E_CONTROL_URL}/run-worker`)).ok()).toBeTruthy();
       await order.getByText('Synthetic fulfillment report', { exact: true }).click();
-      await order.getByRole('button', { name: 'Refresh report', exact: true }).click();
-      await expect(order.getByRole('status')).toContainText('Current');
+      // The complete suite shares this disposable queue. Drain real worker batches until this
+      // organization's projection catches up, independently of how many earlier fixtures exist.
+      await expect(async () => {
+        expect((await request.post(`${process.env.E2E_CONTROL_URL}/run-worker`)).ok()).toBeTruthy();
+        await order.getByRole('button', { name: 'Refresh report', exact: true }).click();
+        await expect(order.getByRole('status')).toContainText('Current', { timeout: 1000 });
+      }).toPass({ timeout: 60000, intervals: [100] });
       await expect(order.getByText('23450 millimes (TND)', { exact: true })).toHaveCount(2);
       const downloadPromise = operator.waitForEvent('download');
       await order.getByRole('link', { name: 'Download synthetic CSV', exact: true }).click();

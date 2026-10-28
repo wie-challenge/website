@@ -62,6 +62,14 @@ export async function projectCapacity(
   });
   const latest = current.find((c) => samePeriod(c, declaration)) ?? declaration;
   const constraints: CapacityConstraint[] = [];
+  const effectivePause = await db.availabilityPause.findFirst({
+    where: {
+      artisanProfileId: declaration.artisanProfileId,
+      effectiveFrom: { lte: now },
+      resumedAt: null,
+    },
+  });
+  if (effectivePause) constraints.push('AVAILABILITY_PAUSED');
   if (current.length > 1 || current.some((c) => !samePeriod(c, declaration)))
     constraints.push('OVERLAPPING_DECLARATIONS');
   const offers = await db.commercialOffer.findMany({

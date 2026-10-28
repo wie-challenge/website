@@ -1,0 +1,54 @@
+$ pnpm db:generate && pnpm --filter @nasj/contracts build && pnpm --filter @nasj/api test:integration
+$ pnpm --filter @nasj/api db:generate
+$ prisma generate
+Loaded Prisma config from prisma.config.ts.
+
+Prisma schema loaded from prisma/schema.prisma.
+
+✔ Generated Prisma Client (v7.10.1) to ./../../node_modules/.pnpm/@prisma+client@7.10.1_prisma@7.10.1_@types+node@24.19.2_@types+react-dom@19.3.0_@types+_9e72caf218d3f522373b8e6c9536cf3f/node_modules/@prisma/client in 947ms
+
+Start by importing your Prisma Client (See: https://pris.ly/d/importing-client)
+
+
+$ tsc -p tsconfig.json
+$ tsx test/integration.ts
+/home/ashenix/Projects/wie-challenge/website/node_modules/.pnpm/@nestjs+core@11.2.7_@nestjs+common@11.2.7_reflect-metadata@0.2.2_rxjs@7.8.2__@nestjs+pl_db0cfabba2e82d88e5fba018b77d61d9/node_modules/@nestjs/core/injector/injector.js:312
+            throw new unknown_dependencies_exception_1.UnknownDependenciesException(wrapper.name, dependencyContext, moduleRef, { id: wrapper.id });
+                  ^
+
+UnknownDependenciesException [Error]: Nest can't resolve dependencies of the CollaborationService (PrismaService, ?). Please make sure that the argument CommerceService at index [1] is available in the CollaborationModule module.
+
+Potential solutions:
+- Is CollaborationModule a valid NestJS module?
+- If CommerceService is a provider, is it part of the current CollaborationModule?
+- If CommerceService is exported from a separate @Module, is that module imported within CollaborationModule?
+  @Module({
+    imports: [ /* the Module containing CommerceService */ ]
+  })
+
+For more common dependency resolution issues, see: https://docs.nestjs.com/faq/common-errors
+    at Injector.lookupComponentInParentModules (/home/ashenix/Projects/wie-challenge/website/node_modules/.pnpm/@nestjs+core@11.2.7_@nestjs+common@11.2.7_reflect-metadata@0.2.2_rxjs@7.8.2__@nestjs+pl_db0cfabba2e82d88e5fba018b77d61d9/node_modules/@nestjs/core/injector/injector.js:312:19)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at async resolveParam (/home/ashenix/Projects/wie-challenge/website/node_modules/.pnpm/@nestjs+core@11.2.7_@nestjs+common@11.2.7_reflect-metadata@0.2.2_rxjs@7.8.2__@nestjs+pl_db0cfabba2e82d88e5fba018b77d61d9/node_modules/@nestjs/core/injector/injector.js:151:38)
+    at async Promise.all (index 1)
+    at async Injector.resolveConstructorParams (/home/ashenix/Projects/wie-challenge/website/node_modules/.pnpm/@nestjs+core@11.2.7_@nestjs+common@11.2.7_reflect-metadata@0.2.2_rxjs@7.8.2__@nestjs+pl_db0cfabba2e82d88e5fba018b77d61d9/node_modules/@nestjs/core/injector/injector.js:180:27)
+    at async Injector.loadInstance (/home/ashenix/Projects/wie-challenge/website/node_modules/.pnpm/@nestjs+core@11.2.7_@nestjs+common@11.2.7_reflect-metadata@0.2.2_rxjs@7.8.2__@nestjs+pl_db0cfabba2e82d88e5fba018b77d61d9/node_modules/@nestjs/core/injector/injector.js:78:13)
+    at async Injector.loadProvider (/home/ashenix/Projects/wie-challenge/website/node_modules/.pnpm/@nestjs+core@11.2.7_@nestjs+common@11.2.7_reflect-metadata@0.2.2_rxjs@7.8.2__@nestjs+pl_db0cfabba2e82d88e5fba018b77d61d9/node_modules/@nestjs/core/injector/injector.js:112:9)
+    at async /home/ashenix/Projects/wie-challenge/website/node_modules/.pnpm/@nestjs+core@11.2.7_@nestjs+common@11.2.7_reflect-metadata@0.2.2_rxjs@7.8.2__@nestjs+pl_db0cfabba2e82d88e5fba018b77d61d9/node_modules/@nestjs/core/injector/instance-loader.js:56:13
+    at async Promise.all (index 3)
+    at async InstanceLoader.createInstancesOfProviders (/home/ashenix/Projects/wie-challenge/website/node_modules/.pnpm/@nestjs+core@11.2.7_@nestjs+common@11.2.7_reflect-metadata@0.2.2_rxjs@7.8.2__@nestjs+pl_db0cfabba2e82d88e5fba018b77d61d9/node_modules/@nestjs/core/injector/instance-loader.js:55:9) {
+  type: 'CollaborationService',
+  context: {
+    index: 1,
+    dependencies: [ [class PrismaService extends t], [class CommerceService] ],
+    name: [class CommerceService]
+  },
+  metadata: { id: 'a4e75f1285f1fb6958c0c' },
+  moduleRef: { id: '5ddc927a2addc1b594046' }
+}
+
+Node.js v24.20.0
+/home/ashenix/Projects/wie-challenge/website/apps/api:
+[ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL] @nasj/api@0.1.0 test:integration: `tsx test/integration.ts`
+Exit status 1
+[ELIFECYCLE] Command failed with exit code 1.

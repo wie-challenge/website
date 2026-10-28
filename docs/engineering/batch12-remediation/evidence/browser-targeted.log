@@ -1,0 +1,42 @@
+
+Running 4 tests using 1 worker
+
+(node:280979) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓  1 tests/e2e/batch12.spec.ts:42:3 › Batch12 sales proposal and financial controls use real scoped records at 390px (7.4s)
+  ✓  2 tests/e2e/batch12.spec.ts:42:3 › Batch12 sales proposal and financial controls use real scoped records at 1280px (6.5s)
+  ✘  3 tests/e2e/batch5.spec.ts:46:1 › Batch 5 real synthetic material custody, payout governance, dispute and blocked closure journeys (1.3m)
+
+
+  1) tests/e2e/batch5.spec.ts:46:1 › Batch 5 real synthetic material custody, payout governance, dispute and blocked closure journeys 
+
+    Test was interrupted.
+
+    Error: locator.click: Test ended.
+    Call log:
+      - waiting for getByText('Contractual due-date evidence', { exact: true })
+
+
+      144 |   });
+      145 |   await expect(page.getByText(/Execution 2.000 TND · Verification pending/)).toBeVisible();
+    > 146 |   await page.getByText('Contractual due-date evidence', { exact: true }).click();
+          |                                                                          ^
+      147 |   await form(page, 'Record contractual due-date evidence')
+      148 |     .getByLabel('Contractual date basis', { exact: true })
+      149 |     .selectOption('ACCEPTED_TERMS_EVIDENCE');
+        at /home/ashenix/Projects/wie-challenge/website/tests/e2e/batch5.spec.ts:146:74
+
+    Error Context: test-results/batch5-Batch-5-real-synthe-bc25a-nd-blocked-closure-journeys/error-context.md
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/batch5-Batch-5-real-synthe-bc25a-nd-blocked-closure-journeys/trace.zip
+    Usage:
+
+        pnpm exec playwright show-trace test-results/batch5-Batch-5-real-synthe-bc25a-nd-blocked-closure-journeys/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  1 interrupted
+    tests/e2e/batch5.spec.ts:46:1 › Batch 5 real synthetic material custody, payout governance, dispute and blocked closure journeys 
+  1 did not run
+  2 passed (1.8m)

@@ -1,0 +1,20 @@
+[
+  {
+    "case": "Negative contribution/variance exact sign",
+    "result": "PASS",
+    "value": "-20.002"
+  },
+  {
+    "case": "Late and partial buyer inflows do not reduce earlier required cash",
+    "result": "PASS",
+    "value": "120.003"
+  },
+  {
+    "case": "Formula/control-character CSV neutralization",
+    "result": "PASS"
+  },
+  {
+    "case": "Zero denominator is unavailable",
+    "result": "PASS"
+  }
+]

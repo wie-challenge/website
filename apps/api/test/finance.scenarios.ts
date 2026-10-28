@@ -60,6 +60,7 @@ export async function runFinanceScenarios(
     'finance.adjustment.propose',
     'finance.adjustment.approve',
     'finance.closure.assess',
+    'finance.accounting.export',
   ])
     await db.membershipPermission.create({
       data: {
@@ -351,5 +352,28 @@ export async function runFinanceScenarios(
     false,
   );
   assert.ok((await db.financeRecordEvent.count({ where: { targetId: id(claim) } })) >= 5);
+  const from = new Date(Date.now() - 30 * 86400000).toISOString(),
+    to = new Date(Date.now() + 86400000).toISOString();
+  const exported = await operator.client.request(
+    `${root}/orders/${orderId}/accounting-export?${new URLSearchParams({ from, to })}`,
+  );
+  assert.equal(exported.status, 200, JSON.stringify(exported.body));
+  const report = exported.body as { csv: string; totals: { group: string; amountTnd: string }[] };
+  const authoritativePayables = await db.artisanPayable.findMany({ where: { orderId } });
+  const liabilityTotal = authoritativePayables.reduce((sum, p) => sum + p.amountMillimes, 0n);
+  const exportedLiabilities = report.totals.filter((t) => t.group.startsWith('ARTISAN_LIABILITY:'));
+  assert.equal(exportedLiabilities.length, 1);
+  assert.equal(exportedLiabilities[0].amountTnd, formatTnd(liabilityTotal));
+  for (const source of authoritativePayables)
+    assert.ok(report.csv.includes(`payable:${source.id}`));
+  assert.doesNotMatch(report.csv, /VERIFIED_SETTLED|bankAccount|beneficiary/);
+  assert.equal(
+    (
+      await buyer.client.request(
+        `${root}/orders/${orderId}/accounting-export?${new URLSearchParams({ from, to })}`,
+      )
+    ).status,
+    404,
+  );
   console.log('  ✓ Batch 5 deposit, payout, execution, claim and closure governance scenarios');
 }

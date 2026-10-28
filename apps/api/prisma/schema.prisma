@@ -18,6 +18,9 @@ enum AccountStatus {
 }
 
 model User {
+ recordedContractualDates ContractualDueDate[]
+ prospectRevisions ProspectRevision[]
+ proposalRevisions PilotProposalRevision[]
   demoIdentity DemoIdentity?
   revisionsAuthored                ProcurementRevision[]       @relation("RevisionAuthor")
   procurementActivities            ProcurementActivity[]       @relation("ActivityActor")
@@ -93,6 +96,41 @@ model User {
   accounts                         Account[]
 
   @@index([role, status])
+  recommendationSnapshots RecommendationSnapshot[] @relation("RecommendationAuthor")
+  allocationPlans         AllocationPlan[]         @relation("AllocationPlanAuthor")
+  reviewedAllocationPlans AllocationPlan[]         @relation("AllocationPlanReviewer")
+  allocationOverrides     AllocationOverride[]     @relation("OverrideActor")
+  scheduleScenarios       ScheduleScenario[]       @relation("ScheduleScenarioAuthor")
+  productSpecifications   ProductSpecification[]         @relation("SpecAuthor")
+  specRevisions           ProductSpecificationRevision[] @relation("SpecRevisionAuthor")
+  submittedSpecRevisions  ProductSpecificationRevision[] @relation("SpecRevisionSubmitter")
+  approvedSpecRevisions   ProductSpecificationRevision[] @relation("SpecRevisionApprover")
+  sampleRequests          ProductSampleRequest[]         @relation("SampleRequestAuthor")
+  acceptedSampleTerms ProductSampleRequest[] @relation("SampleTermsAcceptor")
+  sampleEvaluations       SampleEvaluation[]             @relation("SampleInspector")
+  sampleApprovals         BuyerSampleApproval[]          @relation("SampleApprovalActor")
+  discussions        OrderDiscussion[]    @relation("DiscussionAuthor")
+  discussionMessages DiscussionMessage[]   @relation("DiscussionMessageAuthor")
+  reportedExceptions ProductionException[] @relation("ExceptionReporter")
+  coordinatedExceptions ProductionException[] @relation("ExceptionCoordinator")
+  scheduleRevisions  ScheduleRevision[]   @relation("ScheduleRevisionAuthor")
+  approvedScheduleRevisions ScheduleRevision[] @relation("ScheduleRevisionApprover")
+  counteroffers      Counteroffer[]       @relation("CounterofferAuthor")
+  reviewedCounteroffers Counteroffer[]    @relation("CounterofferReviewer")
+  acceptedCounteroffers Counteroffer[]    @relation("CounterofferAcceptor")
+  availabilityPauses AvailabilityPause[]  @relation("PauseAuthor")
+  resumedPauses      AvailabilityPause[]  @relation("PauseResumer")
+  supportTickets     SupportTicket[]      @relation("TicketReporter")
+  ownedTickets       SupportTicket[]      @relation("TicketOwner")
+  ticketEvents       SupportTicketEvent[] @relation("TicketEventActor")
+  notifications      NotificationDelivery[] @relation("NotificationRecipient")
+  supportAttachments SupportTicketAttachment[] @relation("TicketAttachmentAuthor")
+  buyerScheduleRevisions   ScheduleRevision[] @relation("ScheduleRevisionBuyer")
+  artisanScheduleRevisions ScheduleRevision[] @relation("ScheduleRevisionArtisan")
+  forecastSnapshots     ForecastSnapshot[]   @relation("ForecastAuthor")
+  timeRecords           ProductionTimeRecord[] @relation("TimeReporter")
+  acknowledgedAlerts    BatchAlert[]         @relation("AlertAcknowledger")
+  reviewedPolicies      ReportingPolicy[]    @relation("PolicyReviewer")
 }
 
 model Session {
@@ -228,6 +266,7 @@ enum PrivacyRequestStatus {
 
 enum NotificationChannel {
   EMAIL
+  IN_APP
 }
 
 enum CaseStatus {
@@ -237,6 +276,8 @@ enum CaseStatus {
 }
 
 model Organization {
+ salesOperatorProspects CommercialProspect[] @relation("SalesOperator")
+ salesBuyerProspects CommercialProspect[] @relation("SalesBuyer")
   managingArtisans       ArtisanManagement[]
   assignedArtisans       ArtisanAssignment[]
   assignedOperators      OperatorAssignment[]
@@ -272,6 +313,12 @@ model Organization {
   supportCases           SupportCase[]
 
   @@index([approvalStatus, createdAt])
+  ownedProductSpecifications ProductSpecification[] @relation("ProductOwner")
+  sampleRequests             ProductSampleRequest[] @relation("SampleBuyer")
+  sampleRequestsAsOperator   ProductSampleRequest[] @relation("SampleOperator")
+  sampleApprovals            BuyerSampleApproval[]   @relation("SampleApprovalBuyer")
+  discussions        OrderDiscussion[]
+  supportTickets     SupportTicket[]
 }
 
 model OrganizationMember {
@@ -356,6 +403,11 @@ model ArtisanProfile {
   delegations           DelegationGrant[]
   eligibilityAssessments EligibilityAssessment[]
   payables               ArtisanPayable[]
+  allocationItems       AllocationPlanItem[]
+  sampleRequests        ProductSampleRequest[]
+  availabilityPauses AvailabilityPause[]
+  samplePayables        SamplePayable[]
+  timeRecords           ProductionTimeRecord[]
 }
 
 model CraftSkill {
@@ -368,6 +420,7 @@ model CraftSkill {
   artisans    ArtisanSkill[]
   capacities  CapacityDeclaration[]
   effortAssumptions EffortAssumption[]
+  productSpecifications ProductSpecification[]
 }
 
 model ArtisanSkill {
@@ -597,6 +650,7 @@ model EventReceipt {
 }
 
 model CommercialRfq {
+ pilotProposalRevisions PilotProposalRevision[]
   demoScenario DemoScenario?
   revisions              ProcurementRevision[]
   activities             ProcurementActivity[]
@@ -639,6 +693,7 @@ model CommercialRfq {
 }
 
 model CommercialOrder {
+ financeRecordEvents FinanceRecordEvent[]
   products          ApprovedProductVersion[]
   documents         ProcurementDocument[]
   acceptance        ProcurementAcceptance?
@@ -663,6 +718,17 @@ model CommercialOrder {
   traceability         TraceabilityPublication[]
   payables             ArtisanPayable[]
   settlements          SimulatedSettlement[]
+  recommendationSnapshots RecommendationSnapshot[]
+  allocationPlans       AllocationPlan[]
+  scheduleScenarios     ScheduleScenario[]
+  discussions        OrderDiscussion[]
+  exceptions         ProductionException[]
+  scheduleRevisions  ScheduleRevision[]
+  catalogueProcurementRevisionId String? @unique
+  catalogueProcurementRevision ProcurementRevision? @relation("CatalogueOrderRevision", fields: [catalogueProcurementRevisionId], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  productSpecificationRevisionId String?
+  productSpecificationRevision   ProductSpecificationRevision? @relation(fields: [productSpecificationRevisionId], references: [id], onDelete: Restrict)
+  @@index([productSpecificationRevisionId])
 }
 
 model CommercialOffer {
@@ -677,6 +743,7 @@ model CommercialOffer {
   unitPayMillimes       BigInt
   estimatedHours        String
   expiresAt             DateTime
+  deliveryDeadline      DateTime?
   materials             String
   reworkTerms           String
   paymentConditions     String
@@ -704,6 +771,10 @@ model CommercialOffer {
   @@index([artisanProfileId, status])
   @@index([capacityDeclarationId, status])
   @@index([eligibilityAssessmentId])
+  allocationItem AllocationPlanItem?
+  counteroffers      Counteroffer[]
+  revisedCounteroffer Counteroffer? @relation("RevisedCounterOffer")
+  samplePayables    SamplePayable[] @relation("SamplePayableOffer")
 }
 
 model CommercialBatch {
@@ -738,6 +809,11 @@ model CommercialBatch {
   @@index([orderId])
   @@index([artisanProfileId, status])
   @@index([revisionId])
+  exceptions         ProductionException[]
+  scheduleRevisions  ScheduleRevision[]
+  forecasts         ForecastSnapshot[]
+  timeRecords       ProductionTimeRecord[]
+  alerts            BatchAlert[]
 }
 
 model CommercialInspection {
@@ -1103,6 +1179,8 @@ model ProcurementRevision {
   lockedBatches CommercialBatch[] @relation("LockedBatchRevision")
   releases      BatchRelease[]     @relation("ReleaseRevision")
 
+  catalogueOrder CommercialOrder? @relation("CatalogueOrderRevision")
+
   @@unique([rfqId, version])
 }
 
@@ -1182,6 +1260,10 @@ model ProcurementSample {
   decision          ProcurementSampleDecision?
   products          ApprovedProductVersion[]
   releases          BatchRelease[]
+
+  catalogueApprovalId String?
+  catalogueApproval BuyerSampleApproval? @relation(fields: [catalogueApprovalId], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  @@index([catalogueApprovalId])
 
   @@unique([rfqId, version])
 }
@@ -1584,13 +1666,14 @@ model ProducerShareSnapshot {
 }
 
 model ArtisanPayable {
+ contractualDates ContractualDueDate[]
   id                String           @id @default(cuid())
-  offerId           String
-  offer             CommercialOffer  @relation(fields: [offerId], references: [id], onDelete: Restrict)
-  orderId           String
-  order             CommercialOrder  @relation(fields: [orderId], references: [id], onDelete: Restrict)
-  batchId           String
-  batch             CommercialBatch  @relation(fields: [batchId], references: [id], onDelete: Restrict)
+  offerId           String?
+  offer             CommercialOffer? @relation(fields: [offerId], references: [id], onDelete: Restrict)
+  orderId           String?
+  order             CommercialOrder? @relation(fields: [orderId], references: [id], onDelete: Restrict)
+  batchId           String?
+  batch             CommercialBatch? @relation(fields: [batchId], references: [id], onDelete: Restrict)
   artisanProfileId  String
   artisanProfile    ArtisanProfile   @relation(fields: [artisanProfileId], references: [id], onDelete: Restrict)
   milestone         String
@@ -1605,6 +1688,8 @@ model ArtisanPayable {
   provenance        String           @default("SYNTHETIC")
   createdAt         DateTime         @default(now())
   settlements       SimulatedSettlement[]
+  sampleRequestId   String? @unique
+  sampleRequest     ProductSampleRequest? @relation("SampleLedger", fields: [sampleRequestId], references: [id], onDelete: Restrict, onUpdate: NoAction)
 
   @@unique([batchId, milestone, sourceEventId])
   @@index([orderId])
@@ -1832,6 +1917,10 @@ model FinancialAdjustment {
 }
 
 model FinanceRecordEvent {
+  orderId String?
+  order CommercialOrder? @relation(fields:[orderId],references:[id],onDelete:Restrict,onUpdate:NoAction)
+  sourceKey String? @unique
+  data Json?
   id String @id @default(cuid())
   targetId String
   targetType String
@@ -1924,4 +2013,645 @@ model DemoCommand {
  scenarioId String
  createdAt DateTime @default(now())
  @@unique([visitorId,keyHash])
+}
+
+/* ---------------------------------------------------------------- Batch 8: production planning
+ * Explainable recommendations, reviewed multi-group allocations, human overrides and schedule
+ * scenarios. Recommendations and simulations are advisory; artisan acceptance remains the only
+ * way capacity becomes committed.
+ */
+
+model RecommendationPolicy {
+  id        String   @id @default(cuid())
+  version   Int      @unique
+  name      String
+  inputs    Json
+  excluded  Json
+  active    Boolean  @default(false)
+  createdAt DateTime @default(now())
+  snapshots RecommendationSnapshot[]
+}
+
+model RecommendationSnapshot {
+  id               String               @id @default(cuid())
+  policyId         String
+  policy           RecommendationPolicy @relation(fields: [policyId], references: [id], onDelete: Restrict)
+  orderId          String
+  order            CommercialOrder      @relation(fields: [orderId], references: [id], onDelete: Restrict)
+  requiredQuantity Int
+  craftSkillId     String
+  candidates       Json
+  suggestion       Json
+  limitations      Json
+  authorId         String
+  author           User                 @relation("RecommendationAuthor", fields: [authorId], references: [id], onDelete: Restrict)
+  createdAt        DateTime             @default(now())
+  plans            AllocationPlan[]
+
+  @@index([orderId, createdAt])
+}
+
+model AllocationPlan {
+  id                  String                 @id @default(cuid())
+  orderId             String
+  order               CommercialOrder        @relation(fields: [orderId], references: [id], onDelete: Restrict)
+  version             Int                    @default(1)
+  state               String                 @default("DRAFT")
+  requiredQuantity    Int
+  materialAssumptions Json @default("{}")
+  policyVersion       Int
+  recommendationId    String?
+  recommendation      RecommendationSnapshot? @relation(fields: [recommendationId], references: [id], onDelete: Restrict)
+  authorId            String
+  author              User                   @relation("AllocationPlanAuthor", fields: [authorId], references: [id], onDelete: Restrict)
+  reviewedById        String?
+  reviewedBy          User?                  @relation("AllocationPlanReviewer", fields: [reviewedById], references: [id], onDelete: Restrict)
+  reviewedAt          DateTime?
+  createdAt           DateTime               @default(now())
+  updatedAt           DateTime               @updatedAt
+  items               AllocationPlanItem[]
+  overrides           AllocationOverride[]
+
+  @@unique([orderId, version])
+  @@index([orderId, state])
+}
+
+model AllocationPlanItem {
+  id               String         @id @default(cuid())
+  planId           String
+  plan             AllocationPlan @relation(fields: [planId], references: [id], onDelete: Restrict)
+  artisanProfileId String
+  artisanProfile   ArtisanProfile @relation(fields: [artisanProfileId], references: [id], onDelete: Restrict)
+  quantity         Int
+  state            String         @default("DRAFT")
+  offerId          String?        @unique
+  offer            CommercialOffer? @relation(fields: [offerId], references: [id], onDelete: Restrict)
+  releasedQuantity Int            @default(0)
+  replacementForId String?        @unique
+  replacementFor   AllocationPlanItem? @relation("AllocationReplacement", fields: [replacementForId], references: [id], onDelete: Restrict)
+  replacedBy       AllocationPlanItem? @relation("AllocationReplacement")
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+
+  @@unique([planId, artisanProfileId])
+  @@index([planId, state])
+  @@index([artisanProfileId, state])
+}
+
+model AllocationOverride {
+  id                     String         @id @default(cuid())
+  planId                 String
+  plan                   AllocationPlan @relation(fields: [planId], references: [id], onDelete: Restrict)
+  originalRecommendation Json
+  selectedAlternative    Json
+  actingUserId           String
+  actingUser             User           @relation("OverrideActor", fields: [actingUserId], references: [id], onDelete: Restrict)
+  businessScope          String
+  explanation            String
+  decisionVersion        Int
+  createdAt              DateTime       @default(now())
+
+  @@index([planId, createdAt])
+}
+
+model ScheduleScenario {
+  id               String          @id @default(cuid())
+  orderId          String
+  order            CommercialOrder @relation(fields: [orderId], references: [id], onDelete: Restrict)
+  planId           String?
+  name             String
+  requiredQuantity Int
+  startDate        DateTime
+  deadline         DateTime
+  result           Json
+  assumptions      Json
+  policyVersion    Int
+  authorId         String
+  author           User            @relation("ScheduleScenarioAuthor", fields: [authorId], references: [id], onDelete: Restrict)
+  createdAt        DateTime        @default(now())
+
+  @@index([orderId, createdAt])
+}
+
+/* ---------------------------------------------------------------- Batch 9: product catalog
+ * Versioned product specifications with append-only revision history, paid sample terms and a
+ * single coherent buyer sample approval. Existing ProcurementRevision/ProcurementSample stay the
+ * authority for an accepted order's design evidence; these models add the design lifecycle those
+ * records reference, without creating a second product truth.
+ */
+
+model ProductSpecification {
+  id           String   @id @default(cuid())
+  craftSkillId String
+  craftSkill   CraftSkill @relation(fields: [craftSkillId], references: [id], onDelete: Restrict)
+  productCode  String
+  name         String
+  ownerOrganizationId String
+  ownerOrganization Organization @relation("ProductOwner", fields: [ownerOrganizationId], references: [id], onDelete: Restrict)
+  authorId     String
+  author       User     @relation("SpecAuthor", fields: [authorId], references: [id], onDelete: Restrict)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  revisions    ProductSpecificationRevision[]
+
+  @@unique([ownerOrganizationId, productCode])
+  @@index([craftSkillId])
+}
+
+model ProductSpecificationRevision {
+ pilotProposalRevisions PilotProposalRevision[]
+  id             String               @id @default(cuid())
+  specificationId String
+  specification  ProductSpecification @relation(fields: [specificationId], references: [id], onDelete: Restrict)
+  revisionNumber Int
+  status         String               @default("DRAFT")
+  description    String
+  dimensions     String               @default("")
+  unit           String               @default("cm")
+  materials      Json
+  instructions   String
+  instructionLanguage String @default("en")
+  instructionTranslations Json @default("[]")
+  tolerances     String               @default("")
+  qualityCriteria String
+  referenceImages Json
+  sampleReference String?
+  authorId       String
+  author         User                 @relation("SpecRevisionAuthor", fields: [authorId], references: [id], onDelete: Restrict)
+  submittedById  String?
+  submittedBy    User?                @relation("SpecRevisionSubmitter", fields: [submittedById], references: [id], onDelete: Restrict)
+  submittedAt    DateTime?
+  approvedById   String?
+  approvedBy     User?                @relation("SpecRevisionApprover", fields: [approvedById], references: [id], onDelete: Restrict)
+  approvedAt     DateTime?
+  rejectionReason String               @default("")
+  supersededById String?               @unique
+  supersededBy   ProductSpecificationRevision? @relation("SpecSupersession", fields: [supersededById], references: [id], onDelete: Restrict)
+  supersedes     ProductSpecificationRevision? @relation("SpecSupersession")
+  createdAt      DateTime             @default(now())
+  samples        ProductSampleRequest[]
+  approvals      BuyerSampleApproval[]
+
+  @@unique([specificationId, revisionNumber])
+  @@index([specificationId, status])
+  orders                CommercialOrder[]
+}
+
+model ProductSampleRequest {
+  id                String   @id @default(cuid())
+  specificationRevisionId String
+  specificationRevision ProductSpecificationRevision @relation(fields: [specificationRevisionId], references: [id], onDelete: Restrict)
+  buyerOrganizationId String
+  buyerOrganization Organization @relation("SampleBuyer", fields: [buyerOrganizationId], references: [id], onDelete: Restrict)
+  operatorOrganizationId String
+  operatorOrganization Organization @relation("SampleOperator", fields: [operatorOrganizationId], references: [id], onDelete: Restrict)
+  sampleQuantity    Int
+  responsibleArtisanProfileId String?
+  responsibleArtisan ArtisanProfile? @relation(fields: [responsibleArtisanProfileId], references: [id], onDelete: Restrict)
+  status            String   @default("REQUESTED")
+  workTerms         String
+  compensationMillimes BigInt?
+  compensationBasis String   @default("UNPAID_BY_DEFAULT_BLOCKED")
+  materialResponsibility String
+  plannedCompletion DateTime?
+  actualRecordedMinutes Int?
+  actualMaterialCostMillimes BigInt?
+  actualMaterialUsage String @default("")
+  timeEvidence      String   @default("SYNTHETIC")
+  evidenceReference String   @default("")
+  authorId          String
+  author            User     @relation("SampleRequestAuthor", fields: [authorId], references: [id], onDelete: Restrict)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  evaluations       SampleEvaluation[]
+  approvals         BuyerSampleApproval[]
+
+  @@index([buyerOrganizationId, status])
+  @@index([specificationRevisionId])
+  payables            SamplePayable[]
+  materialCostMillimes BigInt?
+  termsSha256 String?
+  acceptedTermsSha256 String?
+  acceptedById String?
+  acceptedBy User? @relation("SampleTermsAcceptor", fields: [acceptedById], references: [id], onDelete: Restrict, onUpdate: NoAction, map: "sample_acceptor_user_fk")
+  acceptedAt DateTime?
+  reimburseMaterials Boolean @default(false)
+  ledgerPayable ArtisanPayable? @relation("SampleLedger")
+}
+
+model SampleEvaluation {
+  id           String   @id @default(cuid())
+  sampleRequestId String
+  sampleRequest ProductSampleRequest @relation(fields: [sampleRequestId], references: [id], onDelete: Restrict)
+  decision     String
+  criteria     String
+  comments     String   @default("")
+  evidenceReference String
+  inspectorId  String
+  inspector    User     @relation("SampleInspector", fields: [inspectorId], references: [id], onDelete: Restrict)
+  createdAt    DateTime @default(now())
+
+  @@index([sampleRequestId, createdAt])
+}
+
+model BuyerSampleApproval {
+  id               String   @id @default(cuid())
+  sampleRequestId  String
+  sampleRequest    ProductSampleRequest @relation(fields: [sampleRequestId], references: [id], onDelete: Restrict)
+  specificationRevisionId String
+  specificationRevision ProductSpecificationRevision @relation(fields: [specificationRevisionId], references: [id], onDelete: Restrict)
+  buyerOrganizationId String
+  buyerOrganization Organization @relation("SampleApprovalBuyer", fields: [buyerOrganizationId], references: [id], onDelete: Restrict)
+  actorId          String
+  actor            User     @relation("SampleApprovalActor", fields: [actorId], references: [id], onDelete: Restrict)
+  decision         String
+  comments         String   @default("")
+  evidenceReference String
+  amendmentOfId    String?  @unique
+  amendmentOf      BuyerSampleApproval? @relation("SampleApprovalAmendment", fields: [amendmentOfId], references: [id], onDelete: Restrict)
+  amendedBy        BuyerSampleApproval? @relation("SampleApprovalAmendment")
+  createdAt        DateTime @default(now())
+
+  procurementProjections ProcurementSample[]
+
+  @@index([buyerOrganizationId, createdAt])
+}
+
+/* ---------------------------------------------------------------- Batch 11: collaboration
+ * Order-linked discussion, production exceptions, schedule revisions, counteroffers, availability
+ * pauses and support cases. Every record keeps the reporter's original statement; a coordinator can
+ * add to a report but never overwrite the artisan's own account of it.
+ */
+
+model OrderDiscussion {
+  id        String          @id @default(cuid())
+  orderId   String
+  order     CommercialOrder @relation(fields: [orderId], references: [id], onDelete: Restrict)
+  scope     String          @default("BUYER")
+  authorId  String
+  author    User            @relation("DiscussionAuthor", fields: [authorId], references: [id], onDelete: Restrict)
+  authorOrganizationId String?
+  authorOrganization Organization? @relation(fields: [authorOrganizationId], references: [id], onDelete: Restrict)
+  body      String
+  createdAt DateTime        @default(now())
+  messages  DiscussionMessage[]
+
+  @@index([orderId, createdAt])
+}
+
+model DiscussionMessage {
+  id            String          @id @default(cuid())
+  discussionId  String
+  discussion    OrderDiscussion @relation(fields: [discussionId], references: [id], onDelete: Restrict)
+  authorId      String
+  author        User            @relation("DiscussionMessageAuthor", fields: [authorId], references: [id], onDelete: Restrict)
+  body          String
+  internalOnly  Boolean         @default(false)
+  createdAt     DateTime        @default(now())
+
+  @@index([discussionId, createdAt])
+}
+
+model ProductionException {
+  id               String   @id @default(cuid())
+  batchId          String
+  batch            CommercialBatch @relation(fields: [batchId], references: [id], onDelete: Restrict)
+  orderId          String
+  order            CommercialOrder @relation(fields: [orderId], references: [id], onDelete: Restrict)
+  reporterId       String
+  reporter         User     @relation("ExceptionReporter", fields: [reporterId], references: [id], onDelete: Restrict)
+  reporterRole     String
+  category         String
+  severity         String
+  description      String
+  evidenceReference String  @default("")
+  status           String   @default("OPEN")
+  assignedCoordinatorId String?
+  assignedCoordinator User? @relation("ExceptionCoordinator", fields: [assignedCoordinatorId], references: [id], onDelete: Restrict)
+  resolution       String   @default("")
+  resolvedAt       DateTime?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@index([batchId, status])
+  @@index([orderId, status])
+  affectedQuantity  Int?
+  affectedDate      DateTime?
+}
+
+model ScheduleRevision {
+  id            String   @id @default(cuid())
+  batchId       String
+  batch         CommercialBatch @relation(fields: [batchId], references: [id], onDelete: Restrict)
+  orderId       String
+  order         CommercialOrder @relation(fields: [orderId], references: [id], onDelete: Restrict)
+  proposedDeadline DateTime
+  previousDeadline DateTime
+  reason        String
+  impact        Json
+  status        String   @default("PENDING_APPROVAL")
+  authorId      String
+  author        User     @relation("ScheduleRevisionAuthor", fields: [authorId], references: [id], onDelete: Restrict)
+  approvedById  String?
+  approvedBy    User?    @relation("ScheduleRevisionApprover", fields: [approvedById], references: [id], onDelete: Restrict)
+  approvedAt    DateTime?
+  buyerApprovedById String?
+  buyerApprovedBy User?  @relation("ScheduleRevisionBuyer", fields: [buyerApprovedById], references: [id], onDelete: Restrict)
+  buyerApprovedAt DateTime?
+  artisanApprovedById String?
+  artisanApprovedBy User? @relation("ScheduleRevisionArtisan", fields: [artisanApprovedById], references: [id], onDelete: Restrict)
+  artisanApprovedAt DateTime?
+  createdAt     DateTime @default(now())
+
+  @@index([orderId, status])
+  @@index([batchId, createdAt])
+}
+
+model Counteroffer {
+  id            String   @id @default(cuid())
+  offerId       String
+  offer         CommercialOffer @relation(fields: [offerId], references: [id], onDelete: Restrict)
+  revisedOfferId String? @unique
+  revisedOffer CommercialOffer? @relation("RevisedCounterOffer", fields: [revisedOfferId], references: [id], onDelete: Restrict)
+  originalTerms Json?
+  proposedQuantity Int
+  proposedDeadline DateTime
+  clarification String   @default("")
+  status        String   @default("PROPOSED")
+  authorUserId  String
+  authorUser    User     @relation("CounterofferAuthor", fields: [authorUserId], references: [id], onDelete: Restrict)
+  reviewedById  String?
+  reviewedBy    User?    @relation("CounterofferReviewer", fields: [reviewedById], references: [id], onDelete: Restrict)
+  reviewNote    String   @default("")
+  acceptedById  String?
+  acceptedBy    User?    @relation("CounterofferAcceptor", fields: [acceptedById], references: [id], onDelete: Restrict)
+  acceptedAt    DateTime?
+  createdAt     DateTime @default(now())
+
+  @@index([offerId, status])
+}
+
+model AvailabilityPause {
+  id               String   @id @default(cuid())
+  artisanProfileId String
+  artisanProfile   ArtisanProfile @relation(fields: [artisanProfileId], references: [id], onDelete: Restrict)
+  reason           String
+  effectiveFrom    DateTime @default(now())
+  pausedAt         DateTime @default(now())
+  resumedAt        DateTime?
+  resumedById      String?
+  resumedBy        User?    @relation("PauseResumer", fields: [resumedById], references: [id], onDelete: Restrict)
+  actorId          String
+  actor            User     @relation("PauseAuthor", fields: [actorId], references: [id], onDelete: Restrict)
+
+  @@index([artisanProfileId, resumedAt])
+}
+
+model SupportTicket {
+  id             String   @id @default(cuid())
+  category       String
+  relatedType    String?
+  relatedId      String?
+  reporterId     String
+  reporter       User     @relation("TicketReporter", fields: [reporterId], references: [id], onDelete: Restrict)
+  organizationId String?
+  organization   Organization? @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+  description    String
+  evidenceReference String @default("")
+  privacyScope String @default("SUPPORT_ONLY")
+  attachments SupportTicketAttachment[]
+  priority       String   @default("NORMAL")
+  status         String   @default("OPEN")
+  ownerId        String?
+  owner          User?    @relation("TicketOwner", fields: [ownerId], references: [id], onDelete: Restrict)
+  dueAt          DateTime?
+  resolution     String   @default("")
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  events         SupportTicketEvent[]
+
+  @@index([organizationId, status])
+  @@index([reporterId, createdAt])
+}
+
+model SupportTicketEvent {
+  id        String   @id @default(cuid())
+  ticketId  String
+  ticket    SupportTicket @relation(fields: [ticketId], references: [id], onDelete: Restrict)
+  actorId   String
+  actor     User     @relation("TicketEventActor", fields: [actorId], references: [id], onDelete: Restrict)
+  kind      String
+  detail    String
+  createdAt DateTime @default(now())
+
+  @@index([ticketId, createdAt])
+}
+
+model NotificationDelivery {
+  id           String   @id @default(cuid())
+  userId       String
+  user         User     @relation("NotificationRecipient", fields: [userId], references: [id], onDelete: Restrict)
+  category     String
+  channel      String
+  subject      String
+  body         String
+  status       String   @default("PENDING")
+  provider     String   @default("IN_APP")
+  locale       String   @default("en")
+  attempts     Int      @default(1)
+  failureReason String  @default("")
+  createdAt    DateTime @default(now())
+  deliveredAt  DateTime?
+
+  @@index([userId, createdAt])
+  @@index([status, channel])
+}
+
+model SamplePayable {
+  id               String   @id @default(cuid())
+  sampleRequestId  String
+  sampleRequest    ProductSampleRequest @relation(fields: [sampleRequestId], references: [id], onDelete: Restrict)
+  offerId          String?
+  offer            CommercialOffer? @relation("SamplePayableOffer", fields: [offerId], references: [id], onDelete: Restrict)
+  artisanProfileId String
+  artisanProfile   ArtisanProfile @relation(fields: [artisanProfileId], references: [id], onDelete: Restrict)
+  milestone        String   @default("SAMPLE_ACCEPTED_TERMS")
+  amountMillimes   BigInt
+  currency         String   @default("TND")
+  status           String   @default("RECOGNIZED")
+  policyVersion    Int      @default(1)
+  sourceEventId    String
+  termsSnapshot    String
+  provenance       String   @default("SYNTHETIC")
+  createdAt        DateTime @default(now())
+
+  @@unique([sampleRequestId, milestone])
+  @@index([artisanProfileId])
+}
+
+/* Batch 10 completion: preserved forecasts, observed production time, deduplicated alerts. */
+
+model ForecastSnapshot {
+  id                String   @id @default(cuid())
+  batchId           String
+  batch             CommercialBatch @relation(fields: [batchId], references: [id], onDelete: Restrict)
+  ruleVersion       Int
+  forecastedFor     DateTime
+  assumptions       Json
+  evidence          String   @default("SYNTHETIC")
+  createdById       String?
+  createdBy         User?    @relation("ForecastAuthor", fields: [createdById], references: [id], onDelete: Restrict)
+  createdAt         DateTime @default(now())
+  comparisons       ForecastComparison[]
+
+  @@index([batchId, createdAt])
+}
+
+model ForecastComparison {
+  id              String   @id @default(cuid())
+  forecastId      String
+  forecast        ForecastSnapshot @relation(fields: [forecastId], references: [id], onDelete: Restrict)
+  actualCompletedAt DateTime
+  observedDifferenceDays Int
+  absoluteErrorDays Int
+  note            String   @default("")
+  createdAt       DateTime @default(now())
+
+  @@unique([forecastId])
+}
+
+model ProductionTimeRecord {
+  id               String   @id @default(cuid())
+  batchId          String
+  batch            CommercialBatch @relation(fields: [batchId], references: [id], onDelete: Restrict)
+  artisanProfileId String
+  artisanProfile   ArtisanProfile @relation(fields: [artisanProfileId], references: [id], onDelete: Restrict)
+  reportedById     String
+  reportedBy       User     @relation("TimeReporter", fields: [reportedById], references: [id], onDelete: Restrict)
+  consented        Boolean  @default(false)
+  periodFrom       DateTime
+  periodTo         DateTime
+  unitContext      String
+  observedUnits    Int @default(0)
+  observedMinutes  Int?
+  provenance       String @default("")
+  evidence         String   @default("SYNTHETIC")
+  correctionOfId   String?  @unique
+  correctionOf     ProductionTimeRecord? @relation("TimeCorrection", fields: [correctionOfId], references: [id], onDelete: Restrict)
+  correctedBy      ProductionTimeRecord? @relation("TimeCorrection")
+  createdAt        DateTime @default(now())
+
+  @@index([batchId, createdAt])
+}
+
+model BatchAlert {
+  id          String   @id @default(cuid())
+  batchId     String
+  batch       CommercialBatch @relation(fields: [batchId], references: [id], onDelete: Restrict)
+  ruleVersion Int
+  reasonHash  String
+  kind        String
+  facts       Json
+  ownerRole   String   @default("PRODUCTION_MANAGER")
+  status      String   @default("OPEN")
+  acknowledgedById String?
+  acknowledgedBy User? @relation("AlertAcknowledger", fields: [acknowledgedById], references: [id], onDelete: Restrict)
+  acknowledgedAt DateTime?
+  resolvedAt  DateTime?
+  createdAt   DateTime @default(now())
+
+  @@unique([batchId, ruleVersion, reasonHash])
+  @@index([status, createdAt])
+}
+
+model ReportingPolicy {
+  id        String   @id @default(cuid())
+  key       String   @unique
+  version   Int
+  value     Json
+  reviewedById String?
+  reviewedBy User?  @relation("PolicyReviewer", fields: [reviewedById], references: [id], onDelete: Restrict)
+  createdAt DateTime @default(now())
+}
+
+model SupportTicketAttachment {
+  id String @id @default(cuid())
+  ticketId String
+  ticket SupportTicket @relation(fields: [ticketId], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  author User @relation("TicketAttachmentAuthor", fields: [authorId], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  authorId String
+  filename String
+  mime String
+  bytes Bytes
+  sha256 String
+  createdAt DateTime @default(now())
+  @@index([ticketId, createdAt])
+}
+
+// Commercial relationship metadata; Organization remains the buyer identity authority.
+model CommercialProspect {
+ operatorOrganization Organization @relation("SalesOperator",fields:[operatorOrganizationId],references:[id],onDelete:Restrict,onUpdate:NoAction)
+ buyerOrganization Organization @relation("SalesBuyer",fields:[buyerOrganizationId],references:[id],onDelete:Restrict,onUpdate:NoAction)
+ id String @id @default(cuid())
+ operatorOrganizationId String
+ buyerOrganizationId String
+ version Int @default(1)
+ snapshot Json
+ createdAt DateTime @default(now())
+ revisions ProspectRevision[]
+ proposals PilotProposalRevision[]
+ @@unique([operatorOrganizationId,buyerOrganizationId])
+ @@index([operatorOrganizationId,createdAt])
+}
+model ProspectRevision {
+ actor User @relation(fields:[actorId],references:[id],onDelete:Restrict,onUpdate:NoAction)
+ id String @id @default(cuid())
+ prospectId String
+ prospect CommercialProspect @relation(fields:[prospectId],references:[id],onDelete:Restrict,onUpdate:NoAction)
+ version Int
+ snapshot Json
+ actorId String
+ createdAt DateTime @default(now())
+ @@unique([prospectId,version])
+}
+model PilotProposalRevision {
+ actor User @relation(fields:[actorId],references:[id],onDelete:Restrict,onUpdate:NoAction)
+ specificationRevision ProductSpecificationRevision @relation(fields:[specificationRevisionId],references:[id],onDelete:Restrict,onUpdate:NoAction)
+ rfq CommercialRfq? @relation(fields:[rfqId],references:[id],onDelete:Restrict,onUpdate:NoAction)
+ id String @id @default(cuid())
+ prospectId String
+ prospect CommercialProspect @relation(fields:[prospectId],references:[id],onDelete:Restrict,onUpdate:NoAction)
+ groupId String
+ version Int
+ specificationRevisionId String
+ rfqId String?
+ snapshot Json
+ actorId String
+ createdAt DateTime @default(now())
+ @@unique([groupId,version])
+ @@index([prospectId,createdAt])
+}
+
+// Evidence transcription/correction history; never changes an accepted agreement or verifies payment.
+model ContractualDueDate {
+ id String @id @default(cuid())
+ payableId String
+ payable ArtisanPayable @relation(fields:[payableId],references:[id],onDelete:Restrict,onUpdate:NoAction)
+ version Int
+ basis String
+ dueAt DateTime?
+ contractReference String
+ contractVersion String
+ payableTermsSha256 String
+ offerVersionAtRecording Int?
+ sourceEvidence String
+ evidenceStatus String @default("RECORDED_UNVERIFIED")
+ reason String
+ actorId String
+ actor User @relation(fields:[actorId],references:[id],onDelete:Restrict,onUpdate:NoAction)
+ correctionOfId String? @unique
+ correctionOf ContractualDueDate? @relation("ContractDateCorrection",fields:[correctionOfId],references:[id],onDelete:Restrict,onUpdate:NoAction)
+ correctedBy ContractualDueDate? @relation("ContractDateCorrection")
+ createdAt DateTime @default(now())
+ @@unique([payableId,version])
 }

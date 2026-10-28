@@ -1,4 +1,4 @@
-import { exactCapacityQuantity } from '@nasj/contracts';
+import { exactCapacityQuantity, capacityHundredths, capacityDecimal } from '@nasj/contracts';
 import { validateIdempotencyKey } from '../foundation/idempotency.js';
 import { HttpException, Inject, Injectable } from '@nestjs/common';
 import type {
@@ -291,6 +291,124 @@ export class ArtisansService {
     });
     return this.skills(actor, id);
   }
+  async associationCapacity(actor: Actor, organizationId: string) {
+    return iamTransaction(this.db, actor, async (tx) => {
+      const member = await tx.organizationMember.findFirst({
+        where: {
+          userId: actor.id,
+          organizationId,
+          status: 'ACTIVE',
+          roles: { some: { role: 'ASSOCIATION_COORDINATOR' } },
+          organization: { type: 'ASSOCIATION', approvalStatus: 'APPROVED' },
+        },
+      });
+      if (!member)
+        fail(403, 'FORBIDDEN', 'An active coordinator in this approved association is required.');
+      const grants = await tx.delegationGrant.findMany({
+        where: {
+          organizationId,
+          delegateUserId: actor.id,
+          status: 'ACTIVE',
+          revokedAt: null,
+          expiresAt: { gt: new Date() },
+          scopes: { has: 'CAPACITY_READ' },
+        },
+        select: { id: true, artisanProfileId: true },
+        take: 501,
+      });
+      if (grants.length > 500)
+        fail(409, 'COHORT_TOO_LARGE', 'Narrow this reviewed capacity cohort before reporting.');
+      const authorized = new Set<string>();
+      for (const grant of grants) {
+        try {
+          await this.access(actor, grant.artisanProfileId, 'artisan.capacity.read', tx, grant.id);
+          authorized.add(grant.artisanProfileId);
+        } catch (error) {
+          if (!(error instanceof HttpException) || ![403, 404].includes(error.getStatus()))
+            throw error;
+        }
+      }
+      const rows = await tx.capacityDeclaration.findMany({
+        where: { artisanProfileId: { in: [...authorized] }, supersededAt: null },
+        orderBy: [{ version: 'desc' }, { createdAt: 'desc' }],
+      });
+      const unique = new Map<string, (typeof rows)[number]>();
+      for (const row of rows) {
+        const key = [
+          row.artisanProfileId,
+          row.craftSkillId,
+          row.unitType,
+          row.effectiveFrom.toISOString(),
+          row.effectiveTo.toISOString(),
+        ].join('|');
+        if (!unique.has(key)) unique.set(key, row);
+      }
+      const groups = new Map<
+        string,
+        {
+          craftSkillId: string;
+          unit: string;
+          periodFrom: string;
+          periodTo: string;
+          members: Set<string>;
+          declared: bigint;
+          reserved: bigint;
+          committed: bigint;
+          free: bigint;
+          unknown: boolean;
+        }
+      >();
+      for (const row of await capacityViews(tx, [...unique.values()])) {
+        const key = [row.craftSkillId, row.unitType, row.effectiveFrom, row.effectiveTo].join('|');
+        const group = groups.get(key) ?? {
+          craftSkillId: row.craftSkillId,
+          unit: row.unitType,
+          periodFrom: row.effectiveFrom,
+          periodTo: row.effectiveTo,
+          members: new Set<string>(),
+          declared: 0n,
+          reserved: 0n,
+          committed: 0n,
+          free: 0n,
+          unknown: false,
+        };
+        group.members.add(row.artisanProfileId);
+        group.declared += capacityHundredths(row.summary.declared);
+        group.reserved += capacityHundredths(row.summary.reserved);
+        group.committed += capacityHundredths(row.summary.committed);
+        group.free += capacityHundredths(row.summary.remaining);
+        group.unknown ||= !row.summary.availabilityKnown;
+        groups.set(key, group);
+      }
+      return {
+        organizationId,
+        purpose: 'Consented association capacity coordination',
+        timezone: 'Africa/Tunis',
+        asOf: new Date().toISOString(),
+        population: authorized.size,
+        missingDeclarationCount: [...authorized].filter(
+          (id) => !rows.some((row) => row.artisanProfileId === id),
+        ).length,
+        items: [...groups.values()].map((group) => ({
+          craftSkillId: group.craftSkillId,
+          unit: group.unit,
+          periodFrom: group.periodFrom,
+          periodTo: group.periodTo,
+          memberCount: group.members.size,
+          declared: capacityDecimal(group.declared),
+          reserved: capacityDecimal(group.reserved),
+          committed: capacityDecimal(group.committed),
+          free: group.unknown ? null : capacityDecimal(group.free),
+          availabilityKnown: !group.unknown,
+        })),
+        limitations: [
+          'Only current explicit capacity-read delegations and consented active relationships contribute.',
+          'Different periods and units are never combined. Missing capacity remains unavailable.',
+        ],
+      };
+    });
+  }
+
   async capacity(
     actor: Actor,
     id?: string,

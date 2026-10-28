@@ -2,6 +2,7 @@ import 'reflect-metadata';
 import { PrismaService } from '../database/prisma.service.js';
 import { loadConfig } from '../config/env.js';
 import { dispatchBatch, outboxStatus } from './outbox.js';
+import { dispatchNotifications } from './notifications.js';
 import { rebuildAnalyticsBatch } from './commerce-consumer.js';
 import { logger } from '../common/logging.js';
 const args = process.argv.slice(2);
@@ -11,7 +12,8 @@ if (
   (mode === '--retry-failed' ? args.length !== 2 : args.length > 1)
 )
   throw new Error('Use --once, --watch, --status or --retry-failed EVENT_ID, --rebuild-analytics.');
-const db = new PrismaService(loadConfig());
+const config = loadConfig();
+const db = new PrismaService(config);
 let stopping = false;
 process.once('SIGTERM', () => {
   stopping = true;
@@ -43,6 +45,7 @@ try {
   } else {
     do {
       await dispatchBatch(db);
+      await dispatchNotifications(db, config);
       if (mode === '--watch' && !stopping)
         await new Promise((resolve) => setTimeout(resolve, 1000));
     } while (mode === '--watch' && !stopping);

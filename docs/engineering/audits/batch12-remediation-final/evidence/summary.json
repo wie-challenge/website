@@ -1,0 +1,68 @@
+{
+  "verifiedAt": "2026-10-28T15:09:59.697441+00:00",
+  "decision": "READY_FOR_BATCH13_PLANNING",
+  "scope": "Targeted independent read-only verification; not production or owner acceptance",
+  "sourceHead": "b63b9d9a94ec576533a0c87e60e20203e72690f4",
+  "branch": "feat/nasj-showroom-competition-package",
+  "unchangedOriginalFiles": 913,
+  "changedOriginalFiles": [],
+  "matchesPinnedRemediationSource": true,
+  "freshResults": {
+    "focusedIntegrationNative": 54,
+    "apiUnit": 133,
+    "webUnit": 25,
+    "focusedBrowser": 4,
+    "failures": 0,
+    "skips": 0
+  },
+  "freshRestore": {
+    "evidence": "DISPOSABLE_ENCRYPTED_SYNTHETIC_RESTORE",
+    "configurationRestored": true,
+    "encryptedBytes": 552958,
+    "tables": 131,
+    "contractualDateRows": 4,
+    "rows": 699,
+    "backupMs": 312,
+    "restoreAndVerifyMs": 3146,
+    "archiveBytes": 552797
+  },
+  "reconciledUnchangedFullBaseline": {
+    "integration": 176,
+    "applicationBrowser": 52,
+    "showroom": 3,
+    "migrations": 36,
+    "tables": 131,
+    "fullRegressionRerun": false,
+    "reason": "All pinned release inputs match current source; fresh targeted negative/positive/native/browser checks passed."
+  },
+  "stories": {
+    "E18-03": "PARTIALLY_IMPLEMENTED",
+    "E10-13": "PARTIALLY_IMPLEMENTED",
+    "E10-14": "PARTIALLY_IMPLEMENTED"
+  },
+  "ownerAcceptance": "PENDING",
+  "productCodeModified": false,
+  "persistentDatabaseTouched": false,
+  "commands": [
+    {
+      "command": "BATCH12_FOCUSED=1 pnpm exec tsx --tsconfig /home/ashenix/Projects/wie-challenge/website/apps/api/tsconfig.json docs/engineering/audits/batch12-remediation-final/evidence/runner.ts",
+      "exitCode": 0,
+      "log": "focused-final.log"
+    },
+    {
+      "command": "pnpm --filter @nasj/api test",
+      "exitCode": 0,
+      "log": "api-unit.log"
+    },
+    {
+      "command": "pnpm --filter @nasj/web test",
+      "exitCode": 0,
+      "log": "web-unit.log"
+    },
+    {
+      "command": "pnpm exec playwright test tests/e2e/batch12.spec.ts tests/e2e/batch5.spec.ts",
+      "exitCode": 0,
+      "log": "browser.log"
+    }
+  ]
+}

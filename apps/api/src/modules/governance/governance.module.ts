@@ -1,3 +1,4 @@
+import { RetentionController } from './retention.controller.js';
 import { Module } from '@nestjs/common';
 import { FoundationModule } from '../foundation/foundation.module.js';
 import { MailModule } from '../mail/mail.module.js';
@@ -6,6 +7,6 @@ import { GovernanceController } from './governance.controller.js';
 @Module({
   imports: [FoundationModule, MailModule],
   providers: [GovernanceService],
-  controllers: [GovernanceController],
+  controllers: [RetentionController, GovernanceController],
 })
 export class GovernanceModule {}

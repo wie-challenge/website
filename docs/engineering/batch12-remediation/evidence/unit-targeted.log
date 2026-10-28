@@ -1,0 +1,18 @@
+✔ cash gap uses exact chronological millimes, conservative same-instant order and unknown dates (0.839392ms)
+✔ timeliness excludes synthetic, partial, disputed, overpaid and unknown dates from verified denominator (0.36083ms)
+✔ timeliness requires full settlement and reports completion on final partial payment date (0.156242ms)
+✔ accounting export balances separate evidence groups, stable source IDs and half-open periods (5.65206ms)
+✔ CSV neutralizes formulas, controls, quotes and embedded newlines (0.157628ms)
+✔ notification operational alerts distinguish failed/uncertain and sending-age review (0.605148ms)
+✔ structured logs redact contact, finance, health and credentials without dropping correlation (1.278504ms)
+✔ retention inventory covers material classes without inventing approved periods or wearable datasets (0.186799ms)
+✔ contractual date evidence refuses ambiguous known/unknown inputs and unsupported settlement fields (3.179305ms)
+✔ financial review hashing is stable across object ordering and binds exact millimes and funding evidence (1.635375ms)
+ℹ tests 10
+ℹ suites 0
+ℹ pass 10
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 306.913737

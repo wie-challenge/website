@@ -69,6 +69,7 @@ export const envSchema = z.object({
   RATE_API_WINDOW: positive.default(60),
   RATE_ADMIN_MAX: positive.default(30),
   RATE_ADMIN_WINDOW: positive.default(60),
+  NOTIFICATION_EMAIL_ENABLED: bool.default(false),
   SMTP_HOST: z.string().min(1).default('127.0.0.1'),
   SMTP_PORT: z.coerce.number().int().min(1).max(65535).default(1026),
   SMTP_SECURE: bool.default(false),

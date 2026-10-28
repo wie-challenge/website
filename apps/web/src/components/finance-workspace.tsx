@@ -1,4 +1,5 @@
 'use client';
+import { FinancialAnalysis, RfqFinanceReview } from './financial-analysis';
 import { EvidenceNotice } from './evidence-notice';
 import { useState } from 'react';
 import Link from 'next/link';
@@ -54,6 +55,7 @@ type Dispute = {
 type Adjustment = { id: string; amountTnd: string; kind: string; reason: string; status: string };
 type Closure = { status: string; blockers: (string | { code: string; message: string })[] };
 type FinanceView = {
+  orderVersion: number;
   orderId: string;
   delivered: number;
   expectedTnd: string;
@@ -108,6 +110,7 @@ export function FinanceWorkspace() {
       >
         <Input name="orderId" label="Commercial order reference" required />
       </ActionForm>
+      <RfqFinanceReview />
       {orderId ? (
         <OrderFinance key={orderId} orderId={orderId} />
       ) : (
@@ -124,7 +127,10 @@ export function OrderFinance({ orderId }: { orderId: string }) {
   const data = resource.data;
   const allowed = (permission: string) => has(data, permission);
   return (
-    <section aria-labelledby={`finance-${orderId}`} className="section-gap">
+    <section
+      aria-labelledby={`finance-${orderId}`}
+      className="section-gap financial-order-workspace"
+    >
       <h2 id={`finance-${orderId}`}>Financial controls and closure</h2>
       <ResourceState {...resource} retry={resource.reload} />
       <p>
@@ -346,7 +352,37 @@ export function OrderFinance({ orderId }: { orderId: string }) {
             </article>
           ))}
           <h3>Order closure assessment</h3>
+          {(allowed('finance.payout.read') || allowed('operator.accounts.read')) && (
+            <FinancialAnalysis
+              orderId={orderId}
+              canRecord={allowed('finance.payable.reconcile')}
+              canExport={allowed('finance.accounting.export')}
+            />
+          )}
           <Blockers closure={data.closure} />
+          {allowed('finance.closure.assess') && (
+            <ActionForm
+              label="Request financial closure"
+              onSuccess={resource.reload}
+              action={async (f) => {
+                const result = (await post(`${root}/orders/${orderId}/close`, {
+                  version: data.orderVersion,
+                  reason: text(f, 'reason'),
+                  ...(text(f, 'exceptionReference')
+                    ? { exceptionReference: text(f, 'exceptionReference') }
+                    : {}),
+                })) as { status: string; blockers: string[] };
+                if (result.status === 'DENIED')
+                  throw new Error(`Closure denied: ${result.blockers.join(', ')}`);
+              }}
+            >
+              <Input name="reason" label="Closure decision reason" required />
+              <Input
+                name="exceptionReference"
+                label="Exception evidence reference (no waiver policy enabled)"
+              />
+            </ActionForm>
+          )}
           {allowed('finance.closure.assess') && (
             <ActionForm
               label="Record closure assessment"

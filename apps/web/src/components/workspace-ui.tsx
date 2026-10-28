@@ -357,3 +357,17 @@ export function Checkboxes({
     </div>
   );
 }
+
+/** Native selection field for forms that need explicit options or controlled selection. */
+export function Choice({
+  label,
+  ...props
+}: React.ComponentProps<typeof NativeSelect> & { label: string }) {
+  const id = useId();
+  return (
+    <div className="field">
+      <Label htmlFor={id}>{label}</Label>
+      <NativeSelect id={id} aria-label={label} {...props} />
+    </div>
+  );
+}

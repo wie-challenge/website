@@ -1,0 +1,824 @@
+[
+  {
+    "id": "CONTACT_SCOPE",
+    "outcome": "PASS"
+  },
+  {
+    "id": "FUNDING_BEFORE_WON",
+    "required": "DENY_FINANCE_REVIEW_REQUIRED",
+    "actualStatus": 201,
+    "actualCode": "ACCEPTED",
+    "reviewCount": 0,
+    "orderId": "cmvs7bgq8001tzze4es6cenha"
+  },
+  {
+    "id": "CSV_RECONCILIATION",
+    "outcome": "PASS",
+    "sqlMillimes": "12346",
+    "csvMillimes": "12346",
+    "costRows": 2
+  },
+  {
+    "id": "TIMELINESS_REACHABILITY",
+    "required": "Immutable contractual due dates and verified settlement path",
+    "actual": "execution_unverified forbids bankVerified and VERIFIED_SETTLED; no current payable writer sets paymentDueAt",
+    "constraints": [
+      {
+        "conname": "execution_unverified",
+        "definition": "CHECK (((NOT \"bankVerified\") AND (status = ANY (ARRAY['VERIFICATION_PENDING'::text, 'FAILED'::text])) AND (\"amountMillimes\" > 0)))"
+      }
+    ]
+  },
+  {
+    "id": "TIMELINESS_PURE",
+    "outcome": "PASS",
+    "period": {
+      "from": "2026-10-01T00:00:00Z",
+      "to": "2026-11-01T00:00:00Z",
+      "bounds": "[from,to)"
+    },
+    "eligiblePaymentCount": 2,
+    "verifiedOnTimeCount": 1,
+    "verifiedLateCount": 1,
+    "unverifiedUnknownCount": 8,
+    "outstandingOverdueCount": 4,
+    "partialPaymentCount": 1,
+    "disputedExcludedCount": 1,
+    "onTimePercentage": 50,
+    "exclusions": [
+      "Unknown contractual due dates use creation date only for unknown-count cohorting",
+      "Synthetic, disputed, partially paid, overpaid and unverified obligations excluded from the verified denominator"
+    ],
+    "details": [
+      {
+        "id": "on-time",
+        "status": "VERIFIED_ON_TIME",
+        "dueAt": "2026-10-15T00:00:00Z",
+        "verifiedSettlementAt": "2026-10-14T00:00:00Z",
+        "amountTnd": "1.000",
+        "verifiedTnd": "1.000",
+        "evidence": "OBSERVED"
+      },
+      {
+        "id": "late",
+        "status": "VERIFIED_LATE",
+        "dueAt": "2026-10-15T00:00:00Z",
+        "verifiedSettlementAt": "2026-10-16T00:00:00Z",
+        "amountTnd": "1.000",
+        "verifiedTnd": "1.000",
+        "evidence": "OBSERVED"
+      },
+      {
+        "id": "partial",
+        "status": "OUTSTANDING_OVERDUE",
+        "dueAt": "2026-10-15T00:00:00Z",
+        "verifiedSettlementAt": null,
+        "amountTnd": "1.000",
+        "verifiedTnd": "0.500",
+        "evidence": "OBSERVED"
+      },
+      {
+        "id": "disputed",
+        "status": "DISPUTED_EXCLUDED",
+        "dueAt": "2026-10-15T00:00:00Z",
+        "verifiedSettlementAt": "2026-10-14T00:00:00Z",
+        "amountTnd": "1.000",
+        "verifiedTnd": "1.000",
+        "evidence": "OBSERVED"
+      },
+      {
+        "id": "outstanding",
+        "status": "OUTSTANDING_OVERDUE",
+        "dueAt": "2026-10-15T00:00:00Z",
+        "verifiedSettlementAt": null,
+        "amountTnd": "1.000",
+        "verifiedTnd": "0.000",
+        "evidence": "OBSERVED"
+      },
+      {
+        "id": "unknown-due",
+        "status": "UNKNOWN_UNVERIFIED",
+        "dueAt": null,
+        "verifiedSettlementAt": "2026-10-14T00:00:00Z",
+        "amountTnd": "1.000",
+        "verifiedTnd": "1.000",
+        "evidence": "OBSERVED"
+      },
+      {
+        "id": "unknown-settled",
+        "status": "OUTSTANDING_OVERDUE",
+        "dueAt": "2026-10-15T00:00:00Z",
+        "verifiedSettlementAt": null,
+        "amountTnd": "1.000",
+        "verifiedTnd": "0.000",
+        "evidence": "OBSERVED"
+      },
+      {
+        "id": "synthetic",
+        "status": "UNKNOWN_UNVERIFIED",
+        "dueAt": "2026-10-15T00:00:00Z",
+        "verifiedSettlementAt": "2026-10-14T00:00:00Z",
+        "amountTnd": "1.000",
+        "verifiedTnd": "1.000",
+        "evidence": "SYNTHETIC"
+      },
+      {
+        "id": "failed",
+        "status": "OUTSTANDING_OVERDUE",
+        "dueAt": "2026-10-15T00:00:00Z",
+        "verifiedSettlementAt": null,
+        "amountTnd": "1.000",
+        "verifiedTnd": "0.000",
+        "evidence": "OBSERVED"
+      },
+      {
+        "id": "overpaid",
+        "status": "UNKNOWN_UNVERIFIED",
+        "dueAt": "2026-10-15T00:00:00Z",
+        "verifiedSettlementAt": "2026-10-14T00:00:00Z",
+        "amountTnd": "1.000",
+        "verifiedTnd": "1.001",
+        "evidence": "OBSERVED"
+      }
+    ]
+  },
+  {
+    "id": "LEGACY_ADJUSTMENT_CLOSE",
+    "required": "DENY_UNRESOLVED_FINANCIAL_ADJUSTMENT",
+    "actualStatus": 201,
+    "actualCode": "CLOSED",
+    "adjustmentStatus": "PENDING_REVIEW",
+    "assessmentBlockers": [
+      "BUYER_BANK_EVIDENCE_UNAVAILABLE",
+      "PAYOUT_PROVIDER_VERIFICATION_UNAVAILABLE",
+      "TAX_INVOICE_POLICY_UNAPPROVED",
+      "DELIVERY_RECONCILIATION_INCOMPLETE",
+      "COMPENSATION_ENTITLEMENT_REVIEW_REQUIRED",
+      "SETTLEMENT_POLICY_REVIEW_REQUIRED",
+      "MATERIAL_LIABILITIES_UNRESOLVED"
+    ]
+  },
+  {
+    "id": "RETENTION_NO_PURGE",
+    "outcome": "PASS"
+  },
+  {
+    "id": "RESTORE_INDEPENDENT",
+    "outcome": "PASS",
+    "encryptedBytes": 497876,
+    "tables": 130,
+    "rows": 178,
+    "snapshots": [
+      {
+        "table": "Account",
+        "rows": 9,
+        "sha256": "80a59a88a8458b84bedec50e15043d401d9d3c344b6df5f2def2b509ff312067"
+      },
+      {
+        "table": "AllocationOverride",
+        "rows": 0,
+        "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      {
+        "table": "AllocationPlan",
+        "rows": 0,
+        "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      {
+        "table": "AllocationPlanItem",
+        "rows": 0,
+        "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      {
+        "table": "ApprovedProductVersion",
+        "rows": 0,
+        "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      {
+        "table": "ArtisanAssignment",
+        "rows": 0,
+        "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      {
+        "table": "ArtisanManagement",
+        "rows": 0,
+        "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      {
+        "table": "ArtisanPayable",
+        "rows": 0,
+        "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      {
+        "table": "ArtisanProfile",
+        "rows": 1,
+        "sha256": "8c8da38a6b38d713dc2fc300ba0b1af6943557be3eaac94f6616e947424fb89e"
+      },
+      {
+        "table": "ArtisanSkill",
+        "rows": 1,
+        "sha256": "1abba02b83a1fbfc5b4fe1e32a0205e39303e7e875fade7dbb0bee9de0437a4f"
+      },
+      {
+        "table": "AssistedOfferDecision",
+        "rows": 0,
+        "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      {
+        "table": "AssociationMembership",
+        "rows": 0,
+        "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      {
+        "table": "AuditEvent",
+        "rows": 25,
+        "sha256": "aa0e25ca5126e190f4541e3cd07501e8394025b304248188563c52ddee326df5"
+      },
+      {
+        "table": "AuthorizationPolicy",
+        "rows": 0,
+        "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      {
+        "table": "AvailabilityPause",
+        "rows": 0,
+        "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      {
+        "table": "BatchAlert",
+        "rows": 0,
+        "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      {
+        "table": "BatchMaterialRequirement",
+        "rows": 0,
+        "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      {
+        "table": "BatchRelease",
+        "rows": 0,
+        "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      {
+        "table": "BuyerDeliveryConfirmation",
+        "rows": 0,
+        "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      {
+        "table": "BuyerDepositRecord",
+        "rows": 0,
+        "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      {
+        "table": "BuyerSampleApproval",
+        "rows": 0,
+        "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      {
+        "table": "CapacityDeclaration",
+        "rows": 1,
+        "sha256": "8754fbabdc6128ede320a4926bf7f524aa295e4e7d34cf6cff1d14976647ffea"
+      },
+      {
+        "table": "CommandOutcome",
+        "rows": 9,
+        "sha256": "866b2300baf93b9c7861a43f844b91f6c3e445f581435de4d2539d0102e80c77"
+      },
+      {
+        "table": "CommerceNotice",
+        "rows": 0,
+        "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      {
+        "table": "CommerceProjection",
+        "rows": 0,
+        "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      {
+        "table": "CommercialBatch",
+        "rows": 1,
+        "sha256": "12629edd70072d58d55490b2dcfed4f05f8b8eb7df988c4cec8d1c142b7a7726"
+      },
+      {
+        "table": "CommercialInspection",
+        "rows": 0,
+        "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      {
+        "table": "CommercialOffer",
+        "rows": 1,
+        "sha256": "b019f204219c151cc78aa7f8d721a9562826f16568d79f43d457464b8b8c0093"
+      },
+      {
+        "table": "CommercialOrder",
+        "rows": 2,
+        "sha256": "f62ea4b3dbd10d34b30ee34ebc721507dd67c2d12395afaaee7c0d0dbc1439c1"
+      },
+      {
+        "table": "CommercialProspect",
+        "rows": 1,
+        "sha256": "42908bac27ecb5ea39adb6247abd7409ecd4e1c5428af22fa94969853a343851"
+      },
+      {
+        "table": "CommercialRfq",
+        "rows": 2,
+        "sha256": "8cea794ff268b7e456b6dee64ae6ef28d8dcffe3ccf23f564a2a375414923f15"
+      },
+      {
+        "table": "ConsentRecord",
+        "rows": 1,
+        "sha256": "c1c13597e132f44216835bba23f167f6dcd41212f5f147d458c6d5f8e4f02f37"
+      },
+      {
+        "table": "CostEstimate",
+        "rows": 1,
+        "sha256": "06c4a7615a1c6dfbd50ca16d8ffac8c4efa3bcf7667b8b95cc826b3bc5a9c3b7"
+      },
+      {
+        "table": "Counteroffer",
+        "rows": 0,
+        "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      {
+        "table": "CraftSkill",
+        "rows": 5,
+        "sha256": "5eb77ac79a16c5ef3e400772f9222a13c513e9b85d7971bc76b3b440281e6586"
+      },
+      {
+        "table": "CustodyHandover",
+        "rows": 0,
+        "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      {
+        "table": "DelegationGrant",
+        "rows": 0,
+        "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      {
+        "table": "DeliveryDiscrepancy",
+        "rows": 0,
+        "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      {
+        "table": "DeliveryReport",
+        "rows": 0,
+        "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      {
+        "table": "DemoCommand",
+        "rows": 0,
+        "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      {
+        "table": "DemoIdentity",
+        "rows": 0,
+        "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      {
+        "table": "DemoScenario",
+        "rows": 0,
+        "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      {
+        "table": "DemoVisitor",
+        "rows": 0,
+        "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      {
+        "table": "DiscussionMessage",
+        "rows": 0,
+        "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      {
+        "table": "EffortAssumption",
+        "rows": 0,
+        "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      {
+        "table": "EligibilityAssessment",
+        "rows": 0,
+        "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      {
+        "table": "EventReceipt",
+        "rows": 0,
+        "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      {
+        "table": "FeasibilityAssessment",
+        "rows": 1,
+        "sha256": "7db30419c057c0e1aa364bbec88416065471d4420673f4397fa6cd25c1c4dc13"
+      },
+      {
+        "table": "FinanceRecordEvent",
+        "rows": 2,
+        "sha256": "3bad2156bfeacedaf0f55bda370f9fbe068eb5882ff6d629dbdeb875aff4ca26"
+      },
+      {
+        "table": "FinancialAdjustment",
+        "rows": 1,
+        "sha256": "121a7dace611d65470da4b53de95e67e893e7ddf640c5e8f47c3d3ee1a4c798f"
+      },
+      {
+        "table": "ForecastComparison",
+        "rows": 0,
+        "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      {
+        "table": "ForecastSnapshot",
+        "rows": 0,
+        "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      {
+        "table": "InspectionCriterion",
+        "rows": 0,
+        "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      {
+        "table": "InspectionCriterionResult",
+        "rows": 0,
+        "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      {
+        "table": "InventoryMovement",
+        "rows": 0,
+        "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      {
+        "table": "Invitation",
+        "rows": 0,
+        "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      {
+        "table": "MaterialHandover",
+        "rows": 0,
+        "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      {
+        "table": "MaterialLot",
+        "rows": 0,
+        "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      {
+        "table": "MaterialReadiness",
+        "rows": 0,
+        "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      {
+        "table": "MaterialReceipt",
+        "rows": 0,
+        "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      {
+        "table": "MaterialReconciliation",
+        "rows": 0,
+        "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      {
+        "table": "MaterialReservation",
+        "rows": 0,
+        "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      {
+        "table": "MaterialReturn",
+        "rows": 0,
+        "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      {
+        "table": "MembershipPermission",
+        "rows": 5,
+        "sha256": "fbe8fd0a979027e82a38cdfea986e2b071fbef5cfd1d147ac929a42539435543"
+      },
+      {
+        "table": "MembershipRole",
+        "rows": 10,
+        "sha256": "79f09a95cefb5ba183d8e1d523d96bf82fd84f735ad90db22d7f623e782f3e3f"
+      },
+      {
+        "table": "NotificationDelivery",
+        "rows": 0,
+        "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      {
+        "table": "NotificationPreference",
+        "rows": 0,
+        "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      {
+        "table": "OnboardingAuthorization",
+        "rows": 0,
+        "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      {
+        "table": "OperatorAssignment",
+        "rows": 1,
+        "sha256": "e95e9182bc1eb8b54f93f55467a9da7af6d856e5953e4b623448ca57f1aac816"
+      },
+      {
+        "table": "OrderClosureAssessment",
+        "rows": 0,
+        "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      {
+        "table": "OrderDiscussion",
+        "rows": 0,
+        "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      {
+        "table": "Organization",
+        "rows": 3,
+        "sha256": "47b94aeafa5fb3c542651db157163408ab320168eef93299718e9dd390c4d2d0"
+      },
+      {
+        "table": "OrganizationMember",
+        "rows": 4,
+        "sha256": "b825f7148f86f2994880cd9f56208d5c3a9ca1b75902141d232ddf98f8738b71"
+      },
+      {
+        "table": "OutboxEvent",
+        "rows": 15,
+        "sha256": "23c4efd7719fe9083d244c6468ebcbcc04bee4cfbe362b6128892ac23b557f4d"
+      },
+      {
+        "table": "ParticipantConcern",
+        "rows": 0,
+        "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      {
+        "table": "PaymentDispute",
+        "rows": 0,
+        "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      {
+        "table": "PayoutExecutionRecord",
+        "rows": 0,
+        "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      {
+        "table": "PayoutRequest",
+        "rows": 0,
+        "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      {
+        "table": "PickupSchedule",
+        "rows": 0,
+        "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      {
+        "table": "PilotProposalRevision",
+        "rows": 2,
+        "sha256": "c6dcf048eb2bf79d492e84b2958f06a3a2f24f889ea8ca59fd09a83dd6216412"
+      },
+      {
+        "table": "PrivacyRequest",
+        "rows": 0,
+        "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      {
+        "table": "ProcurementAcceptance",
+        "rows": 1,
+        "sha256": "4cbde9d656f9b56e5381563484767732dbb5922b3440018f9672114da4d185c4"
+      },
+      {
+        "table": "ProcurementActivity",
+        "rows": 2,
+        "sha256": "3c180ac4e97d5f19a2107d72b619a4f4ccd0dbfa2ad5c24d253e6855a7f634fa"
+      },
+      {
+        "table": "ProcurementAttachment",
+        "rows": 0,
+        "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      {
+        "table": "ProcurementDocument",
+        "rows": 1,
+        "sha256": "532d64c954432cd5a73606dbe986cfd2332165a7ce5db1f6ff560b1fead747a3"
+      },
+      {
+        "table": "ProcurementMessage",
+        "rows": 0,
+        "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      {
+        "table": "ProcurementQuestion",
+        "rows": 0,
+        "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      {
+        "table": "ProcurementQuote",
+        "rows": 1,
+        "sha256": "40544326b799fbdb9ff911dec981838a3af3078072967986752250229fde8087"
+      },
+      {
+        "table": "ProcurementQuoteRejection",
+        "rows": 0,
+        "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      {
+        "table": "ProcurementRevision",
+        "rows": 1,
+        "sha256": "48f0793cdd4b4be43058dca7bf5a74953549e28e25a640babc256a08da4e85cd"
+      },
+      {
+        "table": "ProcurementSample",
+        "rows": 0,
+        "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      {
+        "table": "ProcurementSampleDecision",
+        "rows": 0,
+        "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      {
+        "table": "ProducerSharePolicy",
+        "rows": 1,
+        "sha256": "f454fa16a5ea475a96db8c0c9b3d272fafbdf4dd941141fa75a88c266ffee275"
+      },
+      {
+        "table": "ProducerShareSnapshot",
+        "rows": 0,
+        "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      {
+        "table": "ProductSampleRequest",
+        "rows": 0,
+        "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      {
+        "table": "ProductSpecification",
+        "rows": 1,
+        "sha256": "a988ef083582b99fadd70b478af55a330924232d3d7089208c901cb2e974a515"
+      },
+      {
+        "table": "ProductSpecificationRevision",
+        "rows": 1,
+        "sha256": "f9d6fbcdf82d992f31216001ab054beae1e07822fd77e3e5243e3d5b13c4fa6f"
+      },
+      {
+        "table": "ProductionException",
+        "rows": 0,
+        "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      {
+        "table": "ProductionLedgerEvent",
+        "rows": 0,
+        "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      {
+        "table": "ProductionProgressEvent",
+        "rows": 0,
+        "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      {
+        "table": "ProductionTimeRecord",
+        "rows": 0,
+        "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      {
+        "table": "ProspectRevision",
+        "rows": 3,
+        "sha256": "043a4f25ec1565ddbba5313d0ed7c740b2711e4926435428da0cb6a733d40185"
+      },
+      {
+        "table": "QualityInspectionAttempt",
+        "rows": 0,
+        "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      {
+        "table": "RateBucket",
+        "rows": 10,
+        "sha256": "fe20c920d10f3f94cc1e26745a08aecdc8893980d2a397d91a5ee3c489b92d78"
+      },
+      {
+        "table": "RecommendationPolicy",
+        "rows": 0,
+        "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      {
+        "table": "RecommendationSnapshot",
+        "rows": 0,
+        "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      {
+        "table": "ReportingPolicy",
+        "rows": 0,
+        "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      {
+        "table": "SampleEvaluation",
+        "rows": 0,
+        "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      {
+        "table": "SamplePayable",
+        "rows": 0,
+        "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      {
+        "table": "ScheduleRevision",
+        "rows": 0,
+        "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      {
+        "table": "ScheduleScenario",
+        "rows": 0,
+        "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      {
+        "table": "Session",
+        "rows": 6,
+        "sha256": "12db36a57eddbb6549e839f78e0070ca35a3d215a5643ce96d91ac5ec4d050e0"
+      },
+      {
+        "table": "Shipment",
+        "rows": 0,
+        "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      {
+        "table": "ShipmentItem",
+        "rows": 0,
+        "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      {
+        "table": "ShipmentPreparation",
+        "rows": 0,
+        "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      {
+        "table": "ShipmentPreparationItem",
+        "rows": 0,
+        "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      {
+        "table": "SimulatedSettlement",
+        "rows": 0,
+        "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      {
+        "table": "SimulatedSettlementEvent",
+        "rows": 0,
+        "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      {
+        "table": "SpecificationMaterialLine",
+        "rows": 0,
+        "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      {
+        "table": "SupportCase",
+        "rows": 0,
+        "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      {
+        "table": "SupportTicket",
+        "rows": 0,
+        "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      {
+        "table": "SupportTicketAttachment",
+        "rows": 0,
+        "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      {
+        "table": "SupportTicketEvent",
+        "rows": 0,
+        "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      {
+        "table": "SyntheticPayment",
+        "rows": 2,
+        "sha256": "4d872718b710f1038b9cb9eb8ae65cfadb3df996c218c2d13783ad988a6da68b"
+      },
+      {
+        "table": "TraceabilityPublication",
+        "rows": 0,
+        "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      {
+        "table": "TraceabilityRevision",
+        "rows": 0,
+        "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      {
+        "table": "TwoFactor",
+        "rows": 0,
+        "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      {
+        "table": "User",
+        "rows": 9,
+        "sha256": "1e9c76bdd007404f7cee17681656e58083796854f949867621218d598d72cf5f"
+      },
+      {
+        "table": "Verification",
+        "rows": 0,
+        "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      {
+        "table": "_prisma_migrations",
+        "rows": 35,
+        "sha256": "cde341ee2a5e5e69dea9b8a9019d4999752d2aaf7944081eb19e01c03e3040bc"
+      }
+    ]
+  }
+]

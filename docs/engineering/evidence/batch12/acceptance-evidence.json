@@ -1,0 +1,131 @@
+[
+  {
+    "story": "E18-01",
+    "issue": "https://github.com/wie-challenge/website/issues/204",
+    "criteria": [
+      "Account, contact, consent basis, segment, next action, status and qualification notes stored and permission-scoped.",
+      "Capture organization/contact, segment, permission basis, needs and qualification status.",
+      "Assign owner, next action and follow-up date without implying purchase commitment.",
+      "Restrict contact/negotiation access and honor retention/contact preferences.",
+      "Track stage history and distinguish lead, qualified opportunity, proposal and contracted customer."
+    ],
+    "implementation": "sales/sales.service.ts; sales-workspace.tsx; CommercialProspect/ProspectRevision",
+    "tests": "batch12.scenarios.ts pipeline/contact/discovery cases; batch12.spec.ts mobile/desktop",
+    "missing": "None in the implemented software scope. Customer stage is derived only from existing buyer-authorized quote acceptance, with synthetic/unverified legal provenance; discovery never verifies buyer identity.",
+    "softwareStatus": "VERIFIED_SOFTWARE_CRITERIA",
+    "ownerAcceptance": "PENDING"
+  },
+  {
+    "story": "E18-02",
+    "issue": "https://github.com/wie-challenge/website/issues/205",
+    "criteria": [
+      "Proposal versions and feedback documented; won deals link to RFQ or signed contract.",
+      "Version sample/pilot proposal scope, price, timing and responsibilities.",
+      "Record buyer objections, outcome, decision date and follow-up owner.",
+      "Require RFQ/contract evidence before marking a proposal won.",
+      "Preserve lost/no-decision reasons without overwriting earlier negotiation."
+    ],
+    "implementation": "sales/sales.service.ts; PilotProposalRevision; sales-workspace.tsx",
+    "tests": "batch12.scenarios.ts proposal/version/RFQ/immutability cases; batch12.spec.ts draft \u2192 sent \u2192 lost",
+    "missing": "None for the RFQ conversion path. Signed-contract verification is not added; a won proposal alone creates no agreement or obligation.",
+    "softwareStatus": "VERIFIED_SOFTWARE_CRITERIA",
+    "ownerAcceptance": "PENDING"
+  },
+  {
+    "story": "E18-03",
+    "issue": "https://github.com/wie-challenge/website/issues/206",
+    "criteria": [
+      "Quote versus actual variance, buyer payment milestones, obligations and minimum cash gap calculated per order.",
+      "Compare quoted versus actual revenue/cost lines with variance reasons.",
+      "Model timing of buyer receipts, material purchases and artisan obligations.",
+      "Show minimum cash gap and assumptions without conflating contribution with cash.",
+      "Require finance review before committing to an unfunded or unsustainable new contract."
+    ],
+    "implementation": "finance/finance.service.ts analysis/recordCost/reviewCashModel/reviewRfq; finance/analysis.ts; financial-analysis.tsx",
+    "tests": "batch12.scenarios.ts exact-cost/cash/review cases; batch12.test.ts dated gap; batch12.spec.ts",
+    "missing": "Supported recognized actual contribution remains unavailable: no approved revenue-recognition definition or complete verified actual-cost evidence exists. Implemented planned/quote-basis estimates are labelled; cash dates and coverage remain explicit. Qualified finance policy and real source evidence are required before completing the actual-contribution criterion.",
+    "softwareStatus": "PARTIALLY_IMPLEMENTED",
+    "ownerAcceptance": "PENDING"
+  },
+  {
+    "story": "E10-11",
+    "issue": "https://github.com/wie-challenge/website/issues/146",
+    "criteria": [
+      "Exports balance to source events and restrict sensitive details.",
+      "Export period, account/order reference, currency, amount and source event with stable IDs.",
+      "Reconcile totals to invoice, receipt, liability and payout subledgers.",
+      "Separate pending/simulated records from verified transactions.",
+      "Limit sensitive beneficiary details and audit who exported which period."
+    ],
+    "implementation": "finance/finance.service.ts exportAccounting; finance/analysis.ts accountingExport/csvCell; finance.accounting.export grant",
+    "tests": "batch12.test.ts exact grouped totals/CSV injection; batch12.scenarios.ts scope/period/audit; finance.scenarios.ts payable-source reconciliation; batch12.spec.ts CSV download",
+    "missing": "Eligible existing source subledgers reconcile, but an approved invoice subledger/tax classification is unavailable. Accepted-quote references are explicitly not recognized revenue or tax invoices. The original invoice-reconciliation criterion is not claimed complete.",
+    "softwareStatus": "PARTIALLY_IMPLEMENTED",
+    "ownerAcceptance": "PENDING"
+  },
+  {
+    "story": "E10-13",
+    "issue": "https://github.com/wie-challenge/website/issues/148",
+    "criteria": [
+      "On-time rate excludes missing/unknown denominators, distinguishes planned from completed, and identifies unverified payout dates.",
+      "Derive due dates from accepted contractual rules rather than report creation dates.",
+      "Compute on-time numerator/eligible denominator with explicit reporting period.",
+      "Distinguish outstanding overdue, settled late, on-time and unknown/unverified dates.",
+      "Define treatment of partial payments and disputed obligations and disclose exclusions."
+    ],
+    "implementation": "finance/analysis.ts paymentTimeliness; FinanceService.timeliness; financial-analysis.tsx",
+    "tests": "batch12.test.ts verified/late/partial/disputed/unknown/synthetic cases; batch12.scenarios.ts authenticated unavailable denominator; batch12.spec.ts",
+    "missing": "No missing software criterion for supported evidence states. No real settled payment was verified. Contract dates absent from immutable terms stay unknown; synthetic due dates and execution reports do not enter the verified denominator.",
+    "softwareStatus": "VERIFIED_SOFTWARE_CRITERIA",
+    "ownerAcceptance": "PENDING"
+  },
+  {
+    "story": "E10-14",
+    "issue": "https://github.com/wie-challenge/website/issues/73",
+    "criteria": [
+      "Closure blocks on unreconciled receivables, undisposed material costs, outstanding payables or open settlement disputes unless explicit authorized exception.",
+      "Check buyer receivables, all artisan obligations, settlement disputes and material dispositions.",
+      "Block closure when a required balance/evidence remains unresolved.",
+      "Require a documented authorized and lawful disposition for any exception without erasing liability history.",
+      "Record closure checklist, actor, time and ledger snapshot atomically."
+    ],
+    "implementation": "FinanceService.assess/linkedPayables/closeOrder; CommerceService.orderAction; OrderClosureAssessment",
+    "tests": "batch12.scenarios.ts denial/replay/legacy bypass; finance.scenarios.ts partial/unpaid/dispute/material cases; product-authority.scenarios.ts exact linked sample liability; batch12.spec.ts closure error",
+    "missing": "Closure denial, detailed blockers, atomic snapshots and liability preservation work. Successful financial close and lawful exception handling are intentionally not enabled because approved bank/settlement/tax/exception policies are absent. No administrator waiver is invented; this positive closure criterion remains incomplete.",
+    "softwareStatus": "PARTIALLY_IMPLEMENTED",
+    "ownerAcceptance": "PENDING"
+  },
+  {
+    "story": "E16-08",
+    "issue": "https://github.com/wie-challenge/website/issues/77",
+    "criteria": [
+      "Recovery target, log redaction and alert tests documented.",
+      "Define reviewed recovery-time/recovery-point targets and backup ownership.",
+      "Produce protected backups and execute a restore into an isolated environment.",
+      "Capture structured redacted logs, health checks and actionable alerts.",
+      "Document incident/rollback procedures and verify restored ledger consistency."
+    ],
+    "implementation": "operations/backup.ts/check.ts; jobs/alerts.ts; common/logging.ts; foundation/transaction.ts; docs/operations/README.md",
+    "tests": "restore.scenarios.ts native encrypted restore; batch811-migrations.scenarios.ts constraints/upgrade; backup-logging.test.ts; operations.test.ts; batch12.test.ts",
+    "missing": "Local synthetic recovery targets and drill only. Hosted/off-site recovery, key custody, real paging, deployment ownership and production readiness require operational validation; none is asserted.",
+    "softwareStatus": "VERIFIED_SOFTWARE_CRITERIA",
+    "ownerAcceptance": "PENDING"
+  },
+  {
+    "story": "E14-09",
+    "issue": "https://github.com/wie-challenge/website/issues/74",
+    "criteria": [
+      "Per-data-class retention, deletion exceptions, access roles and breach reporting ownership reviewed before real pilot.",
+      "Define per-class purpose, retention trigger/duration, access roles and deletion method.",
+      "Document required finance/audit exceptions and approve them through qualified review.",
+      "Assign privacy incident detection, escalation and response owners.",
+      "Verify expiry/removal behavior for personal data and approved public copies.",
+      "Keep wearable raw/summary records absent from commercial retention inventories except a documented local-only boundary."
+    ],
+    "implementation": "governance/retention.ts/retention.controller.ts; admin/retention/page.tsx; existing privacy/trace revocation workflows",
+    "tests": "batch12.scenarios.ts governed inventory/no purge/contact expiry; batch12.test.ts inventory/redaction; existing governance/logging/traceability regressions",
+    "missing": "Qualified review of retention durations/triggers, statutory preservation exceptions, named controller/incident owners and real removal procedures remains external. Operational review records explicitly keep legal approval pending. Destructive purging is disabled; expired contact visibility and existing public revocation are not represented as erasure of retained finance/history.",
+    "softwareStatus": "BLOCKED",
+    "ownerAcceptance": "PENDING"
+  }
+]

@@ -1,0 +1,56 @@
+$ pnpm db:generate && pnpm --filter @nasj/contracts build && pnpm --filter @nasj/api test:integration
+$ pnpm --filter @nasj/api db:generate
+$ prisma generate
+Loaded Prisma config from prisma.config.ts.
+
+Prisma schema loaded from prisma/schema.prisma.
+
+✔ Generated Prisma Client (v7.10.1) to ./../../node_modules/.pnpm/@prisma+client@7.10.1_prisma@7.10.1_@types+node@24.19.2_@types+react-dom@19.3.0_@types+_9e72caf218d3f522373b8e6c9536cf3f/node_modules/@prisma/client in 1.03s
+
+Start by importing your Prisma Client (See: https://pris.ly/d/importing-client)
+
+
+$ tsc -p tsconfig.json
+$ tsx test/integration.ts
+PASS startup, migrations, readiness and unauthenticated API denial
+PASS real signup, SMTP verification, login and safe cookie/session projections
+PASS generic registration and failed login avoid account enumeration
+PASS origin, CSRF, validation and object ownership protect profile and admin routes
+PASS parser and size errors use safe envelopes and request tracing
+PASS sessions are ownership-bound and revocation/logout invalidate access
+PASS password recovery is generic, single-use and revokes existing sessions
+PASS expired sessions and invalid verification links are rejected
+PASS admin pagination, role changes and last-administrator race protection
+PASS self-deactivation ends sessions and prevents future login without deleting history
+PASS atomic rate limits resist concurrent requests and spoofed forwarded IP headers
+PASS explicit proxy trust resolves independent clients while ignoring private identity header spoofing
+PASS operator bootstrap promotes only an existing verified account and revokes its sessions
+(node:279092) DeprecationWarning: Calling client.query() when the client is already executing a query is deprecated and will be removed in pg@9.0. Use async/await or an external async flow control mechanism instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+PASS B12 pipeline scopes contact access, preserves versioned discovery and idempotent creation
+PASS B12 pipeline transitions preserve history, expired contacts disappear and stale writes fail
+PASS B12 proposal revisions preserve exact scope and cannot win without authorized RFQ evidence
+PASS B12 won proposal links RFQ without creating artisan consent or financial obligations
+PASS B12 sales conversion requires exact sustainable cost and funding review before buyer contract acceptance
+PASS R12 SENT proposal keeps an authorized RFQ link and missing, held or rejected review denies acceptance
+PASS R12 current approval permits idempotent concurrent acceptance before WON without artisan commitment
+PASS R12 changed RFQ assumptions or latest funding plan invalidate the previous approval
+PASS R12 changed costing requires a fresh quote and approval; historical JSON SENT links remain gated
+PASS B12 financial analysis reports unknowns and refuses unrelated contact or buyer finance disclosure
+PASS B12 cost evidence uses exact money, rejects duplicates atomically and preserves source events
+PASS B12 dated working-capital review preserves unknown dates and separates estimates from transactions
+PASS B12 accounting export reconciles immutable sources with period, audit and financial disclosure scopes
+PASS B12 timeliness returns unavailable rather than simulated payment performance
+PASS B12 financial closure denies unapproved exceptions, preserves liabilities and replays one immutable decision
+PASS B12 finance review cannot approve unsupported costs or unfunded conversion
+PASS R12 contractual dates append immutable exact-source corrections without rewriting accepted terms
+PASS R12 actual timeliness exposes scheduled, pending, failed and partial reports without verified payment
+PASS R12 native simulated and overpayment reports remain outside the verified denominator
+PASS R12 closure exact pending-adjustment counterexample denies legacy and finance routes without waiving liabilities
+PASS R12 closure detects inventory readiness, payable, dispute and partial buyer evidence through their real relationships
+PASS R12 closure and a concurrent adjustment cannot leave a closed order with a newly accepted adjustment
+PASS B12 legacy simulation cannot close an order with finance source records
+PASS B12 prospect discovery never enrolls a verified buyer and supports audited name correction
+PASS B12 revoked membership immediately removes sales and finance access
+PASS B12 retention inventory is governed, non-destructive and never claims legal approval
+Integration passed: 39 scenarios against a newly created disposable PostgreSQL database and local SMTP capture.

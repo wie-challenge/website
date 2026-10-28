@@ -4,6 +4,8 @@ export function operationalAlerts(input: {
   oldestPendingAgeMs: number;
   failedCount: number;
   backupAgeMs?: number | null;
+  notificationFailures?: number;
+  notificationAgeReview?: number;
 }) {
   const alerts: string[] = [];
   if (!input.ready) alerts.push('API_NOT_READY');
@@ -12,5 +14,7 @@ export function operationalAlerts(input: {
   if (input.backupAgeMs === null) alerts.push('BACKUP_MISSING');
   else if (input.backupAgeMs !== undefined && input.backupAgeMs > 86400000)
     alerts.push('BACKUP_STALE');
+  if ((input.notificationFailures ?? 0) > 0) alerts.push('NOTIFICATION_REVIEW_REQUIRED');
+  if ((input.notificationAgeReview ?? 0) > 0) alerts.push('NOTIFICATION_SENDING_AGE_REVIEW');
   return alerts;
 }

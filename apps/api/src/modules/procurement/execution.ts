@@ -187,13 +187,17 @@ export class ProductionExecutionService {
             'Procurement release applies to an approved commercial order.',
           );
         const reasons = await this.blockers(tx, batch);
+        // One specification authority. When the accepted order revision pins a catalogue revision,
+        // that catalogue revision must still be the current approved one. Orders that predate the
+        // binding keep their previously accepted immutable version and are not retro-fitted.
+        const catalogueSample = await this.assertCatalogueRevisionCurrent(tx, order.id);
         if (batch.offer.status !== 'ACCEPTED') reasons.unshift('OFFER_NOT_ACCEPTED');
         if (!input.materialAttestation) reasons.push('MATERIAL_READINESS_UNKNOWN');
         const funding = C.fundingDecision(order.provenance, input.fundingAttestation);
         if (funding === 'FUNDING_UNCONFIRMED') reasons.push('FUNDING_UNCONFIRMED');
         if (reasons.length) fail(409, reasons[0], blockerText[reasons[0]] ?? reasons[0]);
         const revisionId = this.revisionId(order);
-        const sample = await this.sample(tx, revisionId);
+        const sample = catalogueSample ?? (await this.sample(tx, revisionId));
         const lines = await tx.specificationMaterialLine.findMany({ where: { revisionId } });
         C.transitionBatch(batch.status as C.BatchState, 'MATERIAL_READY', ['PRODUCTION_MANAGER'], {
           assigned: batch.offer.quantity,
@@ -232,6 +236,20 @@ export class ProductionExecutionService {
         const saved = await tx.commercialBatch.update({
           where: { id: batchId },
           data: { status: 'MATERIAL_READY', revisionId, version: { increment: 1 } },
+        });
+        await tx.forecastSnapshot.create({
+          data: {
+            batchId,
+            ruleVersion: C.RISK_POLICY_VERSION,
+            forecastedFor: batch.offer.deliveryDeadline ?? order.rfq.deliveryAt,
+            createdById: actor.id,
+            evidence: 'SYNTHETIC',
+            assumptions: {
+              source: 'Approved deadline baseline, not a throughput prediction',
+              forecastVersion: (await tx.forecastSnapshot.count({ where: { batchId } })) + 1,
+              releaseId: release.id,
+            },
+          },
         });
         await this.ledger(
           tx,
@@ -874,7 +892,10 @@ export class ProductionExecutionService {
       fail(409, 'DEFECT_UNACCOUNTED', 'A failed criterion must remain rejected or pending.');
   }
   private async criteria(tx: Db, batch: LoadedBatch) {
-    const revisionId = batch.revisionId ?? batch.order.acceptance?.quote.revisionId;
+    const revisionId =
+      batch.revisionId ??
+      batch.order.catalogueProcurementRevisionId ??
+      batch.order.acceptance?.quote.revisionId;
     if (!revisionId) return [];
     return tx.inspectionCriterion.findMany({ where: { revisionId } });
   }
@@ -898,7 +919,13 @@ export class ProductionExecutionService {
       where: { orderId: loaded.id },
       include: { quote: true },
     });
-    const revisionId = revision?.quote.revisionId ?? null;
+    const revisionId = loaded.catalogueProcurementRevisionId ?? revision?.quote.revisionId ?? null;
+    const effectiveRevision = revisionId
+      ? await tx.procurementRevision.findUnique({
+          where: { id: revisionId },
+          select: { version: true },
+        })
+      : null;
     const lines = revisionId
       ? await tx.specificationMaterialLine.findMany({ where: { revisionId } })
       : [];
@@ -997,7 +1024,7 @@ export class ProductionExecutionService {
     return {
       summary,
       revisionId,
-      specificationVersion: revision?.quote.version ?? null,
+      specificationVersion: effectiveRevision?.version ?? null,
       materials: operator ? materials : [],
       criteria: operator
         ? criteria.map((row) => ({
@@ -1047,7 +1074,8 @@ export class ProductionExecutionService {
     if (batch.offer.assistedDecision) reasons.push('ASSISTED_DECISION_UNVERIFIED');
     if (batch.artisanProfile.participantStatus !== 'ACTIVE') reasons.push('PARTICIPATION_INACTIVE');
     if (batch.status !== 'ACCEPTED') reasons.push('OFFER_NOT_ACCEPTED');
-    const revisionId = batch.order.acceptance?.quote.revisionId;
+    const revisionId =
+      batch.order.catalogueProcurementRevisionId ?? batch.order.acceptance?.quote.revisionId;
     const sample = revisionId ? await this.sampleOrNull(tx, revisionId) : null;
     if (!sample) reasons.push('SPECIFICATION_UNAPPROVED');
     const lines = revisionId
@@ -1064,6 +1092,47 @@ export class ProductionExecutionService {
     const latest = [...batch.progressEvents]
       .reverse()
       .find((row) => row.kind === 'REPORT' || row.kind === 'CORRECTION');
+    const catalogue = batch.order.productSpecificationRevisionId
+      ? await tx.productSpecificationRevision.findUnique({
+          where: { id: batch.order.productSpecificationRevisionId },
+        })
+      : null;
+    const translations = (catalogue?.instructionTranslations ?? []) as {
+      language: string;
+      instructions: string;
+      reviewReference: string;
+    }[];
+    const translated = translations.find(
+      (t) => t.language === batch.artisanProfile.preferredLanguage,
+    );
+    const instructionLanguage = translated?.language ?? catalogue?.instructionLanguage ?? 'en';
+    const references = (catalogue?.referenceImages ?? []) as {
+      filename: string;
+      caption: string;
+      sha256: string;
+    }[];
+    const attachments = references.length
+      ? await tx.procurementAttachment.findMany({
+          where: {
+            rfqId: batch.order.rfqId,
+            removedAt: null,
+            sha256: { in: references.map((r) => r.sha256) },
+          },
+        })
+      : [];
+    const images = references.map((reference) => {
+      const attachment = attachments.find(
+        (a) =>
+          a.sha256 === reference.sha256 &&
+          ['image/webp', 'image/png', 'image/jpeg'].includes(a.mime),
+      );
+      return {
+        ...reference,
+        dataUrl: attachment
+          ? `data:${attachment.mime};base64,${Buffer.from(attachment.bytes).toString('base64')}`
+          : null,
+      };
+    });
     return {
       batchId: batch.id,
       version: batch.version,
@@ -1073,13 +1142,29 @@ export class ProductionExecutionService {
       craft: batch.order.rfq.craftSkill.name,
       quantity: batch.offer.quantity,
       unit: 'PIECES',
-      deadline: batch.order.rfq.deliveryAt.toISOString(),
+      deadline: (batch.offer.deliveryDeadline ?? batch.order.rfq.deliveryAt).toISOString(),
       periodFrom: period.from,
       periodTo: period.to,
-      specificationVersion: batch.order.acceptance?.quote.version ?? null,
-      specification: batch.order.rfq.specification,
+      specificationVersion:
+        catalogue?.revisionNumber ?? batch.order.acceptance?.quote.version ?? null,
+      catalogueRevisionId: catalogue?.id ?? null,
+      instructionAmendment:
+        catalogue && catalogue.revisionNumber > 1
+          ? `Approved design revision v${catalogue.revisionNumber}; review measurements and criteria before work.`
+          : null,
+      translationNotice:
+        instructionLanguage !== batch.artisanProfile.preferredLanguage
+          ? `A reviewed ${batch.artisanProfile.preferredLanguage} translation is unavailable; original ${instructionLanguage} instructions are shown.`
+          : null,
+      specification: catalogue
+        ? `${catalogue.description} Measurements: ${catalogue.dimensions} ${catalogue.unit}. Tolerances: ${catalogue.tolerances}`
+        : batch.order.rfq.specification,
       materials,
-      instructions: batch.offer.instructions ?? batch.order.rfq.designRequirements,
+      instructions:
+        translated?.instructions ??
+        catalogue?.instructions ??
+        batch.offer.instructions ??
+        batch.order.rfq.designRequirements,
       qualityCriteria: criteria.map((row) => ({
         id: row.id,
         code: row.code,
@@ -1088,13 +1173,13 @@ export class ProductionExecutionService {
         tolerance: row.tolerance,
         required: row.required,
       })),
-      images: [],
+      images,
       compensationTnd: pay
         ? C.formatTnd(C.payableForUnits(batch.offer.unitPayMillimes, batch.offer.quantity))
         : null,
       supportContact: 'Assigned HirfaCare operator',
       preferredLanguage: batch.artisanProfile.preferredLanguage,
-      termsLanguage: 'en',
+      termsLanguage: instructionLanguage,
       produced: batch.produced,
       submitted: batch.submitted,
       approved: batch.approved,
@@ -1143,7 +1228,8 @@ export class ProductionExecutionService {
           row.readiness) as C.ExecutionMaterial['readiness'],
       }));
     }
-    const revisionId = batch.order.acceptance?.quote.revisionId;
+    const revisionId =
+      batch.order.catalogueProcurementRevisionId ?? batch.order.acceptance?.quote.revisionId;
     if (!revisionId) return [];
     const lines = await tx.specificationMaterialLine.findMany({ where: { revisionId } });
     return lines.map((line) =>
@@ -1182,8 +1268,60 @@ export class ProductionExecutionService {
       orderBy: { version: 'desc' },
     });
   }
-  private revisionId(order: { acceptance: { quote: { revisionId: string } } | null }) {
-    const revisionId = order.acceptance?.quote.revisionId;
+  /**
+   * A bound catalogue revision must be the current approved revision for its specification.
+   * A superseded or non-approved revision blocks release. An unbound (legacy) order keeps the
+   * catalogue out of its gate so existing accepted versions are never retro-fitted.
+   */
+  private async assertCatalogueRevisionCurrent(tx: Db, orderId: string) {
+    const order = await tx.commercialOrder.findUnique({
+      where: { id: orderId },
+      select: {
+        productSpecificationRevisionId: true,
+        catalogueProcurementRevisionId: true,
+        rfq: { select: { buyerOrganizationId: true } },
+      },
+    });
+    const catalogueId = order?.productSpecificationRevisionId;
+    if (!catalogueId) return;
+    const catalogue = await tx.productSpecificationRevision.findUnique({
+      where: { id: catalogueId },
+      select: { status: true, supersededById: true, specificationId: true },
+    });
+    if (catalogue?.status !== 'APPROVED' || catalogue.supersededById)
+      fail(
+        409,
+        'SPECIFICATION_SUPERSEDED',
+        'The approved product specification for this order changed. Renew sample approval first.',
+      );
+    const approvedSample = await tx.buyerSampleApproval.findFirst({
+      where: {
+        specificationRevisionId: catalogueId,
+        buyerOrganizationId: order!.rfq.buyerOrganizationId,
+        decision: 'APPROVED',
+        procurementProjections: {
+          some: { revisionId: order!.catalogueProcurementRevisionId ?? '' },
+        },
+      },
+      include: {
+        procurementProjections: {
+          where: { revisionId: order!.catalogueProcurementRevisionId ?? '' },
+        },
+      },
+    });
+    if (!approvedSample?.procurementProjections[0])
+      fail(
+        409,
+        'SAMPLE_NOT_APPROVED',
+        'The buying organization has not bound an approved sample of this specification revision.',
+      );
+    return approvedSample.procurementProjections[0];
+  }
+  private revisionId(order: {
+    catalogueProcurementRevisionId?: string | null;
+    acceptance: { quote: { revisionId: string } } | null;
+  }) {
+    const revisionId = order.catalogueProcurementRevisionId ?? order.acceptance?.quote.revisionId;
     if (!revisionId) fail(409, 'SPECIFICATION_UNAPPROVED', blockerText.SPECIFICATION_UNAPPROVED);
     return revisionId;
   }

@@ -143,6 +143,25 @@ test('Batch 5 real synthetic material custody, payout governance, dispute and bl
     'Reported execution date': '2026-10-20T10:00',
   });
   await expect(page.getByText(/Execution 2.000 TND · Verification pending/)).toBeVisible();
+  await page.getByText('Contractual due-date evidence', { exact: true }).click();
+  await form(page, 'Record contractual due-date evidence')
+    .getByLabel('Contractual date basis', { exact: true })
+    .selectOption('ACCEPTED_TERMS_EVIDENCE');
+  await fill(page, 'Record contractual due-date evidence', {
+    'Exact contractual due date (leave empty for unknown)': '2026-10-15T12:00',
+    'Accepted agreement source evidence': 'Synthetic accepted milestone document reference',
+    'Date recording or correction reason': 'Transcribe existing source without amending terms',
+  });
+  await expect(
+    page.getByText(/Version 1:.*Synthetic accepted milestone document reference/),
+  ).toBeVisible();
+  await fill(page, 'Set financial reporting period', {
+    'Financial period from': '2026-01-01T00:00',
+    'Financial period to (exclusive)': '2026-12-31T00:00',
+  });
+  await page.getByRole('button', { name: 'Calculate payment timeliness', exact: true }).click();
+  await expect(page.getByText(/operational state PARTIAL_REPORTED_UNVERIFIED/)).toBeVisible();
+  await expect(page.getByText(/Eligible verified: 0;.*on-time rate: Unavailable/)).toBeVisible();
   await login(page, email('artisan'), '/artisan/compensation');
   await fill(page, 'Raise a payment dispute', {
     'Disputed amount (TND)': '3.000',

@@ -318,11 +318,14 @@ export type WorkInstruction = {
   materials: ExecutionMaterial[];
   instructions: string;
   qualityCriteria: ExecutionCriterion[];
-  images: [];
+  images: { filename: string; caption: string; sha256: string; dataUrl: string | null }[];
+  catalogueRevisionId: string | null;
+  instructionAmendment: string | null;
+  translationNotice: string | null;
   compensationTnd: string | null;
   supportContact: string;
   preferredLanguage: string;
-  termsLanguage: 'en';
+  termsLanguage: string;
   produced: number;
   submitted: number;
   approved: number;

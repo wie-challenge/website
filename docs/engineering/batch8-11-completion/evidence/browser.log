@@ -1,0 +1,201 @@
+$ pnpm db:generate && pnpm --filter @nasj/contracts build && playwright test && playwright test --config playwright.demo.config.ts
+$ pnpm --filter @nasj/api db:generate
+$ prisma generate
+Loaded Prisma config from prisma.config.ts.
+
+Prisma schema loaded from prisma/schema.prisma.
+
+✔ Generated Prisma Client (v7.10.1) to ./../../node_modules/.pnpm/@prisma+client@7.10.1_prisma@7.10.1_@types+node@24.19.2_@types+react-dom@19.3.0_@types+_9e72caf218d3f522373b8e6c9536cf3f/node_modules/@prisma/client in 1.02s
+
+Start by importing your Prisma Client (See: https://pris.ly/d/importing-client)
+
+
+$ tsc -p tsconfig.json
+
+Running 50 tests using 1 worker
+
+(node:70913) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓   1 tests/e2e/batch5.spec.ts:46:1 › Batch 5 real synthetic material custody, payout governance, dispute and blocked closure journeys (10.4s)
+  ✓   2 tests/e2e/batch5.spec.ts:175:1 › full synthetic material receipt confirms custody while physical verification remains unavailable (4.6s)
+  ✓   3 tests/e2e/batch7-simulator.spec.ts:3:1 › public financial model recalculates exact assumptions without commercial writes (571ms)
+  ✓   4 tests/e2e/batch7-simulator.spec.ts:42:1 › financial model remains readable and operable on a narrow screen (328ms)
+  ✓   5 tests/e2e/capacity.spec.ts:58:3 › capacity revisions preserve commitments for artisan and coordinator at 360px (8.6s)
+  ✓   6 tests/e2e/capacity.spec.ts:58:3 › capacity revisions preserve commitments for artisan and coordinator at 1280px (8.7s)
+  ✓   7 tests/e2e/catalog.spec.ts:47:3 › synthetic catalog browses safely and prefills a persisted RFQ on mobile (5.8s)
+  ✓   8 tests/e2e/catalog.spec.ts:47:3 › synthetic catalog browses safely and prefills a persisted RFQ on desktop (5.8s)
+  ✓   9 tests/e2e/catalog.spec.ts:147:1 › catalog loading, retry, empty and broken-image states remain usable (1.7s)
+  ✓  10 tests/e2e/collaboration.spec.ts:32:3 › private backend-connected support creation and withdrawal on mobile (2.0s)
+  ✓  11 tests/e2e/collaboration.spec.ts:32:3 › private backend-connected support creation and withdrawal on desktop (2.1s)
+  ✓  12 tests/e2e/commerce.spec.ts:76:3 › buyer RFQ, voluntary artisan decisions/progress and operator QA are accessible on mobile (46.8s)
+  ✓  13 tests/e2e/commerce.spec.ts:76:3 › buyer RFQ, voluntary artisan decisions/progress and operator QA are accessible on tablet (23.1s)
+  ✓  14 tests/e2e/commerce.spec.ts:76:3 › buyer RFQ, voluntary artisan decisions/progress and operator QA are accessible on desktop (26.4s)
+  ✓  15 tests/e2e/commercial.spec.ts:27:1 › buyer accepts the exact costed quotation after feasibility review (5.6s)
+  ✓  16 tests/e2e/directory.spec.ts:39:3 › production directory search stays private and responsive at 360px (4.7s)
+  ✓  17 tests/e2e/directory.spec.ts:39:3 › production directory search stays private and responsive at 1280px (5.2s)
+  ✓  18 tests/e2e/evidence.spec.ts:7:3 › truthful public concept and evidence navigation on mobile (901ms)
+  ✓  19 tests/e2e/evidence.spec.ts:7:3 › truthful public concept and evidence navigation on desktop (715ms)
+  ✓  20 tests/e2e/execution.spec.ts:27:1 › an accepted batch is prepared, collected, confirmed and published as synthetic traceability (14.8s)
+  ✓  21 tests/e2e/foundation.spec.ts:33:1 › protected routes redirect and authentication errors are accessible (479ms)
+  ✓  22 tests/e2e/foundation.spec.ts:42:1 › signup, email verification, profile, sessions and password changes work in the browser (5.7s)
+  ✓  23 tests/e2e/foundation.spec.ts:100:1 › password recovery token stays out of URLs after hydration and revokes sessions (1.5s)
+  ✓  24 tests/e2e/foundation.spec.ts:120:1 › admin user search and status controls work; last admin cannot be removed (1.6s)
+  ✓  25 tests/e2e/foundation.spec.ts:156:1 › mobile forms, reduced motion and validation do not overflow (395ms)
+  ✓  26 tests/e2e/foundation.spec.ts:171:1 › network failures show a recoverable message without exposing upstream details (340ms)
+  ✓  27 tests/e2e/foundation.spec.ts:183:1 › forms remain disabled without JavaScript and cannot fall back to credential-bearing GET requests (202ms)
+  ✓  28 tests/e2e/foundation.spec.ts:201:1 › pending authentication disables duplicate submissions and recovers after a failed response (373ms)
+  ✓  29 tests/e2e/foundation.spec.ts:236:1 › small-screen login supports keyboard focus, associated labels and direct API denials through the proxy (439ms)
+  ✓  30 tests/e2e/identity.spec.ts:88:1 › buyer onboarding, approval, invitation and scoped membership revocation work across organizations (11.7s)
+  ✓  31 tests/e2e/identity.spec.ts:211:1 › independent artisan manages skills, capacity, association consent and limited delegation (7.6s)
+  ✓  32 tests/e2e/identity.spec.ts:365:1 › authenticator enrollment and recovery-code sign-in work without persisting secrets (2.5s)
+  ✓  33 tests/e2e/nasj-rebrand.spec.ts:7:3 › NASJ landing, branding and account menu work on mobile (3.2s)
+  ✓  34 tests/e2e/nasj-rebrand.spec.ts:7:3 › NASJ landing, branding and account menu work on desktop (2.9s)
+  ✘  35 tests/e2e/planning-intelligence.spec.ts:16:1 › operator plans from recorded ranking, reviews material assumptions and compares explicit pricing scenarios (3.0m)
+(node:94907) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✘  36 tests/e2e/planning-intelligence.spec.ts:61:1 › unprivileged production intelligence read shows an honest error without exposing totals (1.3s)
+(node:95076) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓  37 tests/e2e/presentation.spec.ts:9:3 › presentation navigation, notes, resume and evidence on mobile (1.6s)
+  ✓  38 tests/e2e/presentation.spec.ts:9:3 › presentation navigation, notes, resume and evidence on desktop (1.4s)
+  ✓  39 tests/e2e/presentation.spec.ts:100:1 › presentation fullscreen uses the browser API, preserves progress and hides notes (652ms)
+  ✓  40 tests/e2e/presentation.spec.ts:124:1 › presentation ignores malformed resume data and prints evidence without notes (546ms)
+  ✓  41 tests/e2e/procurement.spec.ts:70:3 › E02 buyer and operator complete versioned procurement on mobile (17.0s)
+  ✓  42 tests/e2e/procurement.spec.ts:70:3 › E02 buyer and operator complete versioned procurement on desktop (17.0s)
+  ✓  43 tests/e2e/procurement.spec.ts:328:1 › E02 shows field errors, empty records and a recoverable list failure (2.0s)
+  ✘  44 tests/e2e/product-authority.spec.ts:49:3 › paid sample explicit consent and rejection retain obligation on mobile (3.3s)
+(node:97099) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✘  45 tests/e2e/product-authority.spec.ts:49:3 › paid sample explicit consent and rejection retain obligation on desktop (3.8s)
+(node:97278) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓  46 tests/e2e/production.spec.ts:39:1 › an artisan accepts issued work and an accountless report stays unverified (6.0s)
+  ✓  47 tests/e2e/revised-foundation.spec.ts:82:1 › coordinator onboards an artisan without login, records declared capacity and loses access immediately on suspension (6.1s)
+  ✓  48 tests/e2e/revised-foundation.spec.ts:184:1 › buyer and administrator default workspaces are distinct and participant concerns require no account (9.9s)
+  ✓  49 tests/e2e/workspace-ui.spec.ts:40:1 › desktop sidebar shows buyer work, active navigation and the current procurement workspace (2.8s)
+  ✓  50 tests/e2e/workspace-ui.spec.ts:69:1 › mobile drawer supports focus, escape, navigation and keyboard account tabs at 360px (4.7s)
+
+
+  1) tests/e2e/planning-intelligence.spec.ts:16:1 › operator plans from recorded ranking, reviews material assumptions and compares explicit pricing scenarios 
+
+    Test timeout of 180000ms exceeded.
+
+    Error: locator.selectOption: Test timeout of 180000ms exceeded.
+    Call log:
+      - waiting for getByLabel('Material readiness assumption', { exact: true })
+
+
+      32 |   await expect(page.getByRole('heading', { name: 'Candidate groups', exact: true })).toBeVisible();
+      33 |   await expect(page.getByText(/weight version/)).toBeVisible();
+    > 34 |   await page.getByLabel('Material readiness assumption', { exact: true }).selectOption('READY');
+         |                                                                           ^
+      35 |   await page.getByLabel('Material readiness evidence or assumption reference', { exact: true }).fill('SYNTHETIC: ready material assumption for planning, not actual receipt.');
+      36 |   await page.getByRole('button', { name: 'Save draft plan', exact: true }).click();
+      37 |   await expect(page.getByText('Draft allocation plan saved. It is not a production commitment.')).toBeVisible();
+        at /home/ashenix/Projects/wie-challenge/website/tests/e2e/planning-intelligence.spec.ts:34:75
+
+    Error Context: test-results/planning-intelligence-oper-6df0a--explicit-pricing-scenarios/error-context.md
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/planning-intelligence-oper-6df0a--explicit-pricing-scenarios/trace.zip
+    Usage:
+
+        pnpm exec playwright show-trace test-results/planning-intelligence-oper-6df0a--explicit-pricing-scenarios/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  2) tests/e2e/planning-intelligence.spec.ts:61:1 › unprivileged production intelligence read shows an honest error without exposing totals 
+
+    Error: expect(locator).toContainText(expected) failed
+
+    Locator: getByRole('alert')
+    Expected substring: "Analytics access is required"
+    Error: strict mode violation: getByRole('alert') resolved to 2 elements:
+        1) <div role="alert" class="notice">…</div> aka getByText('Analytics access is required for this workspace.Try again')
+        2) <div role="alert" aria-live="assertive" id="__next-route-announcer__"></div> aka locator('[id="__next-route-announcer__"]')
+
+    Call log:
+      - Expect "toContainText" getByRole('alert') with timeout 5000ms
+      - waiting for getByRole('alert')
+        4 × locator resolved to <div role="alert" aria-live="assertive" id="__next-route-announcer__"></div>
+          - unexpected value ""
+
+
+      63 |   await register(request, email);
+      64 |   await login(page, email, '/intelligence');
+    > 65 |   await expect(page.getByRole('alert')).toContainText('Analytics access is required');
+         |                                         ^
+      66 |   await expect(page.getByRole('heading', { name: 'Compensation, kept separate', exact: true })).toHaveCount(0);
+      67 | });
+      68 |
+        at /home/ashenix/Projects/wie-challenge/website/tests/e2e/planning-intelligence.spec.ts:65:41
+
+    Error Context: test-results/planning-intelligence-unpr-c8d14-ror-without-exposing-totals/error-context.md
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/planning-intelligence-unpr-c8d14-ror-without-exposing-totals/trace.zip
+    Usage:
+
+        pnpm exec playwright show-trace test-results/planning-intelligence-unpr-c8d14-ror-without-exposing-totals/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  3) tests/e2e/product-authority.spec.ts:49:3 › paid sample explicit consent and rejection retain obligation on mobile 
+
+    Error: expect(received).toBeTruthy()
+
+    Received: false
+
+      28 | async function signout(page: Page) {
+      29 |   const response = await page.request.post('/api/auth/sign-out', { headers: { Origin: origin } });
+    > 30 |   expect(response.ok()).toBeTruthy();
+         |                         ^
+      31 | }
+      32 | async function command(page: Page, path: string, data: unknown) {
+      33 |   const me = await (await page.request.get('/api/v1/me')).json();
+        at signout (/home/ashenix/Projects/wie-challenge/website/tests/e2e/product-authority.spec.ts:30:25)
+        at /home/ashenix/Projects/wie-challenge/website/tests/e2e/product-authority.spec.ts:91:5
+
+    Error Context: test-results/product-authority-paid-sam-04d5c-retain-obligation-on-mobile/error-context.md
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/product-authority-paid-sam-04d5c-retain-obligation-on-mobile/trace.zip
+    Usage:
+
+        pnpm exec playwright show-trace test-results/product-authority-paid-sam-04d5c-retain-obligation-on-mobile/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  4) tests/e2e/product-authority.spec.ts:49:3 › paid sample explicit consent and rejection retain obligation on desktop 
+
+    Error: expect(received).toBeTruthy()
+
+    Received: false
+
+      28 | async function signout(page: Page) {
+      29 |   const response = await page.request.post('/api/auth/sign-out', { headers: { Origin: origin } });
+    > 30 |   expect(response.ok()).toBeTruthy();
+         |                         ^
+      31 | }
+      32 | async function command(page: Page, path: string, data: unknown) {
+      33 |   const me = await (await page.request.get('/api/v1/me')).json();
+        at signout (/home/ashenix/Projects/wie-challenge/website/tests/e2e/product-authority.spec.ts:30:25)
+        at /home/ashenix/Projects/wie-challenge/website/tests/e2e/product-authority.spec.ts:91:5
+
+    Error Context: test-results/product-authority-paid-sam-2a373-etain-obligation-on-desktop/error-context.md
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/product-authority-paid-sam-2a373-etain-obligation-on-desktop/trace.zip
+    Usage:
+
+        pnpm exec playwright show-trace test-results/product-authority-paid-sam-2a373-etain-obligation-on-desktop/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  4 failed
+    tests/e2e/planning-intelligence.spec.ts:16:1 › operator plans from recorded ranking, reviews material assumptions and compares explicit pricing scenarios 
+    tests/e2e/planning-intelligence.spec.ts:61:1 › unprivileged production intelligence read shows an honest error without exposing totals 
+    tests/e2e/product-authority.spec.ts:49:3 › paid sample explicit consent and rejection retain obligation on mobile 
+    tests/e2e/product-authority.spec.ts:49:3 › paid sample explicit consent and rejection retain obligation on desktop 
+  46 passed (8.3m)
+[ELIFECYCLE] Command failed with exit code 1.

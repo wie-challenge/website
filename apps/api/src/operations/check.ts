@@ -21,7 +21,15 @@ try {
       backupUnavailable = true;
     }
   }
+  const notificationFailures = await db.notificationDelivery.count({
+    where: { status: { in: ['FAILED', 'UNCERTAIN'] } },
+  });
+  const notificationAgeReview = await db.notificationDelivery.count({
+    where: { status: 'SENDING', createdAt: { lt: new Date(Date.now() - 300000) } },
+  });
   const alerts = operationalAlerts({
+    notificationFailures,
+    notificationAgeReview,
     ready: response?.ok ?? false,
     oldestPendingAgeMs: status.oldestPendingAgeMs,
     failedCount,

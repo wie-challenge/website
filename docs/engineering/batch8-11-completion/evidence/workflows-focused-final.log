@@ -1,0 +1,31 @@
+(node:106635) DeprecationWarning: Calling client.query() when the client is already executing a query is deprecated and will be removed in pg@9.0. Use async/await or an external async flow control mechanism instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+PASS commercial feasibility, costing and exact acceptance stay isolated
+PASS counteroffer reissues exact versioned terms; manager review creates no commitment
+PASS schedule consent denies platform substitution and preserves old deadline until both approvals
+PASS scoped exceptions retain original facts and leave quantities and compensation unchanged
+PASS private support correction, attachment access and withdrawal retain original facts
+PASS discussion internal notes and sanitized delivery history cannot leak to buyer or outsider
+PASS localized external notifications fail honestly and retry honors opt-out without duplication
+PASS effective availability pause preserves accepted batches, statements and support access
+PASS production eligibility, offers and voluntary decisions stay isolated
+PASS planning persists reproducible weighted inputs and concurrent drafts remain nonbinding
+PASS planning refuses unknown materials at review and overrides never exceed hard capacity
+PASS pricing effort range and exact recalculation stay advisory with source disclosure
+PASS observed production time requires artisan consent, rejects duplicates and retains correction history
+PASS forecast snapshots are immutable, versioned and scoped; no completion means no accuracy
+PASS risk alerts deduplicate under concurrent evaluation and require scoped acknowledgement and resolution
+PASS ranking audit findings retain purpose, review owner and human corrective decision without penalties
+PASS reporting periods are bounded and narrow association filters cannot reveal suppressed compensation
+PASS reviewed cohort policy requires platform governance and preserves its reviewer and version
+  ✓ Batch 5 deposit, payout, execution, claim and closure governance scenarios
+PASS plan issuance is atomic and retry-safe; concurrent reallocation releases only declined/expired quantities
+PASS production release through buyer confirmation, traceability and simulated settlement stay isolated
+PASS E20 design owner approval is scoped, stale decisions roll back, and approved content is immutable
+PASS E20 paid sample work requires its own artisan acceptance of the exact issued terms
+PASS E20 completion recognizes one exact sample obligation in the finance ledger without bulk or buyer approval
+PASS E20 quality rejection preserves the earned sample obligation and cannot be relabelled buyer approval
+PASS E20 buyer signoff has immutable exact revision lineage and cross-buyer attempts leave no decision
+PASS E20 one buyer approval projects into the release authority and pins downstream inspection criteria
+PASS E20 inspection persists the approved sample criteria and unauthorized inspection creates no result
+PASS E20 revision amendments preserve v1 and cannot reuse its sample acceptance for v2

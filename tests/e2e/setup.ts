@@ -1,3 +1,4 @@
+import { seedBrowserProductFixture } from '../../apps/api/test/product-authority.fixture';
 import { seedBrowserCommercialFixture } from '../../apps/api/test/commercial.fixture';
 import { seedBrowserProductionFixture } from '../../apps/api/test/production.fixture';
 import { seedBrowserBatch5Fixture } from '../../apps/api/test/batch5.fixture';
@@ -59,6 +60,13 @@ export async function runBrowserSetup(options: { demo?: boolean } = {}) {
       } else if (url.pathname.endsWith('/promote') && req.method === 'POST') {
         await promoteDisposableAdmin(database.url, email);
         res.end('{}');
+      } else if (url.pathname.endsWith('/product-authority-fixture') && req.method === 'POST') {
+        const fixture = await seedBrowserProductFixture(
+          database.url,
+          url.searchParams.get('suffix') ?? '',
+        );
+        res.setHeader('Content-Type', 'application/json');
+        res.end(JSON.stringify(fixture));
       } else if (url.pathname.endsWith('/commerce-fixture') && req.method === 'POST') {
         const fixture = await seedBrowserCommerceFixture(
           database.url,

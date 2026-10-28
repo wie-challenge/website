@@ -1,0 +1,2 @@
+$ biome lint apps packages tests scripts/*.ts playwright.config.ts playwright.demo.config.ts
+Checked 395 files in 167ms. No fixes applied.

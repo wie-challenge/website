@@ -1,0 +1,104 @@
+$ pnpm db:generate && pnpm --filter @nasj/contracts build && pnpm --filter @nasj/api test:integration
+$ pnpm --filter @nasj/api db:generate
+$ prisma generate
+Loaded Prisma config from prisma.config.ts.
+
+Prisma schema loaded from prisma/schema.prisma.
+
+✔ Generated Prisma Client (v7.10.1) to ./../../node_modules/.pnpm/@prisma+client@7.10.1_prisma@7.10.1_@types+node@24.19.2_@types+react-dom@19.3.0_@types+_9e72caf218d3f522373b8e6c9536cf3f/node_modules/@prisma/client in 1.02s
+
+Start by importing your Prisma Client (See: https://pris.ly/d/importing-client)
+
+
+$ tsc -p tsconfig.json
+$ tsx test/integration.ts
+PASS startup, migrations, readiness and unauthenticated API denial
+PASS real signup, SMTP verification, login and safe cookie/session projections
+PASS generic registration and failed login avoid account enumeration
+PASS origin, CSRF, validation and object ownership protect profile and admin routes
+PASS parser and size errors use safe envelopes and request tracing
+PASS sessions are ownership-bound and revocation/logout invalidate access
+PASS password recovery is generic, single-use and revokes existing sessions
+PASS expired sessions and invalid verification links are rejected
+PASS admin pagination, role changes and last-administrator race protection
+PASS self-deactivation ends sessions and prevents future login without deleting history
+PASS atomic rate limits resist concurrent requests and spoofed forwarded IP headers
+PASS explicit proxy trust resolves independent clients while ignoring private identity header spoofing
+PASS operator bootstrap promotes only an existing verified account and revokes its sessions
+(node:277422) DeprecationWarning: Calling client.query() when the client is already executing a query is deprecated and will be removed in pg@9.0. Use async/await or an external async flow control mechanism instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+PASS B12 pipeline scopes contact access, preserves versioned discovery and idempotent creation
+PASS B12 pipeline transitions preserve history, expired contacts disappear and stale writes fail
+PASS B12 proposal revisions preserve exact scope and cannot win without authorized RFQ evidence
+PASS B12 won proposal links RFQ without creating artisan consent or financial obligations
+PASS B12 sales conversion requires exact sustainable cost and funding review before buyer contract acceptance
+PASS R12 SENT proposal keeps an authorized RFQ link and missing, held or rejected review denies acceptance
+PASS R12 current approval permits idempotent concurrent acceptance before WON without artisan commitment
+PASS R12 changed RFQ assumptions or latest funding plan invalidate the previous approval
+PASS R12 changed costing requires a fresh quote and approval; historical JSON SENT links remain gated
+PASS B12 financial analysis reports unknowns and refuses unrelated contact or buyer finance disclosure
+PASS B12 cost evidence uses exact money, rejects duplicates atomically and preserves source events
+PASS B12 dated working-capital review preserves unknown dates and separates estimates from transactions
+PASS B12 accounting export reconciles immutable sources with period, audit and financial disclosure scopes
+PASS B12 timeliness returns unavailable rather than simulated payment performance
+PASS B12 financial closure denies unapproved exceptions, preserves liabilities and replays one immutable decision
+PASS B12 finance review cannot approve unsupported costs or unfunded conversion
+PASS R12 contractual dates append immutable exact-source corrections without rewriting accepted terms
+PASS R12 actual timeliness exposes scheduled, pending, failed and partial reports without verified payment
+/home/ashenix/Projects/wie-challenge/website/node_modules/.pnpm/@prisma+client@7.10.1_prisma@7.10.1_@types+node@24.19.2_@types+react-dom@19.3.0_@types+_9e72caf218d3f522373b8e6c9536cf3f/node_modules/@prisma/client/src/runtime/RequestHandler.ts:238
+      throw new PrismaClientKnownRequestError(message, {
+            ^
+
+PrismaClientKnownRequestError: 
+Invalid `db.simulatedSettlement.create()` invocation in
+/home/ashenix/Projects/wie-challenge/website/apps/api/test/batch12.scenarios.ts:709:34
+
+  706 });
+  707 await check('R12 native simulated and overpayment reports remain outside the verified denominator',async()=>{
+  708   const c=await payableFixture();
+→ 709   await db.simulatedSettlement.create(
+Database error. Code: `23514`. Message: `new row for relation "SimulatedSettlement" violates check constraint "SimulatedSettlement_status_check"`
+    at vn.handleRequestError (/home/ashenix/Projects/wie-challenge/website/node_modules/.pnpm/@prisma+client@7.10.1_prisma@7.10.1_@types+node@24.19.2_@types+react-dom@19.3.0_@types+_9e72caf218d3f522373b8e6c9536cf3f/node_modules/@prisma/client/src/runtime/RequestHandler.ts:238:13)
+    at vn.handleAndLogRequestError (/home/ashenix/Projects/wie-challenge/website/node_modules/.pnpm/@prisma+client@7.10.1_prisma@7.10.1_@types+node@24.19.2_@types+react-dom@19.3.0_@types+_9e72caf218d3f522373b8e6c9536cf3f/node_modules/@prisma/client/src/runtime/RequestHandler.ts:184:12)
+    at vn.request (/home/ashenix/Projects/wie-challenge/website/node_modules/.pnpm/@prisma+client@7.10.1_prisma@7.10.1_@types+node@24.19.2_@types+react-dom@19.3.0_@types+_9e72caf218d3f522373b8e6c9536cf3f/node_modules/@prisma/client/src/runtime/RequestHandler.ts:153:12)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at async a (/home/ashenix/Projects/wie-challenge/website/node_modules/.pnpm/@prisma+client@7.10.1_prisma@7.10.1_@types+node@24.19.2_@types+react-dom@19.3.0_@types+_9e72caf218d3f522373b8e6c9536cf3f/node_modules/@prisma/client/src/runtime/getPrismaClient.ts:1012:24)
+    at async <anonymous> (/home/ashenix/Projects/wie-challenge/website/apps/api/test/batch12.scenarios.ts:709:5)
+    at async check (/home/ashenix/Projects/wie-challenge/website/apps/api/test/integration.ts:92:5)
+    at async runBatch12Scenarios (/home/ashenix/Projects/wie-challenge/website/apps/api/test/batch12.scenarios.ts:707:3)
+    at async <anonymous> (/home/ashenix/Projects/wie-challenge/website/apps/api/test/integration.ts:566:3) {
+  code: 'P2039',
+  meta: {
+    modelName: 'SimulatedSettlement',
+    driverAdapterError: DriverAdapterError: new row for relation "SimulatedSettlement" violates check constraint "SimulatedSettlement_status_check"
+        at PrismaPgAdapter.onError (file:///home/ashenix/Projects/wie-challenge/website/node_modules/.pnpm/@prisma+adapter-pg@7.10.1/node_modules/@prisma/adapter-pg/dist/index.mjs:666:11)
+        at PrismaPgAdapter.performIO (file:///home/ashenix/Projects/wie-challenge/website/node_modules/.pnpm/@prisma+adapter-pg@7.10.1/node_modules/@prisma/adapter-pg/dist/index.mjs:661:12)
+        at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+        at async PrismaPgAdapter.queryRaw (file:///home/ashenix/Projects/wie-challenge/website/node_modules/.pnpm/@prisma+adapter-pg@7.10.1/node_modules/@prisma/adapter-pg/dist/index.mjs:595:30)
+        at async <anonymous> (/home/ashenix/Projects/wie-challenge/website/node_modules/.pnpm/@prisma+client@7.10.1_prisma@7.10.1_@types+node@24.19.2_@types+react-dom@19.3.0_@types+_9e72caf218d3f522373b8e6c9536cf3f/node_modules/@prisma/client-engine-runtime/src/interpreter/query-interpreter.ts:200:28)
+        at async e.interpretNode (/home/ashenix/Projects/wie-challenge/website/node_modules/.pnpm/@prisma+client@7.10.1_prisma@7.10.1_@types+node@24.19.2_@types+react-dom@19.3.0_@types+_9e72caf218d3f522373b8e6c9536cf3f/node_modules/@prisma/client-engine-runtime/src/interpreter/query-interpreter.ts:228:41)
+        at async e.interpretNode (/home/ashenix/Projects/wie-challenge/website/node_modules/.pnpm/@prisma+client@7.10.1_prisma@7.10.1_@types+node@24.19.2_@types+react-dom@19.3.0_@types+_9e72caf218d3f522373b8e6c9536cf3f/node_modules/@prisma/client-engine-runtime/src/interpreter/query-interpreter.ts:273:41)
+        at async e.run (/home/ashenix/Projects/wie-challenge/website/node_modules/.pnpm/@prisma+client@7.10.1_prisma@7.10.1_@types+node@24.19.2_@types+react-dom@19.3.0_@types+_9e72caf218d3f522373b8e6c9536cf3f/node_modules/@prisma/client-engine-runtime/src/interpreter/query-interpreter.ts:121:23)
+        at async e.execute (/home/ashenix/Projects/wie-challenge/website/node_modules/.pnpm/@prisma+client@7.10.1_prisma@7.10.1_@types+node@24.19.2_@types+react-dom@19.3.0_@types+_9e72caf218d3f522373b8e6c9536cf3f/node_modules/@prisma/client/src/runtime/core/engines/client/LocalExecutor.ts:81:12)
+        at async yr.request (/home/ashenix/Projects/wie-challenge/website/node_modules/.pnpm/@prisma+client@7.10.1_prisma@7.10.1_@types+node@24.19.2_@types+react-dom@19.3.0_@types+_9e72caf218d3f522373b8e6c9536cf3f/node_modules/@prisma/client/src/runtime/core/engines/client/ClientEngine.ts:510:22) {
+      cause: {
+        originalCode: '23514',
+        originalMessage: 'new row for relation "SimulatedSettlement" violates check constraint "SimulatedSettlement_status_check"',
+        kind: 'postgres',
+        code: '23514',
+        severity: 'ERROR',
+        message: 'new row for relation "SimulatedSettlement" violates check constraint "SimulatedSettlement_status_check"',
+        detail: 'Failing row contains (cmvs847kb006s26e43ayxqzxz, cmvs847jw006m26e401kzsz8m, cmvs847k8006r26e4euwgz0zq, cmvs847k8006r26e4euwgz0zq, ARTISAN, 1, SETTLED, 1000, 2026-10-15 00:00:00, SYNTHETIC, f, 2026-10-28 14:42:28.811).',
+        column: undefined,
+        hint: undefined
+      }
+    }
+  },
+  clientVersion: '7.10.1'
+}
+
+Node.js v24.20.0
+/home/ashenix/Projects/wie-challenge/website/apps/api:
+[ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL] @nasj/api@0.1.0 test:integration: `tsx test/integration.ts`
+Exit status 1
+[ELIFECYCLE] Command failed with exit code 1.

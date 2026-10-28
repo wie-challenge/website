@@ -1,0 +1,38 @@
+
+Running 2 tests using 1 worker
+
+(node:175782) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✘  1 tests/e2e/batch12.spec.ts:42:3 › Batch12 sales proposal and financial controls use real scoped records at 390px (6.4s)
+(node:175982) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓  2 tests/e2e/batch12.spec.ts:42:3 › Batch12 sales proposal and financial controls use real scoped records at 1280px (5.3s)
+
+
+  1) tests/e2e/batch12.spec.ts:42:3 › Batch12 sales proposal and financial controls use real scoped records at 390px 
+
+    Error: expect(received).toBeTruthy()
+
+    Received: false
+
+      194 |     expect(
+      195 |       await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1),
+    > 196 |     ).toBeTruthy();
+          |       ^
+      197 |   });
+      198 |
+        at /home/ashenix/Projects/wie-challenge/website/tests/e2e/batch12.spec.ts:196:7
+
+    Error Context: test-results/batch12-Batch12-sales-prop-f225d-eal-scoped-records-at-390px/error-context.md
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/batch12-Batch12-sales-prop-f225d-eal-scoped-records-at-390px/trace.zip
+    Usage:
+
+        pnpm exec playwright show-trace test-results/batch12-Batch12-sales-prop-f225d-eal-scoped-records-at-390px/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  1 failed
+    tests/e2e/batch12.spec.ts:42:3 › Batch12 sales proposal and financial controls use real scoped records at 390px 
+  1 passed (26.1s)

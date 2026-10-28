@@ -1,0 +1,124 @@
+[
+  {
+    "id": "STAGE_DRAFT",
+    "http": 409,
+    "code": "FINANCE_REVIEW_REQUIRED",
+    "acceptedOrders": 0
+  },
+  {
+    "id": "STAGE_SENT",
+    "http": 409,
+    "code": "FINANCE_REVIEW_REQUIRED",
+    "acceptedOrders": 0
+  },
+  {
+    "id": "STAGE_WON",
+    "http": 409,
+    "code": "FINANCE_REVIEW_REQUIRED",
+    "acceptedOrders": 0
+  },
+  {
+    "id": "STAGE_LOST",
+    "http": 409,
+    "code": "FINANCE_REVIEW_REQUIRED",
+    "acceptedOrders": 0
+  },
+  {
+    "id": "JSON_ONLY",
+    "relationalProposalLinks": 0,
+    "absentReviewHttp": 409,
+    "holdHttp": 409,
+    "acceptedOrders": 0
+  },
+  {
+    "id": "CONCURRENT_ACCEPT",
+    "http": [
+      201,
+      409
+    ],
+    "replay": 201,
+    "orders": 1
+  },
+  {
+    "id": "SYNTHETIC_ONLY",
+    "unauthorizedLegacy": 403,
+    "unauthorizedFinance": 404,
+    "closeHttp": 201,
+    "replayHttp": 201,
+    "status": "CLOSED",
+    "authoritativePayables": 0
+  },
+  {
+    "id": "NATIVE_CONSTRAINTS",
+    "boundToTerms": true,
+    "unchangedAgreement": true,
+    "deleteDenied": true,
+    "verifiedEligible": 0,
+    "crossOrganizationHttp": 404,
+    "duplicateVersionRejected": true,
+    "constraints": [
+      {
+        "name": "ContractualDueDate_actorId_fkey",
+        "definition": "FOREIGN KEY (\"actorId\") REFERENCES \"User\"(id) ON DELETE RESTRICT"
+      },
+      {
+        "name": "ContractualDueDate_basis_check",
+        "definition": "CHECK ((basis = ANY (ARRAY['ACCEPTED_TERMS_EVIDENCE'::text, 'UNKNOWN'::text])))"
+      },
+      {
+        "name": "ContractualDueDate_correctionOfId_fkey",
+        "definition": "FOREIGN KEY (\"correctionOfId\") REFERENCES \"ContractualDueDate\"(id) ON DELETE RESTRICT"
+      },
+      {
+        "name": "ContractualDueDate_evidenceStatus_check",
+        "definition": "CHECK ((\"evidenceStatus\" = 'RECORDED_UNVERIFIED'::text))"
+      },
+      {
+        "name": "ContractualDueDate_payableId_fkey",
+        "definition": "FOREIGN KEY (\"payableId\") REFERENCES \"ArtisanPayable\"(id) ON DELETE RESTRICT"
+      },
+      {
+        "name": "ContractualDueDate_payableTermsSha256_check",
+        "definition": "CHECK ((\"payableTermsSha256\" ~ '^[a-f0-9]{64}$'::text))"
+      },
+      {
+        "name": "ContractualDueDate_pkey",
+        "definition": "PRIMARY KEY (id)"
+      },
+      {
+        "name": "ContractualDueDate_version_check",
+        "definition": "CHECK ((version > 0))"
+      },
+      {
+        "name": "PayoutExecutionRecord_actorId_fkey",
+        "definition": "FOREIGN KEY (\"actorId\") REFERENCES \"User\"(id) ON UPDATE CASCADE ON DELETE RESTRICT"
+      },
+      {
+        "name": "PayoutExecutionRecord_payoutId_fkey",
+        "definition": "FOREIGN KEY (\"payoutId\") REFERENCES \"PayoutRequest\"(id) ON UPDATE CASCADE ON DELETE RESTRICT"
+      },
+      {
+        "name": "PayoutExecutionRecord_pkey",
+        "definition": "PRIMARY KEY (id)"
+      },
+      {
+        "name": "PayoutExecutionRecord_reference_key",
+        "definition": "UNIQUE (reference)"
+      },
+      {
+        "name": "contract_date_known",
+        "definition": "CHECK ((((basis = 'UNKNOWN'::text) AND (\"dueAt\" IS NULL)) OR ((basis = 'ACCEPTED_TERMS_EVIDENCE'::text) AND (\"dueAt\" IS NOT NULL))))"
+      },
+      {
+        "name": "execution_unverified",
+        "definition": "CHECK (((NOT \"bankVerified\") AND (status = ANY (ARRAY['VERIFICATION_PENDING'::text, 'FAILED'::text])) AND (\"amountMillimes\" > 0)))"
+      }
+    ]
+  },
+  {
+    "id": "MIGRATIONS",
+    "finished": 36,
+    "tables": 131,
+    "checksumsMatch": true
+  }
+]

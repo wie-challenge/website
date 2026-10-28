@@ -81,6 +81,29 @@ for (const width of [360, 1280])
       const [artisan, coordinator] = await Promise.all(contexts.map((ctx) => ctx.newPage()));
       await signIn(artisan, `commerce-artisan-${suffix}@example.com`);
       await signIn(coordinator, `commerce-coordinator-${suffix}@example.com`);
+      await coordinator.goto('/association');
+      await expect(
+        coordinator.getByRole('heading', { name: 'Delegated association capacity', exact: true }),
+      ).toBeVisible();
+      const associationContext = await (await coordinator.request.get('/api/v1/me/context')).json();
+      const sharedResponse = await coordinator.request.get(
+        `/api/v1/associations/${associationContext.coordinatorOrganizationId}/capacity`,
+      );
+      expect(sharedResponse.status()).toBe(200);
+      const sharedCapacity = await sharedResponse.json();
+      expect(sharedCapacity.organizationId).toBe(associationContext.coordinatorOrganizationId);
+      expect(JSON.stringify(sharedCapacity)).not.toContain('unitPay');
+      expect(JSON.stringify(sharedCapacity)).not.toContain('contactPhone');
+      if (!sharedCapacity.items.length)
+        await expect(
+          coordinator.getByText('No current capacity has been shared with this association.'),
+        ).toBeVisible();
+      await coordinator
+        .getByRole('button', { name: 'Refresh shared capacity', exact: true })
+        .focus();
+      await coordinator.keyboard.press('Enter');
+      await axe(coordinator, `association-capacity-${width}`);
+
       await artisan.goto('/artisan/capacity');
       await totals(artisan, '100.00', '50.00', '0.00');
       await artisan.getByLabel('Production period', { exact: true }).focus();

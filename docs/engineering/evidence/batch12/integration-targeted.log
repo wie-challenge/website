@@ -1,0 +1,57 @@
+$ pnpm db:generate && pnpm --filter @nasj/contracts build && pnpm --filter @nasj/api test:integration
+$ pnpm --filter @nasj/api db:generate
+$ prisma generate
+Loaded Prisma config from prisma.config.ts.
+
+Prisma schema loaded from prisma/schema.prisma.
+
+✔ Generated Prisma Client (v7.10.1) to ./../../node_modules/.pnpm/@prisma+client@7.10.1_prisma@7.10.1_@types+node@24.19.2_@types+react-dom@19.3.0_@types+_9e72caf218d3f522373b8e6c9536cf3f/node_modules/@prisma/client in 1.08s
+
+Start by importing your Prisma Client (See: https://pris.ly/d/importing-client)
+
+
+$ tsc -p tsconfig.json
+$ tsx test/integration.ts
+PASS startup, migrations, readiness and unauthenticated API denial
+PASS real signup, SMTP verification, login and safe cookie/session projections
+PASS generic registration and failed login avoid account enumeration
+PASS origin, CSRF, validation and object ownership protect profile and admin routes
+PASS parser and size errors use safe envelopes and request tracing
+PASS sessions are ownership-bound and revocation/logout invalidate access
+PASS password recovery is generic, single-use and revokes existing sessions
+PASS expired sessions and invalid verification links are rejected
+PASS admin pagination, role changes and last-administrator race protection
+PASS self-deactivation ends sessions and prevents future login without deleting history
+PASS atomic rate limits resist concurrent requests and spoofed forwarded IP headers
+PASS explicit proxy trust resolves independent clients while ignoring private identity header spoofing
+PASS operator bootstrap promotes only an existing verified account and revokes its sessions
+/home/ashenix/Projects/wie-challenge/website/node_modules/.pnpm/@prisma+client@7.10.1_prisma@7.10.1_@types+node@24.19.2_@types+react-dom@19.3.0_@types+_9e72caf218d3f522373b8e6c9536cf3f/node_modules/@prisma/client/src/runtime/RequestHandler.ts:238
+      throw new PrismaClientKnownRequestError(message, {
+            ^
+
+PrismaClientKnownRequestError: 
+Invalid `db.organizationMember.findFirstOrThrow()` invocation in
+/home/ashenix/Projects/wie-challenge/website/apps/api/test/batch12.scenarios.ts:15:50
+
+  12 const salesMember=await db.organizationMember.findFirstOrThrow({where:{organizationId:orgId,userId:sales.me.user.id}});
+  13 await db.membershipRole.create({data:{membershipId:salesMember.id,role:'BUSINESS_DEVELOPMENT',assignedByUserId:sales.me.user.id}});
+  14 for(const person of [sales,finance])await db.operatorAssignment.create({data:{operatorId:person.me.user.id,organizationId:fixture.buyerOrganizationId,assignedById:sales.me.user.id}});
+→ 15 const financeMember=await db.organizationMember.findFirstOrThrow(
+An operation failed because it depends on one or more records that were required but not found. No record was found for a query.
+    at vn.handleRequestError (/home/ashenix/Projects/wie-challenge/website/node_modules/.pnpm/@prisma+client@7.10.1_prisma@7.10.1_@types+node@24.19.2_@types+react-dom@19.3.0_@types+_9e72caf218d3f522373b8e6c9536cf3f/node_modules/@prisma/client/src/runtime/RequestHandler.ts:238:13)
+    at vn.handleAndLogRequestError (/home/ashenix/Projects/wie-challenge/website/node_modules/.pnpm/@prisma+client@7.10.1_prisma@7.10.1_@types+node@24.19.2_@types+react-dom@19.3.0_@types+_9e72caf218d3f522373b8e6c9536cf3f/node_modules/@prisma/client/src/runtime/RequestHandler.ts:184:12)
+    at vn.request (/home/ashenix/Projects/wie-challenge/website/node_modules/.pnpm/@prisma+client@7.10.1_prisma@7.10.1_@types+node@24.19.2_@types+react-dom@19.3.0_@types+_9e72caf218d3f522373b8e6c9536cf3f/node_modules/@prisma/client/src/runtime/RequestHandler.ts:153:12)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at async a (/home/ashenix/Projects/wie-challenge/website/node_modules/.pnpm/@prisma+client@7.10.1_prisma@7.10.1_@types+node@24.19.2_@types+react-dom@19.3.0_@types+_9e72caf218d3f522373b8e6c9536cf3f/node_modules/@prisma/client/src/runtime/getPrismaClient.ts:1012:24)
+    at async runBatch12Scenarios (/home/ashenix/Projects/wie-challenge/website/apps/api/test/batch12.scenarios.ts:15:22)
+    at async <anonymous> (/home/ashenix/Projects/wie-challenge/website/apps/api/test/integration.ts:566:3) {
+  code: 'P2025',
+  meta: { modelName: 'OrganizationMember', operation: 'a query' },
+  clientVersion: '7.10.1'
+}
+
+Node.js v24.20.0
+/home/ashenix/Projects/wie-challenge/website/apps/api:
+[ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL] @nasj/api@0.1.0 test:integration: `tsx test/integration.ts`
+Exit status 1
+[ELIFECYCLE] Command failed with exit code 1.

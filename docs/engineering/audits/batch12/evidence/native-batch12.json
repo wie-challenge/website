@@ -1,0 +1,32 @@
+{
+  "engine": "17.7",
+  "throughMigration": "20261028130000_planning_intelligence_authority",
+  "beforeTables": 127,
+  "afterTables": 130,
+  "appliedMigrations": 35,
+  "oldFinanceHashPreserved": "546659224c5927f2f94a1d9d031780e59c167eda46766e2aec3d9171e244b3b2",
+  "newAnnotationsNull": true,
+  "appendOnly": true,
+  "duplicateVersionRejected": true,
+  "foreignKeyFailureRollback": true,
+  "constraints": [
+    "\"CommercialProspect\":CommercialProspect_buyerOrganizationId_fkey:FOREIGN KEY (\"buyerOrganizationId\") REFERENCES \"Organization\"(id) ON DELETE RESTRICT",
+    "\"CommercialProspect\":CommercialProspect_operatorOrganizationId_fkey:FOREIGN KEY (\"operatorOrganizationId\") REFERENCES \"Organization\"(id) ON DELETE RESTRICT",
+    "\"CommercialProspect\":CommercialProspect_pkey:PRIMARY KEY (id)",
+    "\"CommercialProspect\":CommercialProspect_version_check:CHECK ((version > 0))",
+    "\"FinanceRecordEvent\":FinanceRecordEvent_actorId_fkey:FOREIGN KEY (\"actorId\") REFERENCES \"User\"(id) ON UPDATE CASCADE ON DELETE RESTRICT",
+    "\"FinanceRecordEvent\":FinanceRecordEvent_orderId_fkey:FOREIGN KEY (\"orderId\") REFERENCES \"CommercialOrder\"(id) ON DELETE RESTRICT",
+    "\"FinanceRecordEvent\":FinanceRecordEvent_pkey:PRIMARY KEY (id)",
+    "\"PilotProposalRevision\":PilotProposalRevision_actorId_fkey:FOREIGN KEY (\"actorId\") REFERENCES \"User\"(id) ON DELETE RESTRICT",
+    "\"PilotProposalRevision\":PilotProposalRevision_pkey:PRIMARY KEY (id)",
+    "\"PilotProposalRevision\":PilotProposalRevision_prospectId_fkey:FOREIGN KEY (\"prospectId\") REFERENCES \"CommercialProspect\"(id) ON DELETE RESTRICT",
+    "\"PilotProposalRevision\":PilotProposalRevision_rfqId_fkey:FOREIGN KEY (\"rfqId\") REFERENCES \"CommercialRfq\"(id) ON DELETE RESTRICT",
+    "\"PilotProposalRevision\":PilotProposalRevision_specificationRevisionId_fkey:FOREIGN KEY (\"specificationRevisionId\") REFERENCES \"ProductSpecificationRevision\"(id) ON DELETE RESTRICT",
+    "\"PilotProposalRevision\":PilotProposalRevision_version_check:CHECK ((version > 0))",
+    "\"ProspectRevision\":ProspectRevision_actorId_fkey:FOREIGN KEY (\"actorId\") REFERENCES \"User\"(id) ON DELETE RESTRICT",
+    "\"ProspectRevision\":ProspectRevision_pkey:PRIMARY KEY (id)",
+    "\"ProspectRevision\":ProspectRevision_prospectId_fkey:FOREIGN KEY (\"prospectId\") REFERENCES \"CommercialProspect\"(id) ON DELETE RESTRICT",
+    "\"ProspectRevision\":ProspectRevision_version_check:CHECK ((version > 0))"
+  ],
+  "persistentDatabaseTouched": false
+}

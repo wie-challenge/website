@@ -1,0 +1,16 @@
+$ pnpm --filter @nasj/contracts build && pnpm --filter @nasj/api typecheck && pnpm --filter @nasj/api typecheck:test && pnpm --filter @nasj/web typecheck
+$ tsc -p tsconfig.json
+$ prisma generate && tsc --noEmit
+Loaded Prisma config from prisma.config.ts.
+
+Prisma schema loaded from prisma/schema.prisma.
+
+✔ Generated Prisma Client (v7.10.1) to ./../../node_modules/.pnpm/@prisma+client@7.10.1_prisma@7.10.1_@types+node@24.19.2_@types+react-dom@19.3.0_@types+_9e72caf218d3f522373b8e6c9536cf3f/node_modules/@prisma/client in 1.06s
+
+Start by importing your Prisma Client (See: https://pris.ly/d/importing-client)
+
+
+$ tsc -p tsconfig.test.json
+$ next typegen && tsc --noEmit
+Generating route types...
+✓ Types generated successfully

@@ -1,0 +1,81 @@
+[
+  {
+    "name": "independent-targeted",
+    "command": [
+      "pnpm",
+      "exec",
+      "tsx",
+      "--tsconfig",
+      "/home/ashenix/Projects/wie-challenge/website/apps/api/tsconfig.json",
+      "docs/engineering/audits/batch12/evidence/targeted-runner.ts"
+    ],
+    "log": "targeted-final.log",
+    "exitCode": 0,
+    "provenance": "Completed tool process exit status; timestamps for these targeted commands are log mtimes, not captured start/end times.",
+    "env": {
+      "BATCH12_FOCUSED": "1"
+    }
+  },
+  {
+    "name": "independent-native-upgrade",
+    "command": [
+      "pnpm",
+      "exec",
+      "tsx",
+      "--tsconfig",
+      "/home/ashenix/Projects/wie-challenge/website/apps/api/tsconfig.json",
+      "docs/engineering/audits/batch12/evidence/native-batch12.ts"
+    ],
+    "log": "native-batch12.log",
+    "exitCode": 0,
+    "provenance": "Completed tool process exit status; timestamps for these targeted commands are log mtimes, not captured start/end times.",
+    "env": {}
+  },
+  {
+    "name": "independent-browser",
+    "command": [
+      "pnpm",
+      "exec",
+      "playwright",
+      "test",
+      "--config",
+      "docs/engineering/audits/batch12/evidence/independent.playwright.config.ts"
+    ],
+    "log": "browser-independent-final.log",
+    "exitCode": 0,
+    "provenance": "Completed tool process exit status; timestamps for these targeted commands are log mtimes, not captured start/end times.",
+    "env": {}
+  },
+  {
+    "name": "independent-funding-hold",
+    "command": [
+      "pnpm",
+      "exec",
+      "tsx",
+      "--tsconfig",
+      "/home/ashenix/Projects/wie-challenge/website/apps/api/tsconfig.json",
+      "docs/engineering/audits/batch12/evidence/funding-hold-runner.ts"
+    ],
+    "log": "funding-hold.log",
+    "exitCode": 0,
+    "provenance": "Completed tool process exit status; timestamps for these targeted commands are log mtimes, not captured start/end times.",
+    "env": {
+      "BATCH12_FOCUSED": "1"
+    }
+  },
+  {
+    "name": "independent-pure",
+    "command": [
+      "pnpm",
+      "exec",
+      "tsx",
+      "--tsconfig",
+      "/home/ashenix/Projects/wie-challenge/website/apps/api/tsconfig.json",
+      "docs/engineering/audits/batch12/evidence/pure-finance-checks.ts"
+    ],
+    "log": "pure-finance.log",
+    "exitCode": 0,
+    "provenance": "Completed tool process exit status; timestamps for these targeted commands are log mtimes, not captured start/end times.",
+    "env": {}
+  }
+]

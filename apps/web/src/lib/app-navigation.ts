@@ -23,6 +23,12 @@ export const dashboardActions: Record<
 > = {
   admin: [
     {
+      href: '/admin/retention',
+      label: 'Retention and purpose',
+      icon: 'privacy',
+      description: 'Review dataset purpose, preservation and pending retention policy.',
+    },
+    {
       href: '/admin/users',
       label: 'User accounts',
       icon: 'users',
@@ -114,6 +120,12 @@ export const dashboardActions: Record<
       icon: 'users',
       description: 'Manage your company and independently authorized purchasing access.',
     },
+    {
+      href: '/catalog',
+      label: 'Product design and sampling',
+      icon: 'organization',
+      description: 'Review specification versions and approve or reject production samples.',
+    },
   ],
   association: [
     {
@@ -173,6 +185,12 @@ export const dashboardActions: Record<
   ],
   operator: [
     {
+      href: '/operator/sales',
+      label: 'Commercial pipeline',
+      icon: 'organization',
+      description: 'Qualify prospects and preserve pilot proposal history.',
+    },
+    {
       href: '/operator/inventory',
       label: 'Materials inventory',
       icon: 'organization',
@@ -195,6 +213,31 @@ export const dashboardActions: Record<
       label: 'Production directory',
       icon: 'artisan',
       description: 'Search privacy-safe declared capacity by craft, region and period.',
+    },
+    {
+      href: '/catalog',
+      label: 'Product design and sampling',
+      icon: 'organization',
+      description: 'Versioned specifications, paid sample terms and buyer sample approval.',
+    },
+    {
+      href: '/operator/planning',
+      label: 'Production planning',
+      icon: 'artisan',
+      description:
+        'Rank eligible groups, allocate an order across groups and compare delivery plans.',
+    },
+    {
+      href: '/collaboration',
+      label: 'Collaboration and support',
+      icon: 'support',
+      description: 'Exceptions, schedule changes, counteroffers, support cases and notifications.',
+    },
+    {
+      href: '/intelligence',
+      label: 'Production intelligence',
+      icon: 'audit',
+      description: 'Delay risk, forecast comparison, fairness review and business metrics.',
     },
     {
       href: '/operator/activity',

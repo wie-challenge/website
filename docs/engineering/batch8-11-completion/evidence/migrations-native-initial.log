@@ -1,0 +1,39 @@
+PrismaClientKnownRequestError: 
+Invalid `db.commercialRfq.create()` invocation in
+/home/ashenix/Projects/wie-challenge/website/apps/api/test/production.fixture.ts:141:40
+
+  138       declaredByUserId: operator.id,
+  139     },
+  140   });
+→ 141 const rfq = await db.commercialRfq.create(
+The column `CommercialOrder.productSpecificationRevisionId` does not exist in the current database.
+    at vn.handleRequestError (/home/ashenix/Projects/wie-challenge/website/node_modules/.pnpm/@prisma+client@7.10.1_prisma@7.10.1_@types+node@24.19.2_@types+react-dom@19.3.0_@types+_9e72caf218d3f522373b8e6c9536cf3f/node_modules/@prisma/client/src/runtime/RequestHandler.ts:238:13)
+    at vn.handleAndLogRequestError (/home/ashenix/Projects/wie-challenge/website/node_modules/.pnpm/@prisma+client@7.10.1_prisma@7.10.1_@types+node@24.19.2_@types+react-dom@19.3.0_@types+_9e72caf218d3f522373b8e6c9536cf3f/node_modules/@prisma/client/src/runtime/RequestHandler.ts:184:12)
+    at vn.request (/home/ashenix/Projects/wie-challenge/website/node_modules/.pnpm/@prisma+client@7.10.1_prisma@7.10.1_@types+node@24.19.2_@types+react-dom@19.3.0_@types+_9e72caf218d3f522373b8e6c9536cf3f/node_modules/@prisma/client/src/runtime/RequestHandler.ts:153:12)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at async a (/home/ashenix/Projects/wie-challenge/website/node_modules/.pnpm/@prisma+client@7.10.1_prisma@7.10.1_@types+node@24.19.2_@types+react-dom@19.3.0_@types+_9e72caf218d3f522373b8e6c9536cf3f/node_modules/@prisma/client/src/runtime/getPrismaClient.ts:1012:24)
+    at async seedBrowserProductionFixture (/home/ashenix/Projects/wie-challenge/website/apps/api/test/production.fixture.ts:141:17)
+    at async seedBrowserBatch5Fixture (/home/ashenix/Projects/wie-challenge/website/apps/api/test/batch5.fixture.ts:7:16)
+    at async runBatch811MigrationScenarios (/home/ashenix/Projects/wie-challenge/website/apps/api/test/batch811-migrations.scenarios.ts:57:5) {
+  code: 'P2022',
+  meta: {
+    modelName: 'CommercialRfq',
+    driverAdapterError: DriverAdapterError: ColumnNotFound
+        at PgTransaction.onError (/home/ashenix/Projects/wie-challenge/website/node_modules/.pnpm/@prisma+adapter-pg@7.10.1/node_modules/@prisma/adapter-pg/dist/index.js:702:11)
+        at PgTransaction.performIO (/home/ashenix/Projects/wie-challenge/website/node_modules/.pnpm/@prisma+adapter-pg@7.10.1/node_modules/@prisma/adapter-pg/dist/index.js:697:12)
+        at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+        at async PgTransaction.queryRaw (/home/ashenix/Projects/wie-challenge/website/node_modules/.pnpm/@prisma+adapter-pg@7.10.1/node_modules/@prisma/adapter-pg/dist/index.js:631:30)
+        at async <anonymous> (/home/ashenix/Projects/wie-challenge/website/node_modules/.pnpm/@prisma+client@7.10.1_prisma@7.10.1_@types+node@24.19.2_@types+react-dom@19.3.0_@types+_9e72caf218d3f522373b8e6c9536cf3f/node_modules/@prisma/client-engine-runtime/src/interpreter/query-interpreter.ts:200:28)
+        at async <anonymous> (/home/ashenix/Projects/wie-challenge/website/node_modules/.pnpm/@prisma+client@7.10.1_prisma@7.10.1_@types+node@24.19.2_@types+react-dom@19.3.0_@types+_9e72caf218d3f522373b8e6c9536cf3f/node_modules/@prisma/client-engine-runtime/src/interpreter/query-interpreter.ts:261:28)
+        at async Promise.all (index 0)
+        at async e.interpretNode (/home/ashenix/Projects/wie-challenge/website/node_modules/.pnpm/@prisma+client@7.10.1_prisma@7.10.1_@types+node@24.19.2_@types+react-dom@19.3.0_@types+_9e72caf218d3f522373b8e6c9536cf3f/node_modules/@prisma/client-engine-runtime/src/interpreter/query-interpreter.ts:258:26)
+        at async e.interpretNode (/home/ashenix/Projects/wie-challenge/website/node_modules/.pnpm/@prisma+client@7.10.1_prisma@7.10.1_@types+node@24.19.2_@types+react-dom@19.3.0_@types+_9e72caf218d3f522373b8e6c9536cf3f/node_modules/@prisma/client-engine-runtime/src/interpreter/query-interpreter.ts:141:20)
+        at async e.interpretNode (/home/ashenix/Projects/wie-challenge/website/node_modules/.pnpm/@prisma+client@7.10.1_prisma@7.10.1_@types+node@24.19.2_@types+react-dom@19.3.0_@types+_9e72caf218d3f522373b8e6c9536cf3f/node_modules/@prisma/client-engine-runtime/src/interpreter/query-interpreter.ts:273:41) {
+      cause: [Object]
+    }
+  },
+  clientVersion: '7.10.1'
+}
+undefined
+/home/ashenix/Projects/wie-challenge/website/apps/api:
+[ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL] Command failed with exit code 1: tsx -e 'import {runBatch811MigrationScenarios} from "./test/batch811-migrations.scenarios.ts"; runBatch811MigrationScenarios(async (name,fn)=>{await fn();console.log("PASS",name)}).catch(e=>{console.error(e);process.exitCode=1})'

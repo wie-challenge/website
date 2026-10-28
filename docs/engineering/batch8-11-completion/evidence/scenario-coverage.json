@@ -1,0 +1,482 @@
+{
+  "workflows": [
+    {
+      "id": "P01",
+      "scenario": "Recompute ranking from persisted normalized inputs/weights",
+      "test": "apps/api/test/planning-intelligence.scenarios.ts",
+      "logMarker": "planning persists reproducible weighted inputs",
+      "result": "PASS"
+    },
+    {
+      "id": "P02",
+      "scenario": "Concurrent draft replay creates no offers or commitments",
+      "test": "apps/api/test/planning-intelligence.scenarios.ts",
+      "logMarker": "planning persists reproducible weighted inputs",
+      "result": "PASS"
+    },
+    {
+      "id": "P03",
+      "scenario": "Unknown materials may draft but cannot pass review",
+      "test": "apps/api/test/planning-intelligence.scenarios.ts",
+      "logMarker": "planning refuses unknown materials",
+      "result": "PASS"
+    },
+    {
+      "id": "P04",
+      "scenario": "Unauthorized/over-capacity override leaves allocation unchanged",
+      "test": "apps/api/test/planning-intelligence.scenarios.ts",
+      "logMarker": "planning refuses unknown materials",
+      "result": "PASS"
+    },
+    {
+      "id": "P05",
+      "scenario": "Concurrent issuance creates three distinct OFFERED records once",
+      "test": "apps/api/test/planning-intelligence.scenarios.ts",
+      "logMarker": "plan issuance is atomic and retry-safe",
+      "result": "PASS"
+    },
+    {
+      "id": "P06",
+      "scenario": "Declined/expired reallocation releases once and preserves acceptance",
+      "test": "apps/api/test/planning-intelligence.scenarios.ts",
+      "logMarker": "plan issuance is atomic and retry-safe",
+      "result": "PASS"
+    },
+    {
+      "id": "C01",
+      "scenario": "Only design owner approves; approved content is immutable",
+      "test": "apps/api/test/product-authority.scenarios.ts",
+      "logMarker": "E20 design owner approval is scoped",
+      "result": "PASS"
+    },
+    {
+      "id": "C02",
+      "scenario": "Stale/cross-buyer approval leaves no decision",
+      "test": "apps/api/test/product-authority.scenarios.ts",
+      "logMarker": "E20 buyer signoff has immutable exact revision lineage",
+      "result": "PASS"
+    },
+    {
+      "id": "C03",
+      "scenario": "Only assigned artisan accepts exact paid sample terms",
+      "test": "apps/api/test/product-authority.scenarios.ts",
+      "logMarker": "E20 paid sample work requires its own artisan acceptance",
+      "result": "PASS"
+    },
+    {
+      "id": "C04",
+      "scenario": "Concurrent completion creates exactly one exact ledger obligation",
+      "test": "apps/api/test/product-authority.scenarios.ts",
+      "logMarker": "E20 completion recognizes one exact sample obligation",
+      "result": "PASS"
+    },
+    {
+      "id": "C05",
+      "scenario": "Rejected/no-bulk sample retains earned payable",
+      "test": "apps/api/test/product-authority.scenarios.ts",
+      "logMarker": "E20 quality rejection preserves the earned sample obligation",
+      "result": "PASS"
+    },
+    {
+      "id": "C06",
+      "scenario": "One sample decision binds release and inspection; old revision preserved",
+      "test": "apps/api/test/product-authority.scenarios.ts",
+      "logMarker": "E20 one buyer approval projects into the release authority",
+      "result": "PASS"
+    },
+    {
+      "id": "I01",
+      "scenario": "Risk uses recorded shortage and a real evaluation clock",
+      "test": "apps/api/test/planning-intelligence.scenarios.ts",
+      "logMarker": "risk alerts deduplicate under concurrent evaluation",
+      "result": "PASS"
+    },
+    {
+      "id": "I02",
+      "scenario": "Concurrent alerts deduplicate; scoped ack/resolve is audited",
+      "test": "apps/api/test/planning-intelligence.scenarios.ts",
+      "logMarker": "risk alerts deduplicate under concurrent evaluation",
+      "result": "PASS"
+    },
+    {
+      "id": "I03",
+      "scenario": "Forecast snapshots preserve version/assumptions and refuse rewrites",
+      "test": "apps/api/test/planning-intelligence.scenarios.ts",
+      "logMarker": "forecast snapshots are immutable, versioned and scoped",
+      "result": "PASS"
+    },
+    {
+      "id": "I04",
+      "scenario": "Missing completion never fabricates forecast accuracy",
+      "test": "apps/api/test/planning-intelligence.scenarios.ts",
+      "logMarker": "forecast snapshots are immutable, versioned and scoped",
+      "result": "PASS"
+    },
+    {
+      "id": "I05",
+      "scenario": "Consented time rejects overlaps and appends corrections",
+      "test": "apps/api/test/planning-intelligence.scenarios.ts",
+      "logMarker": "observed production time requires artisan consent",
+      "result": "PASS"
+    },
+    {
+      "id": "I06",
+      "scenario": "Reviewed policy and bounded periods enforce suppression",
+      "test": "apps/api/test/planning-intelligence.scenarios.ts",
+      "logMarker": "reviewed cohort policy requires platform governance",
+      "result": "PASS"
+    },
+    {
+      "id": "L01",
+      "scenario": "Buyer approval alone leaves effective schedule unchanged",
+      "test": "apps/api/test/collaboration.scenarios.ts",
+      "logMarker": "schedule consent denies platform substitution",
+      "result": "PASS"
+    },
+    {
+      "id": "L02",
+      "scenario": "Artisan coapproval required; stale/admin substitution refused",
+      "test": "apps/api/test/collaboration.scenarios.ts",
+      "logMarker": "schedule consent denies platform substitution",
+      "result": "PASS"
+    },
+    {
+      "id": "L03",
+      "scenario": "Sanitized internal discussion never leaks to buyer/outsider",
+      "test": "apps/api/test/collaboration.scenarios.ts",
+      "logMarker": "discussion internal notes and sanitized delivery history",
+      "result": "PASS"
+    },
+    {
+      "id": "L04",
+      "scenario": "Affected quantity/date and coordinator exception attribution persist",
+      "test": "apps/api/test/collaboration.scenarios.ts",
+      "logMarker": "scoped exceptions retain original facts",
+      "result": "PASS"
+    },
+    {
+      "id": "L05",
+      "scenario": "Private support permits correction/withdrawal without explanation",
+      "test": "apps/api/test/collaboration.scenarios.ts",
+      "logMarker": "private support correction, attachment access and withdrawal",
+      "result": "PASS"
+    },
+    {
+      "id": "L06",
+      "scenario": "Case image bytes are protected from unrelated users",
+      "test": "apps/api/test/collaboration.scenarios.ts",
+      "logMarker": "private support correction, attachment access and withdrawal",
+      "result": "PASS"
+    },
+    {
+      "id": "L07",
+      "scenario": "Localized no-provider failure, optout and idempotent retry",
+      "test": "apps/api/test/collaboration.scenarios.ts",
+      "logMarker": "localized external notifications fail honestly",
+      "result": "PASS"
+    },
+    {
+      "id": "L08",
+      "scenario": "Effective pause/resume preserves accepted work",
+      "test": "apps/api/test/collaboration.scenarios.ts",
+      "logMarker": "effective availability pause preserves accepted batches",
+      "result": "PASS"
+    },
+    {
+      "id": "X01",
+      "scenario": "Actual auth sessions, CSRF and strict request validation",
+      "test": "apps/api/test/integration.ts",
+      "logMarker": "origin, CSRF, validation and object ownership",
+      "result": "PASS"
+    },
+    {
+      "id": "X02",
+      "scenario": "Suspended affiliations revoke business access",
+      "test": "apps/api/test/roles.scenarios.ts",
+      "logMarker": "revoked participation and suspended organizations",
+      "result": "PASS"
+    },
+    {
+      "id": "X03",
+      "scenario": "Twenty original new tables have PK/FK/index coverage",
+      "test": "apps/api/test/batch811-migrations.scenarios.ts",
+      "logMarker": "B811-M02",
+      "result": "PASS"
+    },
+    {
+      "id": "X04",
+      "scenario": "Populated pre-Batch8 native migrate deploy preserves baseline values",
+      "test": "apps/api/test/batch811-migrations.scenarios.ts",
+      "logMarker": "B811-M01",
+      "result": "PASS"
+    },
+    {
+      "id": "X05",
+      "scenario": "Foreign-key failure rolls back the whole transaction",
+      "test": "apps/api/test/batch811-migrations.scenarios.ts",
+      "logMarker": "B811-M04",
+      "result": "PASS"
+    },
+    {
+      "id": "X06",
+      "scenario": "Every native migration-history checksum matches disk",
+      "test": "apps/api/test/batch811-migrations.scenarios.ts",
+      "logMarker": "B811-M03",
+      "result": "PASS"
+    },
+    {
+      "id": "X07",
+      "scenario": "Concurrent PostgreSQL clients enforce uniqueness",
+      "test": "apps/api/test/batch811-migrations.scenarios.ts",
+      "logMarker": "B811-M05",
+      "result": "PASS"
+    },
+    {
+      "id": "X08",
+      "scenario": "Encrypted backup restores every table in disposable infrastructure",
+      "test": "apps/api/test/restore.scenarios.ts",
+      "logMarker": "E16 real pg_dump/pg_restore preserves every table",
+      "result": "PASS"
+    },
+    {
+      "id": "X09",
+      "scenario": "Concurrent authoritative acceptance creates exactly one effective batch",
+      "test": "apps/api/test/collaboration.scenarios.ts",
+      "logMarker": "counteroffer reissues exact versioned terms",
+      "result": "PASS"
+    },
+    {
+      "id": "X10",
+      "scenario": "Insufficient counteroffer capacity rolls back manager reissue",
+      "test": "apps/api/test/collaboration.scenarios.ts",
+      "logMarker": "counteroffer reissues exact versioned terms",
+      "result": "PASS"
+    },
+    {
+      "id": "X11",
+      "scenario": "Manager refusal creates no extra reservation/commitment",
+      "test": "apps/api/test/collaboration.scenarios.ts",
+      "logMarker": "counteroffer reissues exact versioned terms",
+      "result": "PASS"
+    },
+    {
+      "id": "X12",
+      "scenario": "Expired counteroffer cannot commit work",
+      "test": "apps/api/test/collaboration.scenarios.ts",
+      "logMarker": "counteroffer reissues exact versioned terms",
+      "result": "PASS"
+    },
+    {
+      "id": "X13",
+      "scenario": "Unauthorized sample work persists no observation/payable",
+      "test": "apps/api/test/product-authority.scenarios.ts",
+      "logMarker": "E20 paid sample work requires its own artisan acceptance",
+      "result": "PASS"
+    },
+    {
+      "id": "X14",
+      "scenario": "A v2 design cannot reuse v1 sample sign-off",
+      "test": "apps/api/test/product-authority.scenarios.ts",
+      "logMarker": "E20 revision amendments preserve v1",
+      "result": "PASS"
+    },
+    {
+      "id": "X15",
+      "scenario": "Unauthorized inspection persists no quality result",
+      "test": "apps/api/test/product-authority.scenarios.ts",
+      "logMarker": "E20 inspection persists the approved sample criteria",
+      "result": "PASS"
+    },
+    {
+      "id": "X16",
+      "scenario": "Exact labor/material arithmetic and no second ledger",
+      "test": "apps/api/test/product-authority.scenarios.ts",
+      "logMarker": "E20 completion recognizes one exact sample obligation",
+      "result": "PASS"
+    },
+    {
+      "id": "X17",
+      "scenario": "Buyer discussions cannot inject financial API fields",
+      "test": "apps/api/test/collaboration.scenarios.ts",
+      "logMarker": "discussion internal notes and sanitized delivery history",
+      "result": "PASS"
+    },
+    {
+      "id": "X18",
+      "scenario": "Current delegation revocation is enforced immediately",
+      "test": "apps/api/test/artisans.integration.ts",
+      "logMarker": "revoked delegation and expired delegation lose access immediately",
+      "result": "PASS"
+    },
+    {
+      "id": "X19",
+      "scenario": "Consented association sharing deduplicates and reflects revocation",
+      "test": "apps/api/test/artisans.integration.ts",
+      "logMarker": "E04-09 aggregate capacity requires explicit sharing",
+      "result": "PASS"
+    },
+    {
+      "id": "X20",
+      "scenario": "External retry/concurrent workers send exactly once to local SMTP",
+      "test": "apps/api/test/notification-delivery.scenarios.ts",
+      "logMarker": "notification retry is idempotent and concurrent workers",
+      "result": "PASS"
+    },
+    {
+      "id": "X21",
+      "scenario": "Narrow reporting filters cannot disclose sparse compensation",
+      "test": "apps/api/test/planning-intelligence.scenarios.ts",
+      "logMarker": "reporting periods are bounded and narrow association filters",
+      "result": "PASS"
+    },
+    {
+      "id": "X22",
+      "scenario": "Synthetic batch cannot become genuine observed forecast evidence",
+      "test": "apps/api/test/planning-intelligence.scenarios.ts",
+      "logMarker": "forecast snapshots are immutable, versioned and scoped",
+      "result": "PASS"
+    },
+    {
+      "id": "X23",
+      "scenario": "Visitor reset archives history and revokes old sessions",
+      "test": "apps/api/test/demo.scenarios.ts",
+      "logMarker": "showroom reset archives only owned scope",
+      "result": "PASS"
+    },
+    {
+      "id": "X24",
+      "scenario": "Cross-visitor denial and interrupted reset leave other scope intact",
+      "test": "apps/api/test/demo.scenarios.ts",
+      "logMarker": "showroom reset archives only owned scope",
+      "result": "PASS"
+    }
+  ],
+  "negativeSecurity": [
+    {
+      "id": "N01",
+      "scenario": "Buyer reads another buyer RFQ",
+      "test": "apps/api/test/procurement.scenarios.ts",
+      "logMarker": "E02 current internal operators need assigned buyer scope",
+      "result": "PASS"
+    },
+    {
+      "id": "N02",
+      "scenario": "Coordinator accesses unrelated artisan",
+      "test": "apps/api/test/roles.scenarios.ts",
+      "logMarker": "unassigned same-association coordinators",
+      "result": "PASS"
+    },
+    {
+      "id": "N03",
+      "scenario": "Unrelated actor edits/accepts counteroffer",
+      "test": "apps/api/test/collaboration.scenarios.ts",
+      "logMarker": "counteroffer reissues exact versioned terms",
+      "result": "PASS"
+    },
+    {
+      "id": "N04",
+      "scenario": "Operator override bypasses hard capacity",
+      "test": "apps/api/test/planning-intelligence.scenarios.ts",
+      "logMarker": "planning refuses unknown materials",
+      "result": "PASS"
+    },
+    {
+      "id": "N05",
+      "scenario": "Unauthorized buyer/sample approval",
+      "test": "apps/api/test/product-authority.scenarios.ts",
+      "logMarker": "E20 buyer signoff has immutable exact revision lineage",
+      "result": "PASS"
+    },
+    {
+      "id": "N06",
+      "scenario": "Cross-organization catalogue/document disclosure",
+      "test": "apps/api/test/product-authority.scenarios.ts",
+      "logMarker": "E20 revision amendments preserve v1",
+      "result": "PASS"
+    },
+    {
+      "id": "N07",
+      "scenario": "Duplicate capacity commitment",
+      "test": "apps/api/test/collaboration.scenarios.ts",
+      "logMarker": "counteroffer reissues exact versioned terms",
+      "result": "PASS"
+    },
+    {
+      "id": "N08",
+      "scenario": "Price preview silently mutates issued quote",
+      "test": "apps/api/test/planning-intelligence.scenarios.ts",
+      "logMarker": "pricing effort range and exact recalculation stay advisory",
+      "result": "PASS"
+    },
+    {
+      "id": "N09",
+      "scenario": "Analytics leaks private compensation",
+      "test": "apps/api/test/planning-intelligence.scenarios.ts",
+      "logMarker": "reporting periods are bounded and narrow association filters",
+      "result": "PASS"
+    },
+    {
+      "id": "N10",
+      "scenario": "Small-cohort/filter differencing disclosure",
+      "test": "apps/api/test/planning-intelligence.scenarios.ts",
+      "logMarker": "reporting periods are bounded and narrow association filters",
+      "result": "PASS"
+    },
+    {
+      "id": "N11",
+      "scenario": "Platform administrator substitutes for schedule consent",
+      "test": "apps/api/test/collaboration.scenarios.ts",
+      "logMarker": "schedule consent denies platform substitution",
+      "result": "PASS"
+    },
+    {
+      "id": "N12",
+      "scenario": "Coordinator impersonates artisan consent",
+      "test": "apps/api/test/commercial.scenarios.ts",
+      "logMarker": "production eligibility, offers and voluntary decisions stay isolated",
+      "result": "PASS"
+    },
+    {
+      "id": "N13",
+      "scenario": "Unrelated actor reads/retries recipient notification",
+      "test": "apps/api/test/collaboration.scenarios.ts",
+      "logMarker": "localized external notifications fail honestly",
+      "result": "PASS"
+    },
+    {
+      "id": "N14",
+      "scenario": "Buyer discussion accepts internal finance API fields",
+      "test": "apps/api/test/collaboration.scenarios.ts",
+      "logMarker": "discussion internal notes and sanitized delivery history",
+      "result": "PASS"
+    },
+    {
+      "id": "N15",
+      "scenario": "Revoked grant or suspended affiliation retains access",
+      "test": "apps/api/test/artisans.integration.ts",
+      "logMarker": "delegate membership suspension removes access immediately",
+      "result": "PASS"
+    },
+    {
+      "id": "N16",
+      "scenario": "Cross-visitor showroom access",
+      "test": "apps/api/test/demo.scenarios.ts",
+      "logMarker": "showroom uses six real scoped authenticated accounts",
+      "result": "PASS"
+    },
+    {
+      "id": "N17",
+      "scenario": "Unsupported accountless acceptance creates work",
+      "test": "apps/api/test/demo.scenarios.ts",
+      "logMarker": "accountless showroom reports remain pending",
+      "result": "PASS"
+    },
+    {
+      "id": "N18",
+      "scenario": "Synthetic evidence relabelled genuine",
+      "test": "apps/api/test/planning-intelligence.scenarios.ts",
+      "logMarker": "forecast snapshots are immutable, versioned and scoped",
+      "result": "PASS"
+    }
+  ]
+}
