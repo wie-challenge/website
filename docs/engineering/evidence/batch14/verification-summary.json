@@ -1,0 +1,224 @@
+{
+  "batch": 14,
+  "date": "2026-10-28",
+  "timezone": "Africa/Tunis",
+  "stories": 1,
+  "story": "E15-06",
+  "githubIssue": 192,
+  "issueStateAtAudit": "OPEN",
+  "boardStatusAtAudit": "Proposed",
+  "criteria": 5,
+  "ownerAcceptance": "PENDING",
+  "softwareStatuses": {
+    "VERIFIED_SOFTWARE_CRITERIA": 5,
+    "PARTIALLY_IMPLEMENTED": 0,
+    "BLOCKED": 0
+  },
+  "scope": {
+    "implemented": [
+      "E15-06"
+    ],
+    "notImplemented": [
+      "E18-04",
+      "E18-05",
+      "Batch 15"
+    ],
+    "batch14PlanningDocumentsPreserved": [
+      "docs/engineering/batch14-planning/SCOPE_AUDIT.md",
+      "docs/engineering/batch14-planning/IMPLEMENTATION_BACKLOG.md",
+      "docs/engineering/batch14-planning/TECHNICAL_PLAN.md"
+    ]
+  },
+  "tests": {
+    "apiUnits": 147,
+    "apiUnitFailures": 0,
+    "webUnits": 25,
+    "webUnitFailures": 0,
+    "fullIntegration": 206,
+    "fullIntegrationFailures": 0,
+    "e15HttpScenarios": 4,
+    "e15MigrationScenarios": 6,
+    "showroomIsolationScenarios": 9,
+    "newBrowserJourneys": 4,
+    "browserFailures": 0,
+    "browserViewports": [
+      "390x844",
+      "1280x900"
+    ],
+    "axeViolations": 0,
+    "showroomBrowserSuiteRunTogether": 4,
+    "fullApplicationBrowsers": 54,
+    "fullShowroomBrowsers": 5,
+    "fullBrowserFailures": 0
+  },
+  "checks": {
+    "lint": "PASS_426_FILES_NO_FINDINGS",
+    "typecheck": "PASS",
+    "build": "PASS",
+    "prismaValidation": "PASS",
+    "gitDiffCheck": "PASS"
+  },
+  "database": {
+    "migration": "20261028170000_demo_feedback",
+    "migrationIndex": 38,
+    "historicalMigrationsPreserved": 37,
+    "nativeEvidence": {
+      "evidence": "DISPOSABLE_NATIVE_POSTGRESQL_DEMO_FEEDBACK_UPGRADE",
+      "engine": "PostgreSQL 17.7-alpine (disposable container)",
+      "preservedBaselineTables": 132,
+      "baselineRowsUnchanged": true,
+      "tables": [
+        "DemoFeedback",
+        "DemoFeedbackEvent"
+      ],
+      "restrictiveForeignKeys": true,
+      "partialUniqueDedupe": true,
+      "checkConstraints": [
+        "generation > 0",
+        "sourceClass in (VISITOR_SUBMITTED, SYNTHETIC_SEEDED)",
+        "category in (USABILITY, CONTENT, DEFECT, IDEA)",
+        "status in (NEW, TRIAGED, ACTIONED, DISMISSED)",
+        "comment length <= 2000",
+        "closed screenKey vocabulary",
+        "dedupeKey length <= 128",
+        "event kind in (SUBMITTED, STATUS_CHANGED, NOTE)",
+        "event note length <= 1000",
+        "STATUS_CHANGED requires distinct from/to status",
+        "moderation kinds require an actorId",
+        "SUBMITTED forbids an actorId"
+      ],
+      "triggers": [
+        "DemoFeedbackEvent_append_only",
+        "DemoFeedback_content_guard",
+        "DemoFeedback_no_delete",
+        "DemoFeedback_anchor"
+      ],
+      "populatedUpgrade": "PASS",
+      "failedTransactionRollback": "PASS",
+      "restorePreservesHistory": "PASS",
+      "persistentDatabaseTouched": false
+    }
+  },
+  "securityNegativeTests": {
+    "missingDemoCsrfProof": "403_DEMO_CSRF_REJECTED",
+    "invalidCategory": "400",
+    "invalidScreenKey": "400",
+    "oversizedComment": "400",
+    "forgedVisitorId": "400_STRICT_SCHEMA",
+    "forgedSourceClass": "400_STRICT_SCHEMA",
+    "forgedGeneration": "400_STRICT_SCHEMA",
+    "forgedStatus": "400_STRICT_SCHEMA",
+    "forgedCreatedAt": "400_STRICT_SCHEMA",
+    "otherVisitorScenario": "404",
+    "archivedGenerationWrite": "409_STALE_DEMO_SCENARIO",
+    "crossVisitorRead": "EMPTY_LIST_NO_LEAK",
+    "duplicateSubmission": "409_IDEMPOTENCY_CONFLICT_ON_CHANGED_PAYLOAD",
+    "sameKeyReplay": "ORIGINAL_RESULT_RETURNED",
+    "dedupeKeyDuplicate": "P2002_AT_DATABASE",
+    "perScenarioCap": "409_FEEDBACK_LIMIT",
+    "rateLimit": "429_WITH_RETRY_AFTER",
+    "allShowroomPersonasModeration": "403",
+    "supportPersonaModeration": "403_DESPITE_COLLABORATION_200",
+    "nonAdminRealAccountModeration": "403",
+    "unauthorizedVisitorModeration": "403",
+    "missingClosureReason": "400_NOTE_REQUIRED",
+    "invalidTransition": "409_INVALID_TRANSITION",
+    "staleExpectedStatus": "409_STALE_STATUS",
+    "terminalStatusReopen": "409_AND_DATABASE_TERMINAL",
+    "immutableEventUpdate": "REJECTED_APPEND_ONLY",
+    "immutableEventDelete": "REJECTED_APPEND_ONLY",
+    "contentRewrite": "REJECTED_IMMUTABLE",
+    "aggregateDelete": "REJECTED_APPEND_ONLY",
+    "foreignVisitorScenarioAtDatabase": "REJECTED_ANCHOR_TRIGGER",
+    "generationMismatchAtDatabase": "REJECTED_ANCHOR_TRIGGER"
+  },
+  "resetBehaviour": {
+    "feedbackPreservedAcrossReset": true,
+    "mechanism": "scenario archived, never deleted, FK ON DELETE RESTRICT",
+    "archivedGenerationAcceptsNewFeedback": false,
+    "crossGenerationDisclosure": false,
+    "visitorSeesOwnArchivedSubmissions": true
+  },
+  "provenance": {
+    "classes": [
+      "VISITOR_SUBMITTED",
+      "SYNTHETIC_SEEDED"
+    ],
+    "serverDerived": true,
+    "provesRealParticipantView": false,
+    "distinguishedInDtoAndUi": true
+  },
+  "financialNonInterference": {
+    "verified": true,
+    "snapshotFields": [
+      "artisanPayables",
+      "financialAdjustments",
+      "paymentDisputes",
+      "supportTickets",
+      "buyerOrderFeedback",
+      "simulatedSettlements",
+      "buyerDeliveryConfirmations"
+    ],
+    "identicalBeforeAndAfter": true
+  },
+  "crossBatchRegression": {
+    "batch13BuyerFeedbackIsolation": "PRESERVED",
+    "batch12ClosureAndFunding": "PRESERVED",
+    "demoPersonaIsolation": "PRESERVED",
+    "governanceRestrictions": "PRESERVED",
+    "syntheticToRealPromotion": "PREVENTED"
+  },
+  "governance": {
+    "retentionClassAdded": "DEMO_VISITOR_FEEDBACK",
+    "retentionDurationInvented": false,
+    "purgeEnabled": false,
+    "reviewStatus": "PENDING_QUALIFIED_POLICY_REVIEW",
+    "e14_09StatusPreserved": "PENDING"
+  },
+  "authoritativeLogs": {
+    "integration": "integration.log",
+    "focusedFeedback": "focused-feedback.log",
+    "focusedMigration": "focused-migration.log",
+    "showroomIsolation": "demo.log",
+    "browser": "browser-demo.log",
+    "fullE2e": "e2e-all.log",
+    "apiUnits": "api-unit.log",
+    "webUnits": "web-unit.log",
+    "lint": "lint.log",
+    "typecheck": "typecheck.log",
+    "build": "build.log",
+    "schema": "schema.log",
+    "whitespace": "diff-check.log"
+  },
+  "failures": [],
+  "skips": [],
+  "testDefectsCorrectedDuringImplementation": [
+    "migration snapshot omitted the newly created DemoFeedback tables",
+    "Batch 13 migration snapshot needed the same forward-looking table exclusion"
+  ],
+  "blockers": [
+    {
+      "gate": "E14-09 / #74 qualified privacy review",
+      "affects": "collection of real participant feedback at scale",
+      "status": "EXTERNAL_PENDING"
+    },
+    {
+      "gate": "Owner acceptance for E15-06 / #192",
+      "affects": "acceptance of the five criteria",
+      "status": "PENDING"
+    }
+  ],
+  "syntheticEvidenceOnly": true,
+  "realParticipantFeedbackCollected": false,
+  "readyForIndependentVerification": true,
+  "readyForOwnerAcceptance": false,
+  "readyForRealPilot": false,
+  "githubStateChanged": false,
+  "deploymentPerformed": false,
+  "persistentDatabaseMigrated": false,
+  "workingTreeStagedOrCommitted": false,
+  "harnessConfiguration": {
+    "browserSuiteRateFeedbackMax": 500,
+    "rationale": "one loopback client address in the Playwright harness; production defaults unchanged and the limiter is proved separately with RATE_FEEDBACK_MAX=2"
+  }
+}

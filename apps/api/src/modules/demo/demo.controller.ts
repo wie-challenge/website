@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Headers, Inject, Post, Req, Res } from '@nestjs/common';
+import { Body, Controller, Get, Headers, Inject, Post, Query, Req, Res } from '@nestjs/common';
 import type { Request, Response } from 'express';
 import * as C from '@nasj/contracts';
 import { Public } from '../../common/identity.js';
@@ -27,6 +27,21 @@ export class DemoController {
   ) {
     return this.demo.switch(req, res, body.persona, key);
   }
+  @Post('feedback') feedback(
+    @Req() req: Request,
+    @Body(new ZodValidationPipe(C.demoFeedbackCreateSchema)) body: C.DemoFeedbackCreateInput,
+    @Headers('idempotency-key') key?: string,
+  ) {
+    return this.demo.submitFeedback(req, body, key);
+  }
+
+  @Get('feedback') myFeedback(
+    @Req() req: Request,
+    @Query(new ZodValidationPipe(C.demoFeedbackQuerySchema)) query: C.DemoFeedbackQuery,
+  ) {
+    return this.demo.myFeedback(req, query);
+  }
+
   @Post('reset') reset(
     @Req() req: Request,
     @Res({ passthrough: true }) res: Response,

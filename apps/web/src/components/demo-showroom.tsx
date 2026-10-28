@@ -24,6 +24,7 @@ import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Alert, AlertDescription } from './ui/alert';
 import { Badge } from './ui/badge';
 import { LoaderCircle } from 'lucide-react';
+import { DemoFeedbackPanel } from './demo-feedback-panel';
 
 function useDemoState() {
   const pathname = usePathname();
@@ -380,6 +381,17 @@ export function DemoShowroom() {
               </div>
             </CardContent>
           </Card>
+          {scenario && (
+            <Card>
+              <CardContent className="pt-6">
+                <DemoFeedbackPanel
+                  key={`${scenario.id}:${scenario.generation}`}
+                  scenarioId={scenario.id}
+                  csrfToken={data.csrfToken}
+                />
+              </CardContent>
+            </Card>
+          )}
           {scenario && (
             <section aria-labelledby="choose-persona">
               <h2 id="choose-persona">Choose Persona</h2>

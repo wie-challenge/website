@@ -92,6 +92,7 @@ model User {
   auditEvents                      AuditEvent[]
   privacyRequests                  PrivacyRequest[]            @relation("PrivacySubject")
   privacyReviews                   PrivacyRequest[]            @relation("PrivacyReviewer")
+  demoFeedbackEvents               DemoFeedbackEvent[]         @relation("DemoFeedbackEventActor")
   notificationPreferences          NotificationPreference[]
   supportCases                     SupportCase[]               @relation("CaseSubject")
   assignedCases                    SupportCase[]               @relation("CaseAssignee")
@@ -1970,6 +1971,7 @@ model MaterialReadiness {
 
 model DemoVisitor {
  scenarios DemoScenario[] @relation("OwnedDemoScenarios")
+ feedback DemoFeedback[] @relation("DemoFeedbackVisitor")
  activeScenario DemoScenario? @relation("ActiveDemoScenario", fields: [activeScenarioId], references: [id], onDelete: Restrict, onUpdate: NoAction)
  commands DemoCommand[]
  id String @id @default(cuid())
@@ -1986,6 +1988,7 @@ model DemoScenario {
  identities DemoIdentity[]
  commands DemoCommand[]
  feedback BuyerOrderFeedback[] @relation("BuyerFeedbackScenario")
+ demoFeedback DemoFeedback[] @relation("DemoFeedbackScenario")
  id String @id @default(cuid())
  visitorId String
  generation Int
@@ -2017,6 +2020,8 @@ model DemoCommand {
  operation String
  payloadHash String
  scenarioId String
+ // Set only for an idempotent showroom feedback submission.
+ feedbackId String?
  createdAt DateTime @default(now())
  @@unique([visitorId,keyHash])
 }
@@ -2710,4 +2715,44 @@ model BuyerOrderFeedbackRevision {
   @@index([feedbackId, version])
   @@index([followUpOwnerId])
   @@index([linkedTicketId])
+}
+
+// E15-06 -- structured feedback about a synthetic demonstration. Deliberately separate from
+// BuyerOrderFeedback (a receipt-bound commercial buyer assessment) and from SupportTicket (a claim).
+// Deliberately never deleted on showroom reset: a reset archives the scenario, it does not remove it.
+model DemoFeedback {
+  id          String   @id @default(cuid())
+  scenarioId  String
+  scenario    DemoScenario @relation("DemoFeedbackScenario", fields: [scenarioId], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  visitorId   String
+  visitor     DemoVisitor  @relation("DemoFeedbackVisitor", fields: [visitorId], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  generation  Int
+  sourceClass String   @default("VISITOR_SUBMITTED")
+  screenKey   String
+  category    String
+  comment     String   @default("")
+  status      String   @default("NEW")
+  dedupeKey   String?
+  createdAt   DateTime @default(now())
+  events      DemoFeedbackEvent[]
+
+  @@index([scenarioId, createdAt, id])
+  @@index([status, createdAt])
+  @@index([visitorId, createdAt])
+}
+
+model DemoFeedbackEvent {
+  id         String   @id @default(cuid())
+  feedbackId String
+  feedback   DemoFeedback @relation(fields: [feedbackId], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  actorId    String?
+  actor      User?    @relation("DemoFeedbackEventActor", fields: [actorId], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  kind       String
+  fromStatus String?
+  toStatus   String?
+  note       String   @default("")
+  createdAt  DateTime @default(now())
+
+  @@index([feedbackId, createdAt, id])
+  @@index([actorId, createdAt])
 }

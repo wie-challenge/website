@@ -192,10 +192,14 @@ test('structured logs redact contact, finance, health and credentials without dr
   assert.doesNotMatch(output, /private-/);
 });
 test('retention inventory covers material classes without inventing approved periods or wearable datasets', () => {
-  assert.equal(RETENTION_INVENTORY.length, 10);
+  assert.equal(RETENTION_INVENTORY.length, 11);
   assert.ok(
     RETENTION_INVENTORY.some((row) => row.dataClass === 'BUYER_ORDER_FEEDBACK'),
     'private buyer feedback has its own purpose, access and preservation entry',
+  );
+  assert.ok(
+    RETENTION_INVENTORY.some((row) => row.dataClass === 'DEMO_VISITOR_FEEDBACK'),
+    'showroom visitor feedback has its own purpose, access and preservation entry',
   );
   for (const row of RETENTION_INVENTORY) {
     assert.equal(row.retentionDuration, null);

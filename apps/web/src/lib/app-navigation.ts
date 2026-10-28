@@ -59,6 +59,12 @@ export const dashboardActions: Record<
       description: 'Review concerns independently of association operations.',
     },
     {
+      href: '/admin/demo-feedback',
+      label: 'Showroom feedback',
+      icon: 'support',
+      description: 'Triage structured feedback visitors left about the synthetic demonstration.',
+    },
+    {
       href: '/admin/privacy-requests',
       label: 'Privacy requests',
       icon: 'privacy',

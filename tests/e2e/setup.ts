@@ -146,6 +146,9 @@ export async function runBrowserSetup(options: { demo?: boolean } = {}) {
     DEMO_MODE: options.demo ? 'true' : 'false',
     API_PORT: 3101,
     LOG_LEVEL: 'silent',
+    // The browser suite shares one loopback client address, so the dedicated showroom-feedback
+    // bucket is raised for the harness only. Production defaults stay conservative (env.ts).
+    RATE_FEEDBACK_MAX: 500,
   });
   const environment = Object.fromEntries(
     Object.entries(config).map(([key, value]) => [

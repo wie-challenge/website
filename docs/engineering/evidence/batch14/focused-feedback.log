@@ -1,0 +1,4 @@
+PASS E15-06 visitor feedback is captured once, validated, rate limited and visitor-scoped
+PASS E15-06 showroom personas cannot moderate feedback, and reset preserves it
+PASS E15-06 an ADMIN reviewer triages feedback with attributable immutable history
+PASS E15-06 dedicated feedback bucket limits abuse without touching financial or claims state

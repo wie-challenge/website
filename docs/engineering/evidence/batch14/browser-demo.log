@@ -1,0 +1,9 @@
+
+Running 4 tests using 1 worker
+
+  ✓  1 tests/demo-e2e/showroom.spec.ts:40:1 › visitor showroom completes real synthetic commercial workflow and resets without affecting another visitor (11.4s)
+  ✓  2 tests/demo-e2e/showroom.spec.ts:367:1 › showroom is responsive, keyboard reachable and preserves scenario across persona navigation (971ms)
+  ✓  3 tests/demo-e2e/showroom.spec.ts:395:1 › E15-06 visitor shares structured feedback that persists through reset and stays private (2.1s)
+  ✓  4 tests/demo-e2e/showroom.spec.ts:489:1 › E15-06 administrators moderate showroom feedback with attributable history (1.9s)
+
+  4 passed (33.5s)

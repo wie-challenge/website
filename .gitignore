@@ -35,5 +35,16 @@ __pycache__/
 /apps/web/next-env.d.ts
 /reports/
 
+# Package-manager crash/debug output; retained engineering evidence stays tracked.
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Machine-local Python tooling caches.
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
 # Accidental nested workspace used during local migration experiments.
 /apps/api/apps/

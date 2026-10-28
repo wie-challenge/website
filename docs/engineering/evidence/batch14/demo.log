@@ -1,0 +1,13 @@
+$ tsx test/demo.ts
+(node:184335) DeprecationWarning: Calling client.query() when the client is already executing a query is deprecated and will be removed in pg@9.0. Use async/await or an external async flow control mechanism instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+PASS showroom uses six real scoped authenticated accounts without exposing credentials
+PASS accountless showroom reports remain pending and revoked memberships cannot be restored by switching
+PASS showroom buyer feedback is visitor-scoped, source-labelled and never shared across generations
+{"level":50,"time":1793220794239,"pid":184335,"hostname":"ashenix-crawlere40","requestId":"86e6e2d5-7de4-41a3-9f1e-611eb4740801","errorType":"PrismaClientKnownRequestError","msg":"Request failed"}
+PASS showroom reset archives only owned scope, replays safely and rolls back interrupted recreation
+PASS E15-06 visitor feedback is captured once, validated, rate limited and visitor-scoped
+PASS E15-06 showroom personas cannot moderate feedback, and reset preserves it
+PASS E15-06 an ADMIN reviewer triages feedback with attributable immutable history
+PASS E15-06 dedicated feedback bucket limits abuse without touching financial or claims state
+PASS ordinary mode denies anonymous showroom mutations without creating scenarios

@@ -1,12 +1,18 @@
 import { ApiError } from './api';
 
-import type { DemoSessionView, DemoScenarioView } from '@nasj/contracts';
+import type {
+  DemoFeedbackCreateInput,
+  DemoFeedbackMineList,
+  DemoFeedbackView,
+  DemoSessionView,
+  DemoScenarioView,
+} from '@nasj/contracts';
 export type DemoSession = DemoSessionView;
 export type DemoScenario = DemoScenarioView;
 export type DemoPersona = DemoSession['personas'][number];
 // Anonymous demo entry uses its separate visitor-bound proof. Commercial writes still use /me CSRF.
 export async function demoRequest<T>(
-  operation: 'session' | 'start' | 'switch' | 'reset',
+  operation: 'session' | 'start' | 'switch' | 'reset' | 'feedback',
   options?: {
     body: unknown;
     csrfToken: string;
@@ -47,6 +53,38 @@ export async function demoRequest<T>(
           },
     );
   return body as T;
+}
+
+/**
+ * Visitor feedback about a synthetic demonstration. Uses the same visitor-bound CSRF proof as the
+ * other showroom commands; a failure keeps the caller's draft and idempotency key intact.
+ */
+export async function demoFeedbackRequest(
+  body: DemoFeedbackCreateInput,
+  options: { csrfToken: string; idempotencyKey: string },
+): Promise<DemoFeedbackView> {
+  return demoRequest<DemoFeedbackView>('feedback', { body, ...options });
+}
+
+export async function demoFeedbackList(scenarioId?: string): Promise<DemoFeedbackMineList> {
+  const query = new URLSearchParams();
+  if (scenarioId) query.set('scenarioId', scenarioId);
+  const response = await fetch(`/api/v1/demo/feedback?${query.toString()}`, {
+    credentials: 'same-origin',
+    redirect: 'error',
+    cache: 'no-store',
+    signal: AbortSignal.timeout(15000),
+    headers: { Accept: 'application/json' },
+  });
+  const payload = await response.json().catch(() => null);
+  if (!response.ok)
+    throw new ApiError(
+      response.status,
+      payload?.code && typeof payload.message === 'string'
+        ? payload
+        : { code: 'DEMO_UNAVAILABLE', message: 'Unable to load your feedback.' },
+    );
+  return payload as DemoFeedbackMineList;
 }
 
 export const demoStageGuidance: Record<string, string> = {
