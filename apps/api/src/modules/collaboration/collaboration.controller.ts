@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Headers, Inject, Param, Post } from '@nestjs/common';
+import { Body, Controller, Get, Headers, Inject, Param, Post, Query } from '@nestjs/common';
 import * as C from '@nasj/contracts';
 import { CurrentUser, type Actor } from '../../common/identity.js';
 import { ZodValidationPipe } from '../../common/validation.pipe.js';
@@ -12,6 +12,57 @@ export class CollaborationController {
 
   @Get() workspace(@CurrentUser() a: Actor) {
     return this.service.workspace(a);
+  }
+
+  @Get('order-feedback') feedback(
+    @CurrentUser() a: Actor,
+    @Query(new ZodValidationPipe(C.feedbackListQuerySchema)) q: C.FeedbackListQuery,
+  ) {
+    return this.service.listOrderFeedback(a, q);
+  }
+
+  @Get('order-feedback/:id/history') feedbackHistory(
+    @CurrentUser() a: Actor,
+    @Param('id', rid) id: string,
+    @Query(new ZodValidationPipe(C.feedbackHistoryQuerySchema)) q: C.FeedbackHistoryQuery,
+  ) {
+    return this.service.feedbackHistory(a, id, q);
+  }
+
+  @Post('orders/:id/feedback') createFeedback(
+    @CurrentUser() a: Actor,
+    @Param('id', rid) id: string,
+    @Body(new ZodValidationPipe(C.feedbackCreateSchema)) i: C.FeedbackCreateInput,
+    @Headers('idempotency-key') k?: string,
+  ) {
+    return this.service.createOrderFeedback(a, id, i, k);
+  }
+
+  @Post('order-feedback/:id/corrections') correctFeedback(
+    @CurrentUser() a: Actor,
+    @Param('id', rid) id: string,
+    @Body(new ZodValidationPipe(C.feedbackCorrectionSchema)) i: C.FeedbackCorrectionInput,
+    @Headers('idempotency-key') k?: string,
+  ) {
+    return this.service.correctOrderFeedback(a, id, i, k);
+  }
+
+  @Post('order-feedback/:id/follow-up') followUpFeedback(
+    @CurrentUser() a: Actor,
+    @Param('id', rid) id: string,
+    @Body(new ZodValidationPipe(C.feedbackFollowUpSchema)) i: C.FeedbackFollowUpInput,
+    @Headers('idempotency-key') k?: string,
+  ) {
+    return this.service.followUpOrderFeedback(a, id, i, k);
+  }
+
+  @Post('order-feedback/:id/case-link') linkFeedbackCase(
+    @CurrentUser() a: Actor,
+    @Param('id', rid) id: string,
+    @Body(new ZodValidationPipe(C.feedbackCaseLinkSchema)) i: C.FeedbackCaseLinkInput,
+    @Headers('idempotency-key') k?: string,
+  ) {
+    return this.service.linkOrderFeedbackCase(a, id, i, k);
   }
 
   @Post('exceptions') report(

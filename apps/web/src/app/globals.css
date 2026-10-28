@@ -2377,3 +2377,41 @@
 .financial-order-workspace dd {
   margin-inline-start: 1rem;
 }
+
+/* Private buyer feedback controls must meet the 24px touch-target minimum and keep spacing. */
+.order-feedback-panel button,
+.order-feedback-support button {
+  min-height: 32px;
+  padding-block: 6px;
+  padding-inline: 12px;
+}
+.order-feedback-panel button + button,
+.order-feedback-support button + button {
+  margin-inline-start: 8px;
+}
+.order-feedback-panel details,
+.order-feedback-support details {
+  margin-block: 12px;
+}
+.order-feedback-panel details > summary,
+.order-feedback-support details > summary {
+  min-height: 32px;
+  display: flex;
+  align-items: center;
+  padding-block: 6px;
+}
+.order-feedback-support fieldset {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-block: 8px;
+}
+.order-feedback-support fieldset > legend {
+  font-weight: 600;
+  margin-bottom: 6px;
+}
+.order-feedback-panel fieldset,
+.order-feedback-panel > article > button,
+.order-feedback-support > ul > li > button {
+  margin-block: 8px;
+}

@@ -12,6 +12,16 @@ import { replaySafe, validateIdempotencyKey } from '../foundation/idempotency.js
 import type { Db } from '../foundation/transaction.js';
 import { iamTransaction } from '../foundation/transaction.js';
 import { ProductionOfferService } from '../procurement/production-offers.js';
+import {
+  buyerFeedbackAuthority,
+  eligibleFollowUpOwners,
+  feedbackLimitationNotes,
+  feedbackHistoryView,
+  feedbackOrder,
+  feedbackView,
+  supportFeedbackAuthority,
+  visibleTicketIds,
+} from './order-feedback.js';
 
 const json = (value: unknown) => JSON.parse(JSON.stringify(value)) as Prisma.InputJsonValue;
 
@@ -48,6 +58,7 @@ export class CollaborationService {
         discussions,
         preferences,
         notifications,
+        feedback,
       ] = await Promise.all([
         tx.productionException.findMany({
           where: access.platform
@@ -109,6 +120,24 @@ export class CollaborationService {
           orderBy: { createdAt: 'desc' },
           take: 20,
         }),
+        (async () => {
+          const buyerOrders = await this.feedbackBuyerOrders(tx, actor);
+          const supportOrders = await this.feedbackSupportOrders(tx, actor);
+          const scope = [
+            ...(buyerOrders.length ? [{ reporterId: actor.id, orderId: { in: buyerOrders } }] : []),
+            ...(supportOrders.length ? [{ orderId: { in: supportOrders } }] : []),
+          ] as Prisma.BuyerOrderFeedbackWhereInput[];
+          if (!scope.length)
+            return {
+              items: [],
+              followUpOwners: [],
+            } satisfies Pick<C.FeedbackListResponse, 'items' | 'followUpOwners'>;
+          const owners = supportOrders.length
+            ? await this.feedbackWorkspaceOwners(tx, supportOrders)
+            : [];
+          const collected = await this.feedbackCollection(tx, actor, scope, 1, 20);
+          return { items: collected.items, followUpOwners: owners };
+        })(),
       ]);
 
       const view: C.CollaborationWorkspaceView = {
@@ -234,7 +263,10 @@ export class CollaborationService {
           'A counteroffer is not an acceptance and creates no capacity commitment.',
           'Internal financial detail is never visible to buyers in a discussion.',
           'External notification channels stay undeliverable until a provider is configured.',
+          ...feedbackLimitationNotes,
         ],
+        orderFeedback: feedback.items,
+        followUpOwners: feedback.followUpOwners,
       };
       return view;
     });
@@ -1290,6 +1322,659 @@ export class CollaborationService {
         sha256: row.sha256,
       };
     });
+  }
+
+  /* ------------------------------------------------------ buyer order feedback */
+
+  private feedbackRevisionInclude = {
+    revisions: {
+      orderBy: { version: 'desc' },
+      take: 1,
+      include: {
+        actor: { select: { id: true, name: true } },
+        followUpOwner: { select: { id: true, name: true } },
+      },
+    },
+  } as const;
+
+  private async feedbackRow(tx: Db, feedbackId: string) {
+    const row = await tx.buyerOrderFeedback.findUnique({
+      where: { id: feedbackId },
+      include: {
+        revisions: {
+          orderBy: { version: 'desc' },
+          take: 1,
+          include: {
+            actor: { select: { id: true, name: true } },
+            followUpOwner: { select: { id: true, name: true } },
+          },
+        },
+      },
+    });
+    if (!row) fail(404, 'NOT_FOUND', 'Feedback not found.');
+    return row;
+  }
+
+  /** Buyer author, or the scoped support operator currently responsible for this buyer. */
+  private async feedbackScope(tx: Db, actor: Actor, feedbackId: string) {
+    const row = await this.feedbackRow(tx, feedbackId);
+    const order = await feedbackOrder(tx, row.orderId);
+    const buyer = await buyerFeedbackAuthority(tx, actor, order);
+    const support = await supportFeedbackAuthority(tx, actor, order);
+    const author = row.reporterId === actor.id && Boolean(buyer?.canRead);
+    const supportReviewer = Boolean(support?.canManage && support.assignmentActive);
+    if (!author && !supportReviewer) fail(404, 'NOT_FOUND', 'Feedback not found.');
+    return { row, order, buyer, support, author, supportReviewer };
+  }
+
+  async listOrderFeedback(actor: Actor, query: C.FeedbackListQuery) {
+    return iamTransaction(this.db, actor, async (tx) => {
+      if (query.orderId) {
+        const order = await feedbackOrder(tx, query.orderId);
+        const buyer = await buyerFeedbackAuthority(tx, actor, order);
+        const support = await supportFeedbackAuthority(tx, actor, order);
+        const supportReviewer = Boolean(support?.canManage && support.assignmentActive);
+        if (!buyer?.canRead && !supportReviewer) fail(404, 'NOT_FOUND', 'Order not found.');
+        const where = supportReviewer
+          ? { orderId: order.id }
+          : { orderId: order.id, reporterId: actor.id };
+        const [rows, total, receipts, owners] = await Promise.all([
+          tx.buyerOrderFeedback.findMany({
+            where,
+            include: this.feedbackRevisionInclude,
+            orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
+            skip: (query.page - 1) * query.pageSize,
+            take: query.pageSize,
+          }),
+          tx.buyerOrderFeedback.count({ where }),
+          buyer?.canRead
+            ? tx.buyerDeliveryConfirmation.findMany({
+                where: { received: { gt: 0 }, shipment: { orderId: order.id } },
+                select: {
+                  id: true,
+                  shipmentId: true,
+                  received: true,
+                  accepted: true,
+                  missing: true,
+                  damaged: true,
+                  provenance: true,
+                },
+                orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
+                take: 20,
+              })
+            : Promise.resolve([]),
+          supportReviewer ? eligibleFollowUpOwners(tx, order) : Promise.resolve([]),
+        ]);
+        const visible = await visibleTicketIds(
+          tx,
+          actor,
+          rows.flatMap((row) =>
+            row.revisions[0]?.linkedTicketId ? [row.revisions[0].linkedTicketId] : [],
+          ),
+        );
+        const items = rows.map((row) =>
+          feedbackView({
+            row,
+            actorId: actor.id,
+            orderProvenance: order.provenance,
+            support: supportReviewer,
+            visibleTickets: visible,
+            canCorrect: Boolean(buyer?.canWrite),
+            canManageFollowUp: supportReviewer,
+          }),
+        );
+        return {
+          items,
+          total,
+          page: query.page,
+          pageSize: query.pageSize,
+          eligibleReceipts: receipts.map((receipt) => ({
+            confirmationId: receipt.id,
+            shipmentId: receipt.shipmentId,
+            received: receipt.received,
+            accepted: receipt.accepted,
+            missing: receipt.missing,
+            damaged: receipt.damaged,
+            provenance: receipt.provenance,
+          })),
+          followUpOwners: owners,
+          limitations: feedbackLimitationNotes,
+        } satisfies C.FeedbackListResponse;
+      }
+      const buyerOrders = await this.feedbackBuyerOrders(tx, actor);
+      const supportOrders = await this.feedbackSupportOrders(tx, actor);
+      const scope = [
+        ...(buyerOrders.length ? [{ reporterId: actor.id, orderId: { in: buyerOrders } }] : []),
+        ...(supportOrders.length ? [{ orderId: { in: supportOrders } }] : []),
+      ];
+      if (!scope.length) {
+        return {
+          items: [],
+          total: 0,
+          page: query.page,
+          pageSize: query.pageSize,
+          eligibleReceipts: [],
+          followUpOwners: [],
+          limitations: feedbackLimitationNotes,
+        } satisfies C.FeedbackListResponse;
+      }
+      return this.feedbackCollection(tx, actor, scope, query.page, query.pageSize);
+    });
+  }
+
+  private async feedbackCollection(
+    tx: Db,
+    actor: Actor,
+    scope: Prisma.BuyerOrderFeedbackWhereInput[],
+    page: number,
+    pageSize: number,
+  ) {
+    const where = { OR: scope };
+    const [rows, total] = await Promise.all([
+      tx.buyerOrderFeedback.findMany({
+        where,
+        include: this.feedbackRevisionInclude,
+        orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
+        skip: (page - 1) * pageSize,
+        take: pageSize,
+      }),
+      tx.buyerOrderFeedback.count({ where }),
+    ]);
+    const orderIds = [...new Set(rows.map((row) => row.orderId))];
+    const orders = await tx.commercialOrder.findMany({
+      where: { id: { in: orderIds } },
+      include: { rfq: true },
+    });
+    const orderIndex = new Map(orders.map((order) => [order.id, order]));
+    const visible = await visibleTicketIds(
+      tx,
+      actor,
+      rows.flatMap((row) =>
+        row.revisions[0]?.linkedTicketId ? [row.revisions[0].linkedTicketId] : [],
+      ),
+    );
+    const management = new Map<string, boolean>();
+    for (const order of orders) {
+      const support = await supportFeedbackAuthority(tx, actor, order);
+      management.set(order.id, Boolean(support?.canManage && support.assignmentActive));
+    }
+    return {
+      items: rows.map((row) =>
+        feedbackView({
+          row,
+          actorId: actor.id,
+          orderProvenance: orderIndex.get(row.orderId)?.provenance ?? 'SYNTHETIC',
+          support: management.get(row.orderId) ?? false,
+          visibleTickets: visible,
+          canCorrect: row.reporterId === actor.id,
+          canManageFollowUp: management.get(row.orderId) ?? false,
+        }),
+      ),
+      total,
+      page,
+      pageSize,
+      eligibleReceipts: [],
+      followUpOwners: [],
+      limitations: feedbackLimitationNotes,
+    } satisfies C.FeedbackListResponse;
+  }
+
+  private async feedbackWorkspaceOwners(tx: Db, orderIds: string[]) {
+    const first = orderIds[0]
+      ? await tx.commercialOrder.findUnique({
+          where: { id: orderIds[0] },
+          include: { rfq: true },
+        })
+      : null;
+    if (!first) return [];
+    return eligibleFollowUpOwners(tx, first);
+  }
+
+  private async feedbackBuyerOrders(tx: Db, actor: Actor) {
+    const organizationIds = await this.feedbackBuyerOrganizations(tx, actor);
+    if (!organizationIds.length) return [];
+    const orders = await tx.commercialOrder.findMany({
+      where: { rfq: { buyerOrganizationId: { in: organizationIds } } },
+      select: { id: true },
+      take: 500,
+    });
+    return orders.map((order) => order.id);
+  }
+
+  private async feedbackBuyerOrganizations(tx: Db, actor: Actor) {
+    const members = await tx.organizationMember.findMany({
+      where: { userId: actor.id, status: 'ACTIVE', organization: { approvalStatus: 'APPROVED' } },
+      include: { roles: true, permissionGrants: true, organization: true },
+    });
+    return members
+      .filter((member) => member.organization.type === 'BUYER_BUSINESS')
+      .filter((member) => {
+        const permissions = C.permissionsForMembership(member);
+        return (
+          permissions.includes('buyer.rfq.read') || permissions.includes('buyer.delivery.confirm')
+        );
+      })
+      .map((member) => member.organizationId);
+  }
+
+  private async feedbackSupportOrders(tx: Db, actor: Actor) {
+    const members = await tx.organizationMember.findMany({
+      where: { userId: actor.id, status: 'ACTIVE', organization: { approvalStatus: 'APPROVED' } },
+      include: { roles: true, permissionGrants: true, organization: true },
+    });
+    const organizationIds = members
+      .filter((member) => member.organization.type === 'INTERNAL')
+      .filter((member) => C.permissionsForMembership(member).includes('support.case.manage'))
+      .map((member) => member.organizationId);
+    if (!organizationIds.length) return [];
+    const assignments = await tx.operatorAssignment.findMany({
+      where: { operatorId: actor.id, revokedAt: null },
+      select: { organizationId: true },
+    });
+    if (!assignments.length) return [];
+    const orders = await tx.commercialOrder.findMany({
+      where: {
+        rfq: {
+          operatorOrganizationId: { in: organizationIds },
+          buyerOrganizationId: { in: assignments.map((row) => row.organizationId) },
+        },
+      },
+      select: { id: true },
+      take: 500,
+    });
+    return orders.map((order) => order.id);
+  }
+
+  async feedbackHistory(actor: Actor, feedbackId: string, query: C.FeedbackHistoryQuery) {
+    return iamTransaction(this.db, actor, async (tx) => {
+      const scope = await this.feedbackScope(tx, actor, feedbackId);
+      const [rows, total] = await Promise.all([
+        tx.buyerOrderFeedbackRevision.findMany({
+          where: { feedbackId },
+          include: {
+            actor: { select: { id: true, name: true } },
+            followUpOwner: { select: { id: true, name: true } },
+          },
+          orderBy: { version: 'desc' },
+          skip: (query.page - 1) * query.pageSize,
+          take: query.pageSize,
+        }),
+        tx.buyerOrderFeedbackRevision.count({ where: { feedbackId } }),
+      ]);
+      const visible = await visibleTicketIds(
+        tx,
+        actor,
+        rows.flatMap((row) => (row.linkedTicketId ? [row.linkedTicketId] : [])),
+      );
+      return feedbackHistoryView({
+        feedbackId,
+        rows,
+        total,
+        page: query.page,
+        pageSize: query.pageSize,
+        viewerIsReporter: scope.author,
+        reporterId: scope.row.reporterId,
+        visibleTickets: visible,
+      });
+    });
+  }
+
+  async createOrderFeedback(
+    actor: Actor,
+    orderId: string,
+    input: C.FeedbackCreateInput,
+    key?: string,
+  ) {
+    return iamTransaction(this.db, actor, async (tx) => {
+      const order = await feedbackOrder(tx, orderId);
+      const buyer = await buyerFeedbackAuthority(tx, actor, order);
+      const support = await supportFeedbackAuthority(tx, actor, order);
+      if (!buyer && !support) fail(404, 'NOT_FOUND', 'Order not found.');
+      if (!buyer?.canWrite)
+        fail(403, 'FORBIDDEN', 'Buyer delivery confirmation authority is required.');
+      const receipt = await tx.buyerDeliveryConfirmation.findUnique({
+        where: { id: input.receiptConfirmationId },
+        include: { shipment: { select: { orderId: true } } },
+      });
+      const eligibility = C.feedbackEligibility({
+        receiptExists: Boolean(receipt),
+        received: receipt?.received ?? 0,
+        accepted: receipt?.accepted ?? 0,
+        missing: receipt?.missing ?? 0,
+        damaged: receipt?.damaged ?? 0,
+        sameOrder: receipt?.shipment.orderId === orderId,
+      });
+      if (!eligibility.eligible)
+        fail(
+          409,
+          eligibility.reason === 'RECEIPT_ORDER_MISMATCH'
+            ? 'RECEIPT_ORDER_MISMATCH'
+            : 'NO_CONFIRMED_RECEIPT',
+          eligibility.reason === 'RECEIPT_ORDER_MISMATCH'
+            ? 'This receipt belongs to another order.'
+            : 'Feedback follows your own confirmed receipt of this order. Use the claim workflow when nothing was received.',
+        );
+      const identity = await tx.demoIdentity.findUnique({ where: { userId: actor.id } });
+      const scenario = identity
+        ? await tx.demoScenario.findUnique({ where: { id: identity.scenarioId } })
+        : null;
+      const source = C.deriveFeedbackSource({
+        demoScenarioId:
+          scenario && scenario.status === 'ACTIVE' && scenario.rfqId === order.rfqId
+            ? scenario.id
+            : null,
+        orderProvenance: order.provenance,
+      });
+      return this.command(tx, actor, orderId, 'feedback.create', key, input, async () => {
+        const existing = await tx.buyerOrderFeedback.findUnique({
+          where: { orderId_reporterId: { orderId, reporterId: actor.id } },
+          select: { id: true },
+        });
+        if (existing)
+          fail(
+            409,
+            'DUPLICATE_FEEDBACK',
+            'You already assessed this order. Correct the existing assessment instead of creating a second one.',
+          );
+        const header = await tx.buyerOrderFeedback.create({
+          data: {
+            orderId,
+            reporterId: actor.id,
+            receiptConfirmationId: input.receiptConfirmationId,
+            sourceClass: source.sourceClass,
+            scenarioId: source.scenarioId,
+          },
+        });
+        const revision = await tx.buyerOrderFeedbackRevision.create({
+          data: {
+            feedbackId: header.id,
+            version: 1,
+            kind: 'SUBMITTED',
+            actorId: actor.id,
+            category: input.category,
+            rating: input.rating ?? null,
+            comment: input.comment,
+            followUpStatus: 'OPEN',
+          },
+        });
+        await audit(tx, actor, {
+          action: 'collaboration.feedback.submitted',
+          targetType: 'BuyerOrderFeedback',
+          targetId: header.id,
+          organizationId: order.rfq.buyerOrganizationId,
+          after: {
+            orderId,
+            version: 1,
+            category: input.category,
+            rating: input.rating ?? null,
+            hasComment: input.comment.length > 0,
+            sourceClass: source.sourceClass,
+            provenance: order.provenance,
+          },
+        });
+        return {
+          id: header.id,
+          version: revision.version,
+          category: revision.category,
+          followUpStatus: revision.followUpStatus,
+          sourceClass: header.sourceClass,
+          createdAt: header.createdAt.toISOString(),
+        };
+      });
+    });
+  }
+
+  /**
+   * Buyer correction: the original statement stays in the history and the new version replaces
+   * only buyer-owned fields. Support follow-up state is carried forward unchanged.
+   */
+  async correctOrderFeedback(
+    actor: Actor,
+    feedbackId: string,
+    input: C.FeedbackCorrectionInput,
+    key?: string,
+  ) {
+    return iamTransaction(this.db, actor, async (tx) => {
+      const scope = await this.feedbackScope(tx, actor, feedbackId);
+      if (!scope.author) fail(404, 'NOT_FOUND', 'Feedback not found.');
+      if (!scope.buyer?.canWrite)
+        fail(403, 'FORBIDDEN', 'Buyer delivery confirmation authority is required.');
+      return this.command(tx, actor, feedbackId, 'feedback.correct', key, input, async () => {
+        const current = await this.feedbackRow(tx, feedbackId);
+        if (input.expectedVersion !== current.currentVersion)
+          fail(409, 'STALE_VERSION', 'Reload the assessment and retry from the current version.');
+        const latest = current.revisions[0];
+        if (!latest) fail(409, 'INVALID_STATE', 'This assessment has no recorded statement.');
+        const next = current.currentVersion + 1;
+        const saved = await tx.buyerOrderFeedback.update({
+          where: { id: feedbackId },
+          data: { currentVersion: next },
+        });
+        const revision = await tx.buyerOrderFeedbackRevision.create({
+          data: {
+            feedbackId,
+            version: next,
+            kind: 'BUYER_CORRECTION',
+            actorId: actor.id,
+            category: input.category,
+            rating: input.rating === undefined ? latest.rating : input.rating,
+            comment: input.comment === undefined ? latest.comment : input.comment,
+            followUpStatus: latest.followUpStatus,
+            followUpOwnerId: latest.followUpOwnerId,
+            followUpNote: latest.followUpNote,
+            linkedTicketId: latest.linkedTicketId,
+            reason: input.reason,
+          },
+        });
+        await audit(tx, actor, {
+          action: 'collaboration.feedback.corrected',
+          targetType: 'BuyerOrderFeedbackRevision',
+          targetId: revision.id,
+          organizationId: scope.order.rfq.buyerOrganizationId,
+          reason: 'BUYER_CORRECTION',
+          before: { version: latest.version, category: latest.category, rating: latest.rating },
+          after: {
+            version: revision.version,
+            category: revision.category,
+            rating: revision.rating,
+          },
+        });
+        return {
+          id: feedbackId,
+          version: saved.currentVersion,
+          category: revision.category,
+          rating: revision.rating,
+          followUpStatus: revision.followUpStatus,
+        };
+      });
+    });
+  }
+
+  async followUpOrderFeedback(
+    actor: Actor,
+    feedbackId: string,
+    input: C.FeedbackFollowUpInput,
+    key?: string,
+  ) {
+    return iamTransaction(this.db, actor, async (tx) => {
+      const scope = await this.feedbackScope(tx, actor, feedbackId);
+      if (!scope.supportReviewer)
+        fail(403, 'FORBIDDEN', 'Scoped support follow-up authority is required.');
+      return this.command(tx, actor, feedbackId, 'feedback.follow-up', key, input, async () => {
+        const current = await this.feedbackRow(tx, feedbackId);
+        if (input.expectedVersion !== current.currentVersion)
+          fail(409, 'STALE_VERSION', 'Reload the assessment and retry from the current version.');
+        const latest = current.revisions[0];
+        if (!latest) fail(409, 'INVALID_STATE', 'This assessment has no recorded statement.');
+        if (
+          !C.canTransitionFeedbackFollowUp(
+            latest.followUpStatus as C.FeedbackFollowUpStatus,
+            input.status,
+          )
+        )
+          fail(409, 'INVALID_TRANSITION', 'This follow-up state cannot move to that status.');
+        if (input.status === 'FOLLOW_UP' && !input.ownerId && !latest.followUpOwnerId)
+          fail(400, 'OWNER_REQUIRED', 'Choose the support owner responsible for follow-up.');
+        if (input.status === 'RESOLVED' && input.reason.trim().length < 3)
+          fail(400, 'REASON_REQUIRED', 'State why this follow-up is resolved.');
+        const owners = await eligibleFollowUpOwners(tx, scope.order);
+        const ownerId = input.ownerId ?? latest.followUpOwnerId;
+        if (input.status === 'FOLLOW_UP' && !owners.some((owner) => owner.id === ownerId))
+          fail(403, 'INVALID_OWNER', 'Choose an assigned support manager for this buyer.');
+        const next = current.currentVersion + 1;
+        const saved = await tx.buyerOrderFeedback.update({
+          where: { id: feedbackId },
+          data: { currentVersion: next },
+        });
+        const revision = await tx.buyerOrderFeedbackRevision.create({
+          data: {
+            feedbackId,
+            version: next,
+            kind: 'FOLLOW_UP',
+            actorId: actor.id,
+            category: latest.category,
+            rating: latest.rating,
+            comment: latest.comment,
+            followUpStatus: input.status,
+            followUpOwnerId: ownerId ?? null,
+            followUpNote: input.note,
+            linkedTicketId: latest.linkedTicketId,
+            reason: input.reason,
+          },
+        });
+        await audit(tx, actor, {
+          action: 'collaboration.feedback.follow_up',
+          targetType: 'BuyerOrderFeedbackRevision',
+          targetId: revision.id,
+          organizationId: scope.order.rfq.operatorOrganizationId,
+          reason: 'SUPPORT_FOLLOW_UP',
+          before: { version: latest.version, followUpStatus: latest.followUpStatus },
+          after: {
+            version: revision.version,
+            followUpStatus: revision.followUpStatus,
+            followUpOwnerId: revision.followUpOwnerId,
+          },
+        });
+        return {
+          id: feedbackId,
+          version: saved.currentVersion,
+          followUpStatus: revision.followUpStatus,
+          followUpOwnerId: revision.followUpOwnerId,
+        };
+      });
+    });
+  }
+
+  /**
+   * Linking an existing order claim never creates one, never impersonates the buyer and never
+   * changes the ticket's own status. The ticket keeps its lifecycle and its authorization.
+   */
+  async linkOrderFeedbackCase(
+    actor: Actor,
+    feedbackId: string,
+    input: C.FeedbackCaseLinkInput,
+    key?: string,
+  ) {
+    return iamTransaction(this.db, actor, async (tx) => {
+      const scope = await this.feedbackScope(tx, actor, feedbackId);
+      if (!scope.supportReviewer)
+        fail(403, 'FORBIDDEN', 'Scoped support follow-up authority is required.');
+      const ticket = await tx.supportTicket.findUnique({ where: { id: input.ticketId } });
+      const visible = ticket ? await this.visibleTicketIdsFor(tx, actor, ticket) : false;
+      if (!ticket || !visible) fail(404, 'NOT_FOUND', 'Support case not found.');
+      const match = C.feedbackCaseLinkMatches({
+        ticketRelatedType: ticket.relatedType,
+        ticketRelatedId: ticket.relatedId,
+        ticketOrganizationId: ticket.organizationId,
+        orderId: scope.row.orderId,
+        operatorOrganizationId: scope.order.rfq.operatorOrganizationId,
+      });
+      if (!match.matches)
+        fail(
+          409,
+          match.reason === 'NOT_ORDER_RELATED'
+            ? 'CASE_NOT_ORDER_RELATED'
+            : match.reason === 'DIFFERENT_ORDER'
+              ? 'CASE_ORDER_MISMATCH'
+              : 'CASE_OPERATOR_MISMATCH',
+          'Link a support case that belongs to this exact order and operating organization.',
+        );
+      return this.command(tx, actor, feedbackId, 'feedback.case-link', key, input, async () => {
+        const current = await this.feedbackRow(tx, feedbackId);
+        if (input.expectedVersion !== current.currentVersion)
+          fail(409, 'STALE_VERSION', 'Reload the assessment and retry from the current version.');
+        const latest = current.revisions[0];
+        if (!latest) fail(409, 'INVALID_STATE', 'This assessment has no recorded statement.');
+        const next = current.currentVersion + 1;
+        const saved = await tx.buyerOrderFeedback.update({
+          where: { id: feedbackId },
+          data: { currentVersion: next },
+        });
+        const revision = await tx.buyerOrderFeedbackRevision.create({
+          data: {
+            feedbackId,
+            version: next,
+            kind: 'CASE_LINK',
+            actorId: actor.id,
+            category: latest.category,
+            rating: latest.rating,
+            comment: latest.comment,
+            followUpStatus: latest.followUpStatus,
+            followUpOwnerId: latest.followUpOwnerId,
+            followUpNote: latest.followUpNote,
+            linkedTicketId: ticket.id,
+            reason: input.reason,
+          },
+        });
+        await tx.supportTicketEvent.create({
+          data: {
+            ticketId: ticket.id,
+            actorId: actor.id,
+            kind: 'FEEDBACK_LINKED',
+            detail: `Linked to private buyer feedback ${feedbackId} version ${revision.version}.`,
+          },
+        });
+        await audit(tx, actor, {
+          action: 'collaboration.feedback.case_linked',
+          targetType: 'BuyerOrderFeedbackRevision',
+          targetId: revision.id,
+          organizationId: scope.order.rfq.operatorOrganizationId,
+          reason: 'FORMAL_CASE_LINK',
+          after: {
+            version: revision.version,
+            ticketId: ticket.id,
+            ticketStatus: ticket.status,
+            orderId: scope.row.orderId,
+          },
+        });
+        return {
+          id: feedbackId,
+          version: saved.currentVersion,
+          linkedTicketId: ticket.id,
+          linkedTicketStatus: ticket.status,
+        };
+      });
+    });
+  }
+
+  private async visibleTicketIdsFor(
+    tx: Db,
+    actor: Actor,
+    ticket: { reporterId: string; organizationId: string | null },
+  ) {
+    const members = await tx.organizationMember.findMany({
+      where: { userId: actor.id, status: 'ACTIVE', organization: { approvalStatus: 'APPROVED' } },
+      include: { roles: true, permissionGrants: true, organization: true },
+    });
+    const platform = members.some((member) =>
+      C.permissionsForMembership(member).includes('platform.roles.manage'),
+    );
+    const support = members.some(
+      (member) =>
+        member.organizationId === ticket.organizationId &&
+        C.permissionsForMembership(member).includes('support.case.manage'),
+    );
+    return platform || support || ticket.reporterId === actor.id;
   }
 
   private async access(tx: Db, actor: Actor) {

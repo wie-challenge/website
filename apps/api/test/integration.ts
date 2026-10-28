@@ -1,3 +1,5 @@
+import { runOrderFeedbackScenarios } from './order-feedback.scenarios.js';
+import { runFeedbackMigrationScenarios } from './feedback-migration.scenarios.js';
 import { runNotificationDeliveryScenarios } from './notification-delivery.scenarios.js';
 import { runProductAuthorityScenarios } from './product-authority.scenarios.js';
 import { runBatch811MigrationScenarios } from './batch811-migrations.scenarios.js';
@@ -554,6 +556,7 @@ try {
     await runCatalogScenarios({ db, register, check });
     await runProcurementScenarios({ db, register, check, config });
     await runProductAuthorityScenarios({ db, register, check });
+    await runOrderFeedbackScenarios({ db, register, check });
     await runNotificationDeliveryScenarios({ db, register, check, config, mail });
     await runUpgradeScenario(check);
     await runCapacityUpgradeScenario(check);
@@ -563,6 +566,7 @@ try {
     await runDemoScenarios(check);
     await runMigrationReadinessScenario(check);
     await runBatch811MigrationScenarios(check);
+    await runFeedbackMigrationScenarios(check);
   }
   if (process.env.BATCH12_FOCUSED === '1') await runBatch12Scenarios({ db, register, check });
   console.log(

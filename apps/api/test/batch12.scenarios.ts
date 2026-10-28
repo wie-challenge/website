@@ -1508,7 +1508,12 @@ export async function runBatch12Scenarios({ db, register, check }: Harness) {
         inventory: unknown[];
         purgeEnabled: boolean;
       };
-      assert.equal(data.inventory.length, 9);
+      assert.equal(data.inventory.length, 10, 'private buyer feedback adds its own purpose entry');
+      assert.ok(
+        (data.inventory as { dataClass: string }[]).some(
+          (row) => row.dataClass === 'BUYER_ORDER_FEEDBACK',
+        ),
+      );
       assert.equal(data.purgeEnabled, false);
       const input = {
         version: data.version,

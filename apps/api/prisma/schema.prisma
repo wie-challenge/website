@@ -52,6 +52,9 @@ model User {
   custodyHandovers                 CustodyHandover[]           @relation("CustodyActor")
   deliveryReports                  DeliveryReport[]            @relation("DeliveryReporter")
   buyerConfirmations               BuyerDeliveryConfirmation[] @relation("BuyerReceiptActor")
+  buyerFeedbackReported            BuyerOrderFeedback[]        @relation("BuyerFeedbackReporter")
+  buyerFeedbackRevisions           BuyerOrderFeedbackRevision[] @relation("BuyerFeedbackRevisionActor")
+  buyerFeedbackFollowUps           BuyerOrderFeedbackRevision[] @relation("BuyerFeedbackFollowUpOwner")
   traceabilityPublications         TraceabilityPublication[]   @relation("TraceabilityAuthor")
   traceabilityRevisions            TraceabilityRevision[]      @relation("TraceabilityReviewer")
   settlementEvents                 SimulatedSettlementEvent[]  @relation("SettlementActor")
@@ -728,6 +731,7 @@ model CommercialOrder {
   catalogueProcurementRevision ProcurementRevision? @relation("CatalogueOrderRevision", fields: [catalogueProcurementRevisionId], references: [id], onDelete: Restrict, onUpdate: NoAction)
   productSpecificationRevisionId String?
   productSpecificationRevision   ProductSpecificationRevision? @relation(fields: [productSpecificationRevisionId], references: [id], onDelete: Restrict)
+  buyerFeedback      BuyerOrderFeedback[] @relation("BuyerFeedbackOrder")
   @@index([productSpecificationRevisionId])
 }
 
@@ -1592,6 +1596,7 @@ model BuyerDeliveryConfirmation {
   provenance  String               @default("SYNTHETIC")
   createdAt   DateTime             @default(now())
   discrepancy DeliveryDiscrepancy?
+  feedback    BuyerOrderFeedback[] @relation("BuyerFeedbackReceipt")
 }
 
 model DeliveryDiscrepancy {
@@ -1980,6 +1985,7 @@ model DemoScenario {
  rfq CommercialRfq @relation(fields: [rfqId], references: [id], onDelete: Restrict, onUpdate: NoAction)
  identities DemoIdentity[]
  commands DemoCommand[]
+ feedback BuyerOrderFeedback[] @relation("BuyerFeedbackScenario")
  id String @id @default(cuid())
  visitorId String
  generation Int
@@ -2429,6 +2435,7 @@ model SupportTicket {
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
   events         SupportTicketEvent[]
+  feedbackLinks  BuyerOrderFeedbackRevision[] @relation("BuyerFeedbackCaseLink")
 
   @@index([organizationId, status])
   @@index([reporterId, createdAt])
@@ -2654,4 +2661,53 @@ model ContractualDueDate {
  correctedBy ContractualDueDate? @relation("ContractDateCorrection")
  createdAt DateTime @default(now())
  @@unique([payableId,version])
+}
+
+// E18-06 — private buyer order feedback. A satisfaction assessment is not a claim, settlement or
+// publication. The header pins order, reporter, receipt and provenance; every later change appends
+// a complete revision snapshot instead of rewriting an earlier statement.
+model BuyerOrderFeedback {
+  id                    String   @id @default(cuid())
+  orderId               String
+  order                 CommercialOrder @relation("BuyerFeedbackOrder", fields: [orderId], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  reporterId            String
+  reporter              User     @relation("BuyerFeedbackReporter", fields: [reporterId], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  receiptConfirmationId String
+  receiptConfirmation   BuyerDeliveryConfirmation @relation("BuyerFeedbackReceipt", fields: [receiptConfirmationId], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  sourceClass           String
+  scenarioId            String?
+  scenario              DemoScenario? @relation("BuyerFeedbackScenario", fields: [scenarioId], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  createdAt             DateTime @default(now())
+  currentVersion        Int      @default(1)
+  revisions             BuyerOrderFeedbackRevision[]
+
+  @@unique([orderId, reporterId])
+  @@index([orderId, createdAt, id])
+  @@index([reporterId, createdAt])
+}
+
+model BuyerOrderFeedbackRevision {
+  id                String   @id @default(cuid())
+  feedbackId        String
+  feedback          BuyerOrderFeedback @relation(fields: [feedbackId], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  version           Int
+  kind              String
+  actorId           String
+  actor             User     @relation("BuyerFeedbackRevisionActor", fields: [actorId], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  createdAt         DateTime @default(now())
+  category          String
+  rating            Int?
+  comment           String   @default("")
+  followUpStatus    String   @default("OPEN")
+  followUpOwnerId   String?
+  followUpOwner     User?    @relation("BuyerFeedbackFollowUpOwner", fields: [followUpOwnerId], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  followUpNote      String   @default("")
+  linkedTicketId    String?
+  linkedTicket      SupportTicket? @relation("BuyerFeedbackCaseLink", fields: [linkedTicketId], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  reason            String   @default("")
+
+  @@unique([feedbackId, version])
+  @@index([feedbackId, version])
+  @@index([followUpOwnerId])
+  @@index([linkedTicketId])
 }

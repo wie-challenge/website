@@ -212,6 +212,96 @@ export async function runDemoScenarios(
       },
     );
     await check(
+      'showroom buyer feedback is visitor-scoped, source-labelled and never shared across generations',
+      async () => {
+        const business = async (who: ReturnType<typeof visitor>, path: string, body: unknown) => {
+          const me = await who.request('/api/v1/me');
+          return who.request(path, 'POST', body, {
+            'X-CSRF-Token': me.body.csrfToken,
+            'Idempotency-Key': randomUUID(),
+          });
+        };
+        await b.command('switch', { persona: 'buyer' });
+        const orderId = (await b.session()).scenario!.orderId!;
+        const buyerIdentity = await db.demoIdentity.findUniqueOrThrow({
+          where: {
+            scenarioId_persona: { scenarioId: second.scenario!.id, persona: 'buyer' },
+          },
+        });
+        // Synthetic fixture only: a real receipt row so eligibility can be exercised over HTTP.
+        const shipment = await db.shipment.create({
+          data: {
+            orderId,
+            status: 'BUYER_CONFIRMED',
+            hub: 'Synthetic showroom hub',
+            destination: 'Synthetic Tunis buyer studio',
+            actorId: buyerIdentity.userId,
+            deliveryReport: {
+              create: {
+                quantity: 4,
+                actorId: buyerIdentity.userId,
+                occurredAt: new Date('2026-10-01T09:00:00Z'),
+              },
+            },
+          },
+        });
+        const receipt = await db.buyerDeliveryConfirmation.create({
+          data: {
+            shipmentId: shipment.id,
+            received: 4,
+            accepted: 4,
+            missing: 0,
+            damaged: 0,
+            actorId: buyerIdentity.userId,
+            occurredAt: new Date('2026-10-01T10:00:00Z'),
+          },
+        });
+        const created = await business(b, `/api/v1/collaboration/orders/${orderId}/feedback`, {
+          receiptConfirmationId: receipt.id,
+          category: 'QUALITY',
+          rating: 4,
+          comment: 'Synthetic visitor opinion about the showroom sample.',
+        });
+        assert.equal(created.status, 201, JSON.stringify(created.body));
+        assert.equal(created.body.sourceClass, 'DEMO_USER_SUBMITTED');
+        const stored = await db.buyerOrderFeedback.findUniqueOrThrow({
+          where: { id: created.body.id },
+        });
+        assert.equal(stored.scenarioId, second.scenario!.id);
+        const ownView = await b.request(`/api/v1/collaboration/order-feedback?orderId=${orderId}`);
+        assert.equal(ownView.status, 200);
+        assert.deepEqual(
+          (ownView.body as { items: { id: string }[] }).items.map((row) => row.id),
+          [created.body.id],
+        );
+        // Another visitor never sees this synthetic assessment, even with the same buyer persona.
+        await a.command('switch', { persona: 'buyer' });
+        assert.equal(
+          (await a.request(`/api/v1/collaboration/order-feedback?orderId=${orderId}`)).status,
+          404,
+        );
+        assert.equal(
+          (await a.request(`/api/v1/collaboration/order-feedback/${created.body.id}/history`))
+            .status,
+          404,
+        );
+        assert.equal(
+          (
+            await business(a, `/api/v1/collaboration/orders/${orderId}/feedback`, {
+              receiptConfirmationId: receipt.id,
+              category: 'OVERALL',
+            })
+          ).status,
+          404,
+        );
+        assert.equal(
+          JSON.stringify((await a.request('/api/v1/collaboration')).body).includes(created.body.id),
+          false,
+        );
+        assert.equal(await db.buyerOrderFeedback.count({ where: { orderId } }), 1);
+      },
+    );
+    await check(
       'showroom reset archives only owned scope, replays safely and rolls back interrupted recreation',
       async () => {
         const old = first.scenario!;

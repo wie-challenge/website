@@ -8,6 +8,7 @@ import {
   supportTicketCategories,
   type CollaborationWorkspaceView,
 } from '@nasj/contracts';
+import { OrderFeedbackSection } from './order-feedback-support';
 
 async function post(path: string, body: unknown) {
   return apiFetch(path, {
@@ -32,6 +33,7 @@ export function CollaborationWorkspace() {
           <ScheduleSection data={data} reload={resource.reload} />
           <CounterofferSection data={data} reload={resource.reload} />
           <AvailabilitySection data={data} reload={resource.reload} />
+          <OrderFeedbackSection data={data} reload={resource.reload} />
           <TicketSection data={data} reload={resource.reload} />
           <DiscussionSection data={data} reload={resource.reload} />
           <NotificationSection data={data} reload={resource.reload} />

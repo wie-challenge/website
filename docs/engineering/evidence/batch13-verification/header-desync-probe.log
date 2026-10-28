@@ -1,0 +1,6 @@
+PROBE1 header advanced to 2 with revisions=1
+PROBE2 direct insert at version 2 SUCCEEDED (aggregate recoverable by raw SQL)
+PROBE3 application-shaped transaction SUCCEEDED
+PROBE4 final header version=3 revisions=3
+PROBE5 delete header REJECTED: 
+PROBE5 reset version down REJECTED: 

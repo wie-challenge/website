@@ -1,6 +1,7 @@
 import { seedBrowserProductFixture } from '../../apps/api/test/product-authority.fixture';
 import { seedBrowserCommercialFixture } from '../../apps/api/test/commercial.fixture';
 import { seedBrowserProductionFixture } from '../../apps/api/test/production.fixture';
+import { seedBrowserFeedbackFixture } from '../../apps/api/test/order-feedback.fixture';
 import { seedBrowserBatch5Fixture } from '../../apps/api/test/batch5.fixture';
 import { seedBrowserDirectoryFixture } from '../../apps/api/test/directory.fixture';
 import {
@@ -92,6 +93,14 @@ export async function runBrowserSetup(options: { demo?: boolean } = {}) {
         const fixture = await seedBrowserProductionFixture(
           database.url,
           url.searchParams.get('suffix') ?? '',
+        );
+        res.setHeader('Content-Type', 'application/json');
+        res.end(JSON.stringify(fixture));
+      } else if (url.pathname.endsWith('/feedback-fixture') && req.method === 'POST') {
+        const fixture = await seedBrowserFeedbackFixture(
+          database.url,
+          url.searchParams.get('suffix') ?? '',
+          url.searchParams.get('buyer') ?? '',
         );
         res.setHeader('Content-Type', 'application/json');
         res.end(JSON.stringify(fixture));

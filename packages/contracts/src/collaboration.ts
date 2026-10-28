@@ -151,6 +151,175 @@ export function canTransitionTicket(from: SupportTicketState, to: SupportTicketS
   return ticketTransitions[from]?.includes(to) ?? false;
 }
 
+/* ------------------------------------------------- buyer order feedback (E18-06) */
+
+/**
+ * A structured satisfaction assessment about a delivered order is not a claim. It is private to
+ * its buyer author and to the scoped support operator responsible for that buyer. Nothing here
+ * creates a payable, changes a quantity, resolves a case or publishes a testimonial.
+ */
+export const feedbackCategories = ['OVERALL', 'QUALITY', 'DELIVERY', 'COMMUNICATION'] as const;
+export type FeedbackCategory = (typeof feedbackCategories)[number];
+
+export const feedbackFollowUpStatuses = ['OPEN', 'FOLLOW_UP', 'RESOLVED'] as const;
+export type FeedbackFollowUpStatus = (typeof feedbackFollowUpStatuses)[number];
+
+export const feedbackRevisionKinds = [
+  'SUBMITTED',
+  'BUYER_CORRECTION',
+  'FOLLOW_UP',
+  'CASE_LINK',
+] as const;
+export type FeedbackRevisionKind = (typeof feedbackRevisionKinds)[number];
+
+/** Server-derived provenance. SYNTHETIC_SEEDED is unreachable through any public command. */
+export const feedbackSourceClasses = [
+  'DEMO_USER_SUBMITTED',
+  'OPERATIONAL_USER_SUBMITTED',
+  'SYNTHETIC_SEEDED',
+] as const;
+export type FeedbackSourceClass = (typeof feedbackSourceClasses)[number];
+
+export const feedbackCommentMaxLength = 2000;
+
+const feedbackFollowUpTransitions: Record<FeedbackFollowUpStatus, FeedbackFollowUpStatus[]> = {
+  OPEN: ['FOLLOW_UP', 'RESOLVED'],
+  FOLLOW_UP: ['OPEN', 'RESOLVED'],
+  // Reopening a resolved follow-up is a later revision that must state why.
+  RESOLVED: ['FOLLOW_UP'],
+};
+
+export function canTransitionFeedbackFollowUp(
+  from: FeedbackFollowUpStatus,
+  to: FeedbackFollowUpStatus,
+) {
+  return feedbackFollowUpTransitions[from]?.includes(to) ?? false;
+}
+
+/** Only reopening an already-resolved follow-up needs a stated reason. */
+export function feedbackFollowUpRequiresReason(
+  from: FeedbackFollowUpStatus,
+  to: FeedbackFollowUpStatus,
+) {
+  return from === 'RESOLVED' && to === 'FOLLOW_UP';
+}
+
+/**
+ * Eligibility is a recorded buyer receipt, not an operator delivery report, a delivered-piece
+ * projection, QA approval or an accepted quotation. A partial or damaged receipt remains eligible
+ * because the buyer still received something to assess. A fully missing delivery belongs in the
+ * existing claim workflow.
+ */
+export function feedbackEligibility(input: {
+  received: number;
+  accepted: number;
+  missing: number;
+  damaged: number;
+  sameOrder: boolean;
+  receiptExists?: boolean;
+}) {
+  if (input.receiptExists === false)
+    return {
+      eligible: false as const,
+      reason: 'NO_CONFIRMED_RECEIPT' as const,
+      partialOrDamaged: false,
+      acceptedZero: false,
+    };
+  if (!input.sameOrder)
+    return {
+      eligible: false as const,
+      reason: 'RECEIPT_ORDER_MISMATCH' as const,
+      partialOrDamaged: false,
+      acceptedZero: false,
+    };
+  if (!Number.isInteger(input.received) || input.received <= 0)
+    return {
+      eligible: false as const,
+      reason: 'NO_CONFIRMED_RECEIPT' as const,
+      partialOrDamaged: false,
+      acceptedZero: false,
+    };
+  return {
+    eligible: true as const,
+    reason: 'CONFIRMED_RECEIPT' as const,
+    partialOrDamaged: input.missing > 0 || input.damaged > 0,
+    acceptedZero: input.accepted === 0,
+  };
+}
+
+/**
+ * A linked case must be an order-related SupportTicket for this exact order in this exact
+ * operator organization. A legacy SupportCase id, another order's ticket or a foreign tenant's
+ * ticket never satisfies the link.
+ */
+export function feedbackCaseLinkMatches(input: {
+  ticketRelatedType: string | null;
+  ticketRelatedId: string | null;
+  ticketOrganizationId: string | null;
+  orderId: string;
+  operatorOrganizationId: string;
+}) {
+  if (input.ticketRelatedType !== 'ORDER')
+    return { matches: false as const, reason: 'NOT_ORDER_RELATED' as const };
+  if (input.ticketRelatedId !== input.orderId)
+    return { matches: false as const, reason: 'DIFFERENT_ORDER' as const };
+  if (input.ticketOrganizationId !== input.operatorOrganizationId)
+    return { matches: false as const, reason: 'DIFFERENT_OPERATOR' as const };
+  return { matches: true as const, reason: 'MATCHED' as const };
+}
+
+/**
+ * Provenance is always recorded by the server. A user-submitted assessment about a synthetic
+ * showroom order remains an opinion about a demonstration, never verified customer satisfaction.
+ */
+export function deriveFeedbackSource(input: {
+  demoScenarioId: string | null;
+  orderProvenance: string;
+}): { sourceClass: FeedbackSourceClass; scenarioId: string | null } {
+  if (input.demoScenarioId)
+    return { sourceClass: 'DEMO_USER_SUBMITTED', scenarioId: input.demoScenarioId };
+  return { sourceClass: 'OPERATIONAL_USER_SUBMITTED', scenarioId: null };
+}
+
+export function feedbackSourceLabel(input: {
+  sourceClass: FeedbackSourceClass;
+  orderProvenance: string;
+}) {
+  const syntheticOrder = input.orderProvenance === 'SYNTHETIC';
+  if (input.sourceClass === 'SYNTHETIC_SEEDED')
+    return {
+      label: 'Seeded synthetic feedback',
+      provesRealCustomerSatisfaction: false,
+      syntheticOrder,
+    };
+  if (input.sourceClass === 'DEMO_USER_SUBMITTED')
+    return {
+      label: 'Visitor feedback about a synthetic showroom',
+      provesRealCustomerSatisfaction: false,
+      syntheticOrder,
+    };
+  return {
+    label: syntheticOrder
+      ? 'User-submitted feedback about a synthetic order'
+      : 'User-submitted feedback',
+    provesRealCustomerSatisfaction: false,
+    syntheticOrder,
+  };
+}
+
+/** Plain text only: comments are rendered as text, never as markup or attachments. */
+export function sanitizeFeedbackComment(value: string) {
+  const cleaned = Array.from(value)
+    .filter((char) => {
+      const code = char.charCodeAt(0);
+      return code === 9 || code === 10 || code === 13 || code >= 32;
+    })
+    .join('')
+    .replace(/<[^>]*>/g, '')
+    .trim();
+  return cleaned.slice(0, feedbackCommentMaxLength);
+}
+
 export const notificationCategories = [
   'NEW_OFFER',
   'OFFER_EXPIRY',
@@ -309,6 +478,81 @@ export const notificationPreferenceSchema = z
   .strict();
 
 export type ExceptionUpdateInput = z.infer<typeof exceptionUpdateSchema>;
+
+/* ------------------------------------------------- feedback command schemas */
+
+const feedbackRating = z.number().int().min(1).max(5);
+const feedbackComment = z
+  .string()
+  .trim()
+  .max(feedbackCommentMaxLength)
+  .default('')
+  .transform(sanitizeFeedbackComment);
+const feedbackReason = z.string().trim().min(3).max(500);
+
+export const feedbackCreateSchema = z
+  .object({
+    receiptConfirmationId: id,
+    category: z.enum(feedbackCategories),
+    rating: feedbackRating.optional(),
+    comment: feedbackComment,
+  })
+  .strict();
+export type FeedbackCreateInput = z.infer<typeof feedbackCreateSchema>;
+
+export const feedbackCorrectionSchema = z
+  .object({
+    expectedVersion: z.number().int().min(1),
+    category: z.enum(feedbackCategories),
+    rating: feedbackRating.nullable().optional(),
+    comment: feedbackComment.optional(),
+    reason: feedbackReason,
+  })
+  .strict();
+export type FeedbackCorrectionInput = z.infer<typeof feedbackCorrectionSchema>;
+
+export const feedbackFollowUpSchema = z
+  .object({
+    expectedVersion: z.number().int().min(1),
+    status: z.enum(feedbackFollowUpStatuses),
+    ownerId: id.optional(),
+    note: z
+      .string()
+      .trim()
+      .max(feedbackCommentMaxLength)
+      .default('')
+      .transform(sanitizeFeedbackComment),
+    reason: feedbackReason,
+  })
+  .strict();
+export type FeedbackFollowUpInput = z.infer<typeof feedbackFollowUpSchema>;
+
+export const feedbackCaseLinkSchema = z
+  .object({
+    expectedVersion: z.number().int().min(1),
+    ticketId: id,
+    reason: feedbackReason,
+  })
+  .strict();
+export type FeedbackCaseLinkInput = z.infer<typeof feedbackCaseLinkSchema>;
+
+export const feedbackListQuerySchema = z
+  .object({
+    page: z.coerce.number().int().min(1).max(10000).default(1),
+    pageSize: z.coerce.number().int().min(1).max(50).default(20),
+    orderId: id.optional(),
+  })
+  .strict();
+export type FeedbackListQuery = z.infer<typeof feedbackListQuerySchema>;
+
+export const feedbackHistoryQuerySchema = z
+  .object({
+    page: z.coerce.number().int().min(1).max(10000).default(1),
+    pageSize: z.coerce.number().int().min(1).max(50).default(20),
+  })
+  .strict();
+export type FeedbackHistoryQuery = z.infer<typeof feedbackHistoryQuerySchema>;
+
 export type ScheduleRevisionInput = z.infer<typeof scheduleRevisionSchema>;
 export type ScheduleDecisionInput = z.infer<typeof scheduleDecisionSchema>;
 export type CounterofferInput = z.infer<typeof counterofferSchema>;
@@ -398,6 +642,82 @@ export type TicketView = {
   events: { id: string; kind: string; detail: string; createdAt: string }[];
 };
 
+export type FeedbackEligibleReceipt = {
+  confirmationId: string;
+  shipmentId: string;
+  received: number;
+  accepted: number;
+  missing: number;
+  damaged: number;
+  provenance: string;
+};
+
+/**
+ * A minimized current-assessment projection. Internal follow-up notes are never included here:
+ * the buyer-safe projection carries only the buyer's own words and the permitted follow-up state.
+ */
+export type OrderFeedbackView = {
+  id: string;
+  orderId: string;
+  reporterId: string;
+  receiptConfirmationId: string;
+  sourceClass: FeedbackSourceClass;
+  sourceLabel: string;
+  syntheticOrder: boolean;
+  createdAt: string;
+  currentVersion: number;
+  category: FeedbackCategory;
+  rating: number | null;
+  comment: string;
+  followUpStatus: FeedbackFollowUpStatus;
+  followUpOwnerId: string | null;
+  followUpOwnerName: string | null;
+  linkedTicketId: string | null;
+  linkedTicketStatus: SupportTicketState | null;
+  canCorrect: boolean;
+  canManageFollowUp: boolean;
+};
+
+export type OrderFeedbackHistoryItem = {
+  id: string;
+  version: number;
+  kind: FeedbackRevisionKind;
+  actorName: string;
+  actorIsReporter: boolean;
+  createdAt: string;
+  category: FeedbackCategory;
+  rating: number | null;
+  comment: string;
+  followUpStatus: FeedbackFollowUpStatus;
+  followUpOwnerId: string | null;
+  followUpOwnerName: string | null;
+  /** Internal support notes are withheld from the buyer-facing projection. */
+  followUpNote: string | null;
+  linkedTicketId: string | null;
+  reason: string;
+};
+
+export type OrderFeedbackHistoryView = {
+  feedbackId: string;
+  viewerIsReporter: boolean;
+  notesWithheld: boolean;
+  items: OrderFeedbackHistoryItem[];
+  total: number;
+  page: number;
+  pageSize: number;
+};
+
+export type FeedbackListResponse = {
+  items: OrderFeedbackView[];
+  total: number;
+  page: number;
+  pageSize: number;
+  eligibleReceipts: FeedbackEligibleReceipt[];
+  /** Active same-operator support managers an authorized actor may assign as follow-up owner. */
+  followUpOwners: { id: string; name: string }[];
+  limitations: string[];
+};
+
 export type CollaborationWorkspaceView = {
   exceptions: ExceptionView[];
   scheduleRevisions: ScheduleRevisionView[];
@@ -426,6 +746,9 @@ export type CollaborationWorkspaceView = {
     status: string;
     createdAt: string;
   }[];
+  /** Current private assessments this actor may see, minimized for the workspace summary. */
+  orderFeedback: OrderFeedbackView[];
+  followUpOwners: { id: string; name: string }[];
   limitations: string[];
 };
 

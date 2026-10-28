@@ -92,6 +92,17 @@ export const RETENTION_INVENTORY = [
     'No truncate endpoint; restrict access; record purpose; reviewed schema-owner maintenance',
   ),
   entry(
+    'BUYER_ORDER_FEEDBACK',
+    'Private delivered-order satisfaction assessment and scoped follow-up',
+    [
+      'Subject (the buyer author)',
+      'Authorized scoped support with support.case.manage and a current buyer assignment',
+    ],
+    'Order and dispute lifecycle ends',
+    'Preserve the original statement and every accepted correction as evidence of what the buyer reported and what support did; internal follow-up notes are never exported to the buyer',
+    'Buyer corrections append a new version instead of rewriting history; no deletion endpoint exists; any erasure requires the qualified privacy review below',
+  ),
+  entry(
     'DEMO_SYNTHETIC',
     'Isolated demonstration and executable tests',
     ['Visitor within generation', 'Test harness'],

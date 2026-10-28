@@ -1,0 +1,240 @@
+{
+  "batch": 13,
+  "date": "2026-10-28",
+  "timezone": "Africa/Tunis",
+  "stories": 1,
+  "story": "E18-06",
+  "githubIssue": 209,
+  "criteria": 5,
+  "ownerAcceptance": "PENDING",
+  "softwareStatuses": {
+    "VERIFIED_SOFTWARE_CRITERIA": 5,
+    "PARTIALLY_IMPLEMENTED": 0,
+    "BLOCKED": 0
+  },
+  "scope": {
+    "implemented": [
+      "E18-06"
+    ],
+    "notImplemented": [
+      "E15-06",
+      "E18-04",
+      "E18-05",
+      "Batch 14"
+    ],
+    "planningDocumentsPreserved": [
+      "docs/engineering/batch13-planning/SCOPE_AUDIT.md",
+      "docs/engineering/batch13-planning/IMPLEMENTATION_BACKLOG.md",
+      "docs/engineering/batch13-planning/TECHNICAL_PLAN.md"
+    ]
+  },
+  "tests": {
+    "apiUnits": 140,
+    "apiUnitFailures": 0,
+    "webUnits": 25,
+    "webUnitFailures": 0,
+    "fullIntegration": 196,
+    "fullIntegrationFailures": 0,
+    "e18HttpScenarios": 13,
+    "e18MigrationScenarios": 6,
+    "showroomScenarios": 5,
+    "browserJourneys": 2,
+    "fullApplicationBrowsers": 54,
+    "fullShowroomBrowsers": 3,
+    "browserFailures": 0,
+    "browserViewports": [
+      "390x844",
+      "1280x900"
+    ],
+    "axeViolations": 0
+  },
+  "checks": {
+    "lint": "PASS_419_FILES_NO_FINDINGS",
+    "typecheck": "PASS",
+    "build": "PASS",
+    "prismaValidation": "PASS",
+    "gitDiffCheck": "PASS"
+  },
+  "database": {
+    "migration": "20261028160000_buyer_order_feedback",
+    "migrationIndex": 37,
+    "historicalMigrationsPreserved": 36,
+    "nativeEvidence": {
+      "evidence": "DISPOSABLE_NATIVE_POSTGRESQL_FEEDBACK_UPGRADE",
+      "engine": "PostgreSQL 17.7-alpine (disposable container)",
+      "preservedBaselineTables": 130,
+      "baselineRowsUnchanged": true,
+      "tables": [
+        "BuyerOrderFeedback",
+        "BuyerOrderFeedbackRevision"
+      ],
+      "restrictiveForeignKeys": true,
+      "uniqueOrderReporter": true,
+      "uniqueFeedbackVersion": true,
+      "checkConstraints": [
+        "version >= 1",
+        "kind in (SUBMITTED, BUYER_CORRECTION, FOLLOW_UP, CASE_LINK)",
+        "category in (OVERALL, QUALITY, DELIVERY, COMMUNICATION)",
+        "rating is null or 1..5",
+        "comment and note length <= 2000",
+        "followUpStatus in (OPEN, FOLLOW_UP, RESOLVED)",
+        "FOLLOW_UP requires an owner",
+        "RESOLVED requires a reason",
+        "version > 1 requires a reason",
+        "sourceClass in (DEMO_USER_SUBMITTED, OPERATIONAL_USER_SUBMITTED, SYNTHETIC_SEEDED)",
+        "demo source requires a scenario"
+      ],
+      "triggers": [
+        "BuyerOrderFeedbackRevision_append_only",
+        "BuyerOrderFeedback_identity_guard",
+        "BuyerOrderFeedback_no_delete",
+        "BuyerOrderFeedback_eligibility",
+        "BuyerOrderFeedbackRevision_chain"
+      ],
+      "populatedUpgrade": "PASS",
+      "failedTransactionRollback": "PASS",
+      "restorePreservesHistory": "PASS",
+      "persistentDatabaseTouched": false
+    }
+  },
+  "securityNegativeTests": {
+    "zeroReceivedQuantity": "REJECTED_409_NO_CONFIRMED_RECEIPT",
+    "crossOrderReceipt": "REJECTED_409_RECEIPT_ORDER_MISMATCH",
+    "operatorOnlyDeliveryAssertion": "REJECTED_409_NO_CONFIRMED_RECEIPT",
+    "differentTenant": "404",
+    "artisanOrCoordinator": "404",
+    "anotherBuyerEmployee": "404_NO_ROW_VISIBLE",
+    "revokedBuyerMembership": "404_IMMEDIATE",
+    "revokedOperatorAssignment": "404_IMMEDIATE",
+    "invalidFollowUpOwner": "403_INVALID_OWNER",
+    "missingFollowUpOwner": "400_OWNER_REQUIRED",
+    "crossOrderCaseLink": "409_CASE_ORDER_MISMATCH",
+    "inaccessibleTicket": "404",
+    "duplicateCreation": "409_DUPLICATE_FEEDBACK",
+    "sameKeyReplay": "ORIGINAL_RESULT_RETURNED",
+    "changedPayloadSameKey": "409_IDEMPOTENCY_CONFLICT",
+    "staleExpectedVersion": "409_STALE_VERSION",
+    "concurrentBuyerAndSupport": "ONE_201_ONE_409_NO_LOST_REVISION",
+    "demoVisitorIsolation": "404_CROSS_VISITOR",
+    "forgedReporterOrSource": "400_VALIDATION_ERROR",
+    "anonymousRead": "401"
+  },
+  "financialNonInterference": {
+    "verified": true,
+    "snapshotFields": [
+      "payables",
+      "financialAdjustments",
+      "paymentDisputes",
+      "receiptQuantities",
+      "procurementAcceptances",
+      "offerTerms",
+      "deliveredAcceptedPieces",
+      "closureAssessments",
+      "orderStatus"
+    ],
+    "identicalBeforeAndAfterFollowUpAndCaseLink": true,
+    "caseStatusUnchangedByFollowUpResolution": true,
+    "orderStatusUnchangedByCaseLink": true
+  },
+  "crossBatchRegression": {
+    "A12-01ClosureBlocksOnUnresolvedAdjustments": "PRESERVED",
+    "A12-02FinanceReviewBlocksQuoteAcceptance": "PRESERVED",
+    "A12-03UnverifiedSettlementExcluded": "PRESERVED",
+    "existingFinancialInventoryConsentConstraints": "PRESERVED",
+    "batch12RetentionClassCountUpdated": "9_TO_10_INTENTIONAL"
+  },
+  "governance": {
+    "subjectExportIncludesOwnFeedback": true,
+    "subjectExportWithholdsInternalNotes": true,
+    "subjectExportExcludesOtherParticipants": true,
+    "retentionClassAdded": "BUYER_ORDER_FEEDBACK",
+    "retentionDurationInvented": false,
+    "purgeEnabled": false,
+    "reviewStatus": "PENDING_QUALIFIED_POLICY_REVIEW",
+    "e14_09StatusPreserved": "PENDING"
+  },
+  "authoritativeLogs": {
+    "integration": "integration.log",
+    "focusedFeedback": "focused-feedback.log",
+    "focusedMigration": "focused-migration.log",
+    "showroom": "demo.log",
+    "browser": "browser-order-feedback.log",
+    "apiUnits": "api-unit.log",
+    "webUnits": "web-unit.log",
+    "lint": "lint.log",
+    "typecheck": "typecheck.log",
+    "build": "build.log",
+    "schema": "schema.log",
+    "whitespace": "diff-check.log"
+  },
+  "failures": [],
+  "skips": [],
+  "blockers": [
+    {
+      "gate": "E14-09 / #74 qualified privacy review",
+      "affects": "collection of real participant feedback",
+      "status": "EXTERNAL_PENDING"
+    },
+    {
+      "gate": "Owner acceptance for E18-06 / #209",
+      "affects": "acceptance of the five criteria",
+      "status": "PENDING"
+    },
+    {
+      "gate": "Publication, testimonial or public rating authority",
+      "affects": "any public disclosure",
+      "status": "NOT_IMPLEMENTED_BY_DESIGN"
+    }
+  ],
+  "syntheticEvidenceOnly": true,
+  "realParticipantFeedbackCollected": false,
+  "readyForIndependentVerification": true,
+  "readyForOwnerAcceptance": false,
+  "readyForRealPilot": false,
+  "githubStateChanged": false,
+  "deploymentPerformed": false,
+  "persistentDatabaseMigrated": false,
+  "workingTreeStagedOrCommitted": false,
+  "independentVerification": {
+    "date": "2026-10-28",
+    "report": "docs/engineering/BATCH13_INDEPENDENT_VERIFICATION.md",
+    "evidenceDirectory": "docs/engineering/evidence/batch13-verification",
+    "adversarialChecks": 13,
+    "adversarialFailures": 0,
+    "criteriaVerified": 5,
+    "findings": [
+      {
+        "id": "IV-01",
+        "severity": "LOW",
+        "area": "database",
+        "summary": "Header trigger enforces +1 but cannot require a matching revision row in the same transaction; reachable only by direct schema-owner SQL, self-healing, no accepted history lost and not reachable through any API route.",
+        "status": "DOCUMENTED_RESIDUAL"
+      },
+      {
+        "id": "IV-02",
+        "severity": "INFO",
+        "area": "documentation",
+        "summary": "No dedicated feedback-write rate-limit bucket was added; the existing shared API limiter applies, matching the conditional wording of the technical plan.",
+        "status": "ACCURATE_WITH_CLARIFICATION"
+      },
+      {
+        "id": "IV-03",
+        "severity": "INFO",
+        "area": "privacy",
+        "summary": "Buyer-facing history renders support-authored reason and actor name; no internal note is disclosed. Flagged for a future privacy review decision.",
+        "status": "NOTED_FOR_PRIVACY_REVIEW"
+      }
+    ],
+    "evidenceFreshness": {
+      "staleOnArrival": [
+        "api-unit",
+        "web-unit",
+        "browser"
+      ],
+      "rerunOnFinalTree": true,
+      "authoritativeLogsMatchFinalTree": true
+    },
+    "noProductCodeChanged": true,
+    "ownerAcceptance": "PENDING"
+  }
+}

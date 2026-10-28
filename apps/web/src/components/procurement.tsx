@@ -27,6 +27,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
 import { ProductionPanel } from './production-offers';
 import { ExecutionOrder } from './execution-workspace';
 import { LogisticsOrder } from './logistics-workspace';
+import { BuyerOrderFeedback } from './order-feedback';
 import { OrderFinance } from './finance-workspace';
 const root = '/api/v1/procurement';
 function useCommand() {
@@ -920,6 +921,7 @@ export function ProcurementDetail({ id }: { id: string }) {
                 {data.orderId && (
                   <TabsContent value="delivery">
                     <LogisticsOrder orderId={data.orderId} />
+                    <BuyerOrderFeedback orderId={data.orderId} />
                   </TabsContent>
                 )}
                 {data.orderId && (

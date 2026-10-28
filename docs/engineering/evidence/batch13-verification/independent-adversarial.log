@@ -1,0 +1,19 @@
+(node:63847) DeprecationWarning: Calling client.query() when the client is already executing a query is deprecated and will be removed in pg@9.0. Use async/await or an external async flow control mechanism instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+PASS A: forged receipt, cross-order receipt, foreign receipt and forged server fields all rejected
+PASS B1: colleague, artisan, outsider and unscoped operator denied; scoped support allowed
+PASS B2: role union grants no private feedback access; separate buyer participants keep mutually private assessments
+PASS B3: revoked buyer membership removes read/write immediately with no state change
+PASS B4: subject export is reporter-scoped and withholds internal notes
+PASS C1: revision UPDATE/DELETE and header identity/version mutation rejected natively
+PASS C3: replay returns original result, changed payload conflicts, stale version rejected
+PASS C4: same-key replay after revocation is denied and discloses nothing
+PASS C5: concurrent buyer/support updates serialize with contiguous versions
+PASS D1: buyer is the real ticket reporter; cross-order, foreign and legacy links rejected; resolving follow-up leaves the claim open
+PASS E1: payables, adjustments, disputes, receipts, terms, acceptances and order state unchanged
+PASS D2: invalid owner rejected and revoked assignment denied with no state change
+PROBE header+1-without-revision allowed=true version 8->9
+PROBE repair-after-desync status=500 (expected non-2xx)
+PASS C2: header version desync requires direct DB access; recorded as a residual defence-in-depth gap
+
+Independent verification checks passed: 13
