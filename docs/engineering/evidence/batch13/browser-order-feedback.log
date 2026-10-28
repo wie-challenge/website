@@ -1,0 +1,8 @@
+
+Running 2 tests using 1 worker
+
+  ✓  1 tests/e2e/order-feedback.spec.ts:36:3 › buyer receipt, private feedback, correction and support case link on mobile (7.8s)
+  ✓  2 tests/e2e/order-feedback.spec.ts:36:3 › buyer receipt, private feedback, correction and support case link on desktop (7.2s)
+
+  2 passed (28.7s)
+exit=0

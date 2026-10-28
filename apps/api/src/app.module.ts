@@ -1,5 +1,9 @@
+import { SalesModule } from './modules/sales/sales.module.js';
 import { DemoModule } from './modules/demo/demo.module.js';
 import { InventoryModule } from './modules/inventory/inventory.module.js';
+import { CatalogModule } from './modules/catalog/catalog.module.js';
+import { IntelligenceModule } from './modules/intelligence/intelligence.module.js';
+import { CollaborationModule } from './modules/collaboration/collaboration.module.js';
 import { DirectoryModule } from './modules/directory/directory.module.js';
 import { RegistryModule } from './modules/registry/registry.module.js';
 import { CommerceModule } from './modules/commerce/commerce.module.js';
@@ -33,6 +37,10 @@ export class AppModule {
         RegistryModule,
         DirectoryModule,
         InventoryModule,
+        CatalogModule,
+        SalesModule,
+        IntelligenceModule,
+        CollaborationModule,
         DemoModule,
       ],
       controllers: [HealthController],

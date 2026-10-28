@@ -1,0 +1,29 @@
+$ pnpm --filter @nasj/contracts build && pnpm --filter @nasj/api typecheck && pnpm --filter @nasj/api typecheck:test && pnpm --filter @nasj/web typecheck
+$ tsc -p tsconfig.json
+$ prisma generate && tsc --noEmit
+Loaded Prisma config from prisma.config.ts.
+
+Prisma schema loaded from prisma/schema.prisma.
+
+✔ Generated Prisma Client (v7.10.1) to ./../../node_modules/.pnpm/@prisma+client@7.10.1_prisma@7.10.1_@types+node@24.19.2_@types+react-dom@19.3.0_@types+_9e72caf218d3f522373b8e6c9536cf3f/node_modules/@prisma/client in 1.05s
+
+Start by importing your Prisma Client (See: https://pris.ly/d/importing-client)
+
+
+$ tsc -p tsconfig.test.json
+test/batch12.scenarios.ts(460,49): error TS2322: Type '{ version: number; subtotalMillimes: bigint; status: string; snapshot: JsonValue; rfqId: string; quantity: number; authorId: string; components: JsonValue; ... 6 more ...; incomplete: boolean; }' is not assignable to type '((Without<CostEstimateCreateInput, CostEstimateUncheckedCreateInput> & CostEstimateUncheckedCreateInput) | (Without<...> & CostEstimateCreateInput)) & object'.
+  Type '{ version: number; subtotalMillimes: bigint; status: string; snapshot: JsonValue; rfqId: string; quantity: number; authorId: string; components: JsonValue; ... 6 more ...; incomplete: boolean; }' is not assignable to type 'Without<CostEstimateCreateInput, CostEstimateUncheckedCreateInput> & CostEstimateUncheckedCreateInput & object'.
+    Type '{ version: number; subtotalMillimes: bigint; status: string; snapshot: JsonValue; rfqId: string; quantity: number; authorId: string; components: JsonValue; ... 6 more ...; incomplete: boolean; }' is not assignable to type 'CostEstimateUncheckedCreateInput'.
+      Types of property 'components' are incompatible.
+        Type 'JsonValue' is not assignable to type 'InputJsonValue | JsonNull'.
+          Type 'null' is not assignable to type 'InputJsonValue | JsonNull'.
+test/batch12.scenarios.ts(464,51): error TS2322: Type '{ version: number; costEstimateId: string; termsSha256: string; status: string; expiresAt: Date; snapshot: JsonValue; rfqId: string; authorId: string; revisionId: string; feasibilityAssessmentId: string | null; totalMillimes: bigint; }' is not assignable to type '((Without<ProcurementQuoteCreateInput, ProcurementQuoteUncheckedCreateInput> & ProcurementQuoteUncheckedCreateInput) | (Without<...> & ProcurementQuoteCreateInput)) & object'.
+  Type '{ version: number; costEstimateId: string; termsSha256: string; status: string; expiresAt: Date; snapshot: JsonValue; rfqId: string; authorId: string; revisionId: string; feasibilityAssessmentId: string | null; totalMillimes: bigint; }' is not assignable to type 'Without<ProcurementQuoteCreateInput, ProcurementQuoteUncheckedCreateInput> & ProcurementQuoteUncheckedCreateInput & object'.
+    Type '{ version: number; costEstimateId: string; termsSha256: string; status: string; expiresAt: Date; snapshot: JsonValue; rfqId: string; authorId: string; revisionId: string; feasibilityAssessmentId: string | null; totalMillimes: bigint; }' is not assignable to type 'ProcurementQuoteUncheckedCreateInput'.
+      Types of property 'snapshot' are incompatible.
+        Type 'JsonValue' is not assignable to type 'InputJsonValue | JsonNull'.
+          Type 'null' is not assignable to type 'InputJsonValue | JsonNull'.
+/home/ashenix/Projects/wie-challenge/website/apps/api:
+[ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL] @nasj/api@0.1.0 typecheck:test: `tsc -p tsconfig.test.json`
+Exit status 2
+[ELIFECYCLE] Command failed with exit code 2.

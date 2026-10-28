@@ -11,6 +11,15 @@ export async function seedBrowserCommercialFixture(url: string, suffix: string) 
         where: { email: `commercial-${role}-${suffix}@example.com` },
       });
     const [buyer, operator] = await Promise.all([user('buyer'), user('operator')]);
+    const craftSkillId = `commercial-weaving-${suffix}`;
+    await db.craftSkill.create({
+      data: {
+        id: craftSkillId,
+        name: `Synthetic commercial weaving ${suffix}`,
+        category: `Fixture ${suffix}`,
+        description: 'Isolated disposable commercial capacity cohort.',
+      },
+    });
     const offset = [...suffix].reduce((total, char) => total + char.charCodeAt(0), 0) % 10;
     const startDay = 6 + offset;
     const periodStart = `2027-09-${String(startDay).padStart(2, '0')}T00:00`;
@@ -85,7 +94,7 @@ export async function seedBrowserCommercialFixture(url: string, suffix: string) 
           region: 'Synthetic quarter',
           contactPhone: '+21699000222',
           equipment: [],
-          skills: { create: { craftSkillId: 'weaving' } },
+          skills: { create: { craftSkillId } },
         },
       });
       await db.artisanManagement.create({
@@ -111,7 +120,7 @@ export async function seedBrowserCommercialFixture(url: string, suffix: string) 
       return db.capacityDeclaration.create({
         data: {
           artisanProfileId: profile.id,
-          craftSkillId: 'weaving',
+          craftSkillId,
           unitType: 'PIECES',
           quantity: 50,
           ...period,
@@ -126,7 +135,7 @@ export async function seedBrowserCommercialFixture(url: string, suffix: string) 
       data: {
         buyerOrganizationId: buyerOrg.id,
         operatorOrganizationId: operatorOrg.id,
-        craftSkillId: 'weaving',
+        craftSkillId,
         title: `Synthetic consumed throughput ${suffix}`,
         specification: 'Synthetic only',
         designRequirements: 'Synthetic only',
@@ -163,12 +172,12 @@ export async function seedBrowserCommercialFixture(url: string, suffix: string) 
       },
     });
     const previousEffort = await db.effortAssumption.findFirst({
-      where: { craftSkillId: 'weaving', unitType: 'PIECES' },
+      where: { craftSkillId, unitType: 'PIECES' },
       orderBy: { version: 'desc' },
     });
     await db.effortAssumption.create({
       data: {
-        craftSkillId: 'weaving',
+        craftSkillId,
         unitType: 'PIECES',
         minPerUnit: '1.50',
         maxPerUnit: '2.50',
@@ -181,7 +190,7 @@ export async function seedBrowserCommercialFixture(url: string, suffix: string) 
       data: {
         buyerOrganizationId: buyerOrg.id,
         operatorOrganizationId: operatorOrg.id,
-        craftSkillId: 'weaving',
+        craftSkillId,
         title: `Synthetic feasibility runner ${suffix}`,
         specification: 'Synthetic cotton runner, exact version one.',
         designRequirements: 'Synthetic border and dimensions.',

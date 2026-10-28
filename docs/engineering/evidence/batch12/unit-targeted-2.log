@@ -1,0 +1,35 @@
+✖ cash gap uses exact chronological millimes, conservative same-instant order and unknown dates (5.836331ms)
+✔ timeliness excludes synthetic, partial, disputed, overpaid and unknown dates from verified denominator (0.371242ms)
+✔ timeliness requires full settlement and reports completion on final partial payment date (0.127138ms)
+✔ accounting export balances separate evidence groups, stable source IDs and half-open periods (0.384348ms)
+✔ CSV neutralizes formulas, controls, quotes and embedded newlines (0.121014ms)
+✔ notification operational alerts distinguish failed/uncertain and stalled sends (0.509846ms)
+✔ structured logs redact contact, finance, health and credentials without dropping correlation (1.17631ms)
+✔ retention inventory covers material classes without inventing approved periods or wearable datasets (0.143861ms)
+ℹ tests 8
+ℹ suites 0
+ℹ pass 7
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 287.796059
+
+✖ failing tests:
+
+test at test/unit/batch12.test.ts:10:1
+✖ cash gap uses exact chronological millimes, conservative same-instant order and unknown dates (5.836331ms)
+  RangeError: TND amount is out of range.
+      at bounded (file:///home/ashenix/Projects/wie-challenge/website/packages/contracts/dist/domain.js:29:15)
+      at formatTnd (file:///home/ashenix/Projects/wie-challenge/website/packages/contracts/dist/domain.js:39:5)
+      at <anonymous> (/home/ashenix/Projects/wie-challenge/website/apps/api/src/modules/finance/analysis.ts:7:176)
+      at Array.map (<anonymous>)
+      at cashGap (/home/ashenix/Projects/wie-challenge/website/apps/api/src/modules/finance/analysis.ts:7:23)
+      at TestContext.<anonymous> (/home/ashenix/Projects/wie-challenge/website/apps/api/test/unit/batch12.test.ts:12:15)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1397:25)
+      at Test.start (node:internal/test_runner/test:1257:17)
+      at startSubtestAfterBootstrap (node:internal/test_runner/harness:387:17)
+undefined
+/home/ashenix/Projects/wie-challenge/website/apps/api:
+[ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL] Command failed with exit code 1: tsx --test test/unit/batch12.test.ts

@@ -1,3 +1,4 @@
+import { createHash } from 'node:crypto';
 import { Inject, Injectable } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import * as C from '@nasj/contracts';
@@ -13,13 +14,14 @@ import { commercialTermsHash } from './commercial-decision.js';
 
 const orderInclude = {
   rfq: true,
+  productSpecificationRevision: true,
   offers: true,
   acceptance: {
     include: { quote: { include: { costEstimate: true, feasibilityAssessment: true } } },
   },
 } as const;
 const offerInclude = {
-  order: { include: { rfq: true } },
+  order: { include: { rfq: true, productSpecificationRevision: true } },
   artisanProfile: true,
   association: true,
   assistedDecision: true,
@@ -227,8 +229,9 @@ export class ProductionOfferService {
       instructions: string;
     },
     key?: string,
+    transaction?: Db,
   ) {
-    return iamTransaction(this.db, actor, async (tx) => {
+    const run = async (tx: Db) => {
       const loaded = await this.gate(tx, actor, orderId);
       if (!loaded.operator) fail(403, 'FORBIDDEN', 'An assigned production operator is required.');
       return this.command(tx, actor, orderId, 'offer.prepare', key, input, async () => {
@@ -242,10 +245,17 @@ export class ProductionOfferService {
         });
         return row;
       });
-    });
+    };
+    return transaction ? run(transaction) : iamTransaction(this.db, actor, run);
   }
-  async issue(actor: Actor, offerId: string, input: { version: number }, key?: string) {
-    return iamTransaction(this.db, actor, async (tx) => {
+  async issue(
+    actor: Actor,
+    offerId: string,
+    input: { version: number },
+    key?: string,
+    transaction?: Db,
+  ) {
+    const run = async (tx: Db) => {
       const offer = await tx.commercialOffer.findUnique({
         where: { id: offerId },
         include: offerInclude,
@@ -309,7 +319,89 @@ export class ProductionOfferService {
         });
         return this.offerView(issued);
       });
+    };
+    return transaction ? run(transaction) : iamTransaction(this.db, actor, run);
+  }
+  /** Reissue reviewed counter terms inside the caller's transaction; acceptance remains offerAction. */
+  async reissueCounter(tx: Db, actor: Actor, offerId: string, quantity: number, deadline: Date) {
+    const original = await tx.commercialOffer.findUnique({
+      where: { id: offerId },
+      include: offerInclude,
     });
+    if (!original) fail(404, 'NOT_FOUND', 'Offer not found.');
+    const loaded = await this.gate(tx, actor, original.orderId);
+    if (!loaded.operator) fail(403, 'FORBIDDEN', 'An assigned production operator is required.');
+    if (original.status !== 'OFFERED' || original.expiresAt <= new Date())
+      fail(409, 'OFFER_NOT_OPEN', 'Only a current issued offer can be replaced.');
+    const declaration = await tx.capacityDeclaration.findUniqueOrThrow({
+      where: { id: original.capacityDeclarationId },
+    });
+    if (
+      deadline <= new Date() ||
+      deadline < declaration.effectiveFrom ||
+      deadline >= declaration.effectiveTo
+    )
+      fail(
+        409,
+        'DEADLINE_OUTSIDE_CAPACITY',
+        'Reassess capacity for a deadline outside the agreed production period.',
+      );
+    const quote = this.ready(loaded.order);
+    // Replaced offers no longer reserve; the new offer is created in the same transaction.
+    await tx.commercialOffer.update({
+      where: { id: offerId },
+      data: { status: 'REPLACED', version: { increment: 1 } },
+    });
+    loaded.order.offers = loaded.order.offers.filter((offer) => offer.id !== offerId);
+    const prepared = await this.prepare(
+      tx,
+      actor,
+      loaded.order,
+      quote,
+      {
+        eligibilityId: original.eligibilityAssessmentId ?? '',
+        quantity,
+        expiresAt: new Date(
+          Math.min(original.expiresAt.getTime(), deadline.getTime() - 86400000),
+        ).toISOString(),
+        materials: original.materials,
+        reworkTerms: original.reworkTerms,
+        paymentConditions: original.paymentConditions,
+        collectionArrangement: original.collectionArrangement ?? '',
+        instructions: original.instructions ?? '',
+        deadline: deadline.toISOString(),
+      },
+      false,
+    );
+    if (!('id' in prepared))
+      fail(409, 'OFFER_PREPARATION_FAILED', 'Revised terms were not prepared.');
+    const revised = await tx.commercialOffer.update({
+      where: { id: prepared.id },
+      data: {
+        status: 'OFFERED',
+        version: { increment: 1 },
+        deliveryDeadline: deadline,
+      },
+    });
+    await audit(tx, actor, {
+      action: 'production.offer.reissued',
+      targetType: 'CommercialOffer',
+      targetId: revised.id,
+      organizationId: loaded.order.rfq.operatorOrganizationId,
+      before: {
+        offerId: original.id,
+        quantity: original.quantity,
+        termsSha256: original.termsSha256,
+      },
+      after: {
+        replacesOfferId: original.id,
+        quantity,
+        deadline: deadline.toISOString(),
+        termsSha256: revised.termsSha256,
+        createsAgreement: false,
+      },
+    });
+    return revised;
   }
   async assisted(
     actor: Actor,
@@ -416,6 +508,7 @@ export class ProductionOfferService {
       quote: NonNullable<NonNullable<LoadedOrder['acceptance']>['quote']>;
     },
     input: {
+      deadline?: string;
       eligibilityId: string;
       quantity: number;
       expiresAt: string;
@@ -429,6 +522,29 @@ export class ProductionOfferService {
     existing?: LoadedOffer,
   ) {
     const acceptedQuote = quote.quote;
+    const catalogue = order.productSpecificationRevision;
+    if (catalogue && (catalogue.status !== 'APPROVED' || catalogue.supersededById))
+      fail(
+        409,
+        'SPECIFICATION_REAPPROVAL_REQUIRED',
+        'Review and approve the exact bound specification before issuing new work.',
+      );
+    const catalogueSnapshot = catalogue
+      ? JSON.stringify({
+          id: catalogue.id,
+          revision: catalogue.revisionNumber,
+          description: catalogue.description,
+          dimensions: catalogue.dimensions,
+          unit: catalogue.unit,
+          materials: catalogue.materials,
+          instructions: catalogue.instructions,
+          instructionLanguage: catalogue.instructionLanguage,
+          tolerances: catalogue.tolerances,
+          qualityCriteria: catalogue.qualityCriteria,
+          referenceImages: catalogue.referenceImages,
+        })
+      : null;
+
     const assessment = await tx.eligibilityAssessment.findFirst({
       where: { id: input.eligibilityId, orderId: order.id },
     });
@@ -504,7 +620,7 @@ export class ProductionOfferService {
       estimatedHours: effort,
       effectiveFrom: assessment.periodFrom.toISOString(),
       effectiveTo: assessment.periodTo.toISOString(),
-      deadline: order.rfq.deliveryAt.toISOString(),
+      deadline: input.deadline ?? order.rfq.deliveryAt.toISOString(),
       expiresAt: expiresAt.toISOString(),
       materials: input.materials,
       reworkTerms: input.reworkTerms,
@@ -512,7 +628,11 @@ export class ProductionOfferService {
       collectionArrangement: input.collectionArrangement,
       instructions: input.instructions,
       compensationMethod: pay.method,
-      specification: order.rfq.specification,
+      specification: catalogue?.description ?? order.rfq.specification,
+      catalogueRevisionId: catalogue?.id ?? null,
+      catalogueRevisionDigest: catalogueSnapshot
+        ? createHash('sha256').update(catalogueSnapshot).digest('hex')
+        : null,
     };
     if (issuing)
       return {
@@ -529,6 +649,7 @@ export class ProductionOfferService {
         unitPayMillimes: pay.unit,
         estimatedHours: effort,
         expiresAt,
+        deliveryDeadline: new Date(input.deadline ?? order.rfq.deliveryAt.toISOString()),
         materials: input.materials,
         reworkTerms: input.reworkTerms,
         paymentConditions: input.paymentConditions,
@@ -684,8 +805,10 @@ export class ProductionOfferService {
       paymentConditions: offer.paymentConditions,
       collectionArrangement: offer.collectionArrangement,
       instructions: offer.instructions,
-      specification: offer.order.rfq.specification,
-      deliveryAt: offer.order.rfq.deliveryAt.toISOString(),
+      specification: offer.order.productSpecificationRevision
+        ? `${offer.order.productSpecificationRevision.description} [Approved specification ${offer.order.productSpecificationRevision.id}, revision ${offer.order.productSpecificationRevision.revisionNumber}]`
+        : offer.order.rfq.specification,
+      deliveryAt: (offer.deliveryDeadline ?? offer.order.rfq.deliveryAt).toISOString(),
       status: offer.status,
       version: offer.version,
       termsSha256: offer.termsSha256,

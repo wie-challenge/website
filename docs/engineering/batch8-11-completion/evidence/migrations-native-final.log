@@ -1,0 +1,6 @@
+PASS B811-M01 native migrate deploy upgrades populated pre-Batch8 database without changing baseline rows
+PASS B811-M02 all twenty original tables have primary keys, foreign keys and indexes
+PASS B811-M03 Prisma migration history checksums match every SQL file with no failed migration
+PASS B811-M04 a failing foreign key rolls back all writes in its transaction
+PASS B811-M05 concurrent PostgreSQL clients serialize duplicate recommendation policy versions
+{"evidence":"DISPOSABLE_NATIVE_POSTGRESQL_MIGRATIONS","engine":"PostgreSQL 17.7 on x86_64-pc-linux-musl, compiled by gcc (Alpine 15.2.0) 15.2.0, 64-bit","baselinePublicTables":100,"finalPublicTables":127,"migrations":34,"originalBatchTables":20,"foreignKeys":65,"persistentDatabaseTouched":false}

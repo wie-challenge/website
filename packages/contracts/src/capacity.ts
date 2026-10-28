@@ -28,7 +28,8 @@ export function capacityDecimal(value: bigint): string {
 export type CapacityConstraint =
   | 'INCOMPATIBLE_COMMITMENT_UNIT'
   | 'PERIOD_ALLOCATION_UNKNOWN'
-  | 'OVERLAPPING_DECLARATIONS';
+  | 'OVERLAPPING_DECLARATIONS'
+  | 'AVAILABILITY_PAUSED';
 export type CapacitySummary = {
   declarationId: string;
   artisanProfileId: string;

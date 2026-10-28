@@ -1,0 +1,24 @@
+PASS startup, migrations, readiness and unauthenticated API denial
+PASS real signup, SMTP verification, login and safe cookie/session projections
+PASS generic registration and failed login avoid account enumeration
+PASS origin, CSRF, validation and object ownership protect profile and admin routes
+PASS parser and size errors use safe envelopes and request tracing
+PASS sessions are ownership-bound and revocation/logout invalidate access
+PASS password recovery is generic, single-use and revokes existing sessions
+PASS expired sessions and invalid verification links are rejected
+PASS admin pagination, role changes and last-administrator race protection
+PASS self-deactivation ends sessions and prevents future login without deleting history
+PASS atomic rate limits resist concurrent requests and spoofed forwarded IP headers
+PASS explicit proxy trust resolves independent clients while ignoring private identity header spoofing
+PASS operator bootstrap promotes only an existing verified account and revokes its sessions
+(node:239759) DeprecationWarning: Calling client.query() when the client is already executing a query is deprecated and will be removed in pg@9.0. Use async/await or an external async flow control mechanism instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+PASS AUDIT contact opt-out rejects outreach; unrelated actor and revoked membership are denied
+PASS AUDIT reproduce finance-review bypass when the proposal is SENT but not WON
+PASS AUDIT independent CSV sums match exact PostgreSQL source costs and omit unrelated records
+PASS AUDIT verified timeliness path is blocked by native settlement constraints
+PASS AUDIT pure timeliness covers all eleven requested evidence cases
+PASS AUDIT legacy closing ignores an unresolved financial adjustment
+PASS AUDIT retention administrator cannot enable destructive purge
+PASS AUDIT independent encrypted backup restores source rows and native constraints
+Integration passed: 21 scenarios against a newly created disposable PostgreSQL database and local SMTP capture.

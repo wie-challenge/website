@@ -4,7 +4,7 @@ import * as C from '@nasj/contracts';
 import type { Db } from '../foundation/transaction.js';
 import { commercialTermsHash } from '../procurement/commercial-decision.js';
 import { specificationSnapshot } from '../procurement/records.js';
-export const DEMO_SEED_VERSION = 1;
+export const DEMO_SEED_VERSION = 3;
 export const DEMO_LIMITATIONS = [
   'All scenario identities, organizations, capacity, costs and commercial records are synthetic.',
   'Seeded sample approval and feasibility are demonstrations, not field measurement or independently verified evidence.',
@@ -43,6 +43,14 @@ export const initialDemoTotals: C.DemoTotals = {
   inventoryLots: 0,
   inventoryReservedMilli: '0',
   publishedQr: 0,
+  allocationPlans: 0,
+  productSpecifications: 1,
+  sampleRequests: 0,
+  samplePayables: 0,
+  productionExceptions: 0,
+  discussions: 0,
+  supportTickets: 0,
+  notificationDeliveries: 0,
 };
 export type DemoSeedSpec = {
   version: number;
@@ -147,7 +155,7 @@ export async function seedDemoScenario(
   await member(
     users.production,
     internal.id,
-    ['NASJ_OPERATOR'],
+    ['NASJ_OPERATOR', 'PRODUCT_DESIGNER'],
     [
       'inventory.stock.register',
       'inventory.stock.reserve',
@@ -490,6 +498,86 @@ export async function seedDemoScenario(
     deliveryAt: deliveryAt.toISOString(),
     initialTotals: initialDemoTotals,
   };
+  // Batch 8–11 demonstration records. Every row belongs to this generation's organizations, so a
+  // reset archives them with the scenario and a new generation never sees them.
+  const recommendationPolicy = await tx.recommendationPolicy.upsert({
+    where: { version: C.PLANNING_POLICY_VERSION },
+    create: {
+      version: C.PLANNING_POLICY_VERSION,
+      name: 'SYNTHETIC deterministic eligibility ranking',
+      inputs: {
+        weights: C.rankingWeights,
+        provenance: 'SYNTHETIC',
+        criteria: [
+          'craft',
+          'declared availability',
+          'free capacity',
+          'accepted commitments',
+          'equipment',
+        ],
+      },
+      excluded: [
+        'wearable participation',
+        'health or strain records',
+        'protected demographics',
+        'offer decline history',
+      ],
+      active: true,
+    },
+    update: {},
+  });
+  const specification = await tx.productSpecification.create({
+    data: {
+      craftSkillId: craft.id,
+      productCode: `SYNTH-RUNNER-${scenarioId.slice(0, 6).toUpperCase()}`,
+      name: 'SYNTHETIC — Embroidered table runner',
+      ownerOrganizationId: internal.id,
+      authorId: owner,
+      revisions: {
+        create: {
+          revisionNumber: 1,
+          status: 'DRAFT',
+          description:
+            'Synthetic draft design; review, sample consent and buyer approval are still required.',
+          dimensions: '40 × 120',
+          unit: 'cm',
+          materials: [
+            { materialCode: 'COTTON', name: 'Cotton cloth', quantity: '1.200', unit: 'METERS' },
+          ],
+          instructions: 'Synthetic stitching instructions for demonstration only.',
+          tolerances: '± 5 mm, synthetic tolerance.',
+          qualityCriteria: 'Even border, no loose thread, synthetic criteria.',
+          referenceImages: [],
+          authorId: owner,
+        },
+      },
+    },
+    include: { revisions: true },
+  });
+  for (const category of ['PRODUCTION_EXCEPTION', 'SUPPORT_CASE_UPDATE'] as const)
+    await tx.notificationPreference.upsert({
+      where: {
+        userId_channel_category: { userId: users.artisan, channel: 'IN_APP', category },
+      },
+      create: { userId: users.artisan, channel: 'IN_APP', category, optedIn: true },
+      update: {},
+    });
+  await tx.auditEvent.create({
+    data: {
+      actorId: owner,
+      action: 'demo.planning.seeded',
+      targetType: 'RecommendationPolicy',
+      targetId: recommendationPolicy.id,
+      organizationId: internal.id,
+      correlationId: randomUUID(),
+      reason: 'Synthetic planning, catalogue and collaboration demonstration records.',
+      after: {
+        policyVersion: recommendationPolicy.version,
+        specificationRevision: specification.revisions[0].revisionNumber,
+        provenance: 'SYNTHETIC',
+      },
+    },
+  });
   const scenario = await tx.demoScenario.create({
     data: {
       id: scenarioId,

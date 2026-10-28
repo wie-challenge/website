@@ -34,6 +34,12 @@ function isWorkspacePath(path: string) {
       '/operator/activity',
       '/operator/inventory',
       '/operator/finance',
+      '/operator/sales',
+      '/admin/retention',
+      '/operator/planning',
+      '/catalog',
+      '/intelligence',
+      '/collaboration',
       '/buyer',
       '/buyer/company',
       '/buyer/representatives',
@@ -76,6 +82,7 @@ function isWorkspacePath(path: string) {
       '/support/cases',
       '/support/privacy',
     ].includes(path) ||
+    /^\/operator\/planning\/[a-zA-Z0-9_-]+$/.test(path) ||
     /^\/procurement(?:\/[a-zA-Z0-9_-]+(?:\/discussion)?)?$/.test(path) ||
     /^\/association\/artisans\/[a-zA-Z0-9_-]+(?:\/history)?$/.test(path) ||
     /^\/directory\/[A-Za-z0-9_-]+$/.test(path) ||

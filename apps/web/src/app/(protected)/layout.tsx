@@ -22,6 +22,7 @@ export default async function ProtectedLayout({ children }: { children: React.Re
                 [
                   'production.manage',
                   'finance.payout.read',
+                  'buyer.relationship.manage',
                   'quality.inspection.create',
                   'inventory.manage',
                 ].includes(p),

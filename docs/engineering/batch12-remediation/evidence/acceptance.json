@@ -1,0 +1,139 @@
+[
+  {
+    "story": "E18-01",
+    "issue": "https://github.com/wie-challenge/website/issues/204",
+    "originalCriteria": [
+      "Account, contact, consent basis, segment, next action, status and qualification notes stored and permission-scoped.",
+      "Capture organization/contact, segment, permission basis, needs and qualification status.",
+      "Assign owner, next action and follow-up date without implying purchase commitment.",
+      "Restrict contact/negotiation access and honor retention/contact preferences.",
+      "Track stage history and distinguish lead, qualified opportunity, proposal and contracted customer."
+    ],
+    "implementation": "Existing scoped discovery/qualification/contact histories retained; all-stage RFQ authorization is stricter.",
+    "tests": "Full Batch12 HTTP and mobile/desktop regressions pass.",
+    "missingCriteria": "None identified in software scope.",
+    "softwareStatus": "VERIFIED_SOFTWARE_CRITERIA",
+    "externalGate": "Real contact-basis evidence and owner acceptance remain separate.",
+    "ownerAcceptance": "PENDING"
+  },
+  {
+    "story": "E18-02",
+    "issue": "https://github.com/wie-challenge/website/issues/205",
+    "originalCriteria": [
+      "Proposal versions and feedback documented; won deals link to RFQ or signed contract.",
+      "Version sample/pilot proposal scope, price, timing and responsibilities.",
+      "Record buyer objections, outcome, decision date and follow-up owner.",
+      "Require RFQ/contract evidence before marking a proposal won.",
+      "Preserve lost/no-decision reasons without overwriting earlier negotiation."
+    ],
+    "implementation": "RFQ references persist at DRAFT/SENT/WON and cannot silently change/disappear; immutable historical JSON links remain read-compatible. No proposal creates artisan obligations.",
+    "tests": "R12 missing/HOLD/REJECT, current approval, both WON orderings and browser proposal histories.",
+    "missingCriteria": "None identified in the authorized RFQ conversion path.",
+    "softwareStatus": "VERIFIED_SOFTWARE_CRITERIA",
+    "externalGate": "Real buyer outcomes and signed-contract evidence are not fabricated.",
+    "ownerAcceptance": "PENDING"
+  },
+  {
+    "story": "E18-03",
+    "issue": "https://github.com/wie-challenge/website/issues/206",
+    "originalCriteria": [
+      "Quote versus actual variance, buyer payment milestones, obligations and minimum cash gap calculated per order.",
+      "Compare quoted versus actual revenue/cost lines with variance reasons.",
+      "Model timing of buyer receipts, material purchases and artisan obligations.",
+      "Show minimum cash gap and assumptions without conflating contribution with cash.",
+      "Require finance review before committing to an unfunded or unsustainable new contract."
+    ],
+    "implementation": "A12-02 repaired: acceptance requires exact current quote/cost/feasibility/RFQ/funding review for linked RFQs or explicit finance-reviewed RFQs.",
+    "tests": "Four new permanent funding checks; missing, HOLD/UNFUNDED, REJECT, stale assumptions/cost/quote and concurrent idempotent acceptance.",
+    "missingCriteria": "Supported actual recognized contribution and complete actual cost/revenue evidence remain unavailable.",
+    "softwareStatus": "PARTIALLY_IMPLEMENTED",
+    "externalGate": "Approved recognition definitions, complete actual evidence and funding-policy ownership.",
+    "ownerAcceptance": "PENDING"
+  },
+  {
+    "story": "E10-11",
+    "issue": "https://github.com/wie-challenge/website/issues/146",
+    "originalCriteria": [
+      "Exports balance to source events and restrict sensitive details.",
+      "Export period, account/order reference, currency, amount and source event with stable IDs.",
+      "Reconcile totals to invoice, receipt, liability and payout subledgers.",
+      "Separate pending/simulated records from verified transactions.",
+      "Limit sensitive beneficiary details and audit who exported which period."
+    ],
+    "implementation": "Existing source-based, scoped, audited accounting CSV preserved; no second ledger or invoice mapping added.",
+    "tests": "Existing independent source-liability and cost reconciliation plus full browser/export regression.",
+    "missingCriteria": "Approved invoice-subledger reconciliation/classification remains absent.",
+    "softwareStatus": "PARTIALLY_IMPLEMENTED",
+    "externalGate": "Approved invoice/tax policy and source evidence.",
+    "ownerAcceptance": "PENDING"
+  },
+  {
+    "story": "E10-13",
+    "issue": "https://github.com/wie-challenge/website/issues/148",
+    "originalCriteria": [
+      "On-time rate excludes missing/unknown denominators, distinguishes planned from completed, and identifies unverified payout dates.",
+      "Derive due dates from accepted contractual rules rather than report creation dates.",
+      "Compute on-time numerator/eligible denominator with explicit reporting period.",
+      "Distinguish outstanding overdue, settled late, on-time and unknown/unverified dates.",
+      "Define treatment of partial payments and disputed obligations and disclose exclusions."
+    ],
+    "implementation": "A12-03 software preparation: append-only ContractualDueDate source/correction history, exact terms-version binding, and separate operational/reported/simulated states. No free-text date parsing or verified-payment fabrication.",
+    "tests": "Three permanent native/HTTP checks, two new units and the extended real browser due-date/partial-report journey. Existing pure verified-case tests remain model tests only.",
+    "missingCriteria": "Verified-positive service settlement remains unavailable under the preserved execution_unverified constraint.",
+    "softwareStatus": "PARTIALLY_IMPLEMENTED",
+    "externalGate": "Approved bank/provider/manual settlement-verification policy and genuine source evidence; positive states require that authority.",
+    "ownerAcceptance": "PENDING"
+  },
+  {
+    "story": "E10-14",
+    "issue": "https://github.com/wie-challenge/website/issues/73",
+    "originalCriteria": [
+      "Closure blocks on unreconciled receivables, undisposed material costs, outstanding payables or open settlement disputes unless explicit authorized exception.",
+      "Check buyer receivables, all artisan obligations, settlement disputes and material dispositions.",
+      "Block closure when a required balance/evidence remains unresolved.",
+      "Require a documented authorized and lawful disposition for any exception without erasing liability history.",
+      "Record closure checklist, actor, time and ledger snapshot atomically."
+    ],
+    "implementation": "A12-01 repaired: one transaction-bound FinanceService.assess gates the legacy CLOSED transition and finance decision; related adjustments, receivables, stock, payables, sample obligations and events cannot be bypassed.",
+    "tests": "Exact pending-adjustment HTTP 409 counterexample; material/payable/dispute/partial buyer evidence; concurrent adjustment/close; repeat/exception denial; linked sample regression.",
+    "missingCriteria": "Lawful positive financial close and authorized exceptions remain disabled. Pure source-free synthetic legacy behavior is explicitly separate from verified settlement.",
+    "softwareStatus": "PARTIALLY_IMPLEMENTED",
+    "externalGate": "Approved settlement, entitlement, material disposition, invoice and lawful exception policies.",
+    "ownerAcceptance": "PENDING"
+  },
+  {
+    "story": "E16-08",
+    "issue": "https://github.com/wie-challenge/website/issues/77",
+    "originalCriteria": [
+      "Recovery target, log redaction and alert tests documented.",
+      "Define reviewed recovery-time/recovery-point targets and backup ownership.",
+      "Produce protected backups and execute a restore into an isolated environment.",
+      "Capture structured redacted logs, health checks and actionable alerts.",
+      "Document incident/rollback procedures and verify restored ledger consistency."
+    ],
+    "implementation": "Existing encrypted backup/restore and native migration verification reused, now with populated contractual-date history.",
+    "tests": "36 native migrations; 131-table restore including all new date rows; row hashes, constraints, rollback/history and normal upgrade regression pass.",
+    "missingCriteria": "No missing local software criterion identified.",
+    "softwareStatus": "VERIFIED_SOFTWARE_CRITERIA",
+    "externalGate": "Hosted/off-site recoverability, named production ownership, key custody and actual RTO/RPO validation remain separate.",
+    "ownerAcceptance": "PENDING"
+  },
+  {
+    "story": "E14-09",
+    "issue": "https://github.com/wie-challenge/website/issues/74",
+    "originalCriteria": [
+      "Per-data-class retention, deletion exceptions, access roles and breach reporting ownership reviewed before real pilot.",
+      "Define per-class purpose, retention trigger/duration, access roles and deletion method.",
+      "Document required finance/audit exceptions and approve them through qualified review.",
+      "Assign privacy incident detection, escalation and response owners.",
+      "Verify expiry/removal behavior for personal data and approved public copies.",
+      "Keep wearable raw/summary records absent from commercial retention inventories except a documented local-only boundary."
+    ],
+    "implementation": "Existing governed inventory and no-destructive-purge boundary preserved. New date evidence belongs to the financial-record purpose class.",
+    "tests": "Existing retention authorization/no-purge and privacy regressions pass.",
+    "missingCriteria": "Retention durations, preservation exceptions, named responsibilities and removal procedures need qualified review.",
+    "softwareStatus": "BLOCKED_EXTERNAL_REVIEW",
+    "externalGate": "Qualified privacy/legal policy review; no Tunisian compliance or production approval asserted.",
+    "ownerAcceptance": "PENDING"
+  }
+]

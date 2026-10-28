@@ -1,0 +1,13 @@
+{
+  "stories": 33,
+  "criteria": 165,
+  "workflowScenarios": 50,
+  "negativeSecurityCases": 18,
+  "integrationPass": true,
+  "browserPass": true,
+  "showroomPass": true,
+  "statuses": {
+    "VERIFIED_SOFTWARE_CRITERIA": 32,
+    "BLOCKED": 1
+  }
+}

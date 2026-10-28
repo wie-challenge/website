@@ -1,0 +1,63 @@
+{
+  "verifiedAt": "2026-10-28T14:59:28.353839+00:00",
+  "head": "b63b9d9a94ec576533a0c87e60e20203e72690f4",
+  "tests": {
+    "apiUnit": 133,
+    "webUnit": 25,
+    "integration": 176,
+    "applicationBrowser": 52,
+    "showroom": 3,
+    "targetedIntegrationIncludingBootstrap": 39,
+    "targetedBrowser": 4,
+    "targetedUnit": 10
+  },
+  "newPermanentIntegrationScenarios": 10,
+  "newApiUnitTests": 2,
+  "commands": "commands.json",
+  "nativeMigration": {
+    "evidence": "DISPOSABLE_NATIVE_POSTGRESQL_MIGRATIONS",
+    "engine": "PostgreSQL 17.7 on x86_64-pc-linux-musl, compiled by gcc (Alpine 15.2.0) 15.2.0, 64-bit",
+    "baselinePublicTables": 100,
+    "finalPublicTables": 131,
+    "migrations": 36,
+    "originalBatchTables": 20,
+    "foreignKeys": 65,
+    "persistentDatabaseTouched": false
+  },
+  "restore": {
+    "evidence": "DISPOSABLE_ENCRYPTED_SYNTHETIC_RESTORE",
+    "configurationRestored": true,
+    "encryptedBytes": 768171,
+    "tables": 131,
+    "contractualDateRows": 3,
+    "rows": 3152,
+    "backupMs": 301,
+    "restoreAndVerifyMs": 3200,
+    "archiveBytes": 768010
+  },
+  "sourceFilesChangedSinceReleaseCapture": [],
+  "softwareStatuses": {
+    "VERIFIED_SOFTWARE_CRITERIA": 3,
+    "PARTIALLY_IMPLEMENTED": 4,
+    "BLOCKED_EXTERNAL_REVIEW": 1
+  },
+  "ownerAcceptance": "PENDING_ALL_EIGHT",
+  "beforeAfter": {
+    "A12-01": {
+      "before": "201 CLOSED with pending adjustment",
+      "after": "409 FINANCIAL_CLOSURE_REQUIRED; order remains SETTLED, liability preserved"
+    },
+    "A12-02": {
+      "before": "201 accepted without review or despite HOLD/UNFUNDED",
+      "after": "409 FINANCE_REVIEW_REQUIRED for missing/HOLD/REJECT/stale; current approved evidence allows one authoritative acceptance"
+    },
+    "A12-03": {
+      "before": "Unreachable verified branch and free-text date lookup",
+      "after": "Native structured immutable due-date evidence and explicit supported-state reporting; verified-positive unavailable, story PARTIAL"
+    }
+  },
+  "committedOrStaged": false,
+  "deployed": false,
+  "persistentDatabaseTouched": false,
+  "historicalReportsChanged": false
+}

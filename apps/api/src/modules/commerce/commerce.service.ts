@@ -1,3 +1,5 @@
+import { FinanceService } from '../finance/finance.service.js';
+import { fail } from '../../common/errors.js';
 import { Inject, Injectable } from '@nestjs/common';
 import type { Prisma, CommercialRfq, CommercialOffer, SyntheticPayment } from '@prisma/client';
 import {
@@ -119,7 +121,10 @@ function orderQuantities(order: Order) {
 }
 @Injectable()
 export class CommerceService {
-  constructor(@Inject(PrismaService) private readonly db: PrismaService) {}
+  constructor(
+    @Inject(PrismaService) private readonly db: PrismaService,
+    @Inject(FinanceService) private readonly finance: FinanceService,
+  ) {}
   async catalog(actor: Actor) {
     return iamTransaction(this.db, actor, async (tx) =>
       projectBuyerCatalog(
@@ -574,6 +579,7 @@ export class CommerceService {
         const available = await projectCapacity(tx, capacity);
         requireRule(
           available.availabilityKnown &&
+            available.constraints.length === 0 &&
             capacityHundredths(available.remaining) >= BigInt(input.quantity) * 100n,
           'CAPACITY_EXCEEDED',
           'This offer exceeds known remaining capacity for this production period.',
@@ -655,7 +661,9 @@ export class CommerceService {
           });
           const available = await projectCapacity(tx, capacity);
           requireRule(
-            available.availabilityKnown && available.reservationShortfall === '0.00',
+            available.availabilityKnown &&
+              available.constraints.length === 0 &&
+              available.reservationShortfall === '0.00',
             'CAPACITY_UNAVAILABLE',
             'Capacity changed; request a revised offer.',
           );
@@ -822,6 +830,19 @@ export class CommerceService {
           'MANAGED_FINANCIAL_WORKFLOW_REQUIRED',
           'Managed procurement requires buyer delivery confirmation and financial closure assessment.',
         );
+        if (input.next === 'CLOSED') {
+          const readiness = await this.finance.assess(
+            tx,
+            id,
+            Boolean(input.materialsResolved && input.dispositionNote),
+          );
+          if (readiness.blockers.length)
+            fail(
+              409,
+              'FINANCIAL_CLOSURE_REQUIRED',
+              `Financial closure denied: ${readiness.blockers.join(', ')}`,
+            );
+        }
         const q = orderQuantities(row);
         const buyerSettled = sums(
           row.payments.filter((p) => p.kind === 'BUYER_RECEIPT' && p.status === 'SETTLED'),

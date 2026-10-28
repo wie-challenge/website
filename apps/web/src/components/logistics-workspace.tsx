@@ -3,6 +3,7 @@ import type * as C from '@nasj/contracts';
 import { EvidenceNotice } from './evidence-notice';
 import { apiFetch } from '@/lib/api';
 import { PublicTraceCode } from './trace-qr';
+import { announceLogisticsUpdate } from '@/lib/logistics-events';
 import {
   ActionForm,
   Input,
@@ -296,7 +297,10 @@ export function LogisticsOrder({ orderId }: { orderId: string }) {
                   occurredAt: new Date().toISOString(),
                 })
               }
-              onSuccess={resource.reload}
+              onSuccess={async () => {
+                await resource.reload();
+                announceLogisticsUpdate();
+              }}
             >
               <Input name="received" label="Pieces received" type="number" min="0" required />
               <Input name="accepted" label="Pieces accepted" type="number" min="0" required />

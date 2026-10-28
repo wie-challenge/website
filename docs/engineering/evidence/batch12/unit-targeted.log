@@ -1,0 +1,38 @@
+node:internal/modules/run_main:107
+    triggerUncaughtException(
+    ^
+
+Error: Transform failed with 1 error:
+/home/ashenix/Projects/wie-challenge/website/apps/api/test/unit/batch12.test.ts:30:107: ERROR: Expected ")" but found "'));assert.equal(csvCell('"
+    at failureErrorWithLog (/home/ashenix/Projects/wie-challenge/website/node_modules/.pnpm/esbuild@0.28.2/node_modules/esbuild/lib/main.js:1752:15)
+    at /home/ashenix/Projects/wie-challenge/website/node_modules/.pnpm/esbuild@0.28.2/node_modules/esbuild/lib/main.js:1019:50
+    at responseCallbacks.<computed> (/home/ashenix/Projects/wie-challenge/website/node_modules/.pnpm/esbuild@0.28.2/node_modules/esbuild/lib/main.js:886:9)
+    at handleIncomingPacket (/home/ashenix/Projects/wie-challenge/website/node_modules/.pnpm/esbuild@0.28.2/node_modules/esbuild/lib/main.js:941:12)
+    at Socket.readFromStdout (/home/ashenix/Projects/wie-challenge/website/node_modules/.pnpm/esbuild@0.28.2/node_modules/esbuild/lib/main.js:864:7)
+    at Socket.emit (node:events:514:28)
+    at addChunk (node:internal/streams/readable:567:12)
+    at readableAddChunkPushByteMode (node:internal/streams/readable:518:3)
+    at Readable.push (node:internal/streams/readable:398:5)
+    at Pipe.onStreamRead (node:internal/stream_base_commons:189:23) {
+  name: 'TransformError'
+}
+
+Node.js v24.20.0
+✖ test/unit/batch12.test.ts (96.987654ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 0
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 105.292509
+
+✖ failing tests:
+
+test at test/unit/batch12.test.ts:1:1
+✖ test/unit/batch12.test.ts (96.987654ms)
+  'test failed'
+undefined
+/home/ashenix/Projects/wie-challenge/website/apps/api:
+[ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL] Command failed with exit code 1: tsx --test test/unit/batch12.test.ts

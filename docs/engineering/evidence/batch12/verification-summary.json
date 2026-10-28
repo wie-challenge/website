@@ -1,0 +1,72 @@
+{
+  "date": "2026-10-28",
+  "timezone": "Africa/Tunis",
+  "stories": 8,
+  "criteria": 41,
+  "ownerAcceptance": "PENDING_ALL_8",
+  "softwareStatuses": {
+    "VERIFIED_SOFTWARE_CRITERIA": 4,
+    "PARTIALLY_IMPLEMENTED": 3,
+    "BLOCKED": 1
+  },
+  "tests": {
+    "apiUnits": 131,
+    "webUnits": 25,
+    "fullIntegration": 166,
+    "latestFocusedIntegrationIncludingBootstrap": 29,
+    "applicationBrowsers": 52,
+    "showroomBrowsers": 3,
+    "latestFocusedBrowsers": 2
+  },
+  "checks": {
+    "lint": "PASS_410_FILES_NO_FINDINGS",
+    "typecheck": "PASS",
+    "build": "PASS",
+    "prismaValidation": "PASS",
+    "gitDiffCheck": "PASS"
+  },
+  "nativeMigrationEvidence": {
+    "evidence": "DISPOSABLE_NATIVE_POSTGRESQL_MIGRATIONS",
+    "engine": "PostgreSQL 17.7 on x86_64-pc-linux-musl, compiled by gcc (Alpine 15.2.0) 15.2.0, 64-bit",
+    "baselinePublicTables": 100,
+    "finalPublicTables": 130,
+    "migrations": 35,
+    "originalBatchTables": 20,
+    "foreignKeys": 65,
+    "persistentDatabaseTouched": false
+  },
+  "restoreDrillEvidence": {
+    "evidence": "DISPOSABLE_ENCRYPTED_SYNTHETIC_RESTORE",
+    "configurationRestored": true,
+    "encryptedBytes": 730455,
+    "tables": 130,
+    "rows": 2788,
+    "backupMs": 402,
+    "restoreAndVerifyMs": 2947,
+    "archiveBytes": 730294
+  },
+  "authoritativeLogs": {
+    "integration": "integration-verified.log",
+    "latestIntegration": "integration-latest.log",
+    "browser": "browser-release.log",
+    "latestBrowser": "browser-verified.log",
+    "apiUnits": "api-unit-verified.log",
+    "webUnits": "web-unit-verified.log",
+    "lint": "lint-accepted.log",
+    "typecheck": "typecheck-accepted.log",
+    "build": "build-accepted.log",
+    "schema": "schema-validated.log",
+    "whitespace": "diff-check.log"
+  },
+  "limitations": [
+    "Approved actual revenue/cost recognition is unavailable",
+    "Approved invoice subledger/tax policy is unavailable",
+    "Positive financial closure and lawful exceptions are not enabled",
+    "Qualified retention/preservation policy review remains pending",
+    "No real payment, commercial result, hosted recovery or legal compliance was verified"
+  ],
+  "persistentDatabaseTouched": false,
+  "deployed": false,
+  "githubMutated": false,
+  "committedOrStaged": false
+}

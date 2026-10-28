@@ -1,0 +1,26 @@
+$ pnpm --filter @nasj/contracts build && pnpm --filter @nasj/api typecheck && pnpm --filter @nasj/api typecheck:test && pnpm --filter @nasj/web typecheck
+$ tsc -p tsconfig.json
+$ prisma generate && tsc --noEmit
+Loaded Prisma config from prisma.config.ts.
+
+Prisma schema loaded from prisma/schema.prisma.
+
+✔ Generated Prisma Client (v7.10.1) to ./../../node_modules/.pnpm/@prisma+client@7.10.1_prisma@7.10.1_@types+node@24.19.2_@types+react-dom@19.3.0_@types+_9e72caf218d3f522373b8e6c9536cf3f/node_modules/@prisma/client in 1.03s
+
+Start by importing your Prisma Client (See: https://pris.ly/d/importing-client)
+
+
+src/modules/finance/finance.service.ts(590,162): error TS2353: Object literal may only specify known properties, and 'buyerSampleApproval' does not exist in type 'ProcurementSampleInclude<DefaultArgs>'.
+src/modules/finance/finance.service.ts(591,46): error TS2339: Property 'buyerSampleApproval' does not exist on type '{ id: string; createdAt: Date; version: number; snapshot: JsonValue; rfqId: string; authorId: string; revisionId: string; evidenceReference: string; criteria: string; catalogueApprovalId: string | null; }'.
+src/modules/finance/finance.service.ts(591,69): error TS2339: Property 'buyerSampleApproval' does not exist on type '{ id: string; createdAt: Date; version: number; snapshot: JsonValue; rfqId: string; authorId: string; revisionId: string; evidenceReference: string; criteria: string; catalogueApprovalId: string | null; }'.
+src/modules/sales/sales.service.ts(51,132): error TS2322: Type '"PENDING"' is not assignable to type 'ApprovalStatus | undefined'.
+/home/ashenix/Projects/wie-challenge/website/apps/api:
+[ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL] @nasj/api@0.1.0 typecheck: `prisma generate && tsc --noEmit`
+Exit status 2
+[ELIFECYCLE] Command failed with exit code 2.
+re ... | undefined'.
+src/modules/sales/sales.service.ts(51,132): error TS2322: Type '"PENDING"' is not assignable to type 'ApprovalStatus | undefined'.
+/home/ashenix/Projects/wie-challenge/website/apps/api:
+[ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL] @nasj/api@0.1.0 typecheck: `prisma generate && tsc --noEmit`
+Exit status 2
+[ELIFECYCLE] Command failed with exit code 2.

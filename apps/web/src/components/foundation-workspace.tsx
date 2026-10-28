@@ -1,4 +1,5 @@
 'use client';
+import { AssociationCapacitySummary } from './association-capacity-summary';
 import { CapacityWorkspace } from './capacity-workspace';
 import Link from 'next/link';
 import { useState } from 'react';
@@ -207,6 +208,9 @@ export function FoundationDashboard({
           Commercial requests are coordinated by assigned NASJ operators. Administrator access
           covers user management, organization approvals and independent governance.
         </p>
+      )}
+      {mode === 'association' && context.coordinatorOrganizationId && (
+        <AssociationCapacitySummary organizationId={context.coordinatorOrganizationId} />
       )}
       {mode === 'association' && (
         <p>

@@ -41,6 +41,14 @@ export interface DemoTotals {
   inventoryLots: number;
   inventoryReservedMilli: string;
   publishedQr: number;
+  allocationPlans: number;
+  productSpecifications: number;
+  sampleRequests: number;
+  samplePayables: number;
+  productionExceptions: number;
+  discussions: number;
+  supportTickets: number;
+  notificationDeliveries: number;
 }
 export interface DemoScenarioView {
   id: string;

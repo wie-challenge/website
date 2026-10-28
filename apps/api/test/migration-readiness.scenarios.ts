@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
-import { mkdtemp, writeFile, rm } from 'node:fs/promises';
+import { mkdtemp, writeFile, rm, readdir } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -13,7 +13,7 @@ import { encryptBackup, decryptBackup } from '../src/operations/backup.js';
 import { disposableDatabase } from './support.js';
 import { seedBrowserBatch5Fixture } from './batch5.fixture.js';
 const exec = promisify(execFile);
-async function snapshot(url: string) {
+async function snapshot(url: string, columns: Map<string, string[]> = new Map()) {
   const sql = new Client({ connectionString: url });
   await sql.connect();
   try {
@@ -24,9 +24,22 @@ async function snapshot(url: string) {
     ).rows;
     const result: Record<string, string> = {};
     for (const { tablename } of tables) {
+      if (!columns.has(tablename))
+        columns.set(
+          tablename,
+          (
+            await sql.query<{ column_name: string }>(
+              "SELECT column_name FROM information_schema.columns WHERE table_schema='public' AND table_name=$1 ORDER BY ordinal_position",
+              [tablename],
+            )
+          ).rows.map((r) => r.column_name),
+        );
       const rows = (
         await sql.query(
-          `SELECT row_to_json(t)::text AS row FROM "${tablename.replaceAll('"', '""')}" t`,
+          `SELECT row_to_json(t)::text AS row FROM (SELECT ${columns
+            .get(tablename)!
+            .map((c) => `"${c.replaceAll('"', '""')}"`)
+            .join(',')} FROM "${tablename.replaceAll('"', '""')}") t`,
         )
       ).rows
         .map((r) => r.row)
@@ -61,7 +74,8 @@ export async function runMigrationReadinessScenario(
             },
           });
         await seedBrowserBatch5Fixture(source.url, 'drill');
-        const before = await snapshot(source.url);
+        const columns = new Map<string, string[]>();
+        const before = await snapshot(source.url, columns);
         const dumped = await exec(
           'docker',
           [
@@ -107,7 +121,7 @@ export async function runMigrationReadinessScenario(
           '--exit-on-error',
           '/tmp/synthetic.dump',
         ]);
-        assert.deepEqual(await snapshot(target.url), before);
+        assert.deepEqual(await snapshot(target.url, columns), before);
         const cwd = fileURLToPath(new URL('../', import.meta.url));
         const env = {
           ...process.env,
@@ -148,7 +162,7 @@ export async function runMigrationReadinessScenario(
           );
         }
         console.log(`SCHEMA_DRIFT_REVIEW_BEGIN\n${drift.stdout.trim()}\nSCHEMA_DRIFT_REVIEW_END`);
-        const after = await snapshot(target.url);
+        const after = await snapshot(target.url, columns);
         for (const [table, digest] of Object.entries(before))
           if (table !== '_prisma_migrations')
             assert.equal(after[table], digest, `Preserve ${table}`);
@@ -163,7 +177,11 @@ export async function runMigrationReadinessScenario(
                 'SELECT count(*)::int AS n FROM "_prisma_migrations" WHERE finished_at IS NOT NULL',
               )
             ).rows[0].n,
-            21,
+            (
+              await readdir(new URL('../prisma/migrations/', import.meta.url), {
+                withFileTypes: true,
+              })
+            ).filter((entry) => entry.isDirectory()).length,
           );
         } finally {
           await db.end();

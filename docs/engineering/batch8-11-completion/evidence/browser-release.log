@@ -1,0 +1,80 @@
+$ pnpm db:generate && pnpm --filter @nasj/contracts build && playwright test && playwright test --config playwright.demo.config.ts
+$ pnpm --filter @nasj/api db:generate
+$ prisma generate
+Loaded Prisma config from prisma.config.ts.
+
+Prisma schema loaded from prisma/schema.prisma.
+
+✔ Generated Prisma Client (v7.10.1) to ./../../node_modules/.pnpm/@prisma+client@7.10.1_prisma@7.10.1_@types+node@24.19.2_@types+react-dom@19.3.0_@types+_9e72caf218d3f522373b8e6c9536cf3f/node_modules/@prisma/client in 1.74s
+
+Start by importing your Prisma Client (See: https://pris.ly/d/importing-client)
+
+
+$ tsc -p tsconfig.json
+
+Running 50 tests using 1 worker
+
+(node:135179) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓   1 tests/e2e/batch5.spec.ts:46:1 › Batch 5 real synthetic material custody, payout governance, dispute and blocked closure journeys (10.1s)
+  ✓   2 tests/e2e/batch5.spec.ts:175:1 › full synthetic material receipt confirms custody while physical verification remains unavailable (4.6s)
+  ✓   3 tests/e2e/batch7-simulator.spec.ts:3:1 › public financial model recalculates exact assumptions without commercial writes (535ms)
+  ✓   4 tests/e2e/batch7-simulator.spec.ts:42:1 › financial model remains readable and operable on a narrow screen (364ms)
+  ✓   5 tests/e2e/capacity.spec.ts:58:3 › capacity revisions preserve commitments for artisan and coordinator at 360px (8.4s)
+  ✓   6 tests/e2e/capacity.spec.ts:58:3 › capacity revisions preserve commitments for artisan and coordinator at 1280px (8.8s)
+  ✓   7 tests/e2e/catalog.spec.ts:47:3 › synthetic catalog browses safely and prefills a persisted RFQ on mobile (5.6s)
+  ✓   8 tests/e2e/catalog.spec.ts:47:3 › synthetic catalog browses safely and prefills a persisted RFQ on desktop (5.4s)
+  ✓   9 tests/e2e/catalog.spec.ts:147:1 › catalog loading, retry, empty and broken-image states remain usable (1.7s)
+  ✓  10 tests/e2e/collaboration.spec.ts:32:3 › private backend-connected support creation and withdrawal on mobile (1.9s)
+  ✓  11 tests/e2e/collaboration.spec.ts:32:3 › private backend-connected support creation and withdrawal on desktop (1.9s)
+  ✓  12 tests/e2e/commerce.spec.ts:76:3 › buyer RFQ, voluntary artisan decisions/progress and operator QA are accessible on mobile (47.3s)
+  ✓  13 tests/e2e/commerce.spec.ts:76:3 › buyer RFQ, voluntary artisan decisions/progress and operator QA are accessible on tablet (23.4s)
+  ✓  14 tests/e2e/commerce.spec.ts:76:3 › buyer RFQ, voluntary artisan decisions/progress and operator QA are accessible on desktop (23.2s)
+  ✓  15 tests/e2e/commercial.spec.ts:27:1 › buyer accepts the exact costed quotation after feasibility review (4.7s)
+  ✓  16 tests/e2e/directory.spec.ts:39:3 › production directory search stays private and responsive at 360px (4.1s)
+  ✓  17 tests/e2e/directory.spec.ts:39:3 › production directory search stays private and responsive at 1280px (4.3s)
+  ✓  18 tests/e2e/evidence.spec.ts:7:3 › truthful public concept and evidence navigation on mobile (648ms)
+  ✓  19 tests/e2e/evidence.spec.ts:7:3 › truthful public concept and evidence navigation on desktop (639ms)
+  ✓  20 tests/e2e/execution.spec.ts:27:1 › an accepted batch is prepared, collected, confirmed and published as synthetic traceability (14.9s)
+  ✓  21 tests/e2e/foundation.spec.ts:33:1 › protected routes redirect and authentication errors are accessible (442ms)
+  ✓  22 tests/e2e/foundation.spec.ts:42:1 › signup, email verification, profile, sessions and password changes work in the browser (5.4s)
+  ✓  23 tests/e2e/foundation.spec.ts:100:1 › password recovery token stays out of URLs after hydration and revokes sessions (1.6s)
+  ✓  24 tests/e2e/foundation.spec.ts:120:1 › admin user search and status controls work; last admin cannot be removed (1.5s)
+  ✓  25 tests/e2e/foundation.spec.ts:156:1 › mobile forms, reduced motion and validation do not overflow (360ms)
+  ✓  26 tests/e2e/foundation.spec.ts:171:1 › network failures show a recoverable message without exposing upstream details (321ms)
+  ✓  27 tests/e2e/foundation.spec.ts:183:1 › forms remain disabled without JavaScript and cannot fall back to credential-bearing GET requests (169ms)
+  ✓  28 tests/e2e/foundation.spec.ts:201:1 › pending authentication disables duplicate submissions and recovers after a failed response (339ms)
+  ✓  29 tests/e2e/foundation.spec.ts:236:1 › small-screen login supports keyboard focus, associated labels and direct API denials through the proxy (400ms)
+  ✓  30 tests/e2e/identity.spec.ts:88:1 › buyer onboarding, approval, invitation and scoped membership revocation work across organizations (11.7s)
+  ✓  31 tests/e2e/identity.spec.ts:211:1 › independent artisan manages skills, capacity, association consent and limited delegation (8.6s)
+  ✓  32 tests/e2e/identity.spec.ts:365:1 › authenticator enrollment and recovery-code sign-in work without persisting secrets (2.4s)
+  ✓  33 tests/e2e/nasj-rebrand.spec.ts:7:3 › NASJ landing, branding and account menu work on mobile (2.6s)
+  ✓  34 tests/e2e/nasj-rebrand.spec.ts:7:3 › NASJ landing, branding and account menu work on desktop (2.8s)
+  ✓  35 tests/e2e/planning-intelligence.spec.ts:28:1 › operator plans from recorded ranking, reviews material assumptions and compares explicit pricing scenarios (4.5s)
+  ✓  36 tests/e2e/planning-intelligence.spec.ts:153:1 › unprivileged production intelligence read shows an honest error without exposing totals (1.0s)
+  ✓  37 tests/e2e/presentation.spec.ts:9:3 › presentation navigation, notes, resume and evidence on mobile (1.2s)
+  ✓  38 tests/e2e/presentation.spec.ts:9:3 › presentation navigation, notes, resume and evidence on desktop (1.3s)
+  ✓  39 tests/e2e/presentation.spec.ts:100:1 › presentation fullscreen uses the browser API, preserves progress and hides notes (465ms)
+  ✓  40 tests/e2e/presentation.spec.ts:124:1 › presentation ignores malformed resume data and prints evidence without notes (483ms)
+  ✓  41 tests/e2e/procurement.spec.ts:70:3 › E02 buyer and operator complete versioned procurement on mobile (17.1s)
+  ✓  42 tests/e2e/procurement.spec.ts:70:3 › E02 buyer and operator complete versioned procurement on desktop (16.9s)
+  ✓  43 tests/e2e/procurement.spec.ts:328:1 › E02 shows field errors, empty records and a recoverable list failure (1.7s)
+  ✓  44 tests/e2e/product-authority.spec.ts:53:3 › paid sample explicit consent and rejection retain obligation on mobile (7.8s)
+  ✓  45 tests/e2e/product-authority.spec.ts:53:3 › paid sample explicit consent and rejection retain obligation on desktop (8.4s)
+  ✓  46 tests/e2e/production.spec.ts:39:1 › an artisan accepts issued work and an accountless report stays unverified (5.6s)
+  ✓  47 tests/e2e/revised-foundation.spec.ts:82:1 › coordinator onboards an artisan without login, records declared capacity and loses access immediately on suspension (5.7s)
+  ✓  48 tests/e2e/revised-foundation.spec.ts:184:1 › buyer and administrator default workspaces are distinct and participant concerns require no account (9.6s)
+  ✓  49 tests/e2e/workspace-ui.spec.ts:40:1 › desktop sidebar shows buyer work, active navigation and the current procurement workspace (2.8s)
+  ✓  50 tests/e2e/workspace-ui.spec.ts:69:1 › mobile drawer supports focus, escape, navigation and keyboard account tabs at 360px (5.0s)
+
+  50 passed (5.3m)
+
+Running 3 tests using 1 worker
+
+(node:147570) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓  1 tests/demo-e2e/batch811.spec.ts:28:1 › Batch 8–11 showroom builds authoritative planning, paid sample and support records in one visitor generation (5.2s)
+  ✓  2 tests/demo-e2e/showroom.spec.ts:39:1 › visitor showroom completes real synthetic commercial workflow and resets without affecting another visitor (10.3s)
+  ✓  3 tests/demo-e2e/showroom.spec.ts:366:1 › showroom is responsive, keyboard reachable and preserves scenario across persona navigation (834ms)
+
+  3 passed (31.2s)

@@ -1,6 +1,7 @@
 import type { Prisma } from '@prisma/client';
 import type { PrismaService } from '../../database/prisma.service.js';
 import type { Actor } from '../../common/identity.js';
+import { logger } from '../../common/logging.js';
 import { fail } from '../../common/errors.js';
 export type Db = Prisma.TransactionClient;
 // Fixed acquisition order also serializes against legacy account lifecycle mutations.
@@ -26,6 +27,10 @@ export function iamTransaction<T>(db: PrismaService, actor: Actor, fn: (tx: Db) 
       { maxWait: 15000, timeout: 15000 },
     )
     .catch((error: unknown) => {
+      logger.warn(
+        { correlationId: actor.requestId, code: 'DOMAIN_TRANSACTION_REJECTED' },
+        'Domain transaction rejected',
+      );
       if (error && typeof error === 'object' && 'code' in error && error.code === 'P2002')
         fail(
           409,

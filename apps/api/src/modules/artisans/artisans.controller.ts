@@ -44,6 +44,12 @@ export class ArtisansController {
   @Get('artisans/assisted') assisted(@CurrentUser() actor: Actor) {
     return this.artisans.assisted(actor);
   }
+  @Get('associations/:id/capacity') associationCapacity(
+    @CurrentUser() actor: Actor,
+    @Param('id', new ZodValidationPipe(resourceIdSchema)) id: string,
+  ) {
+    return this.artisans.associationCapacity(actor, id);
+  }
   @Get('artisans/me') me(@CurrentUser() actor: Actor) {
     return this.artisans.me(actor);
   }

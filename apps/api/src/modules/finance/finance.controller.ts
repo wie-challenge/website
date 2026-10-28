@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Headers, Inject, Param, Post } from '@nestjs/common';
+import { Body, Controller, Get, Headers, Inject, Param, Post, Query } from '@nestjs/common';
 import * as C from '@nasj/contracts';
 import { z } from 'zod';
 import { CurrentUser, type Actor } from '../../common/identity.js';
@@ -8,6 +8,75 @@ const rid = new ZodValidationPipe(C.resourceIdSchema);
 @Controller('api/v1/finance')
 export class FinanceController {
   constructor(@Inject(FinanceService) private readonly service: FinanceService) {}
+  @Post('rfqs/:id/review') rfqReview(
+    @CurrentUser() a: Actor,
+    @Param('id', rid) id: string,
+    @Body(new ZodValidationPipe(C.rfqFinanceReviewSchema)) i: z.infer<
+      typeof C.rfqFinanceReviewSchema
+    >,
+    @Headers('idempotency-key') k?: string,
+  ) {
+    return this.service.reviewRfq(a, id, i, k);
+  }
+  @Get('orders/:id/analysis') analysis(@CurrentUser() a: Actor, @Param('id', rid) id: string) {
+    return this.service.analysis(a, id);
+  }
+  @Post('orders/:id/costs') cost(
+    @CurrentUser() a: Actor,
+    @Param('id', rid) id: string,
+    @Body(new ZodValidationPipe(C.financialCostSchema)) i: z.infer<typeof C.financialCostSchema>,
+    @Headers('idempotency-key') k?: string,
+  ) {
+    return this.service.recordCost(a, id, i, k);
+  }
+  @Post('orders/:id/cash-review') cash(
+    @CurrentUser() a: Actor,
+    @Param('id', rid) id: string,
+    @Body(new ZodValidationPipe(C.cashModelSchema)) i: z.infer<typeof C.cashModelSchema>,
+    @Headers('idempotency-key') k?: string,
+  ) {
+    return this.service.reviewCashModel(a, id, i, k);
+  }
+  @Get('orders/:id/accounting-export') accounting(
+    @CurrentUser() a: Actor,
+    @Param('id', rid) id: string,
+    @Query(new ZodValidationPipe(C.financePeriodSchema)) i: z.infer<typeof C.financePeriodSchema>,
+  ) {
+    return this.service.exportAccounting(a, id, i);
+  }
+  @Get('orders/:id/contractual-dates') contractualDates(
+    @CurrentUser() a: Actor,
+    @Param('id', rid) id: string,
+  ) {
+    return this.service.contractualDates(a, id);
+  }
+  @Post('orders/:id/contractual-dates') contractualDate(
+    @CurrentUser() a: Actor,
+    @Param('id', rid) id: string,
+    @Body(new ZodValidationPipe(C.contractualDueDateSchema)) i: z.infer<
+      typeof C.contractualDueDateSchema
+    >,
+    @Headers('idempotency-key') k?: string,
+  ) {
+    return this.service.recordContractualDate(a, id, i, k);
+  }
+  @Get('orders/:id/timeliness') timeliness(
+    @CurrentUser() a: Actor,
+    @Param('id', rid) id: string,
+    @Query(new ZodValidationPipe(C.financePeriodSchema)) i: z.infer<typeof C.financePeriodSchema>,
+  ) {
+    return this.service.timeliness(a, id, i);
+  }
+  @Post('orders/:id/close') close(
+    @CurrentUser() a: Actor,
+    @Param('id', rid) id: string,
+    @Body(new ZodValidationPipe(C.closureDecisionSchema)) i: z.infer<
+      typeof C.closureDecisionSchema
+    >,
+    @Headers('idempotency-key') k?: string,
+  ) {
+    return this.service.closeOrder(a, id, i, k);
+  }
   @Get('my-statement') statement(@CurrentUser() actor: Actor) {
     return this.service.statement(actor);
   }

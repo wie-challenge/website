@@ -1,0 +1,482 @@
+apps/api/src/modules/finance/analysis.ts:137:35 lint/style/useTemplate  FIXABLE  ━━━━━━━━━━━━━━━━━━━
+
+  i Template literals are preferred over string concatenation.
+  
+    135 │   let check = s.trimStart();
+    136 │   while (check && check.charCodeAt(0) <= 32) check = check.slice(1);
+  > 137 │   if (/^[=+@-]/u.test(check)) s = "'" + s;
+        │                                   ^^^^^^^
+    138 │   return '"' + s.replaceAll('"', '""') + '"';
+    139 │ }
+  
+  i Template literals are easier to read than a chain of + operators and quotes, and they avoid mistakes with spaces and escaped quotes.
+  
+  i Unsafe fix: Use a template literal.
+  
+    135 135 │     let check = s.trimStart();
+    136 136 │     while (check && check.charCodeAt(0) <= 32) check = check.slice(1);
+    137     │ - ··if·(/^[=+@-]/u.test(check))·s·=·"'"·+·s;
+        137 │ + ··if·(/^[=+@-]/u.test(check))·s·=·`'${s}`;
+    138 138 │     return '"' + s.replaceAll('"', '""') + '"';
+    139 139 │   }
+  
+
+apps/api/src/modules/finance/analysis.ts:138:10 lint/style/useTemplate  FIXABLE  ━━━━━━━━━━━━━━━━━━━
+
+  i Template literals are preferred over string concatenation.
+  
+    136 │   while (check && check.charCodeAt(0) <= 32) check = check.slice(1);
+    137 │   if (/^[=+@-]/u.test(check)) s = "'" + s;
+  > 138 │   return '"' + s.replaceAll('"', '""') + '"';
+        │          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    139 │ }
+    140 │ export type AccountingRow = {
+  
+  i Template literals are easier to read than a chain of + operators and quotes, and they avoid mistakes with spaces and escaped quotes.
+  
+  i Unsafe fix: Use a template literal.
+  
+    136 136 │     while (check && check.charCodeAt(0) <= 32) check = check.slice(1);
+    137 137 │     if (/^[=+@-]/u.test(check)) s = "'" + s;
+    138     │ - ··return·'"'·+·s.replaceAll('"',·'""')·+·'"';
+        138 │ + ··return·`"${s.replaceAll('"',·'""')}"`;
+    139 139 │   }
+    140 140 │   export type AccountingRow = {
+  
+
+apps/api/src/modules/finance/analysis.ts:155:17 lint/style/useTemplate  FIXABLE  ━━━━━━━━━━━━━━━━━━━
+
+  i Template literals are preferred over string concatenation.
+  
+    153 │   const grouped = new Map<string, bigint>();
+    154 │   for (const r of selected) {
+  > 155 │     const key = r.kind + ':' + r.evidence;
+        │                 ^^^^^^^^^^^^^^^^^^^^^^^^^
+    156 │     grouped.set(key, (grouped.get(key) ?? 0n) + r.amount);
+    157 │   }
+  
+  i Template literals are easier to read than a chain of + operators and quotes, and they avoid mistakes with spaces and escaped quotes.
+  
+  i Unsafe fix: Use a template literal.
+  
+    153 153 │     const grouped = new Map<string, bigint>();
+    154 154 │     for (const r of selected) {
+    155     │ - ····const·key·=·r.kind·+·':'·+·r.evidence;
+        155 │ + ····const·key·=·`${r.kind}:${r.evidence}`;
+    156 156 │       grouped.set(key, (grouped.get(key) ?? 0n) + r.amount);
+    157 157 │     }
+  
+
+apps/api/src/modules/finance/analysis.ts:169:5 lint/style/useTemplate  FIXABLE  ━━━━━━━━━━━━━━━━━━━━
+
+  i Template literals are preferred over string concatenation.
+  
+    167 │   ];
+    168 │   const csv =
+  > 169 │     [
+        │     ^
+  > 170 │       columns.map(csvCell).join(','),
+         ...
+  > 175 │       ),
+  > 176 │     ].join('\r\n') + '\r\n';
+        │     ^^^^^^^^^^^^^^^^^^^^^^^
+    177 │   return {
+    178 │     csv,
+  
+  i Template literals are easier to read than a chain of + operators and quotes, and they avoid mistakes with spaces and escaped quotes.
+  
+  i Unsafe fix: Use a template literal.
+  
+    167 167 │     ];
+    168 168 │     const csv =
+    169     │ - ····[
+        169 │ + ····`${[
+    170 170 │         columns.map(csvCell).join(','),
+    171 171 │         ...selected.map((r) =>
+    ······· │ 
+    174 174 │             .join(','),
+    175 175 │         ),
+    176     │ - ····].join('\r\n')·+·'\r\n';
+        176 │ + ····].join('\r\n')}\r\n`;
+    177 177 │     return {
+    178 178 │       csv,
+  
+
+apps/api/src/modules/sales/sales.service.ts:45:51 lint/style/useTemplate  FIXABLE  ━━━━━━━━━━━━━━━━━
+
+  i Template literals are preferred over string concatenation.
+  
+    43 │     return replaySafe(
+    44 │       tx,
+  > 45 │       { actorId: actor.id, resourceId, operation: 'sales.' + operation, key },
+       │                                                   ^^^^^^^^^^^^^^^^^^^^
+    46 │       json(input),
+    47 │       fn,
+  
+  i Template literals are easier to read than a chain of + operators and quotes, and they avoid mistakes with spaces and escaped quotes.
+  
+  i Unsafe fix: Use a template literal.
+  
+     43  43 │       return replaySafe(
+     44  44 │         tx,
+     45     │ - ······{·actorId:·actor.id,·resourceId,·operation:·'sales.'·+·operation,·key·},
+         45 │ + ······{·actorId:·actor.id,·resourceId,·operation:·`sales.${operation}`,·key·},
+     46  46 │         json(input),
+     47  47 │         fn,
+  
+
+apps/api/src/modules/sales/sales.service.ts:133:23 lint/style/useTemplate  FIXABLE  ━━━━━━━━━━━━━━━━
+
+  i Template literals are preferred over string concatenation.
+  
+    131 │               data: {
+    132 │                 name: input.organizationName!,
+  > 133 │                 slug: 'prospect-' + randomUUID(),
+        │                       ^^^^^^^^^^^^^^^^^^^^^^^^^^
+    134 │                 type: 'BUYER_BUSINESS',
+    135 │                 approvalStatus: 'PENDING_REVIEW',
+  
+  i Template literals are easier to read than a chain of + operators and quotes, and they avoid mistakes with spaces and escaped quotes.
+  
+  i Unsafe fix: Use a template literal.
+  
+    131 131 │                 data: {
+    132 132 │                   name: input.organizationName!,
+    133     │ - ················slug:·'prospect-'·+·randomUUID(),
+        133 │ + ················slug:·`prospect-${randomUUID()}`,
+    134 134 │                   type: 'BUYER_BUSINESS',
+    135 135 │                   approvalStatus: 'PENDING_REVIEW',
+  
+
+apps/web/src/components/financial-analysis.tsx:40:16 lint/style/useTemplate  FIXABLE  ━━━━━━━━━━━━━━
+
+  i Template literals are preferred over string concatenation.
+  
+    38 │         label="Record RFQ finance review"
+    39 │         action={(f) =>
+  > 40 │           post('/rfqs/' + text(f, 'rfqId') + '/review', {
+       │                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    41 │             quoteId: text(f, 'quoteId'),
+    42 │             decision: text(f, 'decision'),
+  
+  i Template literals are easier to read than a chain of + operators and quotes, and they avoid mistakes with spaces and escaped quotes.
+  
+  i Unsafe fix: Use a template literal.
+  
+     38  38 │           label="Record RFQ finance review"
+     39  39 │           action={(f) =>
+     40     │ - ··········post('/rfqs/'·+·text(f,·'rfqId')·+·'/review',·{
+         40 │ + ··········post(`/rfqs/${text(f,·'rfqId')}/review`,·{
+     41  41 │               quoteId: text(f, 'quoteId'),
+     42  42 │               decision: text(f, 'decision'),
+  
+
+apps/web/src/components/financial-analysis.tsx:75:35 lint/style/useTemplate  FIXABLE  ━━━━━━━━━━━━━━
+
+  i Template literals are preferred over string concatenation.
+  
+    73 │ }) {
+    74 │   const [cashRows, setCashRows] = useState(1);
+  > 75 │   const r = useResource<Analysis>(root + '/orders/' + orderId + '/analysis');
+       │                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    76 │   const [period, setPeriod] = useState({ from: '', to: '' });
+    77 │   const [metrics, setMetrics] = useState<{
+  
+  i Template literals are easier to read than a chain of + operators and quotes, and they avoid mistakes with spaces and escaped quotes.
+  
+  i Unsafe fix: Use a template literal.
+  
+     73  73 │   }) {
+     74  74 │     const [cashRows, setCashRows] = useState(1);
+     75     │ - ··const·r·=·useResource<Analysis>(root·+·'/orders/'·+·orderId·+·'/analysis');
+         75 │ + ··const·r·=·useResource<Analysis>(`${root}/orders/${orderId}/analysis`);
+     76  76 │     const [period, setPeriod] = useState({ from: '', to: '' });
+     77  77 │     const [metrics, setMetrics] = useState<{
+  
+
+apps/web/src/components/financial-analysis.tsx:89:16 lint/style/useTemplate  FIXABLE  ━━━━━━━━━━━━━━
+
+  i Template literals are preferred over string concatenation.
+  
+    87 │     totals: { group: string; amountTnd: string }[];
+    88 │   } | null>(null);
+  > 89 │   const base = '/orders/' + orderId;
+       │                ^^^^^^^^^^^^^^^^^^^^
+    90 │   const query = '?' + new URLSearchParams({ from: period.from, to: period.to });
+    91 │   return (
+  
+  i Template literals are easier to read than a chain of + operators and quotes, and they avoid mistakes with spaces and escaped quotes.
+  
+  i Unsafe fix: Use a template literal.
+  
+     87  87 │       totals: { group: string; amountTnd: string }[];
+     88  88 │     } | null>(null);
+     89     │ - ··const·base·=·'/orders/'·+·orderId;
+         89 │ + ··const·base·=·`/orders/${orderId}`;
+     90  90 │     const query = '?' + new URLSearchParams({ from: period.from, to: period.to });
+     91  91 │     return (
+  
+
+apps/web/src/components/financial-analysis.tsx:90:17 lint/style/useTemplate  FIXABLE  ━━━━━━━━━━━━━━
+
+  i Template literals are preferred over string concatenation.
+  
+    88 │   } | null>(null);
+    89 │   const base = '/orders/' + orderId;
+  > 90 │   const query = '?' + new URLSearchParams({ from: period.from, to: period.to });
+       │                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    91 │   return (
+    92 │     <section aria-label="Order contribution and accounting" className="section-gap">
+  
+  i Template literals are easier to read than a chain of + operators and quotes, and they avoid mistakes with spaces and escaped quotes.
+  
+  i Unsafe fix: Use a template literal.
+  
+     88  88 │     } | null>(null);
+     89  89 │     const base = '/orders/' + orderId;
+     90     │ - ··const·query·=·'?'·+·new·URLSearchParams({·from:·period.from,·to:·period.to·});
+         90 │ + ··const·query·=·`?${new·URLSearchParams({·from:·period.from,·to:·period.to·})}`;
+     91  91 │     return (
+     92  92 │       <section aria-label="Order contribution and accounting" className="section-gap">
+  
+
+apps/web/src/components/financial-analysis.tsx:148:26 lint/style/useTemplate  FIXABLE  ━━━━━━━━━━━━━
+
+  i Template literals are preferred over string concatenation.
+  
+    146 │                   onSuccess={r.reload}
+    147 │                   action={(f) =>
+  > 148 │                     post(base + '/costs', {
+        │                          ^^^^^^^^^^^^^^^
+    149 │                       category: text(f, 'category'),
+    150 │                       amountTnd: text(f, 'amountTnd'),
+  
+  i Template literals are easier to read than a chain of + operators and quotes, and they avoid mistakes with spaces and escaped quotes.
+  
+  i Unsafe fix: Use a template literal.
+  
+    146 146 │                     onSuccess={r.reload}
+    147 147 │                     action={(f) =>
+    148     │ - ····················post(base·+·'/costs',·{
+        148 │ + ····················post(`${base}/costs`,·{
+    149 149 │                         category: text(f, 'category'),
+    150 150 │                         amountTnd: text(f, 'amountTnd'),
+  
+
+apps/web/src/components/sales-workspace.tsx:49:12 lint/style/useTemplate  FIXABLE  ━━━━━━━━━━━━━━━━━
+
+  i Template literals are preferred over string concatenation.
+  
+    47 │ };
+    48 │ const post = (path: string, body: unknown) =>
+  > 49 │   apiFetch('/api/v1/sales' + path, { method: 'POST', body, idempotencyKey: crypto.randomUUID() });
+       │            ^^^^^^^^^^^^^^^^^^^^^^
+    50 │ const iso = (value: string) => (value ? new Date(value).toISOString() : null);
+    51 │ function details(f: FormData) {
+  
+  i Template literals are easier to read than a chain of + operators and quotes, and they avoid mistakes with spaces and escaped quotes.
+  
+  i Unsafe fix: Use a template literal.
+  
+     47  47 │   };
+     48  48 │   const post = (path: string, body: unknown) =>
+     49     │ - ··apiFetch('/api/v1/sales'·+·path,·{·method:·'POST',·body,·idempotencyKey:·crypto.randomUUID()·});
+         49 │ + ··apiFetch(`/api/v1/sales${path}`,·{·method:·'POST',·body,·idempotencyKey:·crypto.randomUUID()·});
+     50  50 │   const iso = (value: string) => (value ? new Date(value).toISOString() : null);
+     51  51 │   function details(f: FormData) {
+  
+
+apps/web/src/components/sales-workspace.tsx:196:39 lint/style/useTemplate  FIXABLE  ━━━━━━━━━━━━━━━━
+
+  i Template literals are preferred over string concatenation.
+  
+    194 │                   label="Save qualification"
+    195 │                   onSuccess={r.reload}
+  > 196 │                   action={(f) => post('/prospects/' + p.id, { ...details(f), version: p.version })}
+        │                                       ^^^^^^^^^^^^^^^^^^^^
+    197 │                 >
+    198 │                   <Fields data={p.snapshot} owners={r.data!.owners} />
+  
+  i Template literals are easier to read than a chain of + operators and quotes, and they avoid mistakes with spaces and escaped quotes.
+  
+  i Unsafe fix: Use a template literal.
+  
+    194 194 │                     label="Save qualification"
+    195 195 │                     onSuccess={r.reload}
+    196     │ - ··················action={(f)·=>·post('/prospects/'·+·p.id,·{·...details(f),·version:·p.version·})}
+        196 │ + ··················action={(f)·=>·post(`/prospects/${p.id}`,·{·...details(f),·version:·p.version·})}
+    197 197 │                   >
+    198 198 │                     <Fields data={p.snapshot} owners={r.data!.owners} />
+  
+
+apps/web/src/components/sales-workspace.tsx:219:35 lint/style/useTemplate  FIXABLE  ━━━━━━━━━━━━━━━━
+
+  i Template literals are preferred over string concatenation.
+  
+    217 │                     {v.snapshot.proposedPriceTnd} TND; {v.snapshot.reason}.{' '}
+    218 │                     {v.snapshot.rfqId ? (
+  > 219 │                       <Link href={'/procurement/rfqs/' + v.snapshot.rfqId}>Linked RFQ</Link>
+        │                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    220 │                     ) : null}
+    221 │                   </p>
+  
+  i Template literals are easier to read than a chain of + operators and quotes, and they avoid mistakes with spaces and escaped quotes.
+  
+  i Unsafe fix: Use a template literal.
+  
+    217 217 │                       {v.snapshot.proposedPriceTnd} TND; {v.snapshot.reason}.{' '}
+    218 218 │                       {v.snapshot.rfqId ? (
+    219     │ - ······················<Link·href={'/procurement/rfqs/'·+·v.snapshot.rfqId}>Linked·RFQ</Link>
+        219 │ + ······················<Link·href={`/procurement/rfqs/${v.snapshot.rfqId}`}>Linked·RFQ</Link>
+    220 220 │                       ) : null}
+    221 221 │                     </p>
+  
+
+apps/web/src/components/sales-workspace.tsx:260:16 lint/style/useTemplate  FIXABLE  ━━━━━━━━━━━━━━━━
+
+  i Template literals are preferred over string concatenation.
+  
+    258 │         }}
+    259 │         action={(f) =>
+  > 260 │           post('/prospects/' + p.id + '/proposals', {
+        │                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    261 │             ...(previous ? { groupId: previous.groupId } : {}),
+    262 │             version: previous ? previous.version + 1 : 1,
+  
+  i Template literals are easier to read than a chain of + operators and quotes, and they avoid mistakes with spaces and escaped quotes.
+  
+  i Unsafe fix: Use a template literal.
+  
+    258 258 │           }}
+    259 259 │           action={(f) =>
+    260     │ - ··········post('/prospects/'·+·p.id·+·'/proposals',·{
+        260 │ + ··········post(`/prospects/${p.id}/proposals`,·{
+    261 261 │               ...(previous ? { groupId: previous.groupId } : {}),
+    262 262 │               version: previous ? previous.version + 1 : 1,
+  
+
+tests/e2e/batch12.spec.ts:30:37 lint/style/useTemplate  FIXABLE  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  i Template literals are preferred over string concatenation.
+  
+    28 │ async function command(page: Page, path: string, data: unknown) {
+    29 │   const me = await (await page.request.get('/api/v1/me')).json();
+  > 30 │   const r = await page.request.post('/api/v1/' + path, {
+       │                                     ^^^^^^^^^^^^^^^^^
+    31 │     headers: {
+    32 │       Origin: origin,
+  
+  i Template literals are easier to read than a chain of + operators and quotes, and they avoid mistakes with spaces and escaped quotes.
+  
+  i Unsafe fix: Use a template literal.
+  
+     28  28 │   async function command(page: Page, path: string, data: unknown) {
+     29  29 │     const me = await (await page.request.get('/api/v1/me')).json();
+     30     │ - ··const·r·=·await·page.request.post('/api/v1/'·+·path,·{
+         30 │ + ··const·r·=·await·page.request.post(`/api/v1/${path}`,·{
+     31  31 │       headers: {
+     32  32 │         Origin: origin,
+  
+
+tests/e2e/batch12.spec.ts:48:20 lint/style/useTemplate  FIXABLE  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  i Template literals are preferred over string concatenation.
+  
+    46 │     test.setTimeout(180000);
+    47 │     await page.setViewportSize({ width, height: 950 });
+  > 48 │     const suffix = 'b12' + width + Date.now().toString(36);
+       │                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    49 │     const email = `production-operator-${suffix}@example.com`;
+    50 │     for (const e of [
+  
+  i Template literals are easier to read than a chain of + operators and quotes, and they avoid mistakes with spaces and escaped quotes.
+  
+  i Unsafe fix: Use a template literal.
+  
+     46  46 │       test.setTimeout(180000);
+     47  47 │       await page.setViewportSize({ width, height: 950 });
+     48     │ - ····const·suffix·=·'b12'·+·width·+·Date.now().toString(36);
+         48 │ + ····const·suffix·=·`b12${width}${Date.now().toString(36)}`;
+     49  49 │       const email = `production-operator-${suffix}@example.com`;
+     50  50 │       for (const e of [
+  
+
+tests/e2e/batch12.spec.ts:90:20 lint/style/useTemplate  FIXABLE  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  i Template literals are preferred over string concatenation.
+  
+    88 │     ).toBeVisible();
+    89 │     const product = await command(page, 'catalog/specifications', {
+  > 90 │       productCode: 'B12-' + suffix,
+       │                    ^^^^^^^^^^^^^^^
+    91 │       name: 'Synthetic pilot design',
+    92 │       craftSkillId: 'weaving',
+  
+  i Template literals are easier to read than a chain of + operators and quotes, and they avoid mistakes with spaces and escaped quotes.
+  
+  i Unsafe fix: Use a template literal.
+  
+     88  88 │       ).toBeVisible();
+     89  89 │       const product = await command(page, 'catalog/specifications', {
+     90     │ - ······productCode:·'B12-'·+·suffix,
+         90 │ + ······productCode:·`B12-${suffix}`,
+     91  91 │         name: 'Synthetic pilot design',
+     92  92 │         craftSkillId: 'weaving',
+  
+
+tests/e2e/batch12.spec.ts:165:13 lint/style/useTemplate  FIXABLE  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  i Template literals are preferred over string concatenation.
+  
+    163 │     await cost
+    164 │       .getByLabel('Unique cost evidence reference', { exact: true })
+  > 165 │       .fill('BROWSER-' + suffix);
+        │             ^^^^^^^^^^^^^^^^^^^
+    166 │     await cost.getByLabel('Cost occurrence date', { exact: true }).fill('2026-10-15T12:00');
+    167 │     await cost
+  
+  i Template literals are easier to read than a chain of + operators and quotes, and they avoid mistakes with spaces and escaped quotes.
+  
+  i Unsafe fix: Use a template literal.
+  
+    163 163 │       await cost
+    164 164 │         .getByLabel('Unique cost evidence reference', { exact: true })
+    165     │ - ······.fill('BROWSER-'·+·suffix);
+        165 │ + ······.fill(`BROWSER-${suffix}`);
+    166 166 │       await cost.getByLabel('Cost occurrence date', { exact: true }).fill('2026-10-15T12:00');
+    167 167 │       await cost
+  
+
+tests/e2e/batch12.spec.ts:172:22 lint/style/useTemplate  FIXABLE  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  i Template literals are preferred over string concatenation.
+  
+    170 │     await cost.getByRole('button', { name: 'Record cost evidence', exact: true }).click();
+    171 │     await expect(
+  > 172 │       page.getByText('MATERIAL: 12.345 TND — BROWSER-' + suffix, { exact: true }),
+        │                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    173 │     ).toBeVisible();
+    174 │     await page.getByLabel('Financial period from', { exact: true }).fill('2026-10-01T00:00');
+  
+  i Template literals are easier to read than a chain of + operators and quotes, and they avoid mistakes with spaces and escaped quotes.
+  
+  i Unsafe fix: Use a template literal.
+  
+    170 170 │       await cost.getByRole('button', { name: 'Record cost evidence', exact: true }).click();
+    171 171 │       await expect(
+    172     │ - ······page.getByText('MATERIAL:·12.345·TND·—·BROWSER-'·+·suffix,·{·exact:·true·}),
+        172 │ + ······page.getByText(`MATERIAL:·12.345·TND·—·BROWSER-${suffix}`,·{·exact:·true·}),
+    173 173 │       ).toBeVisible();
+    174 174 │       await page.getByLabel('Financial period from', { exact: true }).fill('2026-10-01T00:00');
+  
+
+The number of diagnostics exceeds the limit allowed. Use --max-diagnostics to increase it.
+Diagnostics not shown: 72.
+Checked 14 files in 22ms. No fixes applied.
+Found 1 error.
+Found 91 infos.
+lint ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  × Some errors were emitted while running checks.
+  
+

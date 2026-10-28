@@ -1,0 +1,27 @@
+$ pnpm --filter @nasj/contracts build && pnpm --filter @nasj/api typecheck && pnpm --filter @nasj/api typecheck:test && pnpm --filter @nasj/web typecheck
+$ tsc -p tsconfig.json
+$ prisma generate && tsc --noEmit
+Loaded Prisma config from prisma.config.ts.
+
+Prisma schema loaded from prisma/schema.prisma.
+
+✔ Generated Prisma Client (v7.10.1) to ./../../node_modules/.pnpm/@prisma+client@7.10.1_prisma@7.10.1_@types+node@24.19.2_@types+react-dom@19.3.0_@types+_9e72caf218d3f522373b8e6c9536cf3f/node_modules/@prisma/client in 995ms
+
+Start by importing your Prisma Client (See: https://pris.ly/d/importing-client)
+
+
+$ tsc -p tsconfig.test.json
+test/unit/batch12.test.ts(30,108): error TS1005: ',' expected.
+test/unit/batch12.test.ts(30,134): error TS1005: ',' expected.
+test/unit/batch12.test.ts(30,135): error TS1005: ',' expected.
+test/unit/batch12.test.ts(30,145): error TS1005: ',' expected.
+test/unit/batch12.test.ts(30,146): error TS1005: ',' expected.
+test/unit/batch12.test.ts(30,148): error TS1005: ',' expected.
+test/unit/batch12.test.ts(30,149): error TS1127: Invalid character.
+test/unit/batch12.test.ts(30,152): error TS1005: ',' expected.
+test/unit/batch12.test.ts(30,156): error TS1002: Unterminated string literal.
+test/unit/batch12.test.ts(31,1): error TS1005: ',' expected.
+/home/ashenix/Projects/wie-challenge/website/apps/api:
+[ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL] @nasj/api@0.1.0 typecheck:test: `tsc -p tsconfig.test.json`
+Exit status 2
+[ELIFECYCLE] Command failed with exit code 2.

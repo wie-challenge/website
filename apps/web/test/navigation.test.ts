@@ -66,6 +66,11 @@ test('workspace redirects allow scoped destinations and discard invitation secre
     '/organizations/org-123/audit',
     '/admin/approvals',
     '/support/privacy',
+    '/operator/planning',
+    '/operator/planning/order_123',
+    '/catalog',
+    '/intelligence',
+    '/collaboration',
   ])
     assert.equal(safeNext(path), path);
   assert.equal(safeNext('/invitations/accept#token=private'), '/invitations/accept');

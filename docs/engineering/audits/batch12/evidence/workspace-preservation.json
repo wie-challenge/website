@@ -1,0 +1,9 @@
+{
+  "checkedAt": "2026-10-28T14:31:11.525337+00:00",
+  "baselineHead": "b63b9d9a94ec576533a0c87e60e20203e72690f4",
+  "baselineBranch": "feat/nasj-showroom-competition-package",
+  "filesCompared": 827,
+  "changedOriginalFiles": [],
+  "indexDiff": "",
+  "note": "All additions belong under docs/engineering/audits/batch12/. Generated ignored build/test outputs are excluded."
+}

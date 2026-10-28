@@ -65,7 +65,7 @@ export async function runBatch5UpgradeScenario(
               status: 'ACCEPTED',
               order: { create: { status: 'APPROVED', delivered: 3 } },
             },
-            include: { order: true },
+            include: { order: { select: { id: true } } },
           });
           const offer = await db.commercialOffer.create({
             data: {
@@ -82,9 +82,10 @@ export async function runBatch5UpgradeScenario(
               status: 'ACCEPTED',
               batch: { create: { orderId: rfq.order!.id, artisanProfileId: f.artisanProfileId } },
             },
-            include: { batch: true },
+            select: { id: true, paymentConditions: true, batch: { select: { id: true } } },
           });
           await db.artisanPayable.create({
+            select: { id: true },
             data: {
               offerId: offer.id,
               orderId: rfq.order!.id,
@@ -115,9 +116,26 @@ export async function runBatch5UpgradeScenario(
           'ArtisanPayable',
           'SimulatedSettlement',
         ];
-        const before: unknown[][] = [];
+        const baselineColumns = new Map<string, string[]>();
         for (const table of tables)
-          before.push((await sql.query(`SELECT * FROM "${table}" ORDER BY id`)).rows);
+          baselineColumns.set(
+            table,
+            (
+              await sql.query<{ column_name: string }>(
+                "SELECT column_name FROM information_schema.columns WHERE table_schema='public' AND table_name=$1 ORDER BY ordinal_position",
+                [table],
+              )
+            ).rows.map((r) => r.column_name),
+          );
+        const preservedRows = (table: string) =>
+          sql.query(
+            `SELECT ${baselineColumns
+              .get(table)!
+              .map((c) => `"${c.replaceAll('"', '""')}"`)
+              .join(',')} FROM "${table}" ORDER BY id`,
+          );
+        const before: unknown[][] = [];
+        for (const table of tables) before.push((await preservedRows(table)).rows);
         for (const name of names.filter((name) => name >= '20261027070000')) {
           await sql.query(await readFile(new URL(`${name}/migration.sql`, root), 'utf8'));
         }
@@ -127,10 +145,7 @@ export async function runBatch5UpgradeScenario(
           beforeSessions,
         );
         for (const [index, table] of tables.entries()) {
-          assert.deepEqual(
-            (await sql.query(`SELECT * FROM "${table}" ORDER BY id`)).rows,
-            before[index],
-          );
+          assert.deepEqual((await preservedRows(table)).rows, before[index]);
         }
         assert.equal(
           (await sql.query('SELECT COUNT(*)::int AS count FROM "MaterialLot"')).rows[0].count,

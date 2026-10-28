@@ -1,3 +1,8 @@
+import {
+  quoteReviewSnapshot,
+  latestFinanceReview,
+  evidenceHash,
+} from '../finance/review-policy.js';
 import { Inject, Injectable } from '@nestjs/common';
 import { createHash, createHmac, timingSafeEqual } from 'node:crypto';
 import sharp from 'sharp';
@@ -1092,6 +1097,38 @@ export class ProcurementService {
             'COSTED_QUOTATION_REQUIRED',
             'Accept the versioned costed quotation. A free-typed quote cannot authorize production.',
           );
+        const salesConversion = await tx.pilotProposalRevision.findFirst({
+          where: {
+            prospect: {
+              operatorOrganizationId: row.operatorOrganizationId,
+              buyerOrganizationId: row.buyerOrganizationId,
+            },
+            OR: [{ rfqId: id }, { snapshot: { path: ['rfqId'], equals: id } }],
+          },
+        });
+        const review = await latestFinanceReview(tx, id);
+        // Explicit authorized sales linkage (any stage, including historical JSON links), or an explicit finance review, opts this RFQ into the gate. Unrelated historical procurement remains unchanged.
+        if (salesConversion || review) {
+          const data = review?.data as Record<string, unknown> | null;
+          if (
+            review?.status !== 'APPROVE_ADVISORY' ||
+            data?.quoteId !== quote.id ||
+            data?.termsSha256 !== quote.termsSha256 ||
+            data?.costEstimateId !== quote.costEstimateId ||
+            data?.fundingStatus !== 'DOCUMENTED_PLAN' ||
+            data?.fundingSha256 !==
+              evidenceHash({
+                fundingStatus: data?.fundingStatus,
+                fundingEvidence: data?.fundingEvidence,
+              }) ||
+            data?.quoteSnapshotSha256 !== (await quoteReviewSnapshot(tx, row, quote))
+          )
+            fail(
+              409,
+              'FINANCE_REVIEW_REQUIRED',
+              'Sales-linked contracts require scoped finance review of this exact costed quote and funding plan.',
+            );
+        }
         const order = await tx.commercialOrder.create({ data: { rfqId: id } });
         const acceptance = await tx.procurementAcceptance.create({
           data: {
@@ -1110,6 +1147,35 @@ export class ProcurementService {
             }),
           },
         });
+        if (salesConversion) {
+          const prospect = await tx.commercialProspect.findUniqueOrThrow({
+            where: { id: salesConversion.prospectId },
+          });
+          const next = {
+            ...(prospect.snapshot as Record<string, unknown>),
+            status: 'CONTRACTED',
+            acceptedOrderId: order.id,
+            acceptanceId: acceptance.id,
+            stageProvenance:
+              row.provenance === 'SYNTHETIC'
+                ? 'SYNTHETIC_APPLICATION_ACCEPTANCE'
+                : 'APPLICATION_ACCEPTANCE_LEGAL_STATUS_UNVERIFIED',
+            reason:
+              'Existing buyer-authorized exact quote acceptance; no legal signature or payment verification inferred',
+          };
+          await tx.prospectRevision.create({
+            data: {
+              prospectId: prospect.id,
+              version: prospect.version + 1,
+              snapshot: json(next),
+              actorId: actor.id,
+            },
+          });
+          await tx.commercialProspect.update({
+            where: { id: prospect.id },
+            data: { version: prospect.version + 1, snapshot: json(next) },
+          });
+        }
         const r = await tx.commercialRfq.update({
           where: { id },
           data: { status: 'ACCEPTED', version: { increment: 1 } },

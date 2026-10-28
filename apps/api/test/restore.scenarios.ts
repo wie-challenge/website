@@ -50,7 +50,7 @@ export async function runRestoreScenario(
     async () => {
       if (!/^nasj-test-[a-f0-9]{16}$/.test(source.containerName))
         throw new Error('Disposable source required.');
-      const target = await disposableDatabase();
+      const target = await disposableDatabase({ foundationOnly: true });
       const directory = await mkdtemp(join(tmpdir(), 'nasj-restore-'));
       try {
         const before = await snapshot(source.url);
@@ -127,6 +127,7 @@ export async function runRestoreScenario(
             configurationRestored: true,
             encryptedBytes: encrypted.length,
             tables: Object.keys(before).length,
+            contractualDateRows: before.ContractualDueDate?.count ?? 0,
             rows: Object.values(before).reduce((total, table) => total + table.count, 0),
             backupMs,
             restoreAndVerifyMs: Math.round(performance.now() - restoreStarted),

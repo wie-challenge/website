@@ -52,6 +52,30 @@ export async function seedBrowserProductionFixture(url: string, suffix: string) 
     await db.operatorAssignment.create({
       data: { operatorId: operator.id, organizationId: buyerOrg.id, assignedById: operator.id },
     });
+    if (suffix.startsWith('b12')) {
+      const m = await db.organizationMember.findFirstOrThrow({
+        where: { organizationId: operatorOrg.id, userId: operator.id },
+      });
+      await db.membershipRole.createMany({
+        data: ['BUSINESS_DEVELOPMENT', 'FINANCE_MANAGER', 'PRODUCT_DESIGNER'].map((role) => ({
+          membershipId: m.id,
+          role: role as 'BUSINESS_DEVELOPMENT' | 'FINANCE_MANAGER' | 'PRODUCT_DESIGNER',
+          assignedByUserId: operator.id,
+        })),
+      });
+      await db.membershipPermission.createMany({
+        data: [
+          'finance.payable.reconcile',
+          'finance.accounting.export',
+          'finance.closure.assess',
+        ].map((permission) => ({
+          membershipId: m.id,
+          permission,
+          grantedById: operator.id,
+          reason: 'Synthetic Batch12 browser finance authority',
+        })),
+      });
+    }
     const policy = await db.authorizationPolicy.create({
       data: {
         version: `production-browser-${suffix}`,
@@ -153,7 +177,7 @@ export async function seedBrowserProductionFixture(url: string, suffix: string) 
         procurementManaged: true,
         order: { create: { status: 'APPROVED' } },
       },
-      include: { order: true },
+      include: { order: { select: { id: true } } },
     });
     const revision = await db.procurementRevision.create({
       data: {
@@ -165,6 +189,7 @@ export async function seedBrowserProductionFixture(url: string, suffix: string) 
       },
     });
     const sample = await db.procurementSample.create({
+      select: { id: true },
       data: {
         rfqId: rfq.id,
         version: 1,
@@ -251,6 +276,9 @@ export async function seedBrowserProductionFixture(url: string, suffix: string) 
     });
     return {
       rfqId: rfq.id,
+      buyerOrganizationId: buyerOrg.id,
+      operatorOrganizationId: operatorOrg.id,
+      orderId: rfq.order!.id,
       linkedName,
       accountlessName,
       quoteId: quote.id,

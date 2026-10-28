@@ -1,0 +1,129 @@
+[
+  {
+    "name": "lint",
+    "command": [
+      "pnpm",
+      "lint"
+    ],
+    "cwd": "/home/ashenix/Projects/wie-challenge/website",
+    "startedAt": "2026-10-28T14:20:34.330414+00:00",
+    "finishedAt": "2026-10-28T14:20:34.896799+00:00",
+    "exitCode": 0,
+    "log": "lint.log"
+  },
+  {
+    "name": "typecheck",
+    "command": [
+      "pnpm",
+      "typecheck"
+    ],
+    "cwd": "/home/ashenix/Projects/wie-challenge/website",
+    "startedAt": "2026-10-28T14:20:34.897027+00:00",
+    "finishedAt": "2026-10-28T14:20:53.783571+00:00",
+    "exitCode": 0,
+    "log": "typecheck.log"
+  },
+  {
+    "name": "api-unit",
+    "command": [
+      "pnpm",
+      "--filter",
+      "@nasj/api",
+      "test"
+    ],
+    "cwd": "/home/ashenix/Projects/wie-challenge/website",
+    "startedAt": "2026-10-28T14:20:53.783827+00:00",
+    "finishedAt": "2026-10-28T14:20:55.593635+00:00",
+    "exitCode": 0,
+    "log": "api-unit.log"
+  },
+  {
+    "name": "web-unit",
+    "command": [
+      "pnpm",
+      "--filter",
+      "@nasj/web",
+      "test"
+    ],
+    "cwd": "/home/ashenix/Projects/wie-challenge/website",
+    "startedAt": "2026-10-28T14:20:55.593888+00:00",
+    "finishedAt": "2026-10-28T14:20:56.175953+00:00",
+    "exitCode": 0,
+    "log": "web-unit.log"
+  },
+  {
+    "name": "integration",
+    "command": [
+      "pnpm",
+      "test:integration"
+    ],
+    "cwd": "/home/ashenix/Projects/wie-challenge/website",
+    "startedAt": "2026-10-28T14:20:56.176207+00:00",
+    "finishedAt": "2026-10-28T14:23:12.432456+00:00",
+    "exitCode": 0,
+    "log": "integration.log"
+  },
+  {
+    "name": "browser",
+    "command": [
+      "pnpm",
+      "test:e2e"
+    ],
+    "cwd": "/home/ashenix/Projects/wie-challenge/website",
+    "startedAt": "2026-10-28T14:23:12.432745+00:00",
+    "finishedAt": "2026-10-28T14:29:11.254577+00:00",
+    "exitCode": 0,
+    "log": "browser.log"
+  },
+  {
+    "name": "showroom",
+    "command": [
+      "pnpm",
+      "test:e2e:demo"
+    ],
+    "cwd": "/home/ashenix/Projects/wie-challenge/website",
+    "startedAt": "2026-10-28T14:29:11.256642+00:00",
+    "finishedAt": "2026-10-28T14:29:45.195918+00:00",
+    "exitCode": 0,
+    "log": "showroom.log"
+  },
+  {
+    "name": "build",
+    "command": [
+      "pnpm",
+      "build"
+    ],
+    "cwd": "/home/ashenix/Projects/wie-challenge/website",
+    "startedAt": "2026-10-28T14:29:45.196259+00:00",
+    "finishedAt": "2026-10-28T14:29:58.948737+00:00",
+    "exitCode": 0,
+    "log": "build.log"
+  },
+  {
+    "name": "schema",
+    "command": [
+      "pnpm",
+      "exec",
+      "prisma",
+      "validate"
+    ],
+    "cwd": "/home/ashenix/Projects/wie-challenge/website/apps/api",
+    "startedAt": "2026-10-28T14:29:58.949228+00:00",
+    "finishedAt": "2026-10-28T14:29:59.873020+00:00",
+    "exitCode": 0,
+    "log": "schema.log"
+  },
+  {
+    "name": "diff",
+    "command": [
+      "git",
+      "diff",
+      "--check"
+    ],
+    "cwd": "/home/ashenix/Projects/wie-challenge/website",
+    "startedAt": "2026-10-28T14:29:59.873226+00:00",
+    "finishedAt": "2026-10-28T14:29:59.903648+00:00",
+    "exitCode": 0,
+    "log": "diff.log"
+  }
+]

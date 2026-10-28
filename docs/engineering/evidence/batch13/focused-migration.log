@@ -1,0 +1,6 @@
+PASS B13-M01 the new tables are absent before migrate deploy and additive afterwards
+PASS B13-M02 populated upgrade preserves every pre-existing row byte for byte
+PASS B13-M03 the new tables carry restrictive keys, unique pairs and CHECK constraints
+PASS B13-M04 a populated upgrade accepts a valid assessment and rejects invalid history
+PASS B13-M05 migration history matches every SQL file with no failed migration
+PASS B13-M06 backup of a populated feedback database restores both history tables exactly

@@ -1,0 +1,34 @@
+import {disposableDatabase,testConfig} from '../../../../../apps/api/test/support.js';
+import {PrismaService} from '../../../../../apps/api/src/database/prisma.service.js';
+import {writeFile,readFile} from 'node:fs/promises';
+import {execFile} from 'node:child_process';
+import {promisify} from 'node:util';
+import {randomUUID,createHash} from 'node:crypto';
+import assert from 'node:assert/strict';
+import {join} from 'node:path';
+const exec=promisify(execFile);const root=process.cwd();
+const database=await disposableDatabase({throughMigration:'20261028130000_planning_intelligence_authority'});
+assert.match(database.containerName,/^nasj-test-[a-f0-9]{16}$/);
+const db=new PrismaService(testConfig(database.url,2525));
+try{
+ const actor=await db.user.create({data:{id:randomUUID(),name:'Synthetic native audit',email:'native-independent@example.com',emailVerified:true},select:{id:true}});
+ const event=await db.financeRecordEvent.create({data:{targetId:'native-source',targetType:'NATIVE_UPGRADE_EVIDENCE',actorId:actor.id,status:'REVIEW',reason:'Preserve previous finance event'},select:{id:true}});
+ const q=async(sql:string)=>{const r=await exec('docker',['--context','default','exec',database.containerName,'psql','-U','foundation_test','-d','foundation_test','-At','-c',sql],{maxBuffer:4*1024*1024});return r.stdout.trim();};
+ const baseline=await q(`SELECT jsonb_build_object('id',id,'targetId',"targetId",'targetType',"targetType",'actorId',"actorId",'status',status,'reason',reason,'createdAt',"createdAt")::text FROM "FinanceRecordEvent" WHERE id='${event.id}'`);
+ const beforeTables=Number(await q("SELECT count(*) FROM pg_tables WHERE schemaname='public'"));
+ await exec('pnpm',['exec','prisma','migrate','deploy'],{cwd:join(root,'apps/api'),env:{...process.env,DATABASE_URL:database.url,MIGRATION_DATABASE_URL:database.url},maxBuffer:4*1024*1024});
+ const restored=await q(`SELECT jsonb_build_object('id',id,'targetId',"targetId",'targetType',"targetType",'actorId',"actorId",'status',status,'reason',reason,'createdAt',"createdAt")::text FROM "FinanceRecordEvent" WHERE id='${event.id}'`);assert.equal(restored,baseline);
+ const after=await db.financeRecordEvent.findUniqueOrThrow({where:{id:event.id}});assert.equal(after.data,null);assert.equal(after.orderId,null);assert.equal(after.sourceKey,null);
+ await assert.rejects(db.financeRecordEvent.update({where:{id:event.id},data:{reason:'Cannot overwrite'}}));
+ const org=async(type:'INTERNAL'|'BUYER_BUSINESS',slug:string)=>db.organization.create({data:{name:'Synthetic native '+slug,type,slug:'native-'+slug+'-'+randomUUID(),region:'Tunis',description:'Disposable audit only',contactEmail:'native@example.com',representativeName:'Synthetic',createdByUserId:actor.id}});
+ const operator=await org('INTERNAL','operator'),buyer=await org('BUYER_BUSINESS','buyer');
+ const prospect=await db.commercialProspect.create({data:{operatorOrganizationId:operator.id,buyerOrganizationId:buyer.id,snapshot:{status:'LEAD'}}});
+ const history=await db.prospectRevision.create({data:{prospectId:prospect.id,version:1,snapshot:{status:'LEAD'},actorId:actor.id}});
+ await assert.rejects(db.prospectRevision.create({data:{prospectId:prospect.id,version:1,snapshot:{status:'LOST'},actorId:actor.id}}));
+ await assert.rejects(db.prospectRevision.update({where:{id:history.id},data:{snapshot:{status:'LOST'}}}));
+ await assert.rejects(db.$transaction(async(tx:any)=>{await tx.prospectRevision.create({data:{prospectId:prospect.id,version:2,snapshot:{status:'QUALIFIED'},actorId:actor.id}});await tx.prospectRevision.create({data:{prospectId:'missing',version:3,snapshot:{},actorId:actor.id}});}));assert.equal(await db.prospectRevision.count({where:{prospectId:prospect.id}}),1);
+ const constraints=await q("SELECT conrelid::regclass::text||':'||conname||':'||pg_get_constraintdef(oid) FROM pg_constraint WHERE conrelid IN ('\"CommercialProspect\"'::regclass,'\"ProspectRevision\"'::regclass,'\"PilotProposalRevision\"'::regclass,'\"FinanceRecordEvent\"'::regclass) ORDER BY 1");
+ const historyRows=await q('SELECT count(*) FROM "_prisma_migrations" WHERE finished_at IS NOT NULL AND rolled_back_at IS NULL');assert.equal(historyRows,'35');
+ const evidence={engine:await q('SHOW server_version'),throughMigration:'20261028130000_planning_intelligence_authority',beforeTables,afterTables:Number(await q("SELECT count(*) FROM pg_tables WHERE schemaname='public'")),appliedMigrations:Number(historyRows),oldFinanceHashPreserved:createHash('sha256').update(baseline).digest('hex'),newAnnotationsNull:true,appendOnly:true,duplicateVersionRejected:true,foreignKeyFailureRollback:true,constraints:constraints.split('\n'),persistentDatabaseTouched:false};
+ await writeFile(join(root,'docs/engineering/audits/batch12/evidence/native-batch12.json'),JSON.stringify(evidence,null,2)+'\n');console.log('Independent populated pre-Batch12 upgrade, native constraints, history and rollback PASS',beforeTables,'->',evidence.afterTables);
+}finally{await db.$disconnect();await database.stop();}

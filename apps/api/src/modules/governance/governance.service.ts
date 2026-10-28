@@ -295,38 +295,65 @@ export class GovernanceService {
           delegations: true,
         },
       });
-      const [memberships, consents, privacyRequests, notificationPreferences, cases] =
-        await Promise.all([
-          tx.organizationMember.findMany({
-            where: { userId: actor.id },
-            select: {
-              id: true,
-              organizationId: true,
-              status: true,
-              isManager: true,
-              joinedAt: true,
-              roles: { select: { role: true } },
-            },
-          }),
-          tx.consentRecord.findMany({
-            where: { userId: actor.id },
-            select: {
-              id: true,
-              purpose: true,
-              policyVersion: true,
-              decision: true,
-              collectedAt: true,
-              withdrawnAt: true,
-              collectionContext: true,
-            },
-          }),
-          tx.privacyRequest.findMany({ where: { userId: actor.id } }),
-          tx.notificationPreference.findMany({
-            where: { userId: actor.id },
-            select: { category: true, channel: true, language: true, optedIn: true },
-          }),
-          tx.supportCase.findMany({ where: { userId: actor.id } }),
-        ]);
+      const [
+        memberships,
+        consents,
+        privacyRequests,
+        notificationPreferences,
+        cases,
+        feedback,
+        feedbackRevisions,
+      ] = await Promise.all([
+        tx.organizationMember.findMany({
+          where: { userId: actor.id },
+          select: {
+            id: true,
+            organizationId: true,
+            status: true,
+            isManager: true,
+            joinedAt: true,
+            roles: { select: { role: true } },
+          },
+        }),
+        tx.consentRecord.findMany({
+          where: { userId: actor.id },
+          select: {
+            id: true,
+            purpose: true,
+            policyVersion: true,
+            decision: true,
+            collectedAt: true,
+            withdrawnAt: true,
+            collectionContext: true,
+          },
+        }),
+        tx.privacyRequest.findMany({ where: { userId: actor.id } }),
+        tx.notificationPreference.findMany({
+          where: { userId: actor.id },
+          select: { category: true, channel: true, language: true, optedIn: true },
+        }),
+        tx.supportCase.findMany({ where: { userId: actor.id } }),
+        tx.buyerOrderFeedback.findMany({
+          where: { reporterId: actor.id },
+          include: {
+            revisions: { orderBy: { version: 'asc' } },
+            order: { select: { id: true, rfqId: true } },
+          },
+        }),
+        tx.buyerOrderFeedbackRevision.findMany({
+          where: { actorId: actor.id, feedback: { reporterId: { not: actor.id } } },
+          select: {
+            id: true,
+            feedbackId: true,
+            version: true,
+            kind: true,
+            createdAt: true,
+            category: true,
+            followUpStatus: true,
+            reason: true,
+          },
+        }),
+      ]);
       await audit(tx, actor, {
         action: 'PERSONAL_DATA_EXPORTED',
         targetType: 'User',
@@ -384,6 +411,30 @@ export class GovernanceService {
         privacyRequests: privacyRequests.map(privacyView),
         notificationPreferences,
         supportCases: cases.map((c) => caseView(c)),
+        orderFeedback: feedback.map((row) => ({
+          id: row.id,
+          orderId: row.orderId,
+          receiptConfirmationId: row.receiptConfirmationId,
+          sourceClass: row.sourceClass,
+          createdAt: row.createdAt,
+          currentVersion: row.currentVersion,
+          revisions: row.revisions.map((revision) => ({
+            id: revision.id,
+            version: revision.version,
+            kind: revision.kind,
+            createdAt: revision.createdAt,
+            category: revision.category,
+            rating: revision.rating,
+            comment: revision.comment,
+            followUpStatus: revision.followUpStatus,
+            // Internal support notes stay out of the subject export.
+            followUpNote: null,
+            linkedTicketId: revision.linkedTicketId,
+            reason: revision.reason,
+          })),
+        })),
+        // Revisions this subject authored on someone else's assessment, without their private content.
+        feedbackActions: feedbackRevisions,
       };
     });
   }

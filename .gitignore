@@ -30,3 +30,10 @@ __pycache__/
 
 # Generated narrated media exceeds the repository 500 KB commit limit.
 /output/
+
+# Generated Next.js declarations and CI scanner output.
+/apps/web/next-env.d.ts
+/reports/
+
+# Accidental nested workspace used during local migration experiments.
+/apps/api/apps/

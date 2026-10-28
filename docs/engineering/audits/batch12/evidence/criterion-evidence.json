@@ -1,0 +1,412 @@
+[
+  {
+    "id": "E18-01.C1",
+    "story": "E18-01",
+    "issue": "https://github.com/wie-challenge/website/issues/204",
+    "text": "Account, contact, consent basis, segment, next action, status and qualification notes stored and permission-scoped.",
+    "criterionStatus": "PASS_SOFTWARE",
+    "implementationEvidence": "SalesService.scope/workspace/create/update (sales.service.ts:16\u2013264); batch12.ts prospect schemas; CommercialProspect/ProspectRevision; sales-workspace.tsx.",
+    "testEvidence": "Independent CONTACT_SCOPE and native-batch12.json; independent-browser final opt-out/history/unauthorized views; full batch12.scenarios.ts discovery/revocation/version checks.",
+    "missingOrExternal": "None identified within the software-specific original criteria; contact hiding is not physical erasure. Buyer verification remains independent."
+  },
+  {
+    "id": "E18-01.C2",
+    "story": "E18-01",
+    "issue": "https://github.com/wie-challenge/website/issues/204",
+    "text": "Capture organization/contact, segment, permission basis, needs and qualification status.",
+    "criterionStatus": "PASS_SOFTWARE",
+    "implementationEvidence": "SalesService.scope/workspace/create/update (sales.service.ts:16\u2013264); batch12.ts prospect schemas; CommercialProspect/ProspectRevision; sales-workspace.tsx.",
+    "testEvidence": "Independent CONTACT_SCOPE and native-batch12.json; independent-browser final opt-out/history/unauthorized views; full batch12.scenarios.ts discovery/revocation/version checks.",
+    "missingOrExternal": "None identified within the software-specific original criteria; contact hiding is not physical erasure. Buyer verification remains independent."
+  },
+  {
+    "id": "E18-01.C3",
+    "story": "E18-01",
+    "issue": "https://github.com/wie-challenge/website/issues/204",
+    "text": "Assign owner, next action and follow-up date without implying purchase commitment.",
+    "criterionStatus": "PASS_SOFTWARE",
+    "implementationEvidence": "SalesService.scope/workspace/create/update (sales.service.ts:16\u2013264); batch12.ts prospect schemas; CommercialProspect/ProspectRevision; sales-workspace.tsx.",
+    "testEvidence": "Independent CONTACT_SCOPE and native-batch12.json; independent-browser final opt-out/history/unauthorized views; full batch12.scenarios.ts discovery/revocation/version checks.",
+    "missingOrExternal": "None identified within the software-specific original criteria; contact hiding is not physical erasure. Buyer verification remains independent."
+  },
+  {
+    "id": "E18-01.C4",
+    "story": "E18-01",
+    "issue": "https://github.com/wie-challenge/website/issues/204",
+    "text": "Restrict contact/negotiation access and honor retention/contact preferences.",
+    "criterionStatus": "PASS_SOFTWARE",
+    "implementationEvidence": "SalesService.scope/workspace/create/update (sales.service.ts:16\u2013264); batch12.ts prospect schemas; CommercialProspect/ProspectRevision; sales-workspace.tsx.",
+    "testEvidence": "Independent CONTACT_SCOPE and native-batch12.json; independent-browser final opt-out/history/unauthorized views; full batch12.scenarios.ts discovery/revocation/version checks.",
+    "missingOrExternal": "None identified within the software-specific original criteria; contact hiding is not physical erasure. Buyer verification remains independent."
+  },
+  {
+    "id": "E18-01.C5",
+    "story": "E18-01",
+    "issue": "https://github.com/wie-challenge/website/issues/204",
+    "text": "Track stage history and distinguish lead, qualified opportunity, proposal and contracted customer.",
+    "criterionStatus": "PASS_SOFTWARE",
+    "implementationEvidence": "SalesService.scope/workspace/create/update (sales.service.ts:16\u2013264); batch12.ts prospect schemas; CommercialProspect/ProspectRevision; sales-workspace.tsx.",
+    "testEvidence": "Independent CONTACT_SCOPE and native-batch12.json; independent-browser final opt-out/history/unauthorized views; full batch12.scenarios.ts discovery/revocation/version checks.",
+    "missingOrExternal": "None identified within the software-specific original criteria; contact hiding is not physical erasure. Buyer verification remains independent."
+  },
+  {
+    "id": "E18-02.C1",
+    "story": "E18-02",
+    "issue": "https://github.com/wie-challenge/website/issues/205",
+    "text": "Proposal versions and feedback documented; won deals link to RFQ or signed contract.",
+    "criterionStatus": "PASS_SOFTWARE",
+    "implementationEvidence": "SalesService.propose (sales.service.ts:266\u2013423); PilotProposalRevision; existing ProcurementService.accept; sales-workspace.tsx ProposalForm.",
+    "testEvidence": "Full batch12.scenarios.ts proposal revision/WON no-obligations checks; tests/e2e/batch12.spec.ts DRAFT\u2192SENT\u2192LOST and RFQ-backed WON; native append-only behavior.",
+    "missingOrExternal": "None identified for authorized RFQ conversion; signed-contract verification and actual buyer outcomes are not asserted. Won alone creates no agreement."
+  },
+  {
+    "id": "E18-02.C2",
+    "story": "E18-02",
+    "issue": "https://github.com/wie-challenge/website/issues/205",
+    "text": "Version sample/pilot proposal scope, price, timing and responsibilities.",
+    "criterionStatus": "PASS_SOFTWARE",
+    "implementationEvidence": "SalesService.propose (sales.service.ts:266\u2013423); PilotProposalRevision; existing ProcurementService.accept; sales-workspace.tsx ProposalForm.",
+    "testEvidence": "Full batch12.scenarios.ts proposal revision/WON no-obligations checks; tests/e2e/batch12.spec.ts DRAFT\u2192SENT\u2192LOST and RFQ-backed WON; native append-only behavior.",
+    "missingOrExternal": "None identified for authorized RFQ conversion; signed-contract verification and actual buyer outcomes are not asserted. Won alone creates no agreement."
+  },
+  {
+    "id": "E18-02.C3",
+    "story": "E18-02",
+    "issue": "https://github.com/wie-challenge/website/issues/205",
+    "text": "Record buyer objections, outcome, decision date and follow-up owner.",
+    "criterionStatus": "PASS_SOFTWARE",
+    "implementationEvidence": "SalesService.propose (sales.service.ts:266\u2013423); PilotProposalRevision; existing ProcurementService.accept; sales-workspace.tsx ProposalForm.",
+    "testEvidence": "Full batch12.scenarios.ts proposal revision/WON no-obligations checks; tests/e2e/batch12.spec.ts DRAFT\u2192SENT\u2192LOST and RFQ-backed WON; native append-only behavior.",
+    "missingOrExternal": "None identified for authorized RFQ conversion; signed-contract verification and actual buyer outcomes are not asserted. Won alone creates no agreement."
+  },
+  {
+    "id": "E18-02.C4",
+    "story": "E18-02",
+    "issue": "https://github.com/wie-challenge/website/issues/205",
+    "text": "Require RFQ/contract evidence before marking a proposal won.",
+    "criterionStatus": "PASS_SOFTWARE",
+    "implementationEvidence": "SalesService.propose (sales.service.ts:266\u2013423); PilotProposalRevision; existing ProcurementService.accept; sales-workspace.tsx ProposalForm.",
+    "testEvidence": "Full batch12.scenarios.ts proposal revision/WON no-obligations checks; tests/e2e/batch12.spec.ts DRAFT\u2192SENT\u2192LOST and RFQ-backed WON; native append-only behavior.",
+    "missingOrExternal": "None identified for authorized RFQ conversion; signed-contract verification and actual buyer outcomes are not asserted. Won alone creates no agreement."
+  },
+  {
+    "id": "E18-02.C5",
+    "story": "E18-02",
+    "issue": "https://github.com/wie-challenge/website/issues/205",
+    "text": "Preserve lost/no-decision reasons without overwriting earlier negotiation.",
+    "criterionStatus": "PASS_SOFTWARE",
+    "implementationEvidence": "SalesService.propose (sales.service.ts:266\u2013423); PilotProposalRevision; existing ProcurementService.accept; sales-workspace.tsx ProposalForm.",
+    "testEvidence": "Full batch12.scenarios.ts proposal revision/WON no-obligations checks; tests/e2e/batch12.spec.ts DRAFT\u2192SENT\u2192LOST and RFQ-backed WON; native append-only behavior.",
+    "missingOrExternal": "None identified for authorized RFQ conversion; signed-contract verification and actual buyer outcomes are not asserted. Won alone creates no agreement."
+  },
+  {
+    "id": "E18-03.C1",
+    "story": "E18-03",
+    "issue": "https://github.com/wie-challenge/website/issues/206",
+    "text": "Quote versus actual variance, buyer payment milestones, obligations and minimum cash gap calculated per order.",
+    "criterionStatus": "PARTIAL",
+    "implementationEvidence": "FinanceService.analysis/recordCost/reviewCashModel/reviewRfq; finance/analysis.ts cashGap/signedTnd; ProcurementService.accept:1095; financial-analysis.tsx.",
+    "testEvidence": "Independent FUNDING_BEFORE_WON (+ funding-hold follow-up), CSV_RECONCILIATION; pure-finance.json negative sign/late cash; independent browser cash review; full batch12 scenarios.",
+    "missingOrExternal": "A12-02: the required pre-commitment review is bypassable before WON; supported actual revenue/cost contribution also remains unavailable under unapproved recognition definitions and incomplete evidence."
+  },
+  {
+    "id": "E18-03.C2",
+    "story": "E18-03",
+    "issue": "https://github.com/wie-challenge/website/issues/206",
+    "text": "Compare quoted versus actual revenue/cost lines with variance reasons.",
+    "criterionStatus": "PARTIAL",
+    "implementationEvidence": "FinanceService.analysis/recordCost/reviewCashModel/reviewRfq; finance/analysis.ts cashGap/signedTnd; ProcurementService.accept:1095; financial-analysis.tsx.",
+    "testEvidence": "Independent FUNDING_BEFORE_WON (+ funding-hold follow-up), CSV_RECONCILIATION; pure-finance.json negative sign/late cash; independent browser cash review; full batch12 scenarios.",
+    "missingOrExternal": "A12-02: the required pre-commitment review is bypassable before WON; supported actual revenue/cost contribution also remains unavailable under unapproved recognition definitions and incomplete evidence."
+  },
+  {
+    "id": "E18-03.C3",
+    "story": "E18-03",
+    "issue": "https://github.com/wie-challenge/website/issues/206",
+    "text": "Model timing of buyer receipts, material purchases and artisan obligations.",
+    "criterionStatus": "PASS_SOFTWARE_ESTIMATE_ONLY",
+    "implementationEvidence": "FinanceService.analysis/recordCost/reviewCashModel/reviewRfq; finance/analysis.ts cashGap/signedTnd; ProcurementService.accept:1095; financial-analysis.tsx.",
+    "testEvidence": "Independent FUNDING_BEFORE_WON (+ funding-hold follow-up), CSV_RECONCILIATION; pure-finance.json negative sign/late cash; independent browser cash review; full batch12 scenarios.",
+    "missingOrExternal": "A12-02: the required pre-commitment review is bypassable before WON; supported actual revenue/cost contribution also remains unavailable under unapproved recognition definitions and incomplete evidence."
+  },
+  {
+    "id": "E18-03.C4",
+    "story": "E18-03",
+    "issue": "https://github.com/wie-challenge/website/issues/206",
+    "text": "Show minimum cash gap and assumptions without conflating contribution with cash.",
+    "criterionStatus": "PASS_SOFTWARE_ESTIMATE_ONLY",
+    "implementationEvidence": "FinanceService.analysis/recordCost/reviewCashModel/reviewRfq; finance/analysis.ts cashGap/signedTnd; ProcurementService.accept:1095; financial-analysis.tsx.",
+    "testEvidence": "Independent FUNDING_BEFORE_WON (+ funding-hold follow-up), CSV_RECONCILIATION; pure-finance.json negative sign/late cash; independent browser cash review; full batch12 scenarios.",
+    "missingOrExternal": "A12-02: the required pre-commitment review is bypassable before WON; supported actual revenue/cost contribution also remains unavailable under unapproved recognition definitions and incomplete evidence."
+  },
+  {
+    "id": "E18-03.C5",
+    "story": "E18-03",
+    "issue": "https://github.com/wie-challenge/website/issues/206",
+    "text": "Require finance review before committing to an unfunded or unsustainable new contract.",
+    "criterionStatus": "FAILED_A12_02",
+    "implementationEvidence": "FinanceService.analysis/recordCost/reviewCashModel/reviewRfq; finance/analysis.ts cashGap/signedTnd; ProcurementService.accept:1095; financial-analysis.tsx.",
+    "testEvidence": "Independent FUNDING_BEFORE_WON (+ funding-hold follow-up), CSV_RECONCILIATION; pure-finance.json negative sign/late cash; independent browser cash review; full batch12 scenarios.",
+    "missingOrExternal": "A12-02: the required pre-commitment review is bypassable before WON; supported actual revenue/cost contribution also remains unavailable under unapproved recognition definitions and incomplete evidence."
+  },
+  {
+    "id": "E10-11.C1",
+    "story": "E10-11",
+    "issue": "https://github.com/wie-challenge/website/issues/146",
+    "text": "Exports balance to source events and restrict sensitive details.",
+    "criterionStatus": "PASS_SOFTWARE_EXISTING_SOURCES",
+    "implementationEvidence": "FinanceService.exportAccounting:854; finance/analysis.ts accountingExport/csvCell; finance.accounting.export permission; existing payables/deposits/payout sources.",
+    "testEvidence": "Independent PostgreSQL SUM vs independently parsed CSV (12,346 millimes); actual browser file download; pure CSV injection checks; full finance.scenarios.ts liability reconciliation and tenant denial.",
+    "missingOrExternal": "Original invoice-subledger reconciliation has no approved invoice source/policy. Existing cost/liability/receipt/request/execution groups reconcile; quote references are not invoices or recognized revenue."
+  },
+  {
+    "id": "E10-11.C2",
+    "story": "E10-11",
+    "issue": "https://github.com/wie-challenge/website/issues/146",
+    "text": "Export period, account/order reference, currency, amount and source event with stable IDs.",
+    "criterionStatus": "PASS_SOFTWARE",
+    "implementationEvidence": "FinanceService.exportAccounting:854; finance/analysis.ts accountingExport/csvCell; finance.accounting.export permission; existing payables/deposits/payout sources.",
+    "testEvidence": "Independent PostgreSQL SUM vs independently parsed CSV (12,346 millimes); actual browser file download; pure CSV injection checks; full finance.scenarios.ts liability reconciliation and tenant denial.",
+    "missingOrExternal": "Original invoice-subledger reconciliation has no approved invoice source/policy. Existing cost/liability/receipt/request/execution groups reconcile; quote references are not invoices or recognized revenue."
+  },
+  {
+    "id": "E10-11.C3",
+    "story": "E10-11",
+    "issue": "https://github.com/wie-challenge/website/issues/146",
+    "text": "Reconcile totals to invoice, receipt, liability and payout subledgers.",
+    "criterionStatus": "PARTIAL_INVOICE_SOURCE_ABSENT",
+    "implementationEvidence": "FinanceService.exportAccounting:854; finance/analysis.ts accountingExport/csvCell; finance.accounting.export permission; existing payables/deposits/payout sources.",
+    "testEvidence": "Independent PostgreSQL SUM vs independently parsed CSV (12,346 millimes); actual browser file download; pure CSV injection checks; full finance.scenarios.ts liability reconciliation and tenant denial.",
+    "missingOrExternal": "Original invoice-subledger reconciliation has no approved invoice source/policy. Existing cost/liability/receipt/request/execution groups reconcile; quote references are not invoices or recognized revenue."
+  },
+  {
+    "id": "E10-11.C4",
+    "story": "E10-11",
+    "issue": "https://github.com/wie-challenge/website/issues/146",
+    "text": "Separate pending/simulated records from verified transactions.",
+    "criterionStatus": "PASS_SOFTWARE",
+    "implementationEvidence": "FinanceService.exportAccounting:854; finance/analysis.ts accountingExport/csvCell; finance.accounting.export permission; existing payables/deposits/payout sources.",
+    "testEvidence": "Independent PostgreSQL SUM vs independently parsed CSV (12,346 millimes); actual browser file download; pure CSV injection checks; full finance.scenarios.ts liability reconciliation and tenant denial.",
+    "missingOrExternal": "Original invoice-subledger reconciliation has no approved invoice source/policy. Existing cost/liability/receipt/request/execution groups reconcile; quote references are not invoices or recognized revenue."
+  },
+  {
+    "id": "E10-11.C5",
+    "story": "E10-11",
+    "issue": "https://github.com/wie-challenge/website/issues/146",
+    "text": "Limit sensitive beneficiary details and audit who exported which period.",
+    "criterionStatus": "PASS_SOFTWARE",
+    "implementationEvidence": "FinanceService.exportAccounting:854; finance/analysis.ts accountingExport/csvCell; finance.accounting.export permission; existing payables/deposits/payout sources.",
+    "testEvidence": "Independent PostgreSQL SUM vs independently parsed CSV (12,346 millimes); actual browser file download; pure CSV injection checks; full finance.scenarios.ts liability reconciliation and tenant denial.",
+    "missingOrExternal": "Original invoice-subledger reconciliation has no approved invoice source/policy. Existing cost/liability/receipt/request/execution groups reconcile; quote references are not invoices or recognized revenue."
+  },
+  {
+    "id": "E10-13.C1",
+    "story": "E10-13",
+    "issue": "https://github.com/wie-challenge/website/issues/148",
+    "text": "On-time rate excludes missing/unknown denominators, distinguishes planned from completed, and identifies unverified payout dates.",
+    "criterionStatus": "PARTIAL",
+    "implementationEvidence": "FinanceService.timeliness:975\u20131017; finance/analysis.ts paymentTimeliness; execution_unverified native CHECK (20261027080000_financial_controls:107); payable writers logistics.ts:1022 and sample-obligations.ts:35.",
+    "testEvidence": "Independent TIMELINESS_REACHABILITY + eleven-case TIMELINESS_PURE; native constraint inventory; full HTTP unknown/zero-denominator check and browser display. Pure verified rows are not schema-valid settlement evidence.",
+    "missingOrExternal": "A12-03: supported contractual-date and verified-settlement integration is incomplete; the native schema forbids every positive verified execution row, and pending/failed detail is collapsed into unknown. Pure math passes but cannot verify the end-to-end story."
+  },
+  {
+    "id": "E10-13.C2",
+    "story": "E10-13",
+    "issue": "https://github.com/wie-challenge/website/issues/148",
+    "text": "Derive due dates from accepted contractual rules rather than report creation dates.",
+    "criterionStatus": "PARTIAL_CONTRACT_DATE_PATH",
+    "implementationEvidence": "FinanceService.timeliness:975\u20131017; finance/analysis.ts paymentTimeliness; execution_unverified native CHECK (20261027080000_financial_controls:107); payable writers logistics.ts:1022 and sample-obligations.ts:35.",
+    "testEvidence": "Independent TIMELINESS_REACHABILITY + eleven-case TIMELINESS_PURE; native constraint inventory; full HTTP unknown/zero-denominator check and browser display. Pure verified rows are not schema-valid settlement evidence.",
+    "missingOrExternal": "A12-03: supported contractual-date and verified-settlement integration is incomplete; the native schema forbids every positive verified execution row, and pending/failed detail is collapsed into unknown. Pure math passes but cannot verify the end-to-end story."
+  },
+  {
+    "id": "E10-13.C3",
+    "story": "E10-13",
+    "issue": "https://github.com/wie-challenge/website/issues/148",
+    "text": "Compute on-time numerator/eligible denominator with explicit reporting period.",
+    "criterionStatus": "PARTIAL_VERIFIED_ADAPTER_UNREACHABLE",
+    "implementationEvidence": "FinanceService.timeliness:975\u20131017; finance/analysis.ts paymentTimeliness; execution_unverified native CHECK (20261027080000_financial_controls:107); payable writers logistics.ts:1022 and sample-obligations.ts:35.",
+    "testEvidence": "Independent TIMELINESS_REACHABILITY + eleven-case TIMELINESS_PURE; native constraint inventory; full HTTP unknown/zero-denominator check and browser display. Pure verified rows are not schema-valid settlement evidence.",
+    "missingOrExternal": "A12-03: supported contractual-date and verified-settlement integration is incomplete; the native schema forbids every positive verified execution row, and pending/failed detail is collapsed into unknown. Pure math passes but cannot verify the end-to-end story."
+  },
+  {
+    "id": "E10-13.C4",
+    "story": "E10-13",
+    "issue": "https://github.com/wie-challenge/website/issues/148",
+    "text": "Distinguish outstanding overdue, settled late, on-time and unknown/unverified dates.",
+    "criterionStatus": "PARTIAL",
+    "implementationEvidence": "FinanceService.timeliness:975\u20131017; finance/analysis.ts paymentTimeliness; execution_unverified native CHECK (20261027080000_financial_controls:107); payable writers logistics.ts:1022 and sample-obligations.ts:35.",
+    "testEvidence": "Independent TIMELINESS_REACHABILITY + eleven-case TIMELINESS_PURE; native constraint inventory; full HTTP unknown/zero-denominator check and browser display. Pure verified rows are not schema-valid settlement evidence.",
+    "missingOrExternal": "A12-03: supported contractual-date and verified-settlement integration is incomplete; the native schema forbids every positive verified execution row, and pending/failed detail is collapsed into unknown. Pure math passes but cannot verify the end-to-end story."
+  },
+  {
+    "id": "E10-13.C5",
+    "story": "E10-13",
+    "issue": "https://github.com/wie-challenge/website/issues/148",
+    "text": "Define treatment of partial payments and disputed obligations and disclose exclusions.",
+    "criterionStatus": "PASS_SOFTWARE_EXCLUSIONS",
+    "implementationEvidence": "FinanceService.timeliness:975\u20131017; finance/analysis.ts paymentTimeliness; execution_unverified native CHECK (20261027080000_financial_controls:107); payable writers logistics.ts:1022 and sample-obligations.ts:35.",
+    "testEvidence": "Independent TIMELINESS_REACHABILITY + eleven-case TIMELINESS_PURE; native constraint inventory; full HTTP unknown/zero-denominator check and browser display. Pure verified rows are not schema-valid settlement evidence.",
+    "missingOrExternal": "A12-03: supported contractual-date and verified-settlement integration is incomplete; the native schema forbids every positive verified execution row, and pending/failed detail is collapsed into unknown. Pure math passes but cannot verify the end-to-end story."
+  },
+  {
+    "id": "E10-14.C1",
+    "story": "E10-14",
+    "issue": "https://github.com/wie-challenge/website/issues/73",
+    "text": "Closure blocks on unreconciled receivables, undisposed material costs, outstanding payables or open settlement disputes unless explicit authorized exception.",
+    "criterionStatus": "FAILED_A12_01",
+    "implementationEvidence": "FinanceService.assess/snapshot/closeOrder; CommerceService.orderAction:829\u2013840; existing OrderClosureAssessment triggers and financial/inventory authorities.",
+    "testEvidence": "Independent LEGACY_ADJUSTMENT_CLOSE reproduces HTTP 201 CLOSED against pending adjustment; full managed-close denial/replay, partial payout/dispute/material cases; product-authority linked sample check.",
+    "missingOrExternal": "A12-01: legacy close bypasses the authoritative blockers for FinancialAdjustment. Positive closure/lawful exception handling also remain policy-dependent and disabled."
+  },
+  {
+    "id": "E10-14.C2",
+    "story": "E10-14",
+    "issue": "https://github.com/wie-challenge/website/issues/73",
+    "text": "Check buyer receivables, all artisan obligations, settlement disputes and material dispositions.",
+    "criterionStatus": "FAILED_A12_01",
+    "implementationEvidence": "FinanceService.assess/snapshot/closeOrder; CommerceService.orderAction:829\u2013840; existing OrderClosureAssessment triggers and financial/inventory authorities.",
+    "testEvidence": "Independent LEGACY_ADJUSTMENT_CLOSE reproduces HTTP 201 CLOSED against pending adjustment; full managed-close denial/replay, partial payout/dispute/material cases; product-authority linked sample check.",
+    "missingOrExternal": "A12-01: legacy close bypasses the authoritative blockers for FinancialAdjustment. Positive closure/lawful exception handling also remain policy-dependent and disabled."
+  },
+  {
+    "id": "E10-14.C3",
+    "story": "E10-14",
+    "issue": "https://github.com/wie-challenge/website/issues/73",
+    "text": "Block closure when a required balance/evidence remains unresolved.",
+    "criterionStatus": "FAILED_A12_01",
+    "implementationEvidence": "FinanceService.assess/snapshot/closeOrder; CommerceService.orderAction:829\u2013840; existing OrderClosureAssessment triggers and financial/inventory authorities.",
+    "testEvidence": "Independent LEGACY_ADJUSTMENT_CLOSE reproduces HTTP 201 CLOSED against pending adjustment; full managed-close denial/replay, partial payout/dispute/material cases; product-authority linked sample check.",
+    "missingOrExternal": "A12-01: legacy close bypasses the authoritative blockers for FinancialAdjustment. Positive closure/lawful exception handling also remain policy-dependent and disabled."
+  },
+  {
+    "id": "E10-14.C4",
+    "story": "E10-14",
+    "issue": "https://github.com/wie-challenge/website/issues/73",
+    "text": "Require a documented authorized and lawful disposition for any exception without erasing liability history.",
+    "criterionStatus": "BLOCKED_EXTERNAL_REVIEW",
+    "implementationEvidence": "FinanceService.assess/snapshot/closeOrder; CommerceService.orderAction:829\u2013840; existing OrderClosureAssessment triggers and financial/inventory authorities.",
+    "testEvidence": "Independent LEGACY_ADJUSTMENT_CLOSE reproduces HTTP 201 CLOSED against pending adjustment; full managed-close denial/replay, partial payout/dispute/material cases; product-authority linked sample check.",
+    "missingOrExternal": "A12-01: legacy close bypasses the authoritative blockers for FinancialAdjustment. Positive closure/lawful exception handling also remain policy-dependent and disabled."
+  },
+  {
+    "id": "E10-14.C5",
+    "story": "E10-14",
+    "issue": "https://github.com/wie-challenge/website/issues/73",
+    "text": "Record closure checklist, actor, time and ledger snapshot atomically.",
+    "criterionStatus": "PARTIAL_NEW_GATE_ONLY",
+    "implementationEvidence": "FinanceService.assess/snapshot/closeOrder; CommerceService.orderAction:829\u2013840; existing OrderClosureAssessment triggers and financial/inventory authorities.",
+    "testEvidence": "Independent LEGACY_ADJUSTMENT_CLOSE reproduces HTTP 201 CLOSED against pending adjustment; full managed-close denial/replay, partial payout/dispute/material cases; product-authority linked sample check.",
+    "missingOrExternal": "A12-01: legacy close bypasses the authoritative blockers for FinancialAdjustment. Positive closure/lawful exception handling also remain policy-dependent and disabled."
+  },
+  {
+    "id": "E16-08.C1",
+    "story": "E16-08",
+    "issue": "https://github.com/wie-challenge/website/issues/77",
+    "text": "Recovery target, log redaction and alert tests documented.",
+    "criterionStatus": "PASS_SOFTWARE_LOCAL_SCOPE",
+    "implementationEvidence": "operations/backup.ts/check.ts; common/logging.ts; foundation/transaction.ts; health.controller.ts; jobs/alerts.ts; docs/operations/README.md.",
+    "testEvidence": "Independent encrypted CLI backup/decrypt/restore, 130 per-table row hashes and native constraints; independent populated 127\u2192130 upgrade; full native checks/restore; backup-logging/operations unit tests.",
+    "missingOrExternal": "No missing local software criterion identified. The measured drill does not certify hosted/off-site recovery, real paging or production-scale RTO/RPO."
+  },
+  {
+    "id": "E16-08.C2",
+    "story": "E16-08",
+    "issue": "https://github.com/wie-challenge/website/issues/77",
+    "text": "Define reviewed recovery-time/recovery-point targets and backup ownership.",
+    "criterionStatus": "PASS_SOFTWARE_LOCAL_SCOPE",
+    "implementationEvidence": "operations/backup.ts/check.ts; common/logging.ts; foundation/transaction.ts; health.controller.ts; jobs/alerts.ts; docs/operations/README.md.",
+    "testEvidence": "Independent encrypted CLI backup/decrypt/restore, 130 per-table row hashes and native constraints; independent populated 127\u2192130 upgrade; full native checks/restore; backup-logging/operations unit tests.",
+    "missingOrExternal": "No missing local software criterion identified. The measured drill does not certify hosted/off-site recovery, real paging or production-scale RTO/RPO."
+  },
+  {
+    "id": "E16-08.C3",
+    "story": "E16-08",
+    "issue": "https://github.com/wie-challenge/website/issues/77",
+    "text": "Produce protected backups and execute a restore into an isolated environment.",
+    "criterionStatus": "PASS_SOFTWARE_LOCAL_SCOPE",
+    "implementationEvidence": "operations/backup.ts/check.ts; common/logging.ts; foundation/transaction.ts; health.controller.ts; jobs/alerts.ts; docs/operations/README.md.",
+    "testEvidence": "Independent encrypted CLI backup/decrypt/restore, 130 per-table row hashes and native constraints; independent populated 127\u2192130 upgrade; full native checks/restore; backup-logging/operations unit tests.",
+    "missingOrExternal": "No missing local software criterion identified. The measured drill does not certify hosted/off-site recovery, real paging or production-scale RTO/RPO."
+  },
+  {
+    "id": "E16-08.C4",
+    "story": "E16-08",
+    "issue": "https://github.com/wie-challenge/website/issues/77",
+    "text": "Capture structured redacted logs, health checks and actionable alerts.",
+    "criterionStatus": "PASS_SOFTWARE_LOCAL_SCOPE",
+    "implementationEvidence": "operations/backup.ts/check.ts; common/logging.ts; foundation/transaction.ts; health.controller.ts; jobs/alerts.ts; docs/operations/README.md.",
+    "testEvidence": "Independent encrypted CLI backup/decrypt/restore, 130 per-table row hashes and native constraints; independent populated 127\u2192130 upgrade; full native checks/restore; backup-logging/operations unit tests.",
+    "missingOrExternal": "No missing local software criterion identified. The measured drill does not certify hosted/off-site recovery, real paging or production-scale RTO/RPO."
+  },
+  {
+    "id": "E16-08.C5",
+    "story": "E16-08",
+    "issue": "https://github.com/wie-challenge/website/issues/77",
+    "text": "Document incident/rollback procedures and verify restored ledger consistency.",
+    "criterionStatus": "PASS_SOFTWARE_LOCAL_SCOPE",
+    "implementationEvidence": "operations/backup.ts/check.ts; common/logging.ts; foundation/transaction.ts; health.controller.ts; jobs/alerts.ts; docs/operations/README.md.",
+    "testEvidence": "Independent encrypted CLI backup/decrypt/restore, 130 per-table row hashes and native constraints; independent populated 127\u2192130 upgrade; full native checks/restore; backup-logging/operations unit tests.",
+    "missingOrExternal": "No missing local software criterion identified. The measured drill does not certify hosted/off-site recovery, real paging or production-scale RTO/RPO."
+  },
+  {
+    "id": "E14-09.C1",
+    "story": "E14-09",
+    "issue": "https://github.com/wie-challenge/website/issues/74",
+    "text": "Per-data-class retention, deletion exceptions, access roles and breach reporting ownership reviewed before real pilot.",
+    "criterionStatus": "BLOCKED_EXTERNAL_REVIEW",
+    "implementationEvidence": "governance/retention.ts and retention.controller.ts; admin/retention/page.tsx; existing governance privacy-request and trace revocation paths.",
+    "testEvidence": "Independent RETENTION_NO_PURGE + mobile/desktop operational review and access denial; inventory unit checks; full privacy/public-trace revocation tests.",
+    "missingOrExternal": "Qualified retention-duration/preservation review, named controller/incident assignments and reviewed removal procedures remain pending. Purpose/trigger/access placeholders and no-purge controls are implemented."
+  },
+  {
+    "id": "E14-09.C2",
+    "story": "E14-09",
+    "issue": "https://github.com/wie-challenge/website/issues/74",
+    "text": "Define per-class purpose, retention trigger/duration, access roles and deletion method.",
+    "criterionStatus": "PARTIAL_DURATION_PENDING",
+    "implementationEvidence": "governance/retention.ts and retention.controller.ts; admin/retention/page.tsx; existing governance privacy-request and trace revocation paths.",
+    "testEvidence": "Independent RETENTION_NO_PURGE + mobile/desktop operational review and access denial; inventory unit checks; full privacy/public-trace revocation tests.",
+    "missingOrExternal": "Qualified retention-duration/preservation review, named controller/incident assignments and reviewed removal procedures remain pending. Purpose/trigger/access placeholders and no-purge controls are implemented."
+  },
+  {
+    "id": "E14-09.C3",
+    "story": "E14-09",
+    "issue": "https://github.com/wie-challenge/website/issues/74",
+    "text": "Document required finance/audit exceptions and approve them through qualified review.",
+    "criterionStatus": "BLOCKED_EXTERNAL_REVIEW",
+    "implementationEvidence": "governance/retention.ts and retention.controller.ts; admin/retention/page.tsx; existing governance privacy-request and trace revocation paths.",
+    "testEvidence": "Independent RETENTION_NO_PURGE + mobile/desktop operational review and access denial; inventory unit checks; full privacy/public-trace revocation tests.",
+    "missingOrExternal": "Qualified retention-duration/preservation review, named controller/incident assignments and reviewed removal procedures remain pending. Purpose/trigger/access placeholders and no-purge controls are implemented."
+  },
+  {
+    "id": "E14-09.C4",
+    "story": "E14-09",
+    "issue": "https://github.com/wie-challenge/website/issues/74",
+    "text": "Assign privacy incident detection, escalation and response owners.",
+    "criterionStatus": "BLOCKED_EXTERNAL_REVIEW",
+    "implementationEvidence": "governance/retention.ts and retention.controller.ts; admin/retention/page.tsx; existing governance privacy-request and trace revocation paths.",
+    "testEvidence": "Independent RETENTION_NO_PURGE + mobile/desktop operational review and access denial; inventory unit checks; full privacy/public-trace revocation tests.",
+    "missingOrExternal": "Qualified retention-duration/preservation review, named controller/incident assignments and reviewed removal procedures remain pending. Purpose/trigger/access placeholders and no-purge controls are implemented."
+  },
+  {
+    "id": "E14-09.C5",
+    "story": "E14-09",
+    "issue": "https://github.com/wie-challenge/website/issues/74",
+    "text": "Verify expiry/removal behavior for personal data and approved public copies.",
+    "criterionStatus": "PARTIAL_EXPIRY_NOT_ERASURE",
+    "implementationEvidence": "governance/retention.ts and retention.controller.ts; admin/retention/page.tsx; existing governance privacy-request and trace revocation paths.",
+    "testEvidence": "Independent RETENTION_NO_PURGE + mobile/desktop operational review and access denial; inventory unit checks; full privacy/public-trace revocation tests.",
+    "missingOrExternal": "Qualified retention-duration/preservation review, named controller/incident assignments and reviewed removal procedures remain pending. Purpose/trigger/access placeholders and no-purge controls are implemented."
+  },
+  {
+    "id": "E14-09.C6",
+    "story": "E14-09",
+    "issue": "https://github.com/wie-challenge/website/issues/74",
+    "text": "Keep wearable raw/summary records absent from commercial retention inventories except a documented local-only boundary.",
+    "criterionStatus": "PASS_SOFTWARE",
+    "implementationEvidence": "governance/retention.ts and retention.controller.ts; admin/retention/page.tsx; existing governance privacy-request and trace revocation paths.",
+    "testEvidence": "Independent RETENTION_NO_PURGE + mobile/desktop operational review and access denial; inventory unit checks; full privacy/public-trace revocation tests.",
+    "missingOrExternal": "Qualified retention-duration/preservation review, named controller/incident assignments and reviewed removal procedures remain pending. Purpose/trigger/access placeholders and no-purge controls are implemented."
+  }
+]

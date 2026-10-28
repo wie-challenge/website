@@ -1,0 +1,26 @@
+$ biome lint apps packages tests scripts/*.ts playwright.config.ts playwright.demo.config.ts
+apps/api/src/modules/commerce/commerce.service.ts:843:15 lint/style/useTemplate  FIXABLE  ━━━━━━━━━━
+
+  i Template literals are preferred over string concatenation.
+  
+    841 │               409,
+    842 │               'FINANCIAL_CLOSURE_REQUIRED',
+  > 843 │               'Financial closure denied: ' + readiness.blockers.join(', '),
+        │               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    844 │             );
+    845 │         }
+  
+  i Template literals are easier to read than a chain of + operators and quotes, and they avoid mistakes with spaces and escaped quotes.
+  
+  i Unsafe fix: Use a template literal.
+  
+     841  841 │                 409,
+     842  842 │                 'FINANCIAL_CLOSURE_REQUIRED',
+     843      │ - ··············'Financial·closure·denied:·'·+·readiness.blockers.join(',·'),
+          843 │ + ··············`Financial·closure·denied:·${readiness.blockers.join(',·')}`,
+     844  844 │               );
+     845  845 │           }
+  
+
+Checked 411 files in 123ms. No fixes applied.
+Found 1 info.

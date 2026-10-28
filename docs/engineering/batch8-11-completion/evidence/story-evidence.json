@@ -1,0 +1,2213 @@
+[
+  {
+    "BACKLOG_ID": "E05-02",
+    "GITHUB_ISSUE": "https://github.com/wie-challenge/website/issues/115",
+    "ORIGINAL_CRITERIA": [
+      "Show criteria, weights, missing data and no health attributes.",
+      "Show criteria, normalized inputs, weights and score components.",
+      "Version configuration and snapshot candidate inputs.",
+      "Handle ties deterministically and disclose missing data.",
+      "Keep recommendation separate from manager selection and artisan acceptance."
+    ],
+    "IMPLEMENTATION_REFERENCE": "apps/api/src/modules/procurement/planning.ts",
+    "TEST_REFERENCE": "apps/api/test/planning-intelligence.scenarios.ts",
+    "DATABASE_VERIFICATION": "PASS native PostgreSQL 17.7, native deploy/transactions/authenticated HTTP",
+    "BROWSER_VERIFICATION": "PASS tests/e2e/planning-intelligence.spec.ts",
+    "SECURITY_VERIFICATION": "PASS relevant server permission/state-denial assertions; see 18-case index",
+    "MISSING_REQUIREMENTS": "None in software scope; owner acceptance remains pending.",
+    "SOFTWARE_STATUS": "VERIFIED_SOFTWARE_CRITERIA",
+    "OWNER_ACCEPTANCE": "PENDING_OWNER_REVIEW",
+    "githubStateReadOnly": "CLOSED",
+    "criterionEvidence": [
+      {
+        "id": "E05-02.C1",
+        "text": "Show criteria, weights, missing data and no health attributes.",
+        "implementation": "apps/api/src/modules/procurement/planning.ts",
+        "tests": "apps/api/test/planning-intelligence.scenarios.ts",
+        "browser": "tests/e2e/planning-intelligence.spec.ts",
+        "evidenceNote": "weighted snapshots; normalized component recomputation, eligibility gates, deterministic tie unit tests",
+        "status": "VERIFIED_SOFTWARE"
+      },
+      {
+        "id": "E05-02.C2",
+        "text": "Show criteria, normalized inputs, weights and score components.",
+        "implementation": "apps/api/src/modules/procurement/planning.ts",
+        "tests": "apps/api/test/planning-intelligence.scenarios.ts",
+        "browser": "tests/e2e/planning-intelligence.spec.ts",
+        "evidenceNote": "weighted snapshots; normalized component recomputation, eligibility gates, deterministic tie unit tests",
+        "status": "VERIFIED_SOFTWARE"
+      },
+      {
+        "id": "E05-02.C3",
+        "text": "Version configuration and snapshot candidate inputs.",
+        "implementation": "apps/api/src/modules/procurement/planning.ts",
+        "tests": "apps/api/test/planning-intelligence.scenarios.ts",
+        "browser": "tests/e2e/planning-intelligence.spec.ts",
+        "evidenceNote": "weighted snapshots; normalized component recomputation, eligibility gates, deterministic tie unit tests",
+        "status": "VERIFIED_SOFTWARE"
+      },
+      {
+        "id": "E05-02.C4",
+        "text": "Handle ties deterministically and disclose missing data.",
+        "implementation": "apps/api/src/modules/procurement/planning.ts",
+        "tests": "apps/api/test/planning-intelligence.scenarios.ts",
+        "browser": "tests/e2e/planning-intelligence.spec.ts",
+        "evidenceNote": "weighted snapshots; normalized component recomputation, eligibility gates, deterministic tie unit tests",
+        "status": "VERIFIED_SOFTWARE"
+      },
+      {
+        "id": "E05-02.C5",
+        "text": "Keep recommendation separate from manager selection and artisan acceptance.",
+        "implementation": "apps/api/src/modules/procurement/planning.ts",
+        "tests": "apps/api/test/planning-intelligence.scenarios.ts",
+        "browser": "tests/e2e/planning-intelligence.spec.ts",
+        "evidenceNote": "weighted snapshots; normalized component recomputation, eligibility gates, deterministic tie unit tests",
+        "status": "VERIFIED_SOFTWARE"
+      }
+    ]
+  },
+  {
+    "BACKLOG_ID": "E05-03",
+    "GITHUB_ISSUE": "https://github.com/wie-challenge/website/issues/48",
+    "ORIGINAL_CRITERIA": [
+      "No negative quantity, no capacity oversubscription, totals reconcile.",
+      "Allocate positive integer quantities and show remainder.",
+      "Reconcile total to required order quantity without excess.",
+      "Validate capacity periods, material assumptions and units.",
+      "Save draft plans without binding workers or starting production."
+    ],
+    "IMPLEMENTATION_REFERENCE": "apps/api/src/modules/procurement/planning.ts",
+    "TEST_REFERENCE": "apps/api/test/planning-intelligence.scenarios.ts",
+    "DATABASE_VERIFICATION": "PASS native PostgreSQL 17.7, native deploy/transactions/authenticated HTTP",
+    "BROWSER_VERIFICATION": "PASS tests/e2e/planning-intelligence.spec.ts",
+    "SECURITY_VERIFICATION": "PASS relevant server permission/state-denial assertions; see 18-case index",
+    "MISSING_REQUIREMENTS": "None in software scope; owner acceptance remains pending.",
+    "SOFTWARE_STATUS": "VERIFIED_SOFTWARE_CRITERIA",
+    "OWNER_ACCEPTANCE": "PENDING_OWNER_REVIEW",
+    "githubStateReadOnly": "CLOSED",
+    "criterionEvidence": [
+      {
+        "id": "E05-03.C1",
+        "text": "No negative quantity, no capacity oversubscription, totals reconcile.",
+        "implementation": "apps/api/src/modules/procurement/planning.ts",
+        "tests": "apps/api/test/planning-intelligence.scenarios.ts",
+        "browser": "tests/e2e/planning-intelligence.spec.ts",
+        "evidenceNote": "nonbinding concurrent drafts, positive integer reconciliation, unknown material review refusal",
+        "status": "VERIFIED_SOFTWARE"
+      },
+      {
+        "id": "E05-03.C2",
+        "text": "Allocate positive integer quantities and show remainder.",
+        "implementation": "apps/api/src/modules/procurement/planning.ts",
+        "tests": "apps/api/test/planning-intelligence.scenarios.ts",
+        "browser": "tests/e2e/planning-intelligence.spec.ts",
+        "evidenceNote": "nonbinding concurrent drafts, positive integer reconciliation, unknown material review refusal",
+        "status": "VERIFIED_SOFTWARE"
+      },
+      {
+        "id": "E05-03.C3",
+        "text": "Reconcile total to required order quantity without excess.",
+        "implementation": "apps/api/src/modules/procurement/planning.ts",
+        "tests": "apps/api/test/planning-intelligence.scenarios.ts",
+        "browser": "tests/e2e/planning-intelligence.spec.ts",
+        "evidenceNote": "nonbinding concurrent drafts, positive integer reconciliation, unknown material review refusal",
+        "status": "VERIFIED_SOFTWARE"
+      },
+      {
+        "id": "E05-03.C4",
+        "text": "Validate capacity periods, material assumptions and units.",
+        "implementation": "apps/api/src/modules/procurement/planning.ts",
+        "tests": "apps/api/test/planning-intelligence.scenarios.ts",
+        "browser": "tests/e2e/planning-intelligence.spec.ts",
+        "evidenceNote": "nonbinding concurrent drafts, positive integer reconciliation, unknown material review refusal",
+        "status": "VERIFIED_SOFTWARE"
+      },
+      {
+        "id": "E05-03.C5",
+        "text": "Save draft plans without binding workers or starting production.",
+        "implementation": "apps/api/src/modules/procurement/planning.ts",
+        "tests": "apps/api/test/planning-intelligence.scenarios.ts",
+        "browser": "tests/e2e/planning-intelligence.spec.ts",
+        "evidenceNote": "nonbinding concurrent drafts, positive integer reconciliation, unknown material review refusal",
+        "status": "VERIFIED_SOFTWARE"
+      }
+    ]
+  },
+  {
+    "BACKLOG_ID": "E05-04",
+    "GITHUB_ISSUE": "https://github.com/wie-challenge/website/issues/50",
+    "ORIGINAL_CRITERIA": [
+      "Offer created without turning it into an active assignment; worker acceptance required, and declining has no effect on wearable participation or future eligibility.",
+      "Create versioned offers for explicit individual participants rather than silently binding group members.",
+      "Snapshot quantity, compensation, deadline, specification, materials and payment terms.",
+      "Keep OFFERED status until authorized artisan decision.",
+      "Retry failed delivery safely and expose expiry without duplicate offers."
+    ],
+    "IMPLEMENTATION_REFERENCE": "apps/api/src/modules/procurement/planning.ts; apps/api/src/modules/procurement/production-offers.ts",
+    "TEST_REFERENCE": "apps/api/test/planning-intelligence.scenarios.ts",
+    "DATABASE_VERIFICATION": "PASS native PostgreSQL 17.7, native deploy/transactions/authenticated HTTP",
+    "BROWSER_VERIFICATION": "PASS tests/demo-e2e/batch811.spec.ts",
+    "SECURITY_VERIFICATION": "PASS relevant server permission/state-denial assertions; see 18-case index",
+    "MISSING_REQUIREMENTS": "None in software scope; owner acceptance remains pending.",
+    "SOFTWARE_STATUS": "VERIFIED_SOFTWARE_CRITERIA",
+    "OWNER_ACCEPTANCE": "PENDING_OWNER_REVIEW",
+    "githubStateReadOnly": "CLOSED",
+    "criterionEvidence": [
+      {
+        "id": "E05-04.C1",
+        "text": "Offer created without turning it into an active assignment; worker acceptance required, and declining has no effect on wearable participation or future eligibility.",
+        "implementation": "apps/api/src/modules/procurement/planning.ts; apps/api/src/modules/procurement/production-offers.ts",
+        "tests": "apps/api/test/planning-intelligence.scenarios.ts",
+        "browser": "tests/demo-e2e/batch811.spec.ts",
+        "evidenceNote": "atomic per-person issuance, concurrent replay, OFFERED state and exact voluntary acceptance",
+        "status": "VERIFIED_SOFTWARE"
+      },
+      {
+        "id": "E05-04.C2",
+        "text": "Create versioned offers for explicit individual participants rather than silently binding group members.",
+        "implementation": "apps/api/src/modules/procurement/planning.ts; apps/api/src/modules/procurement/production-offers.ts",
+        "tests": "apps/api/test/planning-intelligence.scenarios.ts",
+        "browser": "tests/demo-e2e/batch811.spec.ts",
+        "evidenceNote": "atomic per-person issuance, concurrent replay, OFFERED state and exact voluntary acceptance",
+        "status": "VERIFIED_SOFTWARE"
+      },
+      {
+        "id": "E05-04.C3",
+        "text": "Snapshot quantity, compensation, deadline, specification, materials and payment terms.",
+        "implementation": "apps/api/src/modules/procurement/planning.ts; apps/api/src/modules/procurement/production-offers.ts",
+        "tests": "apps/api/test/planning-intelligence.scenarios.ts",
+        "browser": "tests/demo-e2e/batch811.spec.ts",
+        "evidenceNote": "atomic per-person issuance, concurrent replay, OFFERED state and exact voluntary acceptance",
+        "status": "VERIFIED_SOFTWARE"
+      },
+      {
+        "id": "E05-04.C4",
+        "text": "Keep OFFERED status until authorized artisan decision.",
+        "implementation": "apps/api/src/modules/procurement/planning.ts; apps/api/src/modules/procurement/production-offers.ts",
+        "tests": "apps/api/test/planning-intelligence.scenarios.ts",
+        "browser": "tests/demo-e2e/batch811.spec.ts",
+        "evidenceNote": "atomic per-person issuance, concurrent replay, OFFERED state and exact voluntary acceptance",
+        "status": "VERIFIED_SOFTWARE"
+      },
+      {
+        "id": "E05-04.C5",
+        "text": "Retry failed delivery safely and expose expiry without duplicate offers.",
+        "implementation": "apps/api/src/modules/procurement/planning.ts; apps/api/src/modules/procurement/production-offers.ts",
+        "tests": "apps/api/test/planning-intelligence.scenarios.ts",
+        "browser": "tests/demo-e2e/batch811.spec.ts",
+        "evidenceNote": "atomic per-person issuance, concurrent replay, OFFERED state and exact voluntary acceptance",
+        "status": "VERIFIED_SOFTWARE"
+      }
+    ]
+  },
+  {
+    "BACKLOG_ID": "E05-05",
+    "GITHUB_ISSUE": "https://github.com/wie-challenge/website/issues/116",
+    "ORIGINAL_CRITERIA": [
+      "Capacity released and replacements tracked with audit trail.",
+      "Return declined/expired quantities to replanning with history.",
+      "Release corresponding tentative capacity only.",
+      "Recompute candidates and delivery feasibility for replacements.",
+      "Link replacement reasons without penalizing the original artisan."
+    ],
+    "IMPLEMENTATION_REFERENCE": "apps/api/src/modules/procurement/planning.ts",
+    "TEST_REFERENCE": "apps/api/test/planning-intelligence.scenarios.ts",
+    "DATABASE_VERIFICATION": "PASS native PostgreSQL 17.7, native deploy/transactions/authenticated HTTP",
+    "BROWSER_VERIFICATION": "PASS tests/demo-e2e/batch811.spec.ts",
+    "SECURITY_VERIFICATION": "PASS relevant server permission/state-denial assertions; see 18-case index",
+    "MISSING_REQUIREMENTS": "None in software scope; owner acceptance remains pending.",
+    "SOFTWARE_STATUS": "VERIFIED_SOFTWARE_CRITERIA",
+    "OWNER_ACCEPTANCE": "PENDING_OWNER_REVIEW",
+    "githubStateReadOnly": "OPEN",
+    "criterionEvidence": [
+      {
+        "id": "E05-05.C1",
+        "text": "Capacity released and replacements tracked with audit trail.",
+        "implementation": "apps/api/src/modules/procurement/planning.ts",
+        "tests": "apps/api/test/planning-intelligence.scenarios.ts",
+        "browser": "tests/demo-e2e/batch811.spec.ts",
+        "evidenceNote": "decline/expiry release-once, accepted protection, live candidate capacity and source/reason links",
+        "status": "VERIFIED_SOFTWARE"
+      },
+      {
+        "id": "E05-05.C2",
+        "text": "Return declined/expired quantities to replanning with history.",
+        "implementation": "apps/api/src/modules/procurement/planning.ts",
+        "tests": "apps/api/test/planning-intelligence.scenarios.ts",
+        "browser": "tests/demo-e2e/batch811.spec.ts",
+        "evidenceNote": "decline/expiry release-once, accepted protection, live candidate capacity and source/reason links",
+        "status": "VERIFIED_SOFTWARE"
+      },
+      {
+        "id": "E05-05.C3",
+        "text": "Release corresponding tentative capacity only.",
+        "implementation": "apps/api/src/modules/procurement/planning.ts",
+        "tests": "apps/api/test/planning-intelligence.scenarios.ts",
+        "browser": "tests/demo-e2e/batch811.spec.ts",
+        "evidenceNote": "decline/expiry release-once, accepted protection, live candidate capacity and source/reason links",
+        "status": "VERIFIED_SOFTWARE"
+      },
+      {
+        "id": "E05-05.C4",
+        "text": "Recompute candidates and delivery feasibility for replacements.",
+        "implementation": "apps/api/src/modules/procurement/planning.ts",
+        "tests": "apps/api/test/planning-intelligence.scenarios.ts",
+        "browser": "tests/demo-e2e/batch811.spec.ts",
+        "evidenceNote": "decline/expiry release-once, accepted protection, live candidate capacity and source/reason links",
+        "status": "VERIFIED_SOFTWARE"
+      },
+      {
+        "id": "E05-05.C5",
+        "text": "Link replacement reasons without penalizing the original artisan.",
+        "implementation": "apps/api/src/modules/procurement/planning.ts",
+        "tests": "apps/api/test/planning-intelligence.scenarios.ts",
+        "browser": "tests/demo-e2e/batch811.spec.ts",
+        "evidenceNote": "decline/expiry release-once, accepted protection, live candidate capacity and source/reason links",
+        "status": "VERIFIED_SOFTWARE"
+      }
+    ]
+  },
+  {
+    "BACKLOG_ID": "E05-07",
+    "GITHUB_ISSUE": "https://github.com/wie-challenge/website/issues/118",
+    "ORIGINAL_CRITERIA": [
+      "Required reason and actor logged.",
+      "Require authorized manager and reason for alternative selection.",
+      "Record original ranking, selected candidate, actor, time and plan version.",
+      "Keep hard capacity/qualification/consent guards active.",
+      "Scope override history to permitted auditors."
+    ],
+    "IMPLEMENTATION_REFERENCE": "apps/api/src/modules/procurement/planning.ts",
+    "TEST_REFERENCE": "apps/api/test/planning-intelligence.scenarios.ts",
+    "DATABASE_VERIFICATION": "PASS native PostgreSQL 17.7, native deploy/transactions/authenticated HTTP",
+    "BROWSER_VERIFICATION": "PASS tests/e2e/planning-intelligence.spec.ts",
+    "SECURITY_VERIFICATION": "PASS relevant server permission/state-denial assertions; see 18-case index",
+    "MISSING_REQUIREMENTS": "None in software scope; owner acceptance remains pending.",
+    "SOFTWARE_STATUS": "VERIFIED_SOFTWARE_CRITERIA",
+    "OWNER_ACCEPTANCE": "PENDING_OWNER_REVIEW",
+    "githubStateReadOnly": "CLOSED",
+    "criterionEvidence": [
+      {
+        "id": "E05-07.C1",
+        "text": "Required reason and actor logged.",
+        "implementation": "apps/api/src/modules/procurement/planning.ts",
+        "tests": "apps/api/test/planning-intelligence.scenarios.ts",
+        "browser": "tests/e2e/planning-intelligence.spec.ts",
+        "evidenceNote": "scoped purpose review, logged override and hard-capacity rejection; browser positive override",
+        "status": "VERIFIED_SOFTWARE"
+      },
+      {
+        "id": "E05-07.C2",
+        "text": "Require authorized manager and reason for alternative selection.",
+        "implementation": "apps/api/src/modules/procurement/planning.ts",
+        "tests": "apps/api/test/planning-intelligence.scenarios.ts",
+        "browser": "tests/e2e/planning-intelligence.spec.ts",
+        "evidenceNote": "scoped purpose review, logged override and hard-capacity rejection; browser positive override",
+        "status": "VERIFIED_SOFTWARE"
+      },
+      {
+        "id": "E05-07.C3",
+        "text": "Record original ranking, selected candidate, actor, time and plan version.",
+        "implementation": "apps/api/src/modules/procurement/planning.ts",
+        "tests": "apps/api/test/planning-intelligence.scenarios.ts",
+        "browser": "tests/e2e/planning-intelligence.spec.ts",
+        "evidenceNote": "scoped purpose review, logged override and hard-capacity rejection; browser positive override",
+        "status": "VERIFIED_SOFTWARE"
+      },
+      {
+        "id": "E05-07.C4",
+        "text": "Keep hard capacity/qualification/consent guards active.",
+        "implementation": "apps/api/src/modules/procurement/planning.ts",
+        "tests": "apps/api/test/planning-intelligence.scenarios.ts",
+        "browser": "tests/e2e/planning-intelligence.spec.ts",
+        "evidenceNote": "scoped purpose review, logged override and hard-capacity rejection; browser positive override",
+        "status": "VERIFIED_SOFTWARE"
+      },
+      {
+        "id": "E05-07.C5",
+        "text": "Scope override history to permitted auditors.",
+        "implementation": "apps/api/src/modules/procurement/planning.ts",
+        "tests": "apps/api/test/planning-intelligence.scenarios.ts",
+        "browser": "tests/e2e/planning-intelligence.spec.ts",
+        "evidenceNote": "scoped purpose review, logged override and hard-capacity rejection; browser positive override",
+        "status": "VERIFIED_SOFTWARE"
+      }
+    ]
+  },
+  {
+    "BACKLOG_ID": "E11-01",
+    "GITHUB_ISSUE": "https://github.com/wie-challenge/website/issues/149",
+    "ORIGINAL_CRITERIA": [
+      "Recommendations show rule inputs and do not infer health traits.",
+      "Explain craft match, declared availability, capacity and operational scoring in readable language.",
+      "Reference the same input snapshot and weights as the displayed ranking.",
+      "Disclose missing evidence and distinguish rules from any optional model output.",
+      "Exclude sensor, health and wearable participation from features and explanation."
+    ],
+    "IMPLEMENTATION_REFERENCE": "packages/contracts/src/planning.ts; apps/api/src/modules/procurement/planning.ts",
+    "TEST_REFERENCE": "apps/api/test/planning-intelligence.scenarios.ts",
+    "DATABASE_VERIFICATION": "PASS native PostgreSQL 17.7, native deploy/transactions/authenticated HTTP",
+    "BROWSER_VERIFICATION": "PASS tests/e2e/planning-intelligence.spec.ts",
+    "SECURITY_VERIFICATION": "PASS relevant server permission/state-denial assertions; see 18-case index",
+    "MISSING_REQUIREMENTS": "None in software scope; owner acceptance remains pending.",
+    "SOFTWARE_STATUS": "VERIFIED_SOFTWARE_CRITERIA",
+    "OWNER_ACCEPTANCE": "PENDING_OWNER_REVIEW",
+    "githubStateReadOnly": "CLOSED",
+    "criterionEvidence": [
+      {
+        "id": "E11-01.C1",
+        "text": "Recommendations show rule inputs and do not infer health traits.",
+        "implementation": "packages/contracts/src/planning.ts; apps/api/src/modules/procurement/planning.ts",
+        "tests": "apps/api/test/planning-intelligence.scenarios.ts",
+        "browser": "tests/e2e/planning-intelligence.spec.ts",
+        "evidenceNote": "explanations use the same versioned score inputs and weights",
+        "status": "VERIFIED_SOFTWARE"
+      },
+      {
+        "id": "E11-01.C2",
+        "text": "Explain craft match, declared availability, capacity and operational scoring in readable language.",
+        "implementation": "packages/contracts/src/planning.ts; apps/api/src/modules/procurement/planning.ts",
+        "tests": "apps/api/test/planning-intelligence.scenarios.ts",
+        "browser": "tests/e2e/planning-intelligence.spec.ts",
+        "evidenceNote": "explanations use the same versioned score inputs and weights",
+        "status": "VERIFIED_SOFTWARE"
+      },
+      {
+        "id": "E11-01.C3",
+        "text": "Reference the same input snapshot and weights as the displayed ranking.",
+        "implementation": "packages/contracts/src/planning.ts; apps/api/src/modules/procurement/planning.ts",
+        "tests": "apps/api/test/planning-intelligence.scenarios.ts",
+        "browser": "tests/e2e/planning-intelligence.spec.ts",
+        "evidenceNote": "explanations use the same versioned score inputs and weights",
+        "status": "VERIFIED_SOFTWARE"
+      },
+      {
+        "id": "E11-01.C4",
+        "text": "Disclose missing evidence and distinguish rules from any optional model output.",
+        "implementation": "packages/contracts/src/planning.ts; apps/api/src/modules/procurement/planning.ts",
+        "tests": "apps/api/test/planning-intelligence.scenarios.ts",
+        "browser": "tests/e2e/planning-intelligence.spec.ts",
+        "evidenceNote": "explanations use the same versioned score inputs and weights",
+        "status": "VERIFIED_SOFTWARE"
+      },
+      {
+        "id": "E11-01.C5",
+        "text": "Exclude sensor, health and wearable participation from features and explanation.",
+        "implementation": "packages/contracts/src/planning.ts; apps/api/src/modules/procurement/planning.ts",
+        "tests": "apps/api/test/planning-intelligence.scenarios.ts",
+        "browser": "tests/e2e/planning-intelligence.spec.ts",
+        "evidenceNote": "explanations use the same versioned score inputs and weights",
+        "status": "VERIFIED_SOFTWARE"
+      }
+    ]
+  },
+  {
+    "BACKLOG_ID": "E11-02",
+    "GITHUB_ISSUE": "https://github.com/wie-challenge/website/issues/150",
+    "ORIGINAL_CRITERIA": [
+      "Always show calculation and confidence limitations.",
+      "Suggest rates/costs only with identified source or labeled illustrative assumption.",
+      "Show full calculation, effort range and missing-data limitations.",
+      "Allow finance edits and recompute all dependent totals consistently.",
+      "Require authorized approval before any suggestion becomes issued quote terms."
+    ],
+    "IMPLEMENTATION_REFERENCE": "apps/api/src/modules/procurement/planning.ts; apps/api/src/modules/procurement/commercial-decision.ts",
+    "TEST_REFERENCE": "apps/api/test/planning-intelligence.scenarios.ts",
+    "DATABASE_VERIFICATION": "PASS native PostgreSQL 17.7, native deploy/transactions/authenticated HTTP",
+    "BROWSER_VERIFICATION": "PASS tests/e2e/planning-intelligence.spec.ts",
+    "SECURITY_VERIFICATION": "PASS relevant server permission/state-denial assertions; see 18-case index",
+    "MISSING_REQUIREMENTS": "None in software scope; owner acceptance remains pending.",
+    "SOFTWARE_STATUS": "VERIFIED_SOFTWARE_CRITERIA",
+    "OWNER_ACCEPTANCE": "PENDING_OWNER_REVIEW",
+    "githubStateReadOnly": "CLOSED",
+    "criterionEvidence": [
+      {
+        "id": "E11-02.C1",
+        "text": "Always show calculation and confidence limitations.",
+        "implementation": "apps/api/src/modules/procurement/planning.ts; apps/api/src/modules/procurement/commercial-decision.ts",
+        "tests": "apps/api/test/planning-intelligence.scenarios.ts",
+        "browser": "tests/e2e/planning-intelligence.spec.ts",
+        "evidenceNote": "exact effort-range pricing and authorized costing handoff; existing quote approval authority preserved",
+        "status": "VERIFIED_SOFTWARE"
+      },
+      {
+        "id": "E11-02.C2",
+        "text": "Suggest rates/costs only with identified source or labeled illustrative assumption.",
+        "implementation": "apps/api/src/modules/procurement/planning.ts; apps/api/src/modules/procurement/commercial-decision.ts",
+        "tests": "apps/api/test/planning-intelligence.scenarios.ts",
+        "browser": "tests/e2e/planning-intelligence.spec.ts",
+        "evidenceNote": "exact effort-range pricing and authorized costing handoff; existing quote approval authority preserved",
+        "status": "VERIFIED_SOFTWARE"
+      },
+      {
+        "id": "E11-02.C3",
+        "text": "Show full calculation, effort range and missing-data limitations.",
+        "implementation": "apps/api/src/modules/procurement/planning.ts; apps/api/src/modules/procurement/commercial-decision.ts",
+        "tests": "apps/api/test/planning-intelligence.scenarios.ts",
+        "browser": "tests/e2e/planning-intelligence.spec.ts",
+        "evidenceNote": "exact effort-range pricing and authorized costing handoff; existing quote approval authority preserved",
+        "status": "VERIFIED_SOFTWARE"
+      },
+      {
+        "id": "E11-02.C4",
+        "text": "Allow finance edits and recompute all dependent totals consistently.",
+        "implementation": "apps/api/src/modules/procurement/planning.ts; apps/api/src/modules/procurement/commercial-decision.ts",
+        "tests": "apps/api/test/planning-intelligence.scenarios.ts",
+        "browser": "tests/e2e/planning-intelligence.spec.ts",
+        "evidenceNote": "exact effort-range pricing and authorized costing handoff; existing quote approval authority preserved",
+        "status": "VERIFIED_SOFTWARE"
+      },
+      {
+        "id": "E11-02.C5",
+        "text": "Require authorized approval before any suggestion becomes issued quote terms.",
+        "implementation": "apps/api/src/modules/procurement/planning.ts; apps/api/src/modules/procurement/commercial-decision.ts",
+        "tests": "apps/api/test/planning-intelligence.scenarios.ts",
+        "browser": "tests/e2e/planning-intelligence.spec.ts",
+        "evidenceNote": "exact effort-range pricing and authorized costing handoff; existing quote approval authority preserved",
+        "status": "VERIFIED_SOFTWARE"
+      }
+    ]
+  },
+  {
+    "BACKLOG_ID": "E11-03",
+    "GITHUB_ISSUE": "https://github.com/wie-challenge/website/issues/151",
+    "ORIGINAL_CRITERIA": [
+      "Deterministic schedule calculations and assumptions shown.",
+      "Compare quantity, start date, weekly capacity and material-readiness scenarios.",
+      "State calendar, buffer and time-per-unit assumptions.",
+      "Show earliest completion, shortfall and infeasible constraints consistently.",
+      "Keep scenario exploration separate from committed work and accepted dates."
+    ],
+    "IMPLEMENTATION_REFERENCE": "packages/contracts/src/planning.ts; apps/api/src/modules/procurement/planning.ts",
+    "TEST_REFERENCE": "apps/api/test/planning-intelligence.scenarios.ts",
+    "DATABASE_VERIFICATION": "PASS native PostgreSQL 17.7, native deploy/transactions/authenticated HTTP",
+    "BROWSER_VERIFICATION": "PASS tests/e2e/planning-intelligence.spec.ts",
+    "SECURITY_VERIFICATION": "PASS relevant server permission/state-denial assertions; see 18-case index",
+    "MISSING_REQUIREMENTS": "None in software scope; owner acceptance remains pending.",
+    "SOFTWARE_STATUS": "VERIFIED_SOFTWARE_CRITERIA",
+    "OWNER_ACCEPTANCE": "PENDING_OWNER_REVIEW",
+    "githubStateReadOnly": "CLOSED",
+    "criterionEvidence": [
+      {
+        "id": "E11-03.C1",
+        "text": "Deterministic schedule calculations and assumptions shown.",
+        "implementation": "packages/contracts/src/planning.ts; apps/api/src/modules/procurement/planning.ts",
+        "tests": "apps/api/test/planning-intelligence.scenarios.ts",
+        "browser": "tests/e2e/planning-intelligence.spec.ts",
+        "evidenceNote": "material-ready/unknown scenarios, explicit assumed throughput/calendar and advisory-only persistence",
+        "status": "VERIFIED_SOFTWARE"
+      },
+      {
+        "id": "E11-03.C2",
+        "text": "Compare quantity, start date, weekly capacity and material-readiness scenarios.",
+        "implementation": "packages/contracts/src/planning.ts; apps/api/src/modules/procurement/planning.ts",
+        "tests": "apps/api/test/planning-intelligence.scenarios.ts",
+        "browser": "tests/e2e/planning-intelligence.spec.ts",
+        "evidenceNote": "material-ready/unknown scenarios, explicit assumed throughput/calendar and advisory-only persistence",
+        "status": "VERIFIED_SOFTWARE"
+      },
+      {
+        "id": "E11-03.C3",
+        "text": "State calendar, buffer and time-per-unit assumptions.",
+        "implementation": "packages/contracts/src/planning.ts; apps/api/src/modules/procurement/planning.ts",
+        "tests": "apps/api/test/planning-intelligence.scenarios.ts",
+        "browser": "tests/e2e/planning-intelligence.spec.ts",
+        "evidenceNote": "material-ready/unknown scenarios, explicit assumed throughput/calendar and advisory-only persistence",
+        "status": "VERIFIED_SOFTWARE"
+      },
+      {
+        "id": "E11-03.C4",
+        "text": "Show earliest completion, shortfall and infeasible constraints consistently.",
+        "implementation": "packages/contracts/src/planning.ts; apps/api/src/modules/procurement/planning.ts",
+        "tests": "apps/api/test/planning-intelligence.scenarios.ts",
+        "browser": "tests/e2e/planning-intelligence.spec.ts",
+        "evidenceNote": "material-ready/unknown scenarios, explicit assumed throughput/calendar and advisory-only persistence",
+        "status": "VERIFIED_SOFTWARE"
+      },
+      {
+        "id": "E11-03.C5",
+        "text": "Keep scenario exploration separate from committed work and accepted dates.",
+        "implementation": "packages/contracts/src/planning.ts; apps/api/src/modules/procurement/planning.ts",
+        "tests": "apps/api/test/planning-intelligence.scenarios.ts",
+        "browser": "tests/e2e/planning-intelligence.spec.ts",
+        "evidenceNote": "material-ready/unknown scenarios, explicit assumed throughput/calendar and advisory-only persistence",
+        "status": "VERIFIED_SOFTWARE"
+      }
+    ]
+  },
+  {
+    "BACKLOG_ID": "E20-01",
+    "GITHUB_ISSUE": "https://github.com/wie-challenge/website/issues/91",
+    "ORIGINAL_CRITERIA": [
+      "Every order/batch references immutable approved spec version, measurements and optional acceptance sample.",
+      "Define product measurements, tolerances, materials/BOM, craft instructions and quality criteria.",
+      "Version draft/review/approved specifications with owner and approval evidence.",
+      "Bind order/batch to exact approved version and prevent silent edits.",
+      "Route changed specifications through renewed sample/contract approval when applicable."
+    ],
+    "IMPLEMENTATION_REFERENCE": "apps/api/src/modules/catalog/catalog.service.ts; apps/api/src/modules/procurement/execution.ts; apps/api/src/modules/procurement/production-offers.ts",
+    "TEST_REFERENCE": "apps/api/test/product-authority.scenarios.ts",
+    "DATABASE_VERIFICATION": "PASS native PostgreSQL 17.7, native deploy/transactions/authenticated HTTP",
+    "BROWSER_VERIFICATION": "PASS tests/demo-e2e/batch811.spec.ts",
+    "SECURITY_VERIFICATION": "PASS relevant server permission/state-denial assertions; see 18-case index",
+    "MISSING_REQUIREMENTS": "None in software scope; owner acceptance remains pending.",
+    "SOFTWARE_STATUS": "VERIFIED_SOFTWARE_CRITERIA",
+    "OWNER_ACCEPTANCE": "PENDING_OWNER_REVIEW",
+    "githubStateReadOnly": "OPEN",
+    "criterionEvidence": [
+      {
+        "id": "E20-01.C1",
+        "text": "Every order/batch references immutable approved spec version, measurements and optional acceptance sample.",
+        "implementation": "apps/api/src/modules/catalog/catalog.service.ts; apps/api/src/modules/procurement/execution.ts; apps/api/src/modules/procurement/production-offers.ts",
+        "tests": "apps/api/test/product-authority.scenarios.ts",
+        "browser": "tests/demo-e2e/batch811.spec.ts",
+        "evidenceNote": "immutable approved design, buyer-authorized new projection, exact issued offer digest, release and pinned criteria",
+        "status": "VERIFIED_SOFTWARE"
+      },
+      {
+        "id": "E20-01.C2",
+        "text": "Define product measurements, tolerances, materials/BOM, craft instructions and quality criteria.",
+        "implementation": "apps/api/src/modules/catalog/catalog.service.ts; apps/api/src/modules/procurement/execution.ts; apps/api/src/modules/procurement/production-offers.ts",
+        "tests": "apps/api/test/product-authority.scenarios.ts",
+        "browser": "tests/demo-e2e/batch811.spec.ts",
+        "evidenceNote": "immutable approved design, buyer-authorized new projection, exact issued offer digest, release and pinned criteria",
+        "status": "VERIFIED_SOFTWARE"
+      },
+      {
+        "id": "E20-01.C3",
+        "text": "Version draft/review/approved specifications with owner and approval evidence.",
+        "implementation": "apps/api/src/modules/catalog/catalog.service.ts; apps/api/src/modules/procurement/execution.ts; apps/api/src/modules/procurement/production-offers.ts",
+        "tests": "apps/api/test/product-authority.scenarios.ts",
+        "browser": "tests/demo-e2e/batch811.spec.ts",
+        "evidenceNote": "immutable approved design, buyer-authorized new projection, exact issued offer digest, release and pinned criteria",
+        "status": "VERIFIED_SOFTWARE"
+      },
+      {
+        "id": "E20-01.C4",
+        "text": "Bind order/batch to exact approved version and prevent silent edits.",
+        "implementation": "apps/api/src/modules/catalog/catalog.service.ts; apps/api/src/modules/procurement/execution.ts; apps/api/src/modules/procurement/production-offers.ts",
+        "tests": "apps/api/test/product-authority.scenarios.ts",
+        "browser": "tests/demo-e2e/batch811.spec.ts",
+        "evidenceNote": "immutable approved design, buyer-authorized new projection, exact issued offer digest, release and pinned criteria",
+        "status": "VERIFIED_SOFTWARE"
+      },
+      {
+        "id": "E20-01.C5",
+        "text": "Route changed specifications through renewed sample/contract approval when applicable.",
+        "implementation": "apps/api/src/modules/catalog/catalog.service.ts; apps/api/src/modules/procurement/execution.ts; apps/api/src/modules/procurement/production-offers.ts",
+        "tests": "apps/api/test/product-authority.scenarios.ts",
+        "browser": "tests/demo-e2e/batch811.spec.ts",
+        "evidenceNote": "immutable approved design, buyer-authorized new projection, exact issued offer digest, release and pinned criteria",
+        "status": "VERIFIED_SOFTWARE"
+      }
+    ]
+  },
+  {
+    "BACKLOG_ID": "E20-02",
+    "GITHUB_ISSUE": "https://github.com/wie-challenge/website/issues/98",
+    "ORIGINAL_CRITERIA": [
+      "Sample owner, compensation, material cost, actual hours, approval and decision logged.",
+      "Define sample scope, artisan owner, deadline, labor/material responsibility and compensation before work.",
+      "Obtain explicit sample-offer acceptance and track actual hours/materials.",
+      "Evaluate sample against referenced criteria with evidence and decision.",
+      "Create sample payment obligation under agreed terms even when bulk order is not awarded."
+    ],
+    "IMPLEMENTATION_REFERENCE": "apps/api/src/modules/catalog/catalog.service.ts; apps/api/src/modules/finance/sample-obligations.ts",
+    "TEST_REFERENCE": "apps/api/test/product-authority.scenarios.ts",
+    "DATABASE_VERIFICATION": "PASS native PostgreSQL 17.7, native deploy/transactions/authenticated HTTP",
+    "BROWSER_VERIFICATION": "PASS tests/e2e/product-authority.spec.ts",
+    "SECURITY_VERIFICATION": "PASS relevant server permission/state-denial assertions; see 18-case index",
+    "MISSING_REQUIREMENTS": "None in software scope; owner acceptance remains pending.",
+    "SOFTWARE_STATUS": "VERIFIED_SOFTWARE_CRITERIA",
+    "OWNER_ACCEPTANCE": "PENDING_OWNER_REVIEW",
+    "githubStateReadOnly": "CLOSED",
+    "criterionEvidence": [
+      {
+        "id": "E20-02.C1",
+        "text": "Sample owner, compensation, material cost, actual hours, approval and decision logged.",
+        "implementation": "apps/api/src/modules/catalog/catalog.service.ts; apps/api/src/modules/finance/sample-obligations.ts",
+        "tests": "apps/api/test/product-authority.scenarios.ts",
+        "browser": "tests/e2e/product-authority.spec.ts",
+        "evidenceNote": "exact paid terms, own-artisan consent, observed/unknown costs and effort, completion payable surviving rejection",
+        "status": "VERIFIED_SOFTWARE"
+      },
+      {
+        "id": "E20-02.C2",
+        "text": "Define sample scope, artisan owner, deadline, labor/material responsibility and compensation before work.",
+        "implementation": "apps/api/src/modules/catalog/catalog.service.ts; apps/api/src/modules/finance/sample-obligations.ts",
+        "tests": "apps/api/test/product-authority.scenarios.ts",
+        "browser": "tests/e2e/product-authority.spec.ts",
+        "evidenceNote": "exact paid terms, own-artisan consent, observed/unknown costs and effort, completion payable surviving rejection",
+        "status": "VERIFIED_SOFTWARE"
+      },
+      {
+        "id": "E20-02.C3",
+        "text": "Obtain explicit sample-offer acceptance and track actual hours/materials.",
+        "implementation": "apps/api/src/modules/catalog/catalog.service.ts; apps/api/src/modules/finance/sample-obligations.ts",
+        "tests": "apps/api/test/product-authority.scenarios.ts",
+        "browser": "tests/e2e/product-authority.spec.ts",
+        "evidenceNote": "exact paid terms, own-artisan consent, observed/unknown costs and effort, completion payable surviving rejection",
+        "status": "VERIFIED_SOFTWARE"
+      },
+      {
+        "id": "E20-02.C4",
+        "text": "Evaluate sample against referenced criteria with evidence and decision.",
+        "implementation": "apps/api/src/modules/catalog/catalog.service.ts; apps/api/src/modules/finance/sample-obligations.ts",
+        "tests": "apps/api/test/product-authority.scenarios.ts",
+        "browser": "tests/e2e/product-authority.spec.ts",
+        "evidenceNote": "exact paid terms, own-artisan consent, observed/unknown costs and effort, completion payable surviving rejection",
+        "status": "VERIFIED_SOFTWARE"
+      },
+      {
+        "id": "E20-02.C5",
+        "text": "Create sample payment obligation under agreed terms even when bulk order is not awarded.",
+        "implementation": "apps/api/src/modules/catalog/catalog.service.ts; apps/api/src/modules/finance/sample-obligations.ts",
+        "tests": "apps/api/test/product-authority.scenarios.ts",
+        "browser": "tests/e2e/product-authority.spec.ts",
+        "evidenceNote": "exact paid terms, own-artisan consent, observed/unknown costs and effort, completion payable surviving rejection",
+        "status": "VERIFIED_SOFTWARE"
+      }
+    ]
+  },
+  {
+    "BACKLOG_ID": "E20-03",
+    "GITHUB_ISSUE": "https://github.com/wie-challenge/website/issues/99",
+    "ORIGINAL_CRITERIA": [
+      "Approver, date, evidence, sample specification and amendment relation recorded.",
+      "Present exact sample/specification version and evaluation evidence.",
+      "Capture authorized buyer approval/rejection, time and comments.",
+      "Preserve immutable approval lineage and require renewed sign-off for relevant changes.",
+      "Use approved sample criteria in downstream batch inspection."
+    ],
+    "IMPLEMENTATION_REFERENCE": "apps/api/src/modules/catalog/catalog.service.ts; apps/api/src/modules/procurement/execution.ts",
+    "TEST_REFERENCE": "apps/api/test/product-authority.scenarios.ts",
+    "DATABASE_VERIFICATION": "PASS native PostgreSQL 17.7, native deploy/transactions/authenticated HTTP",
+    "BROWSER_VERIFICATION": "PASS tests/demo-e2e/batch811.spec.ts",
+    "SECURITY_VERIFICATION": "PASS relevant server permission/state-denial assertions; see 18-case index",
+    "MISSING_REQUIREMENTS": "None in software scope; owner acceptance remains pending.",
+    "SOFTWARE_STATUS": "VERIFIED_SOFTWARE_CRITERIA",
+    "OWNER_ACCEPTANCE": "PENDING_OWNER_REVIEW",
+    "githubStateReadOnly": "CLOSED",
+    "criterionEvidence": [
+      {
+        "id": "E20-03.C1",
+        "text": "Approver, date, evidence, sample specification and amendment relation recorded.",
+        "implementation": "apps/api/src/modules/catalog/catalog.service.ts; apps/api/src/modules/procurement/execution.ts",
+        "tests": "apps/api/test/product-authority.scenarios.ts",
+        "browser": "tests/demo-e2e/batch811.spec.ts",
+        "evidenceNote": "immutable buyer decision lineage used by downstream release and inspection",
+        "status": "VERIFIED_SOFTWARE"
+      },
+      {
+        "id": "E20-03.C2",
+        "text": "Present exact sample/specification version and evaluation evidence.",
+        "implementation": "apps/api/src/modules/catalog/catalog.service.ts; apps/api/src/modules/procurement/execution.ts",
+        "tests": "apps/api/test/product-authority.scenarios.ts",
+        "browser": "tests/demo-e2e/batch811.spec.ts",
+        "evidenceNote": "immutable buyer decision lineage used by downstream release and inspection",
+        "status": "VERIFIED_SOFTWARE"
+      },
+      {
+        "id": "E20-03.C3",
+        "text": "Capture authorized buyer approval/rejection, time and comments.",
+        "implementation": "apps/api/src/modules/catalog/catalog.service.ts; apps/api/src/modules/procurement/execution.ts",
+        "tests": "apps/api/test/product-authority.scenarios.ts",
+        "browser": "tests/demo-e2e/batch811.spec.ts",
+        "evidenceNote": "immutable buyer decision lineage used by downstream release and inspection",
+        "status": "VERIFIED_SOFTWARE"
+      },
+      {
+        "id": "E20-03.C4",
+        "text": "Preserve immutable approval lineage and require renewed sign-off for relevant changes.",
+        "implementation": "apps/api/src/modules/catalog/catalog.service.ts; apps/api/src/modules/procurement/execution.ts",
+        "tests": "apps/api/test/product-authority.scenarios.ts",
+        "browser": "tests/demo-e2e/batch811.spec.ts",
+        "evidenceNote": "immutable buyer decision lineage used by downstream release and inspection",
+        "status": "VERIFIED_SOFTWARE"
+      },
+      {
+        "id": "E20-03.C5",
+        "text": "Use approved sample criteria in downstream batch inspection.",
+        "implementation": "apps/api/src/modules/catalog/catalog.service.ts; apps/api/src/modules/procurement/execution.ts",
+        "tests": "apps/api/test/product-authority.scenarios.ts",
+        "browser": "tests/demo-e2e/batch811.spec.ts",
+        "evidenceNote": "immutable buyer decision lineage used by downstream release and inspection",
+        "status": "VERIFIED_SOFTWARE"
+      }
+    ]
+  },
+  {
+    "BACKLOG_ID": "E02-06",
+    "GITHUB_ISSUE": "https://github.com/wie-challenge/website/issues/100",
+    "ORIGINAL_CRITERIA": [
+      "Approval records version, evidence and signatory.",
+      "Show sample evidence, exact specification and acceptance criteria.",
+      "Capture authorized decision, signatory, date and comments.",
+      "Support rejection/changes with a clear next state.",
+      "Require renewed approval for materially changed sample/specification."
+    ],
+    "IMPLEMENTATION_REFERENCE": "apps/api/src/modules/catalog/catalog.service.ts; apps/api/src/modules/procurement/procurement.service.ts",
+    "TEST_REFERENCE": "apps/api/test/product-authority.scenarios.ts; apps/api/test/procurement.scenarios.ts",
+    "DATABASE_VERIFICATION": "PASS native PostgreSQL 17.7, native deploy/transactions/authenticated HTTP",
+    "BROWSER_VERIFICATION": "PASS tests/e2e/product-authority.spec.ts; tests/e2e/procurement.spec.ts",
+    "SECURITY_VERIFICATION": "PASS relevant server permission/state-denial assertions; see 18-case index",
+    "MISSING_REQUIREMENTS": "None in software scope; owner acceptance remains pending.",
+    "SOFTWARE_STATUS": "VERIFIED_SOFTWARE_CRITERIA",
+    "OWNER_ACCEPTANCE": "PENDING_OWNER_REVIEW",
+    "githubStateReadOnly": "CLOSED",
+    "criterionEvidence": [
+      {
+        "id": "E02-06.C1",
+        "text": "Approval records version, evidence and signatory.",
+        "implementation": "apps/api/src/modules/catalog/catalog.service.ts; apps/api/src/modules/procurement/procurement.service.ts",
+        "tests": "apps/api/test/product-authority.scenarios.ts; apps/api/test/procurement.scenarios.ts",
+        "browser": "tests/e2e/product-authority.spec.ts; tests/e2e/procurement.spec.ts",
+        "evidenceNote": "one buyer decision projected into legacy compatibility records; version/decision/rejection regressions",
+        "status": "VERIFIED_SOFTWARE"
+      },
+      {
+        "id": "E02-06.C2",
+        "text": "Show sample evidence, exact specification and acceptance criteria.",
+        "implementation": "apps/api/src/modules/catalog/catalog.service.ts; apps/api/src/modules/procurement/procurement.service.ts",
+        "tests": "apps/api/test/product-authority.scenarios.ts; apps/api/test/procurement.scenarios.ts",
+        "browser": "tests/e2e/product-authority.spec.ts; tests/e2e/procurement.spec.ts",
+        "evidenceNote": "one buyer decision projected into legacy compatibility records; version/decision/rejection regressions",
+        "status": "VERIFIED_SOFTWARE"
+      },
+      {
+        "id": "E02-06.C3",
+        "text": "Capture authorized decision, signatory, date and comments.",
+        "implementation": "apps/api/src/modules/catalog/catalog.service.ts; apps/api/src/modules/procurement/procurement.service.ts",
+        "tests": "apps/api/test/product-authority.scenarios.ts; apps/api/test/procurement.scenarios.ts",
+        "browser": "tests/e2e/product-authority.spec.ts; tests/e2e/procurement.spec.ts",
+        "evidenceNote": "one buyer decision projected into legacy compatibility records; version/decision/rejection regressions",
+        "status": "VERIFIED_SOFTWARE"
+      },
+      {
+        "id": "E02-06.C4",
+        "text": "Support rejection/changes with a clear next state.",
+        "implementation": "apps/api/src/modules/catalog/catalog.service.ts; apps/api/src/modules/procurement/procurement.service.ts",
+        "tests": "apps/api/test/product-authority.scenarios.ts; apps/api/test/procurement.scenarios.ts",
+        "browser": "tests/e2e/product-authority.spec.ts; tests/e2e/procurement.spec.ts",
+        "evidenceNote": "one buyer decision projected into legacy compatibility records; version/decision/rejection regressions",
+        "status": "VERIFIED_SOFTWARE"
+      },
+      {
+        "id": "E02-06.C5",
+        "text": "Require renewed approval for materially changed sample/specification.",
+        "implementation": "apps/api/src/modules/catalog/catalog.service.ts; apps/api/src/modules/procurement/procurement.service.ts",
+        "tests": "apps/api/test/product-authority.scenarios.ts; apps/api/test/procurement.scenarios.ts",
+        "browser": "tests/e2e/product-authority.spec.ts; tests/e2e/procurement.spec.ts",
+        "evidenceNote": "one buyer decision projected into legacy compatibility records; version/decision/rejection regressions",
+        "status": "VERIFIED_SOFTWARE"
+      }
+    ]
+  },
+  {
+    "BACKLOG_ID": "E11-04",
+    "GITHUB_ISSUE": "https://github.com/wie-challenge/website/issues/152",
+    "ORIGINAL_CRITERIA": [
+      "Thresholds tested against recorded progress, no fake ML accuracy.",
+      "Use recorded progress, deadline, exceptions and data staleness with versioned thresholds.",
+      "Explain triggering facts and distinguish unknown from low risk.",
+      "Show time of evaluation and appropriate intervention owner.",
+      "Validate rules against recorded examples and avoid unsupported ML accuracy claims."
+    ],
+    "IMPLEMENTATION_REFERENCE": "apps/api/src/modules/intelligence/intelligence.service.ts; packages/contracts/src/intelligence.ts",
+    "TEST_REFERENCE": "apps/api/test/planning-intelligence.scenarios.ts; apps/api/test/unit/intelligence.test.ts",
+    "DATABASE_VERIFICATION": "PASS native PostgreSQL 17.7, native deploy/transactions/authenticated HTTP",
+    "BROWSER_VERIFICATION": "PASS tests/e2e/planning-intelligence.spec.ts",
+    "SECURITY_VERIFICATION": "PASS relevant server permission/state-denial assertions; see 18-case index",
+    "MISSING_REQUIREMENTS": "None in software scope; owner acceptance remains pending.",
+    "SOFTWARE_STATUS": "VERIFIED_SOFTWARE_CRITERIA",
+    "OWNER_ACCEPTANCE": "PENDING_OWNER_REVIEW",
+    "githubStateReadOnly": "CLOSED",
+    "criterionEvidence": [
+      {
+        "id": "E11-04.C1",
+        "text": "Thresholds tested against recorded progress, no fake ML accuracy.",
+        "implementation": "apps/api/src/modules/intelligence/intelligence.service.ts; packages/contracts/src/intelligence.ts",
+        "tests": "apps/api/test/planning-intelligence.scenarios.ts; apps/api/test/unit/intelligence.test.ts",
+        "browser": "tests/e2e/planning-intelligence.spec.ts",
+        "evidenceNote": "recorded risk examples, real clock, staleness/unknowns, evaluation time and intervention owner",
+        "status": "VERIFIED_SOFTWARE"
+      },
+      {
+        "id": "E11-04.C2",
+        "text": "Use recorded progress, deadline, exceptions and data staleness with versioned thresholds.",
+        "implementation": "apps/api/src/modules/intelligence/intelligence.service.ts; packages/contracts/src/intelligence.ts",
+        "tests": "apps/api/test/planning-intelligence.scenarios.ts; apps/api/test/unit/intelligence.test.ts",
+        "browser": "tests/e2e/planning-intelligence.spec.ts",
+        "evidenceNote": "recorded risk examples, real clock, staleness/unknowns, evaluation time and intervention owner",
+        "status": "VERIFIED_SOFTWARE"
+      },
+      {
+        "id": "E11-04.C3",
+        "text": "Explain triggering facts and distinguish unknown from low risk.",
+        "implementation": "apps/api/src/modules/intelligence/intelligence.service.ts; packages/contracts/src/intelligence.ts",
+        "tests": "apps/api/test/planning-intelligence.scenarios.ts; apps/api/test/unit/intelligence.test.ts",
+        "browser": "tests/e2e/planning-intelligence.spec.ts",
+        "evidenceNote": "recorded risk examples, real clock, staleness/unknowns, evaluation time and intervention owner",
+        "status": "VERIFIED_SOFTWARE"
+      },
+      {
+        "id": "E11-04.C4",
+        "text": "Show time of evaluation and appropriate intervention owner.",
+        "implementation": "apps/api/src/modules/intelligence/intelligence.service.ts; packages/contracts/src/intelligence.ts",
+        "tests": "apps/api/test/planning-intelligence.scenarios.ts; apps/api/test/unit/intelligence.test.ts",
+        "browser": "tests/e2e/planning-intelligence.spec.ts",
+        "evidenceNote": "recorded risk examples, real clock, staleness/unknowns, evaluation time and intervention owner",
+        "status": "VERIFIED_SOFTWARE"
+      },
+      {
+        "id": "E11-04.C5",
+        "text": "Validate rules against recorded examples and avoid unsupported ML accuracy claims.",
+        "implementation": "apps/api/src/modules/intelligence/intelligence.service.ts; packages/contracts/src/intelligence.ts",
+        "tests": "apps/api/test/planning-intelligence.scenarios.ts; apps/api/test/unit/intelligence.test.ts",
+        "browser": "tests/e2e/planning-intelligence.spec.ts",
+        "evidenceNote": "recorded risk examples, real clock, staleness/unknowns, evaluation time and intervention owner",
+        "status": "VERIFIED_SOFTWARE"
+      }
+    ]
+  },
+  {
+    "BACKLOG_ID": "E11-05",
+    "GITHUB_ISSUE": "https://github.com/wie-challenge/website/issues/153",
+    "ORIGINAL_CRITERIA": [
+      "Error metrics computed only when genuine reference data exists.",
+      "Preserve forecast at decision time with model/rule version and assumptions.",
+      "Pair predictions only with eligible genuine completion records.",
+      "Define evaluation cohort, absolute error and missing/cancelled handling.",
+      "Report sample count and limitations separately from any synthetic demonstration."
+    ],
+    "IMPLEMENTATION_REFERENCE": "apps/api/src/modules/intelligence/intelligence.service.ts; apps/api/src/modules/procurement/execution.ts",
+    "TEST_REFERENCE": "apps/api/test/planning-intelligence.scenarios.ts",
+    "DATABASE_VERIFICATION": "PASS native PostgreSQL 17.7, native deploy/transactions/authenticated HTTP",
+    "BROWSER_VERIFICATION": "PASS tests/demo-e2e/batch811.spec.ts",
+    "SECURITY_VERIFICATION": "PASS relevant server permission/state-denial assertions; see 18-case index",
+    "MISSING_REQUIREMENTS": "None in software scope; owner acceptance remains pending.",
+    "SOFTWARE_STATUS": "VERIFIED_SOFTWARE_CRITERIA",
+    "OWNER_ACCEPTANCE": "PENDING_OWNER_REVIEW",
+    "githubStateReadOnly": "CLOSED",
+    "criterionEvidence": [
+      {
+        "id": "E11-05.C1",
+        "text": "Error metrics computed only when genuine reference data exists.",
+        "implementation": "apps/api/src/modules/intelligence/intelligence.service.ts; apps/api/src/modules/procurement/execution.ts",
+        "tests": "apps/api/test/planning-intelligence.scenarios.ts",
+        "browser": "tests/demo-e2e/batch811.spec.ts",
+        "evidenceNote": "append-only versioned forecast snapshots, preserved assumptions, separate synthetic comparisons and missing/genuine evidence gates",
+        "status": "VERIFIED_SOFTWARE"
+      },
+      {
+        "id": "E11-05.C2",
+        "text": "Preserve forecast at decision time with model/rule version and assumptions.",
+        "implementation": "apps/api/src/modules/intelligence/intelligence.service.ts; apps/api/src/modules/procurement/execution.ts",
+        "tests": "apps/api/test/planning-intelligence.scenarios.ts",
+        "browser": "tests/demo-e2e/batch811.spec.ts",
+        "evidenceNote": "append-only versioned forecast snapshots, preserved assumptions, separate synthetic comparisons and missing/genuine evidence gates",
+        "status": "VERIFIED_SOFTWARE"
+      },
+      {
+        "id": "E11-05.C3",
+        "text": "Pair predictions only with eligible genuine completion records.",
+        "implementation": "apps/api/src/modules/intelligence/intelligence.service.ts; apps/api/src/modules/procurement/execution.ts",
+        "tests": "apps/api/test/planning-intelligence.scenarios.ts",
+        "browser": "tests/demo-e2e/batch811.spec.ts",
+        "evidenceNote": "append-only versioned forecast snapshots, preserved assumptions, separate synthetic comparisons and missing/genuine evidence gates",
+        "status": "VERIFIED_SOFTWARE"
+      },
+      {
+        "id": "E11-05.C4",
+        "text": "Define evaluation cohort, absolute error and missing/cancelled handling.",
+        "implementation": "apps/api/src/modules/intelligence/intelligence.service.ts; apps/api/src/modules/procurement/execution.ts",
+        "tests": "apps/api/test/planning-intelligence.scenarios.ts",
+        "browser": "tests/demo-e2e/batch811.spec.ts",
+        "evidenceNote": "append-only versioned forecast snapshots, preserved assumptions, separate synthetic comparisons and missing/genuine evidence gates",
+        "status": "VERIFIED_SOFTWARE"
+      },
+      {
+        "id": "E11-05.C5",
+        "text": "Report sample count and limitations separately from any synthetic demonstration.",
+        "implementation": "apps/api/src/modules/intelligence/intelligence.service.ts; apps/api/src/modules/procurement/execution.ts",
+        "tests": "apps/api/test/planning-intelligence.scenarios.ts",
+        "browser": "tests/demo-e2e/batch811.spec.ts",
+        "evidenceNote": "append-only versioned forecast snapshots, preserved assumptions, separate synthetic comparisons and missing/genuine evidence gates",
+        "status": "VERIFIED_SOFTWARE"
+      }
+    ]
+  },
+  {
+    "BACKLOG_ID": "E11-06",
+    "GITHUB_ISSUE": "https://github.com/wie-challenge/website/issues/154",
+    "ORIGINAL_CRITERIA": [
+      "Feature and decision logs support privacy-safe audits.",
+      "Retain feature/configuration version, eligibility decisions and overrides with purpose-limited access.",
+      "Compare offer exposure and selection patterns using defined populations/periods.",
+      "Suppress small groups and distinguish sparse evidence from confirmed systematic bias.",
+      "Record audit findings, review owner and corrective decisions without automated worker penalties."
+    ],
+    "IMPLEMENTATION_REFERENCE": "apps/api/src/modules/intelligence/intelligence.service.ts; apps/api/src/modules/procurement/planning.ts",
+    "TEST_REFERENCE": "apps/api/test/planning-intelligence.scenarios.ts",
+    "DATABASE_VERIFICATION": "PASS native PostgreSQL 17.7, native deploy/transactions/authenticated HTTP",
+    "BROWSER_VERIFICATION": "PASS tests/e2e/planning-intelligence.spec.ts",
+    "SECURITY_VERIFICATION": "PASS relevant server permission/state-denial assertions; see 18-case index",
+    "MISSING_REQUIREMENTS": "None in software scope; owner acceptance remains pending.",
+    "SOFTWARE_STATUS": "VERIFIED_SOFTWARE_CRITERIA",
+    "OWNER_ACCEPTANCE": "PENDING_OWNER_REVIEW",
+    "githubStateReadOnly": "OPEN",
+    "criterionEvidence": [
+      {
+        "id": "E11-06.C1",
+        "text": "Feature and decision logs support privacy-safe audits.",
+        "implementation": "apps/api/src/modules/intelligence/intelligence.service.ts; apps/api/src/modules/procurement/planning.ts",
+        "tests": "apps/api/test/planning-intelligence.scenarios.ts",
+        "browser": "tests/e2e/planning-intelligence.spec.ts",
+        "evidenceNote": "purpose-scoped snapshot/override review, period/eligible-population exposure, findings and human corrective owner",
+        "status": "VERIFIED_SOFTWARE"
+      },
+      {
+        "id": "E11-06.C2",
+        "text": "Retain feature/configuration version, eligibility decisions and overrides with purpose-limited access.",
+        "implementation": "apps/api/src/modules/intelligence/intelligence.service.ts; apps/api/src/modules/procurement/planning.ts",
+        "tests": "apps/api/test/planning-intelligence.scenarios.ts",
+        "browser": "tests/e2e/planning-intelligence.spec.ts",
+        "evidenceNote": "purpose-scoped snapshot/override review, period/eligible-population exposure, findings and human corrective owner",
+        "status": "VERIFIED_SOFTWARE"
+      },
+      {
+        "id": "E11-06.C3",
+        "text": "Compare offer exposure and selection patterns using defined populations/periods.",
+        "implementation": "apps/api/src/modules/intelligence/intelligence.service.ts; apps/api/src/modules/procurement/planning.ts",
+        "tests": "apps/api/test/planning-intelligence.scenarios.ts",
+        "browser": "tests/e2e/planning-intelligence.spec.ts",
+        "evidenceNote": "purpose-scoped snapshot/override review, period/eligible-population exposure, findings and human corrective owner",
+        "status": "VERIFIED_SOFTWARE"
+      },
+      {
+        "id": "E11-06.C4",
+        "text": "Suppress small groups and distinguish sparse evidence from confirmed systematic bias.",
+        "implementation": "apps/api/src/modules/intelligence/intelligence.service.ts; apps/api/src/modules/procurement/planning.ts",
+        "tests": "apps/api/test/planning-intelligence.scenarios.ts",
+        "browser": "tests/e2e/planning-intelligence.spec.ts",
+        "evidenceNote": "purpose-scoped snapshot/override review, period/eligible-population exposure, findings and human corrective owner",
+        "status": "VERIFIED_SOFTWARE"
+      },
+      {
+        "id": "E11-06.C5",
+        "text": "Record audit findings, review owner and corrective decisions without automated worker penalties.",
+        "implementation": "apps/api/src/modules/intelligence/intelligence.service.ts; apps/api/src/modules/procurement/planning.ts",
+        "tests": "apps/api/test/planning-intelligence.scenarios.ts",
+        "browser": "tests/e2e/planning-intelligence.spec.ts",
+        "evidenceNote": "purpose-scoped snapshot/override review, period/eligible-population exposure, findings and human corrective owner",
+        "status": "VERIFIED_SOFTWARE"
+      }
+    ]
+  },
+  {
+    "BACKLOG_ID": "E13-01",
+    "GITHUB_ISSUE": "https://github.com/wie-challenge/website/issues/174",
+    "ORIGINAL_CRITERIA": [
+      "Synthetic dashboard clearly marks demo numbers; producer share displayed only as aggregate with disclosed formula and denominator.",
+      "Identify every synthetic KPI and distinguish observed/verified evidence.",
+      "Show reporting period, metric units and denominator definitions.",
+      "Avoid displaying demo counts as real customers, participants or income outcomes.",
+      "Provide empty/unknown states rather than invented impact when inputs are missing."
+    ],
+    "IMPLEMENTATION_REFERENCE": "apps/api/src/modules/intelligence/intelligence.service.ts; apps/web/src/components/intelligence-workspace.tsx",
+    "TEST_REFERENCE": "apps/api/test/planning-intelligence.scenarios.ts",
+    "DATABASE_VERIFICATION": "PASS native PostgreSQL 17.7, native deploy/transactions/authenticated HTTP",
+    "BROWSER_VERIFICATION": "PASS tests/e2e/planning-intelligence.spec.ts; tests/demo-e2e/batch811.spec.ts",
+    "SECURITY_VERIFICATION": "PASS relevant server permission/state-denial assertions; see 18-case index",
+    "MISSING_REQUIREMENTS": "None in software scope; owner acceptance remains pending.",
+    "SOFTWARE_STATUS": "VERIFIED_SOFTWARE_CRITERIA",
+    "OWNER_ACCEPTANCE": "PENDING_OWNER_REVIEW",
+    "githubStateReadOnly": "OPEN",
+    "criterionEvidence": [
+      {
+        "id": "E13-01.C1",
+        "text": "Synthetic dashboard clearly marks demo numbers; producer share displayed only as aggregate with disclosed formula and denominator.",
+        "implementation": "apps/api/src/modules/intelligence/intelligence.service.ts; apps/web/src/components/intelligence-workspace.tsx",
+        "tests": "apps/api/test/planning-intelligence.scenarios.ts",
+        "browser": "tests/e2e/planning-intelligence.spec.ts; tests/demo-e2e/batch811.spec.ts",
+        "evidenceNote": "synthetic labels, aggregate producer-share formula and suppressed/unknown states",
+        "status": "VERIFIED_SOFTWARE"
+      },
+      {
+        "id": "E13-01.C2",
+        "text": "Identify every synthetic KPI and distinguish observed/verified evidence.",
+        "implementation": "apps/api/src/modules/intelligence/intelligence.service.ts; apps/web/src/components/intelligence-workspace.tsx",
+        "tests": "apps/api/test/planning-intelligence.scenarios.ts",
+        "browser": "tests/e2e/planning-intelligence.spec.ts; tests/demo-e2e/batch811.spec.ts",
+        "evidenceNote": "synthetic labels, aggregate producer-share formula and suppressed/unknown states",
+        "status": "VERIFIED_SOFTWARE"
+      },
+      {
+        "id": "E13-01.C3",
+        "text": "Show reporting period, metric units and denominator definitions.",
+        "implementation": "apps/api/src/modules/intelligence/intelligence.service.ts; apps/web/src/components/intelligence-workspace.tsx",
+        "tests": "apps/api/test/planning-intelligence.scenarios.ts",
+        "browser": "tests/e2e/planning-intelligence.spec.ts; tests/demo-e2e/batch811.spec.ts",
+        "evidenceNote": "synthetic labels, aggregate producer-share formula and suppressed/unknown states",
+        "status": "VERIFIED_SOFTWARE"
+      },
+      {
+        "id": "E13-01.C4",
+        "text": "Avoid displaying demo counts as real customers, participants or income outcomes.",
+        "implementation": "apps/api/src/modules/intelligence/intelligence.service.ts; apps/web/src/components/intelligence-workspace.tsx",
+        "tests": "apps/api/test/planning-intelligence.scenarios.ts",
+        "browser": "tests/e2e/planning-intelligence.spec.ts; tests/demo-e2e/batch811.spec.ts",
+        "evidenceNote": "synthetic labels, aggregate producer-share formula and suppressed/unknown states",
+        "status": "VERIFIED_SOFTWARE"
+      },
+      {
+        "id": "E13-01.C5",
+        "text": "Provide empty/unknown states rather than invented impact when inputs are missing.",
+        "implementation": "apps/api/src/modules/intelligence/intelligence.service.ts; apps/web/src/components/intelligence-workspace.tsx",
+        "tests": "apps/api/test/planning-intelligence.scenarios.ts",
+        "browser": "tests/e2e/planning-intelligence.spec.ts; tests/demo-e2e/batch811.spec.ts",
+        "evidenceNote": "synthetic labels, aggregate producer-share formula and suppressed/unknown states",
+        "status": "VERIFIED_SOFTWARE"
+      }
+    ]
+  },
+  {
+    "BACKLOG_ID": "E13-02",
+    "GITHUB_ISSUE": "https://github.com/wie-challenge/website/issues/173",
+    "ORIGINAL_CRITERIA": [
+      "Metric definitions documented and denominators available.",
+      "Define each numerator, denominator, source events and period/timezone.",
+      "Separate produced, approved, shipped, received and accepted fulfillment rates.",
+      "Distinguish planned/simulated payments from verified settlement and outstanding obligations.",
+      "Show denominator/coverage and avoid divide-by-zero or misleading zero defaults."
+    ],
+    "IMPLEMENTATION_REFERENCE": "apps/api/src/modules/intelligence/intelligence.service.ts; packages/contracts/src/intelligence.ts",
+    "TEST_REFERENCE": "apps/api/test/planning-intelligence.scenarios.ts; apps/api/test/execution.scenarios.ts",
+    "DATABASE_VERIFICATION": "PASS native PostgreSQL 17.7, native deploy/transactions/authenticated HTTP",
+    "BROWSER_VERIFICATION": "PASS tests/demo-e2e/batch811.spec.ts",
+    "SECURITY_VERIFICATION": "PASS relevant server permission/state-denial assertions; see 18-case index",
+    "MISSING_REQUIREMENTS": "None in software scope; owner acceptance remains pending.",
+    "SOFTWARE_STATUS": "VERIFIED_SOFTWARE_CRITERIA",
+    "OWNER_ACCEPTANCE": "PENDING_OWNER_REVIEW",
+    "githubStateReadOnly": "CLOSED",
+    "criterionEvidence": [
+      {
+        "id": "E13-02.C1",
+        "text": "Metric definitions documented and denominators available.",
+        "implementation": "apps/api/src/modules/intelligence/intelligence.service.ts; packages/contracts/src/intelligence.ts",
+        "tests": "apps/api/test/planning-intelligence.scenarios.ts; apps/api/test/execution.scenarios.ts",
+        "browser": "tests/demo-e2e/batch811.spec.ts",
+        "evidenceNote": "defined source-event metrics, period/timezone, distinct fulfillment and monetary states",
+        "status": "VERIFIED_SOFTWARE"
+      },
+      {
+        "id": "E13-02.C2",
+        "text": "Define each numerator, denominator, source events and period/timezone.",
+        "implementation": "apps/api/src/modules/intelligence/intelligence.service.ts; packages/contracts/src/intelligence.ts",
+        "tests": "apps/api/test/planning-intelligence.scenarios.ts; apps/api/test/execution.scenarios.ts",
+        "browser": "tests/demo-e2e/batch811.spec.ts",
+        "evidenceNote": "defined source-event metrics, period/timezone, distinct fulfillment and monetary states",
+        "status": "VERIFIED_SOFTWARE"
+      },
+      {
+        "id": "E13-02.C3",
+        "text": "Separate produced, approved, shipped, received and accepted fulfillment rates.",
+        "implementation": "apps/api/src/modules/intelligence/intelligence.service.ts; packages/contracts/src/intelligence.ts",
+        "tests": "apps/api/test/planning-intelligence.scenarios.ts; apps/api/test/execution.scenarios.ts",
+        "browser": "tests/demo-e2e/batch811.spec.ts",
+        "evidenceNote": "defined source-event metrics, period/timezone, distinct fulfillment and monetary states",
+        "status": "VERIFIED_SOFTWARE"
+      },
+      {
+        "id": "E13-02.C4",
+        "text": "Distinguish planned/simulated payments from verified settlement and outstanding obligations.",
+        "implementation": "apps/api/src/modules/intelligence/intelligence.service.ts; packages/contracts/src/intelligence.ts",
+        "tests": "apps/api/test/planning-intelligence.scenarios.ts; apps/api/test/execution.scenarios.ts",
+        "browser": "tests/demo-e2e/batch811.spec.ts",
+        "evidenceNote": "defined source-event metrics, period/timezone, distinct fulfillment and monetary states",
+        "status": "VERIFIED_SOFTWARE"
+      },
+      {
+        "id": "E13-02.C5",
+        "text": "Show denominator/coverage and avoid divide-by-zero or misleading zero defaults.",
+        "implementation": "apps/api/src/modules/intelligence/intelligence.service.ts; packages/contracts/src/intelligence.ts",
+        "tests": "apps/api/test/planning-intelligence.scenarios.ts; apps/api/test/execution.scenarios.ts",
+        "browser": "tests/demo-e2e/batch811.spec.ts",
+        "evidenceNote": "defined source-event metrics, period/timezone, distinct fulfillment and monetary states",
+        "status": "VERIFIED_SOFTWARE"
+      }
+    ]
+  },
+  {
+    "BACKLOG_ID": "E13-04",
+    "GITHUB_ISSUE": "https://github.com/wie-challenge/website/issues/176",
+    "ORIGINAL_CRITERIA": [
+      "Missing hours marked unknown, never assumed zero.",
+      "Separate agreed/earned/paid compensation in earnings reports.",
+      "Use consented observed hours with task/unit context and explicit reporting window.",
+      "Mark missing/zero-invalid hours as unknown and distinguish estimated from observed effort.",
+      "Restrict individual earnings to authorized users and publish only safe aggregates."
+    ],
+    "IMPLEMENTATION_REFERENCE": "apps/api/src/modules/intelligence/intelligence.service.ts; apps/web/src/components/execution-workspace.tsx",
+    "TEST_REFERENCE": "apps/api/test/planning-intelligence.scenarios.ts",
+    "DATABASE_VERIFICATION": "PASS native PostgreSQL 17.7, native deploy/transactions/authenticated HTTP",
+    "BROWSER_VERIFICATION": "PASS tests/demo-e2e/batch811.spec.ts",
+    "SECURITY_VERIFICATION": "PASS relevant server permission/state-denial assertions; see 18-case index",
+    "MISSING_REQUIREMENTS": "None in software scope; owner acceptance remains pending.",
+    "SOFTWARE_STATUS": "VERIFIED_SOFTWARE_CRITERIA",
+    "OWNER_ACCEPTANCE": "PENDING_OWNER_REVIEW",
+    "githubStateReadOnly": "OPEN",
+    "criterionEvidence": [
+      {
+        "id": "E13-04.C1",
+        "text": "Missing hours marked unknown, never assumed zero.",
+        "implementation": "apps/api/src/modules/intelligence/intelligence.service.ts; apps/web/src/components/execution-workspace.tsx",
+        "tests": "apps/api/test/planning-intelligence.scenarios.ts",
+        "browser": "tests/demo-e2e/batch811.spec.ts",
+        "evidenceNote": "own-artisan consented time, bounded reporting windows/units/provenance, correction history and private earnings",
+        "status": "VERIFIED_SOFTWARE"
+      },
+      {
+        "id": "E13-04.C2",
+        "text": "Separate agreed/earned/paid compensation in earnings reports.",
+        "implementation": "apps/api/src/modules/intelligence/intelligence.service.ts; apps/web/src/components/execution-workspace.tsx",
+        "tests": "apps/api/test/planning-intelligence.scenarios.ts",
+        "browser": "tests/demo-e2e/batch811.spec.ts",
+        "evidenceNote": "own-artisan consented time, bounded reporting windows/units/provenance, correction history and private earnings",
+        "status": "VERIFIED_SOFTWARE"
+      },
+      {
+        "id": "E13-04.C3",
+        "text": "Use consented observed hours with task/unit context and explicit reporting window.",
+        "implementation": "apps/api/src/modules/intelligence/intelligence.service.ts; apps/web/src/components/execution-workspace.tsx",
+        "tests": "apps/api/test/planning-intelligence.scenarios.ts",
+        "browser": "tests/demo-e2e/batch811.spec.ts",
+        "evidenceNote": "own-artisan consented time, bounded reporting windows/units/provenance, correction history and private earnings",
+        "status": "VERIFIED_SOFTWARE"
+      },
+      {
+        "id": "E13-04.C4",
+        "text": "Mark missing/zero-invalid hours as unknown and distinguish estimated from observed effort.",
+        "implementation": "apps/api/src/modules/intelligence/intelligence.service.ts; apps/web/src/components/execution-workspace.tsx",
+        "tests": "apps/api/test/planning-intelligence.scenarios.ts",
+        "browser": "tests/demo-e2e/batch811.spec.ts",
+        "evidenceNote": "own-artisan consented time, bounded reporting windows/units/provenance, correction history and private earnings",
+        "status": "VERIFIED_SOFTWARE"
+      },
+      {
+        "id": "E13-04.C5",
+        "text": "Restrict individual earnings to authorized users and publish only safe aggregates.",
+        "implementation": "apps/api/src/modules/intelligence/intelligence.service.ts; apps/web/src/components/execution-workspace.tsx",
+        "tests": "apps/api/test/planning-intelligence.scenarios.ts",
+        "browser": "tests/demo-e2e/batch811.spec.ts",
+        "evidenceNote": "own-artisan consented time, bounded reporting windows/units/provenance, correction history and private earnings",
+        "status": "VERIFIED_SOFTWARE"
+      }
+    ]
+  },
+  {
+    "BACKLOG_ID": "E13-05",
+    "GITHUB_ISSUE": "https://github.com/wie-challenge/website/issues/177",
+    "ORIGINAL_CRITERIA": [
+      "Minimum group-size suppression and role checks apply.",
+      "Restrict reports to authorized association relationships and reporting purpose.",
+      "Configure reviewed minimum group size and suppress sparse groups/cells.",
+      "Limit filtering combinations that reveal individual compensation.",
+      "Disclose period, population, sources and unavailable metrics."
+    ],
+    "IMPLEMENTATION_REFERENCE": "apps/api/src/modules/intelligence/intelligence.service.ts",
+    "TEST_REFERENCE": "apps/api/test/planning-intelligence.scenarios.ts",
+    "DATABASE_VERIFICATION": "PASS native PostgreSQL 17.7, native deploy/transactions/authenticated HTTP",
+    "BROWSER_VERIFICATION": "PASS tests/e2e/planning-intelligence.spec.ts",
+    "SECURITY_VERIFICATION": "PASS relevant server permission/state-denial assertions; see 18-case index",
+    "MISSING_REQUIREMENTS": "None in software scope; owner acceptance remains pending.",
+    "SOFTWARE_STATUS": "VERIFIED_SOFTWARE_CRITERIA",
+    "OWNER_ACCEPTANCE": "PENDING_OWNER_REVIEW",
+    "githubStateReadOnly": "CLOSED",
+    "criterionEvidence": [
+      {
+        "id": "E13-05.C1",
+        "text": "Minimum group-size suppression and role checks apply.",
+        "implementation": "apps/api/src/modules/intelligence/intelligence.service.ts",
+        "tests": "apps/api/test/planning-intelligence.scenarios.ts",
+        "browser": "tests/e2e/planning-intelligence.spec.ts",
+        "evidenceNote": "reviewed controlled cohort policy, distinct financial contributor suppression and whole-month filter protections",
+        "status": "VERIFIED_SOFTWARE"
+      },
+      {
+        "id": "E13-05.C2",
+        "text": "Restrict reports to authorized association relationships and reporting purpose.",
+        "implementation": "apps/api/src/modules/intelligence/intelligence.service.ts",
+        "tests": "apps/api/test/planning-intelligence.scenarios.ts",
+        "browser": "tests/e2e/planning-intelligence.spec.ts",
+        "evidenceNote": "reviewed controlled cohort policy, distinct financial contributor suppression and whole-month filter protections",
+        "status": "VERIFIED_SOFTWARE"
+      },
+      {
+        "id": "E13-05.C3",
+        "text": "Configure reviewed minimum group size and suppress sparse groups/cells.",
+        "implementation": "apps/api/src/modules/intelligence/intelligence.service.ts",
+        "tests": "apps/api/test/planning-intelligence.scenarios.ts",
+        "browser": "tests/e2e/planning-intelligence.spec.ts",
+        "evidenceNote": "reviewed controlled cohort policy, distinct financial contributor suppression and whole-month filter protections",
+        "status": "VERIFIED_SOFTWARE"
+      },
+      {
+        "id": "E13-05.C4",
+        "text": "Limit filtering combinations that reveal individual compensation.",
+        "implementation": "apps/api/src/modules/intelligence/intelligence.service.ts",
+        "tests": "apps/api/test/planning-intelligence.scenarios.ts",
+        "browser": "tests/e2e/planning-intelligence.spec.ts",
+        "evidenceNote": "reviewed controlled cohort policy, distinct financial contributor suppression and whole-month filter protections",
+        "status": "VERIFIED_SOFTWARE"
+      },
+      {
+        "id": "E13-05.C5",
+        "text": "Disclose period, population, sources and unavailable metrics.",
+        "implementation": "apps/api/src/modules/intelligence/intelligence.service.ts",
+        "tests": "apps/api/test/planning-intelligence.scenarios.ts",
+        "browser": "tests/e2e/planning-intelligence.spec.ts",
+        "evidenceNote": "reviewed controlled cohort policy, distinct financial contributor suppression and whole-month filter protections",
+        "status": "VERIFIED_SOFTWARE"
+      }
+    ]
+  },
+  {
+    "BACKLOG_ID": "E05-06",
+    "GITHUB_ISSUE": "https://github.com/wie-challenge/website/issues/117",
+    "ORIGINAL_CRITERIA": [
+      "Analyze order distribution with privacy-aware aggregate indicators.",
+      "Define review period, eligible population and metrics.",
+      "Distinguish offered, accepted and paid participation.",
+      "Suppress small-group outputs and disclose missing data.",
+      "Support human review without automatic refusal/health-based exclusion."
+    ],
+    "IMPLEMENTATION_REFERENCE": "apps/api/src/modules/intelligence/intelligence.service.ts",
+    "TEST_REFERENCE": "apps/api/test/planning-intelligence.scenarios.ts",
+    "DATABASE_VERIFICATION": "PASS native PostgreSQL 17.7, native deploy/transactions/authenticated HTTP",
+    "BROWSER_VERIFICATION": "PASS tests/e2e/planning-intelligence.spec.ts",
+    "SECURITY_VERIFICATION": "PASS relevant server permission/state-denial assertions; see 18-case index",
+    "MISSING_REQUIREMENTS": "None in software scope; owner acceptance remains pending.",
+    "SOFTWARE_STATUS": "VERIFIED_SOFTWARE_CRITERIA",
+    "OWNER_ACCEPTANCE": "PENDING_OWNER_REVIEW",
+    "githubStateReadOnly": "OPEN",
+    "criterionEvidence": [
+      {
+        "id": "E05-06.C1",
+        "text": "Analyze order distribution with privacy-aware aggregate indicators.",
+        "implementation": "apps/api/src/modules/intelligence/intelligence.service.ts",
+        "tests": "apps/api/test/planning-intelligence.scenarios.ts",
+        "browser": "tests/e2e/planning-intelligence.spec.ts",
+        "evidenceNote": "defined monthly eligible/exposed population including zero offers, separate simulated paid participation, suppression and no penalties",
+        "status": "VERIFIED_SOFTWARE"
+      },
+      {
+        "id": "E05-06.C2",
+        "text": "Define review period, eligible population and metrics.",
+        "implementation": "apps/api/src/modules/intelligence/intelligence.service.ts",
+        "tests": "apps/api/test/planning-intelligence.scenarios.ts",
+        "browser": "tests/e2e/planning-intelligence.spec.ts",
+        "evidenceNote": "defined monthly eligible/exposed population including zero offers, separate simulated paid participation, suppression and no penalties",
+        "status": "VERIFIED_SOFTWARE"
+      },
+      {
+        "id": "E05-06.C3",
+        "text": "Distinguish offered, accepted and paid participation.",
+        "implementation": "apps/api/src/modules/intelligence/intelligence.service.ts",
+        "tests": "apps/api/test/planning-intelligence.scenarios.ts",
+        "browser": "tests/e2e/planning-intelligence.spec.ts",
+        "evidenceNote": "defined monthly eligible/exposed population including zero offers, separate simulated paid participation, suppression and no penalties",
+        "status": "VERIFIED_SOFTWARE"
+      },
+      {
+        "id": "E05-06.C4",
+        "text": "Suppress small-group outputs and disclose missing data.",
+        "implementation": "apps/api/src/modules/intelligence/intelligence.service.ts",
+        "tests": "apps/api/test/planning-intelligence.scenarios.ts",
+        "browser": "tests/e2e/planning-intelligence.spec.ts",
+        "evidenceNote": "defined monthly eligible/exposed population including zero offers, separate simulated paid participation, suppression and no penalties",
+        "status": "VERIFIED_SOFTWARE"
+      },
+      {
+        "id": "E05-06.C5",
+        "text": "Support human review without automatic refusal/health-based exclusion.",
+        "implementation": "apps/api/src/modules/intelligence/intelligence.service.ts",
+        "tests": "apps/api/test/planning-intelligence.scenarios.ts",
+        "browser": "tests/e2e/planning-intelligence.spec.ts",
+        "evidenceNote": "defined monthly eligible/exposed population including zero offers, separate simulated paid participation, suppression and no penalties",
+        "status": "VERIFIED_SOFTWARE"
+      }
+    ]
+  },
+  {
+    "BACKLOG_ID": "E06-07",
+    "GITHUB_ISSUE": "https://github.com/wie-challenge/website/issues/123",
+    "ORIGINAL_CRITERIA": [
+      "Rules-based alert triggered from deadlines and confirmed progress.",
+      "Version rules using deadlines, progress and open exceptions.",
+      "Distinguish overdue, at-risk and stale/missing-data unknown.",
+      "Deduplicate alerts and expose triggering facts and owner.",
+      "Support acknowledgment/resolution without health-based penalties."
+    ],
+    "IMPLEMENTATION_REFERENCE": "apps/api/src/modules/intelligence/intelligence.service.ts",
+    "TEST_REFERENCE": "apps/api/test/planning-intelligence.scenarios.ts",
+    "DATABASE_VERIFICATION": "PASS native PostgreSQL 17.7, native deploy/transactions/authenticated HTTP",
+    "BROWSER_VERIFICATION": "PASS tests/e2e/planning-intelligence.spec.ts; tests/demo-e2e/batch811.spec.ts",
+    "SECURITY_VERIFICATION": "PASS relevant server permission/state-denial assertions; see 18-case index",
+    "MISSING_REQUIREMENTS": "None in software scope; owner acceptance remains pending.",
+    "SOFTWARE_STATUS": "VERIFIED_SOFTWARE_CRITERIA",
+    "OWNER_ACCEPTANCE": "PENDING_OWNER_REVIEW",
+    "githubStateReadOnly": "CLOSED",
+    "criterionEvidence": [
+      {
+        "id": "E06-07.C1",
+        "text": "Rules-based alert triggered from deadlines and confirmed progress.",
+        "implementation": "apps/api/src/modules/intelligence/intelligence.service.ts",
+        "tests": "apps/api/test/planning-intelligence.scenarios.ts",
+        "browser": "tests/e2e/planning-intelligence.spec.ts; tests/demo-e2e/batch811.spec.ts",
+        "evidenceNote": "deduplicated concurrent alerts, versioned facts, owner, acknowledgement and resolution",
+        "status": "VERIFIED_SOFTWARE"
+      },
+      {
+        "id": "E06-07.C2",
+        "text": "Version rules using deadlines, progress and open exceptions.",
+        "implementation": "apps/api/src/modules/intelligence/intelligence.service.ts",
+        "tests": "apps/api/test/planning-intelligence.scenarios.ts",
+        "browser": "tests/e2e/planning-intelligence.spec.ts; tests/demo-e2e/batch811.spec.ts",
+        "evidenceNote": "deduplicated concurrent alerts, versioned facts, owner, acknowledgement and resolution",
+        "status": "VERIFIED_SOFTWARE"
+      },
+      {
+        "id": "E06-07.C3",
+        "text": "Distinguish overdue, at-risk and stale/missing-data unknown.",
+        "implementation": "apps/api/src/modules/intelligence/intelligence.service.ts",
+        "tests": "apps/api/test/planning-intelligence.scenarios.ts",
+        "browser": "tests/e2e/planning-intelligence.spec.ts; tests/demo-e2e/batch811.spec.ts",
+        "evidenceNote": "deduplicated concurrent alerts, versioned facts, owner, acknowledgement and resolution",
+        "status": "VERIFIED_SOFTWARE"
+      },
+      {
+        "id": "E06-07.C4",
+        "text": "Deduplicate alerts and expose triggering facts and owner.",
+        "implementation": "apps/api/src/modules/intelligence/intelligence.service.ts",
+        "tests": "apps/api/test/planning-intelligence.scenarios.ts",
+        "browser": "tests/e2e/planning-intelligence.spec.ts; tests/demo-e2e/batch811.spec.ts",
+        "evidenceNote": "deduplicated concurrent alerts, versioned facts, owner, acknowledgement and resolution",
+        "status": "VERIFIED_SOFTWARE"
+      },
+      {
+        "id": "E06-07.C5",
+        "text": "Support acknowledgment/resolution without health-based penalties.",
+        "implementation": "apps/api/src/modules/intelligence/intelligence.service.ts",
+        "tests": "apps/api/test/planning-intelligence.scenarios.ts",
+        "browser": "tests/e2e/planning-intelligence.spec.ts; tests/demo-e2e/batch811.spec.ts",
+        "evidenceNote": "deduplicated concurrent alerts, versioned facts, owner, acknowledgement and resolution",
+        "status": "VERIFIED_SOFTWARE"
+      }
+    ]
+  },
+  {
+    "BACKLOG_ID": "E02-05",
+    "GITHUB_ISSUE": "https://github.com/wie-challenge/website/issues/97",
+    "ORIGINAL_CRITERIA": [
+      "Changes create a version with traceable history.",
+      "Link clarification questions and buyer answers to the request.",
+      "Version revisions with author, date, reason and predecessor.",
+      "Preserve earlier versions and flag affected quotes for review.",
+      "Reject stale writes and route accepted-contract changes to amendments."
+    ],
+    "IMPLEMENTATION_REFERENCE": "apps/api/src/modules/procurement/procurement.service.ts",
+    "TEST_REFERENCE": "apps/api/test/procurement.scenarios.ts",
+    "DATABASE_VERIFICATION": "PASS native PostgreSQL 17.7, native deploy/transactions/authenticated HTTP",
+    "BROWSER_VERIFICATION": "PASS tests/e2e/procurement.spec.ts",
+    "SECURITY_VERIFICATION": "PASS relevant server permission/state-denial assertions; see 18-case index",
+    "MISSING_REQUIREMENTS": "None in software scope; owner acceptance remains pending.",
+    "SOFTWARE_STATUS": "VERIFIED_SOFTWARE_CRITERIA",
+    "OWNER_ACCEPTANCE": "PENDING_OWNER_REVIEW",
+    "githubStateReadOnly": "CLOSED",
+    "criterionEvidence": [
+      {
+        "id": "E02-05.C1",
+        "text": "Changes create a version with traceable history.",
+        "implementation": "apps/api/src/modules/procurement/procurement.service.ts",
+        "tests": "apps/api/test/procurement.scenarios.ts",
+        "browser": "tests/e2e/procurement.spec.ts",
+        "evidenceNote": "existing RFQ revision, stale-write, clarification and immutable accepted-terms regressions",
+        "status": "VERIFIED_SOFTWARE"
+      },
+      {
+        "id": "E02-05.C2",
+        "text": "Link clarification questions and buyer answers to the request.",
+        "implementation": "apps/api/src/modules/procurement/procurement.service.ts",
+        "tests": "apps/api/test/procurement.scenarios.ts",
+        "browser": "tests/e2e/procurement.spec.ts",
+        "evidenceNote": "existing RFQ revision, stale-write, clarification and immutable accepted-terms regressions",
+        "status": "VERIFIED_SOFTWARE"
+      },
+      {
+        "id": "E02-05.C3",
+        "text": "Version revisions with author, date, reason and predecessor.",
+        "implementation": "apps/api/src/modules/procurement/procurement.service.ts",
+        "tests": "apps/api/test/procurement.scenarios.ts",
+        "browser": "tests/e2e/procurement.spec.ts",
+        "evidenceNote": "existing RFQ revision, stale-write, clarification and immutable accepted-terms regressions",
+        "status": "VERIFIED_SOFTWARE"
+      },
+      {
+        "id": "E02-05.C4",
+        "text": "Preserve earlier versions and flag affected quotes for review.",
+        "implementation": "apps/api/src/modules/procurement/procurement.service.ts",
+        "tests": "apps/api/test/procurement.scenarios.ts",
+        "browser": "tests/e2e/procurement.spec.ts",
+        "evidenceNote": "existing RFQ revision, stale-write, clarification and immutable accepted-terms regressions",
+        "status": "VERIFIED_SOFTWARE"
+      },
+      {
+        "id": "E02-05.C5",
+        "text": "Reject stale writes and route accepted-contract changes to amendments.",
+        "implementation": "apps/api/src/modules/procurement/procurement.service.ts",
+        "tests": "apps/api/test/procurement.scenarios.ts",
+        "browser": "tests/e2e/procurement.spec.ts",
+        "evidenceNote": "existing RFQ revision, stale-write, clarification and immutable accepted-terms regressions",
+        "status": "VERIFIED_SOFTWARE"
+      }
+    ]
+  },
+  {
+    "BACKLOG_ID": "E02-07",
+    "GITHUB_ISSUE": "https://github.com/wie-challenge/website/issues/101",
+    "ORIGINAL_CRITERIA": [
+      "Conversation tied to permitted order participants.",
+      "Bind messages to RFQ/order with author and timestamp.",
+      "Restrict reading and posting to permitted participants.",
+      "Sanitize content and show delivery/error status.",
+      "Separate internal notes from buyer discussion and retain attributable history."
+    ],
+    "IMPLEMENTATION_REFERENCE": "apps/api/src/modules/collaboration/collaboration.service.ts",
+    "TEST_REFERENCE": "apps/api/test/collaboration.scenarios.ts",
+    "DATABASE_VERIFICATION": "PASS native PostgreSQL 17.7, native deploy/transactions/authenticated HTTP",
+    "BROWSER_VERIFICATION": "PASS tests/e2e/collaboration.spec.ts; tests/e2e/procurement.spec.ts",
+    "SECURITY_VERIFICATION": "PASS relevant server permission/state-denial assertions; see 18-case index",
+    "MISSING_REQUIREMENTS": "None in software scope; owner acceptance remains pending.",
+    "SOFTWARE_STATUS": "VERIFIED_SOFTWARE_CRITERIA",
+    "OWNER_ACCEPTANCE": "PENDING_OWNER_REVIEW",
+    "githubStateReadOnly": "CLOSED",
+    "criterionEvidence": [
+      {
+        "id": "E02-07.C1",
+        "text": "Conversation tied to permitted order participants.",
+        "implementation": "apps/api/src/modules/collaboration/collaboration.service.ts",
+        "tests": "apps/api/test/collaboration.scenarios.ts",
+        "browser": "tests/e2e/collaboration.spec.ts; tests/e2e/procurement.spec.ts",
+        "evidenceNote": "sanitized attributable messages, persisted delivery state and internal/participant separation",
+        "status": "VERIFIED_SOFTWARE"
+      },
+      {
+        "id": "E02-07.C2",
+        "text": "Bind messages to RFQ/order with author and timestamp.",
+        "implementation": "apps/api/src/modules/collaboration/collaboration.service.ts",
+        "tests": "apps/api/test/collaboration.scenarios.ts",
+        "browser": "tests/e2e/collaboration.spec.ts; tests/e2e/procurement.spec.ts",
+        "evidenceNote": "sanitized attributable messages, persisted delivery state and internal/participant separation",
+        "status": "VERIFIED_SOFTWARE"
+      },
+      {
+        "id": "E02-07.C3",
+        "text": "Restrict reading and posting to permitted participants.",
+        "implementation": "apps/api/src/modules/collaboration/collaboration.service.ts",
+        "tests": "apps/api/test/collaboration.scenarios.ts",
+        "browser": "tests/e2e/collaboration.spec.ts; tests/e2e/procurement.spec.ts",
+        "evidenceNote": "sanitized attributable messages, persisted delivery state and internal/participant separation",
+        "status": "VERIFIED_SOFTWARE"
+      },
+      {
+        "id": "E02-07.C4",
+        "text": "Sanitize content and show delivery/error status.",
+        "implementation": "apps/api/src/modules/collaboration/collaboration.service.ts",
+        "tests": "apps/api/test/collaboration.scenarios.ts",
+        "browser": "tests/e2e/collaboration.spec.ts; tests/e2e/procurement.spec.ts",
+        "evidenceNote": "sanitized attributable messages, persisted delivery state and internal/participant separation",
+        "status": "VERIFIED_SOFTWARE"
+      },
+      {
+        "id": "E02-07.C5",
+        "text": "Separate internal notes from buyer discussion and retain attributable history.",
+        "implementation": "apps/api/src/modules/collaboration/collaboration.service.ts",
+        "tests": "apps/api/test/collaboration.scenarios.ts",
+        "browser": "tests/e2e/collaboration.spec.ts; tests/e2e/procurement.spec.ts",
+        "evidenceNote": "sanitized attributable messages, persisted delivery state and internal/participant separation",
+        "status": "VERIFIED_SOFTWARE"
+      }
+    ]
+  },
+  {
+    "BACKLOG_ID": "E06-05",
+    "GITHUB_ISSUE": "https://github.com/wie-challenge/website/issues/121",
+    "ORIGINAL_CRITERIA": [
+      "Exception visible to assigned coordinator; resolution logged.",
+      "Link shortage/delay reports to the artisan's batch.",
+      "Record affected quantity/date, requested help and optional evidence without health disclosure.",
+      "Notify responsible coordinator and show open/acknowledged/resolved state.",
+      "Attribute resolution without silently altering contract or pay."
+    ],
+    "IMPLEMENTATION_REFERENCE": "apps/api/src/modules/collaboration/collaboration.service.ts",
+    "TEST_REFERENCE": "apps/api/test/collaboration.scenarios.ts",
+    "DATABASE_VERIFICATION": "PASS native PostgreSQL 17.7, native deploy/transactions/authenticated HTTP",
+    "BROWSER_VERIFICATION": "PASS tests/demo-e2e/batch811.spec.ts",
+    "SECURITY_VERIFICATION": "PASS relevant server permission/state-denial assertions; see 18-case index",
+    "MISSING_REQUIREMENTS": "None in software scope; owner acceptance remains pending.",
+    "SOFTWARE_STATUS": "VERIFIED_SOFTWARE_CRITERIA",
+    "OWNER_ACCEPTANCE": "PENDING_OWNER_REVIEW",
+    "githubStateReadOnly": "CLOSED",
+    "criterionEvidence": [
+      {
+        "id": "E06-05.C1",
+        "text": "Exception visible to assigned coordinator; resolution logged.",
+        "implementation": "apps/api/src/modules/collaboration/collaboration.service.ts",
+        "tests": "apps/api/test/collaboration.scenarios.ts",
+        "browser": "tests/demo-e2e/batch811.spec.ts",
+        "evidenceNote": "batch-linked affected quantities/dates, coordinator notices, original facts and independent resolution",
+        "status": "VERIFIED_SOFTWARE"
+      },
+      {
+        "id": "E06-05.C2",
+        "text": "Link shortage/delay reports to the artisan's batch.",
+        "implementation": "apps/api/src/modules/collaboration/collaboration.service.ts",
+        "tests": "apps/api/test/collaboration.scenarios.ts",
+        "browser": "tests/demo-e2e/batch811.spec.ts",
+        "evidenceNote": "batch-linked affected quantities/dates, coordinator notices, original facts and independent resolution",
+        "status": "VERIFIED_SOFTWARE"
+      },
+      {
+        "id": "E06-05.C3",
+        "text": "Record affected quantity/date, requested help and optional evidence without health disclosure.",
+        "implementation": "apps/api/src/modules/collaboration/collaboration.service.ts",
+        "tests": "apps/api/test/collaboration.scenarios.ts",
+        "browser": "tests/demo-e2e/batch811.spec.ts",
+        "evidenceNote": "batch-linked affected quantities/dates, coordinator notices, original facts and independent resolution",
+        "status": "VERIFIED_SOFTWARE"
+      },
+      {
+        "id": "E06-05.C4",
+        "text": "Notify responsible coordinator and show open/acknowledged/resolved state.",
+        "implementation": "apps/api/src/modules/collaboration/collaboration.service.ts",
+        "tests": "apps/api/test/collaboration.scenarios.ts",
+        "browser": "tests/demo-e2e/batch811.spec.ts",
+        "evidenceNote": "batch-linked affected quantities/dates, coordinator notices, original facts and independent resolution",
+        "status": "VERIFIED_SOFTWARE"
+      },
+      {
+        "id": "E06-05.C5",
+        "text": "Attribute resolution without silently altering contract or pay.",
+        "implementation": "apps/api/src/modules/collaboration/collaboration.service.ts",
+        "tests": "apps/api/test/collaboration.scenarios.ts",
+        "browser": "tests/demo-e2e/batch811.spec.ts",
+        "evidenceNote": "batch-linked affected quantities/dates, coordinator notices, original facts and independent resolution",
+        "status": "VERIFIED_SOFTWARE"
+      }
+    ]
+  },
+  {
+    "BACKLOG_ID": "E06-06",
+    "GITHUB_ISSUE": "https://github.com/wie-challenge/website/issues/122",
+    "ORIGINAL_CRITERIA": [
+      "Change impact shown and affected parties approve revised commitments.",
+      "Show impact on buyer deadlines, capacity, materials and transport.",
+      "Preserve original/proposed dates and reason.",
+      "Require affected-party approvals before contractual changes.",
+      "Retain unresolved risk and communicate declined changes."
+    ],
+    "IMPLEMENTATION_REFERENCE": "apps/api/src/modules/collaboration/collaboration.service.ts",
+    "TEST_REFERENCE": "apps/api/test/collaboration.scenarios.ts",
+    "DATABASE_VERIFICATION": "PASS native PostgreSQL 17.7, native deploy/transactions/authenticated HTTP",
+    "BROWSER_VERIFICATION": "PASS tests/demo-e2e/batch811.spec.ts",
+    "SECURITY_VERIFICATION": "PASS relevant server permission/state-denial assertions; see 18-case index",
+    "MISSING_REQUIREMENTS": "None in software scope; owner acceptance remains pending.",
+    "SOFTWARE_STATUS": "VERIFIED_SOFTWARE_CRITERIA",
+    "OWNER_ACCEPTANCE": "PENDING_OWNER_REVIEW",
+    "githubStateReadOnly": "CLOSED",
+    "criterionEvidence": [
+      {
+        "id": "E06-06.C1",
+        "text": "Change impact shown and affected parties approve revised commitments.",
+        "implementation": "apps/api/src/modules/collaboration/collaboration.service.ts",
+        "tests": "apps/api/test/collaboration.scenarios.ts",
+        "browser": "tests/demo-e2e/batch811.spec.ts",
+        "evidenceNote": "capacity/material/transport impact disclosure, buyer plus artisan approval, stale/rejected changes and administrator refusal",
+        "status": "VERIFIED_SOFTWARE"
+      },
+      {
+        "id": "E06-06.C2",
+        "text": "Show impact on buyer deadlines, capacity, materials and transport.",
+        "implementation": "apps/api/src/modules/collaboration/collaboration.service.ts",
+        "tests": "apps/api/test/collaboration.scenarios.ts",
+        "browser": "tests/demo-e2e/batch811.spec.ts",
+        "evidenceNote": "capacity/material/transport impact disclosure, buyer plus artisan approval, stale/rejected changes and administrator refusal",
+        "status": "VERIFIED_SOFTWARE"
+      },
+      {
+        "id": "E06-06.C3",
+        "text": "Preserve original/proposed dates and reason.",
+        "implementation": "apps/api/src/modules/collaboration/collaboration.service.ts",
+        "tests": "apps/api/test/collaboration.scenarios.ts",
+        "browser": "tests/demo-e2e/batch811.spec.ts",
+        "evidenceNote": "capacity/material/transport impact disclosure, buyer plus artisan approval, stale/rejected changes and administrator refusal",
+        "status": "VERIFIED_SOFTWARE"
+      },
+      {
+        "id": "E06-06.C4",
+        "text": "Require affected-party approvals before contractual changes.",
+        "implementation": "apps/api/src/modules/collaboration/collaboration.service.ts",
+        "tests": "apps/api/test/collaboration.scenarios.ts",
+        "browser": "tests/demo-e2e/batch811.spec.ts",
+        "evidenceNote": "capacity/material/transport impact disclosure, buyer plus artisan approval, stale/rejected changes and administrator refusal",
+        "status": "VERIFIED_SOFTWARE"
+      },
+      {
+        "id": "E06-06.C5",
+        "text": "Retain unresolved risk and communicate declined changes.",
+        "implementation": "apps/api/src/modules/collaboration/collaboration.service.ts",
+        "tests": "apps/api/test/collaboration.scenarios.ts",
+        "browser": "tests/demo-e2e/batch811.spec.ts",
+        "evidenceNote": "capacity/material/transport impact disclosure, buyer plus artisan approval, stale/rejected changes and administrator refusal",
+        "status": "VERIFIED_SOFTWARE"
+      }
+    ]
+  },
+  {
+    "BACKLOG_ID": "E04-05",
+    "GITHUB_ISSUE": "https://github.com/wie-challenge/website/issues/110",
+    "ORIGINAL_CRITERIA": [
+      "Permission scoped, logged and revocable.",
+      "Add membership only after recorded artisan permission.",
+      "Define allowed actions, scope, dates and accessible consent evidence.",
+      "Immediately enforce artisan revocation on later delegated requests.",
+      "Attribute helper and artisan separately; financial/acceptance access remains explicit."
+    ],
+    "IMPLEMENTATION_REFERENCE": "apps/api/src/modules/artisans/artisans.service.ts",
+    "TEST_REFERENCE": "apps/api/test/artisans.integration.ts; apps/api/test/roles.scenarios.ts",
+    "DATABASE_VERIFICATION": "PASS native PostgreSQL 17.7, native deploy/transactions/authenticated HTTP",
+    "BROWSER_VERIFICATION": "PASS tests/e2e/identity.spec.ts; tests/e2e/revised-foundation.spec.ts",
+    "SECURITY_VERIFICATION": "PASS relevant server permission/state-denial assertions; see 18-case index",
+    "MISSING_REQUIREMENTS": "None in software scope; owner acceptance remains pending.",
+    "SOFTWARE_STATUS": "VERIFIED_SOFTWARE_CRITERIA",
+    "OWNER_ACCEPTANCE": "PENDING_OWNER_REVIEW",
+    "githubStateReadOnly": "CLOSED",
+    "criterionEvidence": [
+      {
+        "id": "E04-05.C1",
+        "text": "Permission scoped, logged and revocable.",
+        "implementation": "apps/api/src/modules/artisans/artisans.service.ts",
+        "tests": "apps/api/test/artisans.integration.ts; apps/api/test/roles.scenarios.ts",
+        "browser": "tests/e2e/identity.spec.ts; tests/e2e/revised-foundation.spec.ts",
+        "evidenceNote": "existing consent/delegation revocation and distinct helper/worker authority regressions",
+        "status": "VERIFIED_SOFTWARE"
+      },
+      {
+        "id": "E04-05.C2",
+        "text": "Add membership only after recorded artisan permission.",
+        "implementation": "apps/api/src/modules/artisans/artisans.service.ts",
+        "tests": "apps/api/test/artisans.integration.ts; apps/api/test/roles.scenarios.ts",
+        "browser": "tests/e2e/identity.spec.ts; tests/e2e/revised-foundation.spec.ts",
+        "evidenceNote": "existing consent/delegation revocation and distinct helper/worker authority regressions",
+        "status": "VERIFIED_SOFTWARE"
+      },
+      {
+        "id": "E04-05.C3",
+        "text": "Define allowed actions, scope, dates and accessible consent evidence.",
+        "implementation": "apps/api/src/modules/artisans/artisans.service.ts",
+        "tests": "apps/api/test/artisans.integration.ts; apps/api/test/roles.scenarios.ts",
+        "browser": "tests/e2e/identity.spec.ts; tests/e2e/revised-foundation.spec.ts",
+        "evidenceNote": "existing consent/delegation revocation and distinct helper/worker authority regressions",
+        "status": "VERIFIED_SOFTWARE"
+      },
+      {
+        "id": "E04-05.C4",
+        "text": "Immediately enforce artisan revocation on later delegated requests.",
+        "implementation": "apps/api/src/modules/artisans/artisans.service.ts",
+        "tests": "apps/api/test/artisans.integration.ts; apps/api/test/roles.scenarios.ts",
+        "browser": "tests/e2e/identity.spec.ts; tests/e2e/revised-foundation.spec.ts",
+        "evidenceNote": "existing consent/delegation revocation and distinct helper/worker authority regressions",
+        "status": "VERIFIED_SOFTWARE"
+      },
+      {
+        "id": "E04-05.C5",
+        "text": "Attribute helper and artisan separately; financial/acceptance access remains explicit.",
+        "implementation": "apps/api/src/modules/artisans/artisans.service.ts",
+        "tests": "apps/api/test/artisans.integration.ts; apps/api/test/roles.scenarios.ts",
+        "browser": "tests/e2e/identity.spec.ts; tests/e2e/revised-foundation.spec.ts",
+        "evidenceNote": "existing consent/delegation revocation and distinct helper/worker authority regressions",
+        "status": "VERIFIED_SOFTWARE"
+      }
+    ]
+  },
+  {
+    "BACKLOG_ID": "E04-07",
+    "GITHUB_ISSUE": "https://github.com/wie-challenge/website/issues/112",
+    "ORIGINAL_CRITERIA": [
+      "No automatic acceptance; manager must approve modified terms.",
+      "Propose quantity/deadline changes before acceptance.",
+      "Show resulting pay, effort and material implications.",
+      "Require manager review and new issued terms before artisan acceptance.",
+      "Do not start production or reserve extra capacity merely on counteroffer."
+    ],
+    "IMPLEMENTATION_REFERENCE": "apps/api/src/modules/collaboration/collaboration.service.ts; apps/api/src/modules/procurement/production-offers.ts",
+    "TEST_REFERENCE": "apps/api/test/collaboration.scenarios.ts",
+    "DATABASE_VERIFICATION": "PASS native PostgreSQL 17.7, native deploy/transactions/authenticated HTTP",
+    "BROWSER_VERIFICATION": "PASS tests/e2e/production.spec.ts; tests/demo-e2e/batch811.spec.ts",
+    "SECURITY_VERIFICATION": "PASS relevant server permission/state-denial assertions; see 18-case index",
+    "MISSING_REQUIREMENTS": "None in software scope; owner acceptance remains pending.",
+    "SOFTWARE_STATUS": "VERIFIED_SOFTWARE_CRITERIA",
+    "OWNER_ACCEPTANCE": "PENDING_OWNER_REVIEW",
+    "githubStateReadOnly": "OPEN",
+    "criterionEvidence": [
+      {
+        "id": "E04-07.C1",
+        "text": "No automatic acceptance; manager must approve modified terms.",
+        "implementation": "apps/api/src/modules/collaboration/collaboration.service.ts; apps/api/src/modules/procurement/production-offers.ts",
+        "tests": "apps/api/test/collaboration.scenarios.ts",
+        "browser": "tests/e2e/production.spec.ts; tests/demo-e2e/batch811.spec.ts",
+        "evidenceNote": "manager-issued replacement terms, original history, expiry/capacity/refusal/unauthorized/stale/concurrent acceptance",
+        "status": "VERIFIED_SOFTWARE"
+      },
+      {
+        "id": "E04-07.C2",
+        "text": "Propose quantity/deadline changes before acceptance.",
+        "implementation": "apps/api/src/modules/collaboration/collaboration.service.ts; apps/api/src/modules/procurement/production-offers.ts",
+        "tests": "apps/api/test/collaboration.scenarios.ts",
+        "browser": "tests/e2e/production.spec.ts; tests/demo-e2e/batch811.spec.ts",
+        "evidenceNote": "manager-issued replacement terms, original history, expiry/capacity/refusal/unauthorized/stale/concurrent acceptance",
+        "status": "VERIFIED_SOFTWARE"
+      },
+      {
+        "id": "E04-07.C3",
+        "text": "Show resulting pay, effort and material implications.",
+        "implementation": "apps/api/src/modules/collaboration/collaboration.service.ts; apps/api/src/modules/procurement/production-offers.ts",
+        "tests": "apps/api/test/collaboration.scenarios.ts",
+        "browser": "tests/e2e/production.spec.ts; tests/demo-e2e/batch811.spec.ts",
+        "evidenceNote": "manager-issued replacement terms, original history, expiry/capacity/refusal/unauthorized/stale/concurrent acceptance",
+        "status": "VERIFIED_SOFTWARE"
+      },
+      {
+        "id": "E04-07.C4",
+        "text": "Require manager review and new issued terms before artisan acceptance.",
+        "implementation": "apps/api/src/modules/collaboration/collaboration.service.ts; apps/api/src/modules/procurement/production-offers.ts",
+        "tests": "apps/api/test/collaboration.scenarios.ts",
+        "browser": "tests/e2e/production.spec.ts; tests/demo-e2e/batch811.spec.ts",
+        "evidenceNote": "manager-issued replacement terms, original history, expiry/capacity/refusal/unauthorized/stale/concurrent acceptance",
+        "status": "VERIFIED_SOFTWARE"
+      },
+      {
+        "id": "E04-07.C5",
+        "text": "Do not start production or reserve extra capacity merely on counteroffer.",
+        "implementation": "apps/api/src/modules/collaboration/collaboration.service.ts; apps/api/src/modules/procurement/production-offers.ts",
+        "tests": "apps/api/test/collaboration.scenarios.ts",
+        "browser": "tests/e2e/production.spec.ts; tests/demo-e2e/batch811.spec.ts",
+        "evidenceNote": "manager-issued replacement terms, original history, expiry/capacity/refusal/unauthorized/stale/concurrent acceptance",
+        "status": "VERIFIED_SOFTWARE"
+      }
+    ]
+  },
+  {
+    "BACKLOG_ID": "E04-08",
+    "GITHUB_ISSUE": "https://github.com/wie-challenge/website/issues/113",
+    "ORIGINAL_CRITERIA": [
+      "No new offers until availability restored.",
+      "Provide artisan-controlled pause/resume with effective date.",
+      "Exclude paused artisans from new offers while preserving active work.",
+      "Retain statements and support access throughout pause.",
+      "Explain that accepted commitments require negotiated amendment."
+    ],
+    "IMPLEMENTATION_REFERENCE": "apps/api/src/modules/collaboration/collaboration.service.ts; apps/api/src/modules/artisans/capacity.ts",
+    "TEST_REFERENCE": "apps/api/test/collaboration.scenarios.ts",
+    "DATABASE_VERIFICATION": "PASS native PostgreSQL 17.7, native deploy/transactions/authenticated HTTP",
+    "BROWSER_VERIFICATION": "PASS tests/e2e/collaboration.spec.ts",
+    "SECURITY_VERIFICATION": "PASS relevant server permission/state-denial assertions; see 18-case index",
+    "MISSING_REQUIREMENTS": "None in software scope; owner acceptance remains pending.",
+    "SOFTWARE_STATUS": "VERIFIED_SOFTWARE_CRITERIA",
+    "OWNER_ACCEPTANCE": "PENDING_OWNER_REVIEW",
+    "githubStateReadOnly": "CLOSED",
+    "criterionEvidence": [
+      {
+        "id": "E04-08.C1",
+        "text": "No new offers until availability restored.",
+        "implementation": "apps/api/src/modules/collaboration/collaboration.service.ts; apps/api/src/modules/artisans/capacity.ts",
+        "tests": "apps/api/test/collaboration.scenarios.ts",
+        "browser": "tests/e2e/collaboration.spec.ts",
+        "evidenceNote": "effective-dated own pause, enforced offer/capacity gates, resume and preserved commitments/support/statements",
+        "status": "VERIFIED_SOFTWARE"
+      },
+      {
+        "id": "E04-08.C2",
+        "text": "Provide artisan-controlled pause/resume with effective date.",
+        "implementation": "apps/api/src/modules/collaboration/collaboration.service.ts; apps/api/src/modules/artisans/capacity.ts",
+        "tests": "apps/api/test/collaboration.scenarios.ts",
+        "browser": "tests/e2e/collaboration.spec.ts",
+        "evidenceNote": "effective-dated own pause, enforced offer/capacity gates, resume and preserved commitments/support/statements",
+        "status": "VERIFIED_SOFTWARE"
+      },
+      {
+        "id": "E04-08.C3",
+        "text": "Exclude paused artisans from new offers while preserving active work.",
+        "implementation": "apps/api/src/modules/collaboration/collaboration.service.ts; apps/api/src/modules/artisans/capacity.ts",
+        "tests": "apps/api/test/collaboration.scenarios.ts",
+        "browser": "tests/e2e/collaboration.spec.ts",
+        "evidenceNote": "effective-dated own pause, enforced offer/capacity gates, resume and preserved commitments/support/statements",
+        "status": "VERIFIED_SOFTWARE"
+      },
+      {
+        "id": "E04-08.C4",
+        "text": "Retain statements and support access throughout pause.",
+        "implementation": "apps/api/src/modules/collaboration/collaboration.service.ts; apps/api/src/modules/artisans/capacity.ts",
+        "tests": "apps/api/test/collaboration.scenarios.ts",
+        "browser": "tests/e2e/collaboration.spec.ts",
+        "evidenceNote": "effective-dated own pause, enforced offer/capacity gates, resume and preserved commitments/support/statements",
+        "status": "VERIFIED_SOFTWARE"
+      },
+      {
+        "id": "E04-08.C5",
+        "text": "Explain that accepted commitments require negotiated amendment.",
+        "implementation": "apps/api/src/modules/collaboration/collaboration.service.ts; apps/api/src/modules/artisans/capacity.ts",
+        "tests": "apps/api/test/collaboration.scenarios.ts",
+        "browser": "tests/e2e/collaboration.spec.ts",
+        "evidenceNote": "effective-dated own pause, enforced offer/capacity gates, resume and preserved commitments/support/statements",
+        "status": "VERIFIED_SOFTWARE"
+      }
+    ]
+  },
+  {
+    "BACKLOG_ID": "E04-09",
+    "GITHUB_ISSUE": "https://github.com/wie-challenge/website/issues/114",
+    "ORIGINAL_CRITERIA": [
+      "No access to nonmember finances or biometric information.",
+      "Aggregate only members permitting capacity sharing.",
+      "Show declared, committed and free values by craft/period with compatible units.",
+      "Exclude revoked relationships and avoid double-counting members.",
+      "Hide individual finances, precise locations and monitoring information."
+    ],
+    "IMPLEMENTATION_REFERENCE": "apps/api/src/modules/artisans/artisans.service.ts",
+    "TEST_REFERENCE": "apps/api/test/artisans.integration.ts",
+    "DATABASE_VERIFICATION": "PASS native PostgreSQL 17.7, native deploy/transactions/authenticated HTTP",
+    "BROWSER_VERIFICATION": "PASS tests/e2e/capacity.spec.ts",
+    "SECURITY_VERIFICATION": "PASS relevant server permission/state-denial assertions; see 18-case index",
+    "MISSING_REQUIREMENTS": "None in software scope; owner acceptance remains pending.",
+    "SOFTWARE_STATUS": "VERIFIED_SOFTWARE_CRITERIA",
+    "OWNER_ACCEPTANCE": "PENDING_OWNER_REVIEW",
+    "githubStateReadOnly": "CLOSED",
+    "criterionEvidence": [
+      {
+        "id": "E04-09.C1",
+        "text": "No access to nonmember finances or biometric information.",
+        "implementation": "apps/api/src/modules/artisans/artisans.service.ts",
+        "tests": "apps/api/test/artisans.integration.ts",
+        "browser": "tests/e2e/capacity.spec.ts",
+        "evidenceNote": "explicit capacity-read sharing, consent/current delegation, deduplication, compatible periods/units and revocation",
+        "status": "VERIFIED_SOFTWARE"
+      },
+      {
+        "id": "E04-09.C2",
+        "text": "Aggregate only members permitting capacity sharing.",
+        "implementation": "apps/api/src/modules/artisans/artisans.service.ts",
+        "tests": "apps/api/test/artisans.integration.ts",
+        "browser": "tests/e2e/capacity.spec.ts",
+        "evidenceNote": "explicit capacity-read sharing, consent/current delegation, deduplication, compatible periods/units and revocation",
+        "status": "VERIFIED_SOFTWARE"
+      },
+      {
+        "id": "E04-09.C3",
+        "text": "Show declared, committed and free values by craft/period with compatible units.",
+        "implementation": "apps/api/src/modules/artisans/artisans.service.ts",
+        "tests": "apps/api/test/artisans.integration.ts",
+        "browser": "tests/e2e/capacity.spec.ts",
+        "evidenceNote": "explicit capacity-read sharing, consent/current delegation, deduplication, compatible periods/units and revocation",
+        "status": "VERIFIED_SOFTWARE"
+      },
+      {
+        "id": "E04-09.C4",
+        "text": "Exclude revoked relationships and avoid double-counting members.",
+        "implementation": "apps/api/src/modules/artisans/artisans.service.ts",
+        "tests": "apps/api/test/artisans.integration.ts",
+        "browser": "tests/e2e/capacity.spec.ts",
+        "evidenceNote": "explicit capacity-read sharing, consent/current delegation, deduplication, compatible periods/units and revocation",
+        "status": "VERIFIED_SOFTWARE"
+      },
+      {
+        "id": "E04-09.C5",
+        "text": "Hide individual finances, precise locations and monitoring information.",
+        "implementation": "apps/api/src/modules/artisans/artisans.service.ts",
+        "tests": "apps/api/test/artisans.integration.ts",
+        "browser": "tests/e2e/capacity.spec.ts",
+        "evidenceNote": "explicit capacity-read sharing, consent/current delegation, deduplication, compatible periods/units and revocation",
+        "status": "VERIFIED_SOFTWARE"
+      }
+    ]
+  },
+  {
+    "BACKLOG_ID": "E19-01",
+    "GITHUB_ISSUE": "https://github.com/wie-challenge/website/issues/92",
+    "ORIGINAL_CRITERIA": [
+      "Work instructions are versioned, images captioned and language chosen, with printable fallback.",
+      "Provide illustrations, captions, measurements and required materials for the approved specification.",
+      "Support selected accessible language and printable/offline fallback.",
+      "Bind instructions to the batch's immutable version and highlight approved amendments.",
+      "Validate comprehension with consenting participants and record fixes."
+    ],
+    "IMPLEMENTATION_REFERENCE": "apps/api/src/modules/procurement/execution.ts; apps/web/src/components/execution-workspace.tsx",
+    "TEST_REFERENCE": "apps/api/test/product-authority.scenarios.ts",
+    "DATABASE_VERIFICATION": "PASS native PostgreSQL 17.7, native deploy/transactions/authenticated HTTP",
+    "BROWSER_VERIFICATION": "PASS tests/demo-e2e/batch811.spec.ts",
+    "SECURITY_VERIFICATION": "PASS relevant server permission/state-denial assertions; see 18-case index",
+    "MISSING_REQUIREMENTS": "Real consenting participant comprehension sessions, reviewed findings and fixes (criterion 5).",
+    "SOFTWARE_STATUS": "BLOCKED",
+    "OWNER_ACCEPTANCE": "PENDING_OWNER_REVIEW",
+    "githubStateReadOnly": "OPEN",
+    "criterionEvidence": [
+      {
+        "id": "E19-01.C1",
+        "text": "Work instructions are versioned, images captioned and language chosen, with printable fallback.",
+        "implementation": "apps/api/src/modules/procurement/execution.ts; apps/web/src/components/execution-workspace.tsx",
+        "tests": "apps/api/test/product-authority.scenarios.ts",
+        "browser": "tests/demo-e2e/batch811.spec.ts",
+        "evidenceNote": "pinned illustrated/translated source instructions and print fallback; real participant comprehension remains open",
+        "status": "VERIFIED_SOFTWARE"
+      },
+      {
+        "id": "E19-01.C2",
+        "text": "Provide illustrations, captions, measurements and required materials for the approved specification.",
+        "implementation": "apps/api/src/modules/procurement/execution.ts; apps/web/src/components/execution-workspace.tsx",
+        "tests": "apps/api/test/product-authority.scenarios.ts",
+        "browser": "tests/demo-e2e/batch811.spec.ts",
+        "evidenceNote": "pinned illustrated/translated source instructions and print fallback; real participant comprehension remains open",
+        "status": "VERIFIED_SOFTWARE"
+      },
+      {
+        "id": "E19-01.C3",
+        "text": "Support selected accessible language and printable/offline fallback.",
+        "implementation": "apps/api/src/modules/procurement/execution.ts; apps/web/src/components/execution-workspace.tsx",
+        "tests": "apps/api/test/product-authority.scenarios.ts",
+        "browser": "tests/demo-e2e/batch811.spec.ts",
+        "evidenceNote": "pinned illustrated/translated source instructions and print fallback; real participant comprehension remains open",
+        "status": "VERIFIED_SOFTWARE"
+      },
+      {
+        "id": "E19-01.C4",
+        "text": "Bind instructions to the batch's immutable version and highlight approved amendments.",
+        "implementation": "apps/api/src/modules/procurement/execution.ts; apps/web/src/components/execution-workspace.tsx",
+        "tests": "apps/api/test/product-authority.scenarios.ts",
+        "browser": "tests/demo-e2e/batch811.spec.ts",
+        "evidenceNote": "pinned illustrated/translated source instructions and print fallback; real participant comprehension remains open",
+        "status": "VERIFIED_SOFTWARE"
+      },
+      {
+        "id": "E19-01.C5",
+        "text": "Validate comprehension with consenting participants and record fixes.",
+        "implementation": "apps/api/src/modules/procurement/execution.ts; apps/web/src/components/execution-workspace.tsx",
+        "tests": "apps/api/test/product-authority.scenarios.ts",
+        "browser": "tests/demo-e2e/batch811.spec.ts",
+        "evidenceNote": "pinned illustrated/translated source instructions and print fallback; real participant comprehension remains open",
+        "status": "BLOCKED_EXTERNAL_EVIDENCE"
+      }
+    ]
+  },
+  {
+    "BACKLOG_ID": "E19-03",
+    "GITHUB_ISSUE": "https://github.com/wie-challenge/website/issues/211",
+    "ORIGINAL_CRITERIA": [
+      "Training requests private to authorized support role and not used as automatic exclusion criteria.",
+      "Let artisans request craft, digital or operational support without mandatory justification.",
+      "Restrict request details to authorized support/community staff.",
+      "Assign response owner and status and permit withdrawal/correction.",
+      "Exclude support requests from automatic matching penalties or public profiles."
+    ],
+    "IMPLEMENTATION_REFERENCE": "apps/api/src/modules/collaboration/collaboration.service.ts",
+    "TEST_REFERENCE": "apps/api/test/collaboration.scenarios.ts",
+    "DATABASE_VERIFICATION": "PASS native PostgreSQL 17.7, native deploy/transactions/authenticated HTTP",
+    "BROWSER_VERIFICATION": "PASS tests/e2e/collaboration.spec.ts; tests/demo-e2e/batch811.spec.ts",
+    "SECURITY_VERIFICATION": "PASS relevant server permission/state-denial assertions; see 18-case index",
+    "MISSING_REQUIREMENTS": "None in software scope; owner acceptance remains pending.",
+    "SOFTWARE_STATUS": "VERIFIED_SOFTWARE_CRITERIA",
+    "OWNER_ACCEPTANCE": "PENDING_OWNER_REVIEW",
+    "githubStateReadOnly": "CLOSED",
+    "criterionEvidence": [
+      {
+        "id": "E19-03.C1",
+        "text": "Training requests private to authorized support role and not used as automatic exclusion criteria.",
+        "implementation": "apps/api/src/modules/collaboration/collaboration.service.ts",
+        "tests": "apps/api/test/collaboration.scenarios.ts",
+        "browser": "tests/e2e/collaboration.spec.ts; tests/demo-e2e/batch811.spec.ts",
+        "evidenceNote": "optional explanation, private support, correction/withdrawal and unchanged ranking inputs",
+        "status": "VERIFIED_SOFTWARE"
+      },
+      {
+        "id": "E19-03.C2",
+        "text": "Let artisans request craft, digital or operational support without mandatory justification.",
+        "implementation": "apps/api/src/modules/collaboration/collaboration.service.ts",
+        "tests": "apps/api/test/collaboration.scenarios.ts",
+        "browser": "tests/e2e/collaboration.spec.ts; tests/demo-e2e/batch811.spec.ts",
+        "evidenceNote": "optional explanation, private support, correction/withdrawal and unchanged ranking inputs",
+        "status": "VERIFIED_SOFTWARE"
+      },
+      {
+        "id": "E19-03.C3",
+        "text": "Restrict request details to authorized support/community staff.",
+        "implementation": "apps/api/src/modules/collaboration/collaboration.service.ts",
+        "tests": "apps/api/test/collaboration.scenarios.ts",
+        "browser": "tests/e2e/collaboration.spec.ts; tests/demo-e2e/batch811.spec.ts",
+        "evidenceNote": "optional explanation, private support, correction/withdrawal and unchanged ranking inputs",
+        "status": "VERIFIED_SOFTWARE"
+      },
+      {
+        "id": "E19-03.C4",
+        "text": "Assign response owner and status and permit withdrawal/correction.",
+        "implementation": "apps/api/src/modules/collaboration/collaboration.service.ts",
+        "tests": "apps/api/test/collaboration.scenarios.ts",
+        "browser": "tests/e2e/collaboration.spec.ts; tests/demo-e2e/batch811.spec.ts",
+        "evidenceNote": "optional explanation, private support, correction/withdrawal and unchanged ranking inputs",
+        "status": "VERIFIED_SOFTWARE"
+      },
+      {
+        "id": "E19-03.C5",
+        "text": "Exclude support requests from automatic matching penalties or public profiles.",
+        "implementation": "apps/api/src/modules/collaboration/collaboration.service.ts",
+        "tests": "apps/api/test/collaboration.scenarios.ts",
+        "browser": "tests/e2e/collaboration.spec.ts; tests/demo-e2e/batch811.spec.ts",
+        "evidenceNote": "optional explanation, private support, correction/withdrawal and unchanged ranking inputs",
+        "status": "VERIFIED_SOFTWARE"
+      }
+    ]
+  },
+  {
+    "BACKLOG_ID": "E14-03",
+    "GITHUB_ISSUE": "https://github.com/wie-challenge/website/issues/181",
+    "ORIGINAL_CRITERIA": [
+      "Ticket lifecycle, attachments, owner and deadlines defined.",
+      "Capture category, related resource, requester, evidence and privacy scope.",
+      "Define open/assigned/in-review/resolved/escalated states with owner and response deadline.",
+      "Show accessible status and permit authorized responses/attachments.",
+      "Preserve original facts and link any remedy to independent domain actions."
+    ],
+    "IMPLEMENTATION_REFERENCE": "apps/api/src/modules/collaboration/collaboration.service.ts",
+    "TEST_REFERENCE": "apps/api/test/collaboration.scenarios.ts",
+    "DATABASE_VERIFICATION": "PASS native PostgreSQL 17.7, native deploy/transactions/authenticated HTTP",
+    "BROWSER_VERIFICATION": "PASS tests/e2e/collaboration.spec.ts; tests/demo-e2e/batch811.spec.ts",
+    "SECURITY_VERIFICATION": "PASS relevant server permission/state-denial assertions; see 18-case index",
+    "MISSING_REQUIREMENTS": "None in software scope; owner acceptance remains pending.",
+    "SOFTWARE_STATUS": "VERIFIED_SOFTWARE_CRITERIA",
+    "OWNER_ACCEPTANCE": "PENDING_OWNER_REVIEW",
+    "githubStateReadOnly": "CLOSED",
+    "criterionEvidence": [
+      {
+        "id": "E14-03.C1",
+        "text": "Ticket lifecycle, attachments, owner and deadlines defined.",
+        "implementation": "apps/api/src/modules/collaboration/collaboration.service.ts",
+        "tests": "apps/api/test/collaboration.scenarios.ts",
+        "browser": "tests/e2e/collaboration.spec.ts; tests/demo-e2e/batch811.spec.ts",
+        "evidenceNote": "scoped case images, response owner/deadline, escalation, preserved original facts and independent remedy references",
+        "status": "VERIFIED_SOFTWARE"
+      },
+      {
+        "id": "E14-03.C2",
+        "text": "Capture category, related resource, requester, evidence and privacy scope.",
+        "implementation": "apps/api/src/modules/collaboration/collaboration.service.ts",
+        "tests": "apps/api/test/collaboration.scenarios.ts",
+        "browser": "tests/e2e/collaboration.spec.ts; tests/demo-e2e/batch811.spec.ts",
+        "evidenceNote": "scoped case images, response owner/deadline, escalation, preserved original facts and independent remedy references",
+        "status": "VERIFIED_SOFTWARE"
+      },
+      {
+        "id": "E14-03.C3",
+        "text": "Define open/assigned/in-review/resolved/escalated states with owner and response deadline.",
+        "implementation": "apps/api/src/modules/collaboration/collaboration.service.ts",
+        "tests": "apps/api/test/collaboration.scenarios.ts",
+        "browser": "tests/e2e/collaboration.spec.ts; tests/demo-e2e/batch811.spec.ts",
+        "evidenceNote": "scoped case images, response owner/deadline, escalation, preserved original facts and independent remedy references",
+        "status": "VERIFIED_SOFTWARE"
+      },
+      {
+        "id": "E14-03.C4",
+        "text": "Show accessible status and permit authorized responses/attachments.",
+        "implementation": "apps/api/src/modules/collaboration/collaboration.service.ts",
+        "tests": "apps/api/test/collaboration.scenarios.ts",
+        "browser": "tests/e2e/collaboration.spec.ts; tests/demo-e2e/batch811.spec.ts",
+        "evidenceNote": "scoped case images, response owner/deadline, escalation, preserved original facts and independent remedy references",
+        "status": "VERIFIED_SOFTWARE"
+      },
+      {
+        "id": "E14-03.C5",
+        "text": "Preserve original facts and link any remedy to independent domain actions.",
+        "implementation": "apps/api/src/modules/collaboration/collaboration.service.ts",
+        "tests": "apps/api/test/collaboration.scenarios.ts",
+        "browser": "tests/e2e/collaboration.spec.ts; tests/demo-e2e/batch811.spec.ts",
+        "evidenceNote": "scoped case images, response owner/deadline, escalation, preserved original facts and independent remedy references",
+        "status": "VERIFIED_SOFTWARE"
+      }
+    ]
+  },
+  {
+    "BACKLOG_ID": "E14-06",
+    "GITHUB_ISSUE": "https://github.com/wie-challenge/website/issues/184",
+    "ORIGINAL_CRITERIA": [
+      "Opt-in channel, localized content and delivery status tracked.",
+      "Store preferred supported channel/language and required consent basis.",
+      "Send only authorized event content with sensitive details behind authenticated links.",
+      "Track queued/sent/failed status and retry safely without duplicate messages.",
+      "Honor preference changes and provide a permitted fallback for critical operational communication."
+    ],
+    "IMPLEMENTATION_REFERENCE": "apps/api/src/modules/collaboration/collaboration.service.ts; apps/api/src/jobs/notifications.ts",
+    "TEST_REFERENCE": "apps/api/test/collaboration.scenarios.ts; apps/api/test/notification-delivery.scenarios.ts",
+    "DATABASE_VERIFICATION": "PASS native PostgreSQL 17.7, native deploy/transactions/authenticated HTTP",
+    "BROWSER_VERIFICATION": "PASS tests/e2e/collaboration.spec.ts; tests/demo-e2e/batch811.spec.ts",
+    "SECURITY_VERIFICATION": "PASS relevant server permission/state-denial assertions; see 18-case index",
+    "MISSING_REQUIREMENTS": "None in software scope; owner acceptance remains pending.",
+    "SOFTWARE_STATUS": "VERIFIED_SOFTWARE_CRITERIA",
+    "OWNER_ACCEPTANCE": "PENDING_OWNER_REVIEW",
+    "githubStateReadOnly": "OPEN",
+    "criterionEvidence": [
+      {
+        "id": "E14-06.C1",
+        "text": "Opt-in channel, localized content and delivery status tracked.",
+        "implementation": "apps/api/src/modules/collaboration/collaboration.service.ts; apps/api/src/jobs/notifications.ts",
+        "tests": "apps/api/test/collaboration.scenarios.ts; apps/api/test/notification-delivery.scenarios.ts",
+        "browser": "tests/e2e/collaboration.spec.ts; tests/demo-e2e/batch811.spec.ts",
+        "evidenceNote": "localized durable queue, consent, local SMTP, transient preflight retry, no duplicate claims, uncertain-ACK hold and permitted in-app fallback",
+        "status": "VERIFIED_SOFTWARE"
+      },
+      {
+        "id": "E14-06.C2",
+        "text": "Store preferred supported channel/language and required consent basis.",
+        "implementation": "apps/api/src/modules/collaboration/collaboration.service.ts; apps/api/src/jobs/notifications.ts",
+        "tests": "apps/api/test/collaboration.scenarios.ts; apps/api/test/notification-delivery.scenarios.ts",
+        "browser": "tests/e2e/collaboration.spec.ts; tests/demo-e2e/batch811.spec.ts",
+        "evidenceNote": "localized durable queue, consent, local SMTP, transient preflight retry, no duplicate claims, uncertain-ACK hold and permitted in-app fallback",
+        "status": "VERIFIED_SOFTWARE"
+      },
+      {
+        "id": "E14-06.C3",
+        "text": "Send only authorized event content with sensitive details behind authenticated links.",
+        "implementation": "apps/api/src/modules/collaboration/collaboration.service.ts; apps/api/src/jobs/notifications.ts",
+        "tests": "apps/api/test/collaboration.scenarios.ts; apps/api/test/notification-delivery.scenarios.ts",
+        "browser": "tests/e2e/collaboration.spec.ts; tests/demo-e2e/batch811.spec.ts",
+        "evidenceNote": "localized durable queue, consent, local SMTP, transient preflight retry, no duplicate claims, uncertain-ACK hold and permitted in-app fallback",
+        "status": "VERIFIED_SOFTWARE"
+      },
+      {
+        "id": "E14-06.C4",
+        "text": "Track queued/sent/failed status and retry safely without duplicate messages.",
+        "implementation": "apps/api/src/modules/collaboration/collaboration.service.ts; apps/api/src/jobs/notifications.ts",
+        "tests": "apps/api/test/collaboration.scenarios.ts; apps/api/test/notification-delivery.scenarios.ts",
+        "browser": "tests/e2e/collaboration.spec.ts; tests/demo-e2e/batch811.spec.ts",
+        "evidenceNote": "localized durable queue, consent, local SMTP, transient preflight retry, no duplicate claims, uncertain-ACK hold and permitted in-app fallback",
+        "status": "VERIFIED_SOFTWARE"
+      },
+      {
+        "id": "E14-06.C5",
+        "text": "Honor preference changes and provide a permitted fallback for critical operational communication.",
+        "implementation": "apps/api/src/modules/collaboration/collaboration.service.ts; apps/api/src/jobs/notifications.ts",
+        "tests": "apps/api/test/collaboration.scenarios.ts; apps/api/test/notification-delivery.scenarios.ts",
+        "browser": "tests/e2e/collaboration.spec.ts; tests/demo-e2e/batch811.spec.ts",
+        "evidenceNote": "localized durable queue, consent, local SMTP, transient preflight retry, no duplicate claims, uncertain-ACK hold and permitted in-app fallback",
+        "status": "VERIFIED_SOFTWARE"
+      }
+    ]
+  }
+]

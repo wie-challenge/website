@@ -1,0 +1,5 @@
+PASS B811-M01 native migrate deploy upgrades populated pre-Batch8 database without changing baseline rows
+PASS B811-M02 all twenty original tables have primary keys, foreign keys and indexes
+PASS B811-M03 Prisma migration history checksums match every SQL file with no failed migration
+PASS B811-M04 a failing foreign key rolls back all writes in its transaction
+PASS B811-M05 concurrent PostgreSQL clients serialize duplicate recommendation policy versions

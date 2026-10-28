@@ -1,0 +1,52 @@
+[
+  {
+    "name": "R12 SENT proposal keeps an authorized RFQ link and missing, held or rejected review denies acceptance",
+    "result": "PASS",
+    "test": "apps/api/test/batch12.scenarios.ts"
+  },
+  {
+    "name": "R12 current approval permits idempotent concurrent acceptance before WON without artisan commitment",
+    "result": "PASS",
+    "test": "apps/api/test/batch12.scenarios.ts"
+  },
+  {
+    "name": "R12 changed RFQ assumptions or latest funding plan invalidate the previous approval",
+    "result": "PASS",
+    "test": "apps/api/test/batch12.scenarios.ts"
+  },
+  {
+    "name": "R12 changed costing requires a fresh quote and approval; historical JSON SENT links remain gated",
+    "result": "PASS",
+    "test": "apps/api/test/batch12.scenarios.ts"
+  },
+  {
+    "name": "R12 contractual dates append immutable exact-source corrections without rewriting accepted terms",
+    "result": "PASS",
+    "test": "apps/api/test/batch12.scenarios.ts"
+  },
+  {
+    "name": "R12 actual timeliness exposes scheduled, pending, failed and partial reports without verified payment",
+    "result": "PASS",
+    "test": "apps/api/test/batch12.scenarios.ts"
+  },
+  {
+    "name": "R12 native simulated and overpayment reports remain outside the verified denominator",
+    "result": "PASS",
+    "test": "apps/api/test/batch12.scenarios.ts"
+  },
+  {
+    "name": "R12 closure exact pending-adjustment counterexample denies legacy and finance routes without waiving liabilities",
+    "result": "PASS",
+    "test": "apps/api/test/batch12.scenarios.ts"
+  },
+  {
+    "name": "R12 closure detects inventory readiness, payable, dispute and partial buyer evidence through their real relationships",
+    "result": "PASS",
+    "test": "apps/api/test/batch12.scenarios.ts"
+  },
+  {
+    "name": "R12 closure and a concurrent adjustment cannot leave a closed order with a newly accepted adjustment",
+    "result": "PASS",
+    "test": "apps/api/test/batch12.scenarios.ts"
+  }
+]

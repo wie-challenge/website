@@ -1,0 +1,21 @@
+$ biome lint apps packages tests scripts/*.ts playwright.config.ts playwright.demo.config.ts
+apps/web/src/components/financial-analysis.tsx:291:81 lint/suspicious/noSuspiciousSemicolonInJsx ━━━━━━━━━━
+
+  ! There is a suspicious semicolon in the JSX element.
+  
+    289 │               <p role="status">
+    290 │                 Eligible verified: {metrics.eligiblePaymentCount}; on time:{' '}
+  > 291 │                 {metrics.verifiedOnTimeCount}; late: {metrics.verifiedLateCount};
+        │                                                                                 ^
+  > 292 │                 unknown/unverified: {metrics.unverifiedUnknownCount}; on-time rate:{' '}
+        │                 ^^^^^^^^^^^^^^^^^^^^
+    293 │                 {metrics.onTimePercentage === null ? 'Unavailable' : `${metrics.onTimePercentage}%`}
+    294 │                 .
+  
+  i This is usually the result of a typo or some refactor gone wrong.
+  
+  i Remove the semicolon, or move it inside a JSX element.
+  
+
+Checked 410 files in 208ms. No fixes applied.
+Found 1 warning.

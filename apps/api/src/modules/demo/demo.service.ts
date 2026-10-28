@@ -245,6 +245,42 @@ export class DemoService {
       verifiedPaidMillimes: '0',
       inventoryLots: lots.length,
       inventoryReservedMilli: lots.reduce((sum, l) => sum + l.reservedMilli, 0n).toString(),
+      allocationPlans: await tx.allocationPlan.count({ where: { orderId: { in: orderIds } } }),
+      productSpecifications: await tx.productSpecification.count({
+        where: { ownerOrganizationId: seed.operatorOrganizationId },
+      }),
+      sampleRequests: await tx.productSampleRequest.count({
+        where: {
+          buyerOrganizationId: seed.buyerOrganizationId,
+          operatorOrganizationId: seed.operatorOrganizationId,
+        },
+      }),
+      samplePayables: await tx.artisanPayable.count({
+        where: {
+          sampleRequest: {
+            buyerOrganizationId: seed.buyerOrganizationId,
+            operatorOrganizationId: seed.operatorOrganizationId,
+          },
+        },
+      }),
+      productionExceptions: await tx.productionException.count({
+        where: { orderId: { in: orderIds } },
+      }),
+      discussions: await tx.orderDiscussion.count({ where: { orderId: { in: orderIds } } }),
+      supportTickets: await tx.supportTicket.count({
+        where: {
+          organizationId: {
+            in: [
+              seed.buyerOrganizationId,
+              seed.operatorOrganizationId,
+              seed.associationOrganizationId,
+            ],
+          },
+        },
+      }),
+      notificationDeliveries: await tx.notificationDelivery.count({
+        where: { user: { demoIdentity: { scenarioId: scenario.id } } },
+      }),
       publishedQr: await tx.traceabilityPublication.count({
         where: { orderId: { in: orderIds }, status: 'PUBLISHED' },
       }),

@@ -7,6 +7,7 @@ import { CommerceService } from '../commerce/commerce.service.js';
 import { ProcurementService } from './procurement.service.js';
 import { ProductionOfferService } from './production-offers.js';
 import { ProductionExecutionService } from './execution.js';
+import { ProductionPlanningService } from './planning.js';
 const rid = new ZodValidationPipe(C.resourceIdSchema);
 const pages = new ZodValidationPipe(C.procurementPageSchema);
 @Controller('api/v1/procurement')
@@ -16,6 +17,7 @@ export class ProcurementController {
     @Inject(CommerceService) private readonly commerce: CommerceService,
     @Inject(ProductionOfferService) private readonly production: ProductionOfferService,
     @Inject(ProductionExecutionService) private readonly execution: ProductionExecutionService,
+    @Inject(ProductionPlanningService) private readonly planning: ProductionPlanningService,
   ) {}
   @Get('discussions') discussions(
     @CurrentUser() a: Actor,
@@ -516,5 +518,93 @@ export class ProcurementController {
     @Param('decisionId', rid) decisionId: string,
   ) {
     return this.production.verify(a, id, decisionId);
+  }
+
+  @Get('orders/:id/planning') planningWorkspace(
+    @CurrentUser() a: Actor,
+    @Param('id', rid) id: string,
+  ) {
+    return this.planning.workspace(a, id);
+  }
+  @Get('orders/:id/planning/audit') planningAudit(
+    @CurrentUser() a: Actor,
+    @Param('id', rid) id: string,
+    @Query(new ZodValidationPipe(C.planningAuditQuerySchema)) q: z.infer<
+      typeof C.planningAuditQuerySchema
+    >,
+  ) {
+    return this.planning.overrideHistory(a, id, q.purpose);
+  }
+  @Post('orders/:id/allocation-plans') createPlan(
+    @CurrentUser() a: Actor,
+    @Param('id', rid) id: string,
+    @Body(new ZodValidationPipe(C.allocationPlanCreateSchema)) i: z.infer<
+      typeof C.allocationPlanCreateSchema
+    >,
+    @Headers('idempotency-key') k?: string,
+  ) {
+    return this.planning.createPlan(a, id, i, k);
+  }
+  @Post('allocation-plans/:id/review') reviewPlan(
+    @CurrentUser() a: Actor,
+    @Param('id', rid) id: string,
+    @Body(new ZodValidationPipe(C.allocationPlanReviewSchema)) i: z.infer<
+      typeof C.allocationPlanReviewSchema
+    >,
+    @Headers('idempotency-key') k?: string,
+  ) {
+    return this.planning.reviewPlan(a, id, i, k);
+  }
+  @Post('allocation-plans/:id/offers') issuePlanOffers(
+    @CurrentUser() a: Actor,
+    @Param('id', rid) id: string,
+    @Body(new ZodValidationPipe(C.allocationOfferSchema)) i: C.AllocationOfferInput,
+    @Headers('idempotency-key') k?: string,
+  ) {
+    return this.planning.issueOffers(a, id, i, k);
+  }
+  @Post('allocation-plans/:id/reallocate') reallocate(
+    @CurrentUser() a: Actor,
+    @Param('id', rid) id: string,
+    @Body(new ZodValidationPipe(C.reallocationSchema)) i: C.ReallocationInput,
+    @Headers('idempotency-key') k?: string,
+  ) {
+    return this.planning.reallocate(a, id, i, k);
+  }
+  @Post('allocation-overrides') override(
+    @CurrentUser() a: Actor,
+    @Body(new ZodValidationPipe(C.allocationOverrideSchema)) i: z.infer<
+      typeof C.allocationOverrideSchema
+    >,
+    @Headers('idempotency-key') k?: string,
+  ) {
+    return this.planning.override(a, i, k);
+  }
+  @Post('orders/:id/pricing-suggestion') pricing(
+    @CurrentUser() a: Actor,
+    @Param('id', rid) id: string,
+    @Body(new ZodValidationPipe(C.pricingAssumptionSchema)) i: z.infer<
+      typeof C.pricingAssumptionSchema
+    >,
+  ) {
+    return this.planning.pricing(a, id, i);
+  }
+  @Post('orders/:id/pricing-handoff') handoff(
+    @CurrentUser() a: Actor,
+    @Param('id', rid) id: string,
+    @Body(new ZodValidationPipe(C.pricingHandoffSchema)) i: z.infer<typeof C.pricingHandoffSchema>,
+    @Headers('idempotency-key') k?: string,
+  ) {
+    return this.planning.pricingHandoff(a, id, i, k);
+  }
+  @Post('orders/:id/delivery-simulation') simulate(
+    @CurrentUser() a: Actor,
+    @Param('id', rid) id: string,
+    @Body(new ZodValidationPipe(C.deliverySimulationSchema)) i: z.infer<
+      typeof C.deliverySimulationSchema
+    >,
+    @Headers('idempotency-key') k?: string,
+  ) {
+    return this.planning.simulate(a, id, i, k);
   }
 }

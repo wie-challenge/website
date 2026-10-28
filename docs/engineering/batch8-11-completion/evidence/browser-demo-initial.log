@@ -1,0 +1,57 @@
+$ pnpm db:generate && pnpm --filter @nasj/contracts build && playwright test --config playwright.demo.config.ts
+$ pnpm --filter @nasj/api db:generate
+$ prisma generate
+Loaded Prisma config from prisma.config.ts.
+
+Prisma schema loaded from prisma/schema.prisma.
+
+✔ Generated Prisma Client (v7.10.1) to ./../../node_modules/.pnpm/@prisma+client@7.10.1_prisma@7.10.1_@types+node@24.19.2_@types+react-dom@19.3.0_@types+_9e72caf218d3f522373b8e6c9536cf3f/node_modules/@prisma/client in 930ms
+
+Start by importing your Prisma Client (See: https://pris.ly/d/importing-client)
+
+
+$ tsc -p tsconfig.json
+
+Running 3 tests using 1 worker
+
+(node:35318) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✘  1 tests/demo-e2e/batch811.spec.ts:28:1 › Batch 8–11 showroom builds authoritative planning, paid sample and support records in one visitor generation (1.5s)
+(node:35750) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓  2 tests/demo-e2e/showroom.spec.ts:39:1 › visitor showroom completes real synthetic commercial workflow and resets without affecting another visitor (12.3s)
+  ✓  3 tests/demo-e2e/showroom.spec.ts:366:1 › showroom is responsive, keyboard reachable and preserves scenario across persona navigation (1.0s)
+
+
+  1) tests/demo-e2e/batch811.spec.ts:28:1 › Batch 8–11 showroom builds authoritative planning, paid sample and support records in one visitor generation 
+
+    Error: /api/v1/catalog/specification-revisions/cmvs3sje1001vw0e47k02iibx/submit: {"code":"FORBIDDEN","message":"Only the owning design organization submits this revision.","requestId":"63cf8d30-f160-460c-a69a-d0fced5c67a1"}
+
+    expect(received).toBeTruthy()
+
+    Received: false
+
+      23 |     },
+      24 |   });
+    > 25 |   expect(response.ok(), `${path}: ${await response.text()}`).toBeTruthy();
+         |                                                              ^
+      26 |   return response.json();
+      27 | }
+      28 | test('Batch 8–11 showroom builds authoritative planning, paid sample and support records in one visitor generation', async ({
+        at post (/home/ashenix/Projects/wie-challenge/website/tests/demo-e2e/batch811.spec.ts:25:62)
+        at /home/ashenix/Projects/wie-challenge/website/tests/demo-e2e/batch811.spec.ts:49:5
+
+    Error Context: test-results/batch811-Batch-8–11-showro-935b9-s-in-one-visitor-generation/error-context.md
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/batch811-Batch-8–11-showro-935b9-s-in-one-visitor-generation/trace.zip
+    Usage:
+
+        pnpm exec playwright show-trace test-results/batch811-Batch-8–11-showro-935b9-s-in-one-visitor-generation/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  1 failed
+    tests/demo-e2e/batch811.spec.ts:28:1 › Batch 8–11 showroom builds authoritative planning, paid sample and support records in one visitor generation 
+  2 passed (36.6s)
+[ELIFECYCLE] Command failed with exit code 1.

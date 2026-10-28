@@ -9,7 +9,11 @@ export async function seedBrowserBatch5Fixture(url: string, suffix: string) {
   try {
     const rfq = await db.commercialRfq.findUniqueOrThrow({
       where: { id: base.rfqId },
-      include: { order: true, revisions: true, samples: true },
+      include: {
+        order: { select: { id: true } },
+        revisions: true,
+        samples: { select: { id: true } },
+      },
     });
     const operator = await db.user.findUniqueOrThrow({
       where: { email: `production-operator-${suffix}@example.com` },
@@ -35,6 +39,7 @@ export async function seedBrowserBatch5Fixture(url: string, suffix: string) {
       'inventory.stock.handover',
       'inventory.stock.adjust',
       'finance.deposit.record',
+      'finance.payable.reconcile',
       'finance.payout.read',
       'finance.payout.request',
       'finance.payout.approve',
@@ -83,6 +88,7 @@ export async function seedBrowserBatch5Fixture(url: string, suffix: string) {
       where: { artisanProfileId: artisan.id },
     });
     const offer = await db.commercialOffer.create({
+      select: { id: true },
       data: {
         orderId: rfq.order!.id,
         capacityDeclarationId: capacity.id,
@@ -109,6 +115,7 @@ export async function seedBrowserBatch5Fixture(url: string, suffix: string) {
       },
     });
     const release = await db.batchRelease.create({
+      select: { id: true },
       data: {
         batchId: batch.id,
         actorId: operator.id,
@@ -133,6 +140,7 @@ export async function seedBrowserBatch5Fixture(url: string, suffix: string) {
       },
     });
     const payable = await db.artisanPayable.create({
+      select: { id: true },
       data: {
         offerId: offer.id,
         orderId: rfq.order!.id,

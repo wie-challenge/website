@@ -360,6 +360,48 @@ export async function runArtisanScenarios({ db, register, mutate, check }: Harne
     },
   );
   await check(
+    'E04-09 aggregate capacity requires explicit sharing, deduplicates grants and reflects revocation',
+    async () => {
+      const url = `/api/v1/associations/${association.id}/capacity`;
+      const empty = await coordinator.client.request(url);
+      assert.equal(empty.status, 200);
+      assert.equal(value<{ population: number }>(empty).population, 0);
+      assert.equal((await outsider.client.request(url)).status, 403);
+      const input = { ...grantInput, scopes: ['artisan.capacity.read'] };
+      const first = await mutate(artisan.client, '/api/v1/artisans/me/delegations', 'POST', input);
+      const second = await mutate(artisan.client, '/api/v1/artisans/me/delegations', 'POST', input);
+      assert.equal(first.status, 201);
+      assert.equal(second.status, 201);
+      const visible = await coordinator.client.request(url);
+      const data = value<{
+        population: number;
+        items: { declared: string; committed: string; free: string | null }[];
+      }>(visible);
+      assert.equal(visible.status, 200);
+      assert.equal(data.population, 1);
+      assert.ok(data.items.length);
+      assert.equal(JSON.stringify(data).includes(artisanId), false);
+      assert.equal(JSON.stringify(data).includes(profile.contactPhone), false);
+      assert.equal(JSON.stringify(data).includes('unitPayMillimes'), false);
+      for (const grant of [first, second])
+        assert.equal(
+          (
+            await mutate(
+              artisan.client,
+              `/api/v1/artisans/me/delegations/${value<{ id: string }>(grant).id}`,
+              'DELETE',
+              {},
+            )
+          ).status,
+          200,
+        );
+      assert.equal(
+        value<{ population: number }>(await coordinator.client.request(url)).population,
+        0,
+      );
+    },
+  );
+  await check(
     'delegate membership suspension removes access immediately and leaves owner access',
     async () => {
       await db.organizationMember.update({

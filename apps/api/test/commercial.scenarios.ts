@@ -1,3 +1,4 @@
+import { runCollaborationScenarios } from './collaboration.scenarios.js';
 import assert from 'node:assert/strict';
 import { randomUUID } from 'node:crypto';
 import type { ProcurementDetail } from '@nasj/contracts';
@@ -858,5 +859,16 @@ export async function runCommercialScenarios({ db, register, check }: Harness) {
       again.body as { assessments: { displayName: string; knownRemaining: string | null }[] }
     ).assessments.find((item) => item.displayName === 'Hidden commercial beta');
     assert.equal(after?.knownRemaining, '10.00');
+    await runCollaborationScenarios({
+      db,
+      buyer,
+      operator,
+      artisan,
+      outsider,
+      admin,
+      orderId: order.id,
+      profileId: beta.profile.id,
+      check,
+    });
   });
 }

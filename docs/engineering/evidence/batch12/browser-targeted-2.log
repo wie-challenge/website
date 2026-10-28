@@ -1,0 +1,72 @@
+
+Running 2 tests using 1 worker
+
+(node:170453) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✘  1 tests/e2e/batch12.spec.ts:42:3 › Batch12 sales proposal and financial controls use real scoped records at 390px (2.5s)
+(node:170692) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✘  2 tests/e2e/batch12.spec.ts:42:3 › Batch12 sales proposal and financial controls use real scoped records at 1280px (2.3s)
+
+
+  1) tests/e2e/batch12.spec.ts:42:3 › Batch12 sales proposal and financial controls use real scoped records at 390px 
+
+    Error: {"code":"VALIDATION_ERROR","message":"Check the submitted fields.","fieldErrors":{"productCode":["Invalid string: must match pattern /^[A-Z0-9][A-Z0-9_-]*$/"],"revision":["Too small: expected array to have >=1 items"]},"requestId":"5625ca09-ab4f-4c2c-9119-4373cca31016"}
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: 201
+    Received: 400
+
+      36 |     data,
+      37 |   });
+    > 38 |   expect(r.status(), await r.text()).toBe(201);
+         |                                      ^
+      39 |   return r.json();
+      40 | }
+      41 | for (const width of [390, 1280])
+        at command (/home/ashenix/Projects/wie-challenge/website/tests/e2e/batch12.spec.ts:38:38)
+        at /home/ashenix/Projects/wie-challenge/website/tests/e2e/batch12.spec.ts:89:21
+
+    Error Context: test-results/batch12-Batch12-sales-prop-f225d-eal-scoped-records-at-390px/error-context.md
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/batch12-Batch12-sales-prop-f225d-eal-scoped-records-at-390px/trace.zip
+    Usage:
+
+        pnpm exec playwright show-trace test-results/batch12-Batch12-sales-prop-f225d-eal-scoped-records-at-390px/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  2) tests/e2e/batch12.spec.ts:42:3 › Batch12 sales proposal and financial controls use real scoped records at 1280px 
+
+    Error: {"code":"VALIDATION_ERROR","message":"Check the submitted fields.","fieldErrors":{"productCode":["Invalid string: must match pattern /^[A-Z0-9][A-Z0-9_-]*$/"],"revision":["Too small: expected array to have >=1 items"]},"requestId":"3353ead7-07ca-4129-ba26-17e0a07f447b"}
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: 201
+    Received: 400
+
+      36 |     data,
+      37 |   });
+    > 38 |   expect(r.status(), await r.text()).toBe(201);
+         |                                      ^
+      39 |   return r.json();
+      40 | }
+      41 | for (const width of [390, 1280])
+        at command (/home/ashenix/Projects/wie-challenge/website/tests/e2e/batch12.spec.ts:38:38)
+        at /home/ashenix/Projects/wie-challenge/website/tests/e2e/batch12.spec.ts:89:21
+
+    Error Context: test-results/batch12-Batch12-sales-prop-73b31-al-scoped-records-at-1280px/error-context.md
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/batch12-Batch12-sales-prop-73b31-al-scoped-records-at-1280px/trace.zip
+    Usage:
+
+        pnpm exec playwright show-trace test-results/batch12-Batch12-sales-prop-73b31-al-scoped-records-at-1280px/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  2 failed
+    tests/e2e/batch12.spec.ts:42:3 › Batch12 sales proposal and financial controls use real scoped records at 390px 
+    tests/e2e/batch12.spec.ts:42:3 › Batch12 sales proposal and financial controls use real scoped records at 1280px 

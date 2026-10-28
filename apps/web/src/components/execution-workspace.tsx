@@ -1,4 +1,5 @@
 'use client';
+import Image from 'next/image';
 import type * as C from '@nasj/contracts';
 import { apiFetch } from '@/lib/api';
 import {
@@ -389,15 +390,15 @@ function WorkList({ title, path, assisted }: { title: string; path: string; assi
                 artisan&apos;s own account.
               </p>
             )}
+            {!assisted && <ObservedProductionTime batchId={item.batchId} />}
             {item.progressSource === 'COORDINATOR' && (
               <p>The latest progress was recorded by a coordinator.</p>
             )}
-            {item.preferredLanguage !== 'en' && (
-              <p>
-                Instructions are in English. A reviewed translation is not available. Preferred
-                language: {item.preferredLanguage}.
-              </p>
-            )}
+            {item.translationNotice && <p role="status">{item.translationNotice}</p>}
+            {item.instructionAmendment && <p role="note">{item.instructionAmendment}</p>}
+            <button type="button" className="instruction-print" onClick={() => window.print()}>
+              Print approved instructions
+            </button>
             <Facts
               rows={[
                 ['Status', humanize(item.status)],
@@ -414,7 +415,9 @@ function WorkList({ title, path, assisted }: { title: string; path: string; assi
               ]}
             />
             <p>{item.specification}</p>
-            <p>{item.instructions}</p>
+            <p lang={item.termsLanguage} dir={item.termsLanguage === 'ar' ? 'rtl' : undefined}>
+              {item.instructions}
+            </p>
             {!item.materials.length && <p>Material requirements are not on file.</p>}
             {item.materials.map((line) => (
               <p key={line.materialCode}>
@@ -429,6 +432,22 @@ function WorkList({ title, path, assisted }: { title: string; path: string; assi
               </p>
             ))}
             {!item.images.length && <p>No reference images are on file.</p>}
+            {item.images.map((image) => (
+              <figure key={image.sha256} className="instruction-figure">
+                {image.dataUrl ? (
+                  <Image
+                    unoptimized
+                    src={image.dataUrl}
+                    alt={image.caption}
+                    width={480}
+                    height={320}
+                  />
+                ) : (
+                  <p>Approved image unavailable: {image.filename}</p>
+                )}
+                <figcaption>{image.caption}</figcaption>
+              </figure>
+            ))}
             <p>Support: {item.supportContact}.</p>
             {item.flags.map((flag) => (
               <p key={flag.id}>Flagged report: {flag.reason}</p>
@@ -488,4 +507,140 @@ export function MyProduction() {
 }
 export function CoordinatorProduction() {
   return <WorkList title="Assigned production work" path={`${root}/assigned-batches`} assisted />;
+}
+
+function ObservedProductionTime({ batchId }: { batchId: string }) {
+  type TimeRow = {
+    id: string;
+    periodFrom: string;
+    periodTo: string;
+    observedMinutes: number | null;
+    observedUnits: number;
+    unitContext: string;
+    provenance: string;
+    evidence: string;
+    consented: boolean;
+    correctionOfId: string | null;
+    superseded: boolean;
+  };
+  const history = useResource<{ items: TimeRow[] }>(
+    `/api/v1/intelligence/batches/${batchId}/time-records`,
+  );
+  const earnings = useResource<{
+    compensation: { agreed: string; earned: string; simulatedPaid: string; verifiedPaid: string };
+    estimate: { status: string; reason?: string | null; hourlyTnd?: string | null };
+  }>(`/api/v1/intelligence/batches/${batchId}/earnings`);
+  return (
+    <details className="production-time-report">
+      <summary>Voluntary observed time and earnings</summary>
+      <p>
+        Reporting time is optional and requires your consent. No wearable reading is used. A
+        correction preserves the original record. Unknown time does not become zero.
+      </p>
+      <ResourceState loading={history.loading} error={history.error} retry={history.reload} />
+      <ResourceState loading={earnings.loading} error={earnings.error} retry={earnings.reload} />
+      {earnings.data && (
+        <>
+          <Facts
+            rows={[
+              ['Agreed compensation', `${earnings.data.compensation.agreed} TND`],
+              ['Recognized earned compensation', `${earnings.data.compensation.earned} TND`],
+              ['Simulated settlement', `${earnings.data.compensation.simulatedPaid} TND`],
+              ['Verified paid', `${earnings.data.compensation.verifiedPaid} TND`],
+            ]}
+          />
+          <p>
+            Hourly estimate:{' '}
+            {earnings.data.estimate.status === 'AVAILABLE'
+              ? `${earnings.data.estimate.hourlyTnd ?? 'Unavailable'} TND/hour`
+              : `Unavailable. ${earnings.data.estimate.reason ?? 'Consented measured time with complete unit coverage is required.'}`}
+          </p>
+        </>
+      )}
+      <ActionForm
+        label="Record consented production time"
+        action={(form) =>
+          apiFetch(`/api/v1/intelligence/batches/${batchId}/time-records`, {
+            method: 'POST',
+            idempotencyKey: crypto.randomUUID(),
+            body: {
+              consented: form.get('consented') === 'on',
+              periodFrom: new Date(text(form, 'periodFrom')).toISOString(),
+              periodTo: new Date(text(form, 'periodTo')).toISOString(),
+              unitContext: text(form, 'unitContext'),
+              observedMinutes: text(form, 'observedMinutes')
+                ? Number(text(form, 'observedMinutes'))
+                : null,
+              observedUnits: Number(text(form, 'observedUnits') || '0'),
+              evidence: text(form, 'evidence'),
+              provenance: text(form, 'provenance'),
+              ...(text(form, 'correctionOfId')
+                ? { correctionOfId: text(form, 'correctionOfId') }
+                : {}),
+            },
+          })
+        }
+        onSuccess={async () => {
+          await Promise.all([history.reload(), earnings.reload()]);
+        }}
+      >
+        <Input name="periodFrom" label="Observed period start" type="datetime-local" required />
+        <Input name="periodTo" label="Observed period end" type="datetime-local" required />
+        <Input
+          name="observedMinutes"
+          label="Observed minutes (leave blank when unknown)"
+          type="number"
+          min="1"
+        />
+        <Input
+          name="observedUnits"
+          label="Units covered by this time record"
+          type="number"
+          min="0"
+          required
+        />
+        <Input name="unitContext" label="Task and unit context" required />
+        <Select
+          name="evidence"
+          label="Time evidence class"
+          options={[
+            { value: 'SYNTHETIC', label: 'Synthetic demonstration observation' },
+            { value: 'OBSERVED', label: 'Personally observed duration' },
+          ]}
+        />
+        <Input name="provenance" label="Observation source and evidence reference" required />
+        <Select
+          name="correctionOfId"
+          label="Correct an existing record (optional)"
+          options={[
+            { value: '', label: 'New reporting period' },
+            ...(history.data?.items
+              .filter((row) => !row.superseded)
+              .map((row) => ({
+                value: row.id,
+                label: `${row.periodFrom}: ${row.observedMinutes ?? 'unknown'} minutes`,
+              })) ?? []),
+          ]}
+        />
+        <label>
+          <input type="checkbox" name="consented" required />I consent to reporting this time for
+          this batch.
+        </label>
+      </ActionForm>
+      {!!history.data?.items.length && (
+        <ul aria-label="Production time correction history">
+          {history.data.items.map((row) => (
+            <li key={row.id}>
+              {row.periodFrom} to {row.periodTo}: {row.observedMinutes ?? 'Unknown'} minutes for{' '}
+              {row.observedUnits} units. {row.evidence}.{' '}
+              {row.superseded
+                ? 'Preserved original, corrected by a later record.'
+                : 'Current record.'}{' '}
+              Source: {row.provenance}
+            </li>
+          ))}
+        </ul>
+      )}
+    </details>
+  );
 }
