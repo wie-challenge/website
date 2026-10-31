@@ -148,7 +148,8 @@ export function ArtisanWorkspace({ artisanId }: { artisanId?: string }) {
                 </label>
               )}
               <p className="hint">
-                Language records your preference. This interface currently uses English. Pausing new
+                Language records your preference. Offer review supports English, French and Arabic
+                interface copy; approved translated commercial terms remain unavailable. Pausing new
                 opportunities preserves existing commitments.
               </p>
             </ActionForm>

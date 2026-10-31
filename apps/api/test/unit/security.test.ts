@@ -8,6 +8,36 @@ import { validateEnvironment } from '../../src/config/env.js';
 import type { PrismaService } from '../../src/database/prisma.service.js';
 import { logger } from '../../src/common/logging.js';
 logger.level = 'silent';
+test('production requires enforcing Arcjet mode while nonproduction permits observation', () => {
+  const production = {
+    NODE_ENV: 'production',
+    PUBLIC_APP_URL: 'https://security-test.invalid',
+    DATABASE_URL: 'postgresql://unused:unused@127.0.0.1:1/security_test',
+    BETTER_AUTH_SECRET: 'a'.repeat(64),
+    REQUIRE_PRIVILEGED_MFA: 'true',
+    ARCJET_ENABLED: 'true',
+    ARCJET_KEY: 'synthetic-never-sent',
+    SMTP_REQUIRE_TLS: 'true',
+    SMTP_USER: 'synthetic',
+    SMTP_PASSWORD: 'synthetic',
+  };
+  for (const mode of [undefined, 'DRY_RUN'])
+    assert.throws(
+      () => validateEnvironment({ ...production, ARCJET_MODE: mode }),
+      /Production requires ARCJET_MODE=LIVE/,
+    );
+  assert.equal(validateEnvironment({ ...production, ARCJET_MODE: 'LIVE' }).ARCJET_MODE, 'LIVE');
+  assert.throws(() =>
+    validateEnvironment({ ...production, ARCJET_MODE: 'LIVE', ARCJET_ENABLED: 'false' }),
+  );
+  assert.throws(() => validateEnvironment({ ...production, ARCJET_MODE: 'LIVE', ARCJET_KEY: '' }));
+  for (const mode of [undefined, 'DRY_RUN'])
+    assert.equal(
+      validateEnvironment({ ...production, NODE_ENV: 'development', ARCJET_MODE: mode })
+        .ARCJET_MODE,
+      'DRY_RUN',
+    );
+});
 function fixture(
   mode: 'LIVE' | 'DRY_RUN',
   kind: 'allow' | 'rate' | 'bot' | 'error',

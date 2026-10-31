@@ -91,8 +91,15 @@ test('an accepted batch is prepared, collected, confirmed and published as synth
   await expect(page.getByText('Stitch alignment: Matches the sample')).toBeVisible();
   await page.context().clearCookies();
   await login(page, emails.artisan, '/commerce/artisan');
+  await page.getByLabel('Offer language', { exact: true }).selectOption('en');
+  await page
+    .getByRole('checkbox', {
+      name: 'I understand and have reviewed the original English terms for this exact offer version.',
+      exact: true,
+    })
+    .check();
   await page.getByRole('button', { name: 'Accept this offer voluntarily', exact: true }).click();
-  await expect(page.getByRole('heading', { name: 'Artisan offer · Accepted' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'État de l’offre: Accepted' })).toBeVisible();
   await page.goto('/artisan/compensation');
   await expect(page.getByText(/Verified paid 0\.000 TND/)).toBeVisible();
   await page.context().clearCookies();

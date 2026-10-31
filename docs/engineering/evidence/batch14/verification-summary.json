@@ -39,7 +39,7 @@
     "e15HttpScenarios": 4,
     "e15MigrationScenarios": 6,
     "showroomIsolationScenarios": 9,
-    "newBrowserJourneys": 4,
+    "newBrowserJourneys": 2,
     "browserFailures": 0,
     "browserViewports": [
       "390x844",
@@ -220,5 +220,29 @@
   "harnessConfiguration": {
     "browserSuiteRateFeedbackMax": 500,
     "rationale": "one loopback client address in the Playwright harness; production defaults unchanged and the limiter is proved separately with RATE_FEEDBACK_MAX=2"
+  },
+  "evidenceCorrections": [
+    {
+      "date": "2026-10-29",
+      "field": "tests.newBrowserJourneys",
+      "previousValue": 4,
+      "correctedValue": 2,
+      "reason": "Four was the historical whole-file run, including two pre-existing tests. Full historical showroom suite remains five; remediation tests are counted separately.",
+      "report": "../../BATCH14_REMEDIATION_REPORT.md"
+    }
+  ],
+  "currentVerification": {
+    "date": "2026-10-29",
+    "report": "../../BATCH14_REMEDIATION_REPORT.md",
+    "summary": "../batch14-remediation/summary.json",
+    "ownerAcceptance": "PENDING",
+    "readyForOwnerAcceptanceReview": true,
+    "allFiveSoftwareCriteriaVerified": true,
+    "unresolvedFindings": [
+      "B14-IV-01",
+      "B14-IV-03"
+    ],
+    "historicalExecutionCountsAboveRetained": true,
+    "historicalReadinessFlagsSupersededByThisRecord": true
   }
 }

@@ -204,6 +204,13 @@ for (const profile of [
       await artisan.goto('/commerce/artisan');
       await expect(artisan.getByText('23.450 TND', { exact: true })).toBeVisible();
       await a11y(artisan, `${profile.name}-artisan-decision`);
+      await artisan.getByLabel('Offer language', { exact: true }).selectOption('en');
+      await artisan
+        .getByRole('checkbox', {
+          name: 'I understand and have reviewed the original English terms for this exact offer version.',
+          exact: true,
+        })
+        .check();
       await keyboardButton(artisan, 'Accept this offer voluntarily');
       state = await workspace(artisan);
       expect(state.batches).toHaveLength(1);

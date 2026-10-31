@@ -77,6 +77,42 @@ export async function runCollaborationScenarios({
           version: prepared.version,
         }),
       );
+      const counterPreviewBody = {
+        offerId: prepared.id,
+        expectedVersion: (
+          await db.commercialOffer.findUniqueOrThrow({ where: { id: prepared.id } })
+        ).version,
+        proposedQuantity: 5,
+        proposedDeadline: '2027-09-12T00:00:00Z',
+      };
+      const previewCount = await db.counteroffer.count({ where: { offerId: prepared.id } });
+      const preview = await post(artisan, `${root}/counteroffers/preview`, counterPreviewBody);
+      assert.equal(preview.status, 201);
+      assert.equal(
+        (preview.body as { original: { quantity: number }; proposed: { quantity: number } })
+          .original.quantity,
+        10,
+      );
+      assert.equal((preview.body as { proposed: { quantity: number } }).proposed.quantity, 5);
+      assert.equal(
+        await db.counteroffer.count({ where: { offerId: prepared.id } }),
+        previewCount,
+        'preview never persists a counteroffer',
+      );
+      assert.equal(
+        (await post(outsider, `${root}/counteroffers/preview`, counterPreviewBody)).status,
+        404,
+      );
+      assert.equal(
+        (
+          await post(artisan, `${root}/counteroffers`, {
+            ...counterPreviewBody,
+            expectedVersion: counterPreviewBody.expectedVersion + 1,
+          })
+        ).status,
+        409,
+      );
+      assert.equal(await db.counteroffer.count({ where: { offerId: prepared.id } }), previewCount);
       const initialBatches = await db.commercialBatch.count({ where: { orderId } });
       const expiry = (await db.commercialOffer.findUniqueOrThrow({ where: { id: prepared.id } }))
         .expiresAt;
@@ -135,6 +171,49 @@ export async function runCollaborationScenarios({
         }),
       );
       counterId = counter.id;
+      const savedTerms = (await db.counteroffer.findUniqueOrThrow({ where: { id: counterId } }))
+        .originalTerms as { quantity: number; totalPayTnd: string; effort: string };
+      assert.equal(savedTerms.quantity, 10, 'original terms snapshotted before manager review');
+      assert.ok(savedTerms.totalPayTnd);
+      assert.ok(savedTerms.effort);
+      const buyerOrganizationId = (
+        await db.commercialOrder.findUniqueOrThrow({
+          where: { id: orderId },
+          include: { rfq: true },
+        })
+      ).rfq.buyerOrganizationId;
+      const assignment = await db.operatorAssignment.findFirstOrThrow({
+        where: {
+          operatorId: operator.me.user.id,
+          organizationId: buyerOrganizationId,
+          revokedAt: null,
+        },
+      });
+      await db.operatorAssignment.update({
+        where: { id: assignment.id },
+        data: { revokedAt: new Date() },
+      });
+      try {
+        const noReview = (await operator.client.request(root)).body as {
+          counteroffers: { id: string; canReview: boolean }[];
+        };
+        assert.equal(noReview.counteroffers.find((c) => c.id === counterId)?.canReview, false);
+        assert.equal(
+          (
+            await post(operator, `${root}/counteroffers/${counterId}/review`, {
+              decision: 'APPROVE_TERMS',
+            })
+          ).status,
+          403,
+          'revoked buyer assignment cannot review changed terms',
+        );
+      } finally {
+        await db.operatorAssignment.update({
+          where: { id: assignment.id },
+          data: { revokedAt: null },
+        });
+      }
+
       const before = await db.commercialBatch.count({ where: { orderId } });
       assert.equal(
         (
@@ -160,6 +239,14 @@ export async function runCollaborationScenarios({
       const revised = await db.commercialOffer.findUniqueOrThrow({ where: { id: revisedId } });
       assert.equal(revised.quantity, 5);
       assert.equal(revised.deliveryDeadline?.toISOString(), '2027-09-12T00:00:00.000Z');
+      const displayed = (await artisan.client.request('/api/v1/commerce/workspace')).body as {
+        offers: Array<{ id: string; deliveryAt: string; specification: string }>;
+      };
+      assert.equal(
+        displayed.offers.find((offer) => offer.id === revisedId)?.deliveryAt,
+        revised.deliveryDeadline?.toISOString(),
+      );
+
       assert.equal(
         (await post(artisan, `${root}/counteroffers/${counterId}/accept`, {})).status,
         409,
@@ -168,6 +255,9 @@ export async function runCollaborationScenarios({
         (
           await post(outsider, `/api/v1/commerce/offers/${revisedId}/actions`, {
             next: 'ACCEPTED',
+            reviewLanguage: 'en',
+            sourceTermsLanguage: 'en',
+            acknowledgeOriginalTerms: true,
             version: revised.version,
             termsSha256: revised.termsSha256,
           })
@@ -178,6 +268,9 @@ export async function runCollaborationScenarios({
         (
           await post(artisan, `/api/v1/commerce/offers/${revisedId}/actions`, {
             next: 'ACCEPTED',
+            reviewLanguage: 'en',
+            sourceTermsLanguage: 'en',
+            acknowledgeOriginalTerms: true,
             version: revised.version,
             termsSha256: 'a'.repeat(64),
           })
@@ -188,6 +281,9 @@ export async function runCollaborationScenarios({
         [1, 2].map(() =>
           post(artisan, `/api/v1/commerce/offers/${revisedId}/actions`, {
             next: 'ACCEPTED',
+            reviewLanguage: 'en',
+            sourceTermsLanguage: 'en',
+            acknowledgeOriginalTerms: true,
             version: revised.version,
             termsSha256: revised.termsSha256,
           }),
@@ -274,6 +370,62 @@ export async function runCollaborationScenarios({
         ).status,
         409,
       );
+    },
+  );
+  await check(
+    'schedule preview is read-only and concurrent final decisions apply once',
+    async () => {
+      const offer = await db.commercialOffer.findUniqueOrThrow({ where: { id: revisedId } });
+      const input = {
+        batchId,
+        expectedVersion: offer.version,
+        proposedDeadline: '2027-09-10T12:00:00Z',
+        reason: 'Synthetic concurrent party decisions',
+      };
+      const count = await db.scheduleRevision.count({ where: { batchId } });
+      assert.equal((await post(operator, `${root}/schedule-revisions/preview`, input)).status, 201);
+      assert.equal((await post(artisan, `${root}/schedule-revisions/preview`, input)).status, 404);
+      assert.equal(await db.scheduleRevision.count({ where: { batchId } }), count);
+      assert.equal(
+        (
+          await post(operator, `${root}/schedule-revisions`, {
+            ...input,
+            expectedVersion: offer.version + 1,
+          })
+        ).status,
+        409,
+      );
+      const created = expectCreated<{ id: string }>(
+        await post(operator, `${root}/schedule-revisions`, input),
+      );
+      expectCreated(
+        await post(buyer, `${root}/schedule-revisions/${created.id}/decision`, {
+          decision: 'APPROVED',
+          note: 'Synthetic buyer consent before race',
+        }),
+      );
+      const raced = await Promise.all([
+        post(artisan, `${root}/schedule-revisions/${created.id}/decision`, {
+          decision: 'APPROVED',
+          note: 'Synthetic final approval',
+        }),
+        post(artisan, `${root}/schedule-revisions/${created.id}/decision`, {
+          decision: 'REJECTED',
+          note: 'Synthetic competing rejection',
+        }),
+      ]);
+      assert.deepEqual(raced.map((r) => r.status).sort(), [201, 409]);
+      const saved = await db.scheduleRevision.findUniqueOrThrow({ where: { id: created.id } });
+      const after = await db.commercialOffer.findUniqueOrThrow({ where: { id: revisedId } });
+      assert.equal(after.quantity, offer.quantity);
+      assert.equal(after.unitPayMillimes, offer.unitPayMillimes);
+      assert.equal(
+        after.deliveryDeadline?.toISOString(),
+        saved.status === 'APPROVED'
+          ? input.proposedDeadline.replace('Z', '.000Z')
+          : offer.deliveryDeadline?.toISOString(),
+      );
+      assert.equal((saved.impact as { decisions: unknown[] }).decisions.length, 2);
     },
   );
   await check(

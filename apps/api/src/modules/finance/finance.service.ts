@@ -191,7 +191,10 @@ export class FinanceService {
             orderBy: { createdAt: 'asc' },
           })),
         ],
-        closure: await this.assess(tx, orderId),
+        closure: {
+          ...(await this.assess(tx, orderId)),
+          history: await this.assessmentHistory(tx, orderId),
+        },
       };
     });
   }
@@ -1489,6 +1492,21 @@ export class FinanceService {
       paidVerifiedTnd: '0.000',
     };
   }
+  private assessmentHistory(tx: Db, orderId: string) {
+    return tx.orderClosureAssessment.findMany({
+      where: { orderId },
+      select: {
+        id: true,
+        actorId: true,
+        status: true,
+        blockers: true,
+        snapshot: true,
+        createdAt: true,
+      },
+      orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
+      take: 20,
+    });
+  }
   async closure(actor: Actor, orderId: string, persist = false, key?: string) {
     return iamTransaction(this.db, actor, async (tx) => {
       const access = await this.access(
@@ -1499,7 +1517,11 @@ export class FinanceService {
       );
       if (!access.finance && !persist)
         fail(404, 'NOT_FOUND', 'Financial closure requires scoped finance access.');
-      if (!persist) return this.assess(tx, orderId);
+      if (!persist)
+        return {
+          ...(await this.assess(tx, orderId)),
+          history: await this.assessmentHistory(tx, orderId),
+        };
       return this.command(tx, actor, orderId, 'closure.assess', key, {}, async () => {
         const result = await this.assess(tx, orderId);
         const row = await tx.orderClosureAssessment.create({

@@ -393,7 +393,15 @@ export class ProductionPlanningService {
           include: planInclude,
         });
         const replacements = input.artisanProfileIds.length
-          ? await this.replacementCandidates(tx, plan.orderId, input.artisanProfileIds)
+          ? await this.replacementCandidates(
+              tx,
+              order,
+              input.artisanProfileIds,
+              updated.items.reduce((sum, item) => sum + item.releasedQuantity, 0),
+              now,
+              (plan.materialAssumptions as { readiness?: 'READY' | 'NOT_READY' | 'UNKNOWN' })
+                .readiness ?? 'UNKNOWN',
+            )
           : [];
         await audit(tx, actor, {
           action: 'planning.reallocation.proposed',
@@ -406,6 +414,7 @@ export class ProductionPlanningService {
             acceptedPreserved: accepted,
             releasedOfferIds: sources.map((source) => source.offerId),
             replacementCandidateIds: replacements.map((candidate) => candidate.artisanProfileId),
+            evaluationSnapshot: 'Persisted in the keyed planning command outcome.',
             replacementReason:
               'Declined or expired offer; original artisan remains eligible without penalty.',
             provenance: 'SYNTHETIC',
@@ -417,9 +426,10 @@ export class ProductionPlanningService {
           replacementSources: sources,
           replacements: replacements.map((candidate) => ({
             ...candidate,
-            replacementForOfferIds: sources.map((source) => source.offerId),
+            replacementForOfferIds: updated.items.flatMap((item) =>
+              item.offerId && item.releasedQuantity > 0 ? [item.offerId] : [],
+            ),
             reason: 'Voluntary replanning after decline or expiry; no penalty.',
-            deliveryFeasibility: 'UNKNOWN_THROUGHPUT_NOT_RECORDED',
             materialAssumptions: plan.materialAssumptions,
           })),
         };
@@ -706,6 +716,19 @@ export class ProductionPlanningService {
           deadline: input.deadline,
           scenarios: input.scenarios,
         });
+        const capacitySnapshot = await tx.capacityDeclaration.findMany({
+          where: {
+            artisanProfileId: {
+              in: input.scenarios.flatMap((scenario) =>
+                scenario.lines.map((line) => line.artisanProfileId),
+              ),
+            },
+            craftSkillId: order.rfq.craftSkillId,
+            unitType: 'PIECES',
+            supersededAt: null,
+          },
+          select: { id: true, artisanProfileId: true, version: true },
+        });
         await tx.scheduleScenario.create({
           data: {
             orderId,
@@ -716,7 +739,7 @@ export class ProductionPlanningService {
             requiredQuantity: order.rfq.quantity,
             startDate: new Date(input.startDate),
             deadline: new Date(input.deadline),
-            result: json(result),
+            result: json({ ...result, inputSnapshot: input, capacitySnapshot }),
             assumptions: json(result.assumptions),
             policyVersion: C.PLANNING_POLICY_VERSION,
             authorId: actor.id,
@@ -910,12 +933,36 @@ export class ProductionPlanningService {
     });
   }
 
-  private async replacementCandidates(tx: Db, orderId: string, profileIds: string[]) {
+  private async replacementCandidates(
+    tx: Db,
+    order: LoadedOrder,
+    profileIds: string[],
+    quantity: number,
+    now: Date,
+    planMaterialReadiness: 'READY' | 'NOT_READY' | 'UNKNOWN',
+  ) {
+    const orderId = order.id;
+    const requirements = await tx.batchMaterialRequirement.findMany({
+      where: { batch: { orderId } },
+      select: { readiness: true },
+    });
+    const currentMaterials = requirements.length
+      ? requirements.every((row) => row.readiness === 'READY')
+        ? 'READY'
+        : 'UNKNOWN'
+      : planMaterialReadiness;
+    const recorded = await tx.scheduleScenario.findMany({
+      where: { orderId },
+      orderBy: { createdAt: 'desc' },
+    });
     const offers = await tx.commercialOffer.findMany({
       where: {
         orderId,
-        artisanProfileId: { notIn: profileIds },
-        status: { in: ['ACCEPTED', 'OFFERED', 'PREPARED'] },
+        artisanProfileId: { in: profileIds },
+        OR: [
+          { status: 'ACCEPTED' },
+          { status: { in: ['OFFERED', 'PLANNED'] }, expiresAt: { gt: now } },
+        ],
       },
       select: { artisanProfileId: true },
     });
@@ -924,10 +971,10 @@ export class ProductionPlanningService {
     const assessments = await tx.eligibilityAssessment.findMany({
       where: { id: { in: [...eligible.values()] } },
     });
-    const result: { artisanProfileId: string; knownRemaining: string }[] = [];
-    const now = new Date();
+    const result = [];
     for (const row of assessments) {
       if (
+        !profileIds.includes(row.artisanProfileId) ||
         row.decision !== 'ELIGIBLE' ||
         busy.has(row.artisanProfileId) ||
         row.unitType !== 'PIECES' ||
@@ -967,10 +1014,6 @@ export class ProductionPlanningService {
         )
           continue;
       } else if (!profile.authorizations.length) continue;
-      const order = await tx.commercialOrder.findUniqueOrThrow({
-        where: { id: orderId },
-        select: { rfq: { select: { craftSkillId: true } } },
-      });
       if (!profile.skills.some((skill) => skill.craftSkillId === order.rfq.craftSkillId)) continue;
       const declaration = await tx.capacityDeclaration.findFirst({
         where: {
@@ -985,8 +1028,110 @@ export class ProductionPlanningService {
       });
       if (!declaration) continue;
       const capacity = await projectCapacity(tx, declaration, now);
-      if (!capacity.availabilityKnown || Number(capacity.remaining) <= 0) continue;
-      result.push({ artisanProfileId: profile.id, knownRemaining: capacity.remaining });
+      if (!capacity.availabilityKnown || declaration.effectiveTo <= now) continue;
+      // Period budgets are never converted into a production rate. Only an explicitly reviewed
+      // operator simulation supplies throughput, lead times and buffers; current holds are reread.
+      const source = recorded.find((entry) => {
+        const snapshot = entry.result as unknown as {
+          inputSnapshot?: z.infer<typeof C.deliverySimulationSchema>;
+          capacitySnapshot?: { id: string; version: number; artisanProfileId: string }[];
+        };
+        return (
+          snapshot.inputSnapshot?.reviewedAssumptions &&
+          snapshot.inputSnapshot.scenarios.some((scenario) =>
+            scenario.lines.some((line) => line.artisanProfileId === profile.id),
+          ) &&
+          snapshot.capacitySnapshot?.some(
+            (item) => item.id === declaration.id && item.version === declaration.version,
+          )
+        );
+      });
+      const saved = source?.result as unknown as
+        | { inputSnapshot?: z.infer<typeof C.deliverySimulationSchema> }
+        | undefined;
+      const input = saved?.inputSnapshot;
+      const alternatives =
+        input?.scenarios.flatMap((scenario) =>
+          scenario.lines.filter((line) => line.artisanProfileId === profile.id),
+        ) ?? [];
+      const documented = alternatives[0];
+      const ambiguous = alternatives.some(
+        (line) => JSON.stringify(line) !== JSON.stringify(documented),
+      );
+      const reviewed = input?.reviewedAssumptions;
+      const start = new Date(
+        Math.max(
+          now.getTime(),
+          declaration.effectiveFrom.getTime(),
+          input ? new Date(input.startDate).getTime() : now.getTime(),
+        ),
+      );
+      const allowances = reviewed ? reviewed.leadTimeDays + reviewed.bufferDays : 0;
+      const deadline = new Date(
+        Math.min(
+          order.rfq.deliveryAt.getTime(),
+          declaration.effectiveTo.getTime(),
+          input ? new Date(input.deadline).getTime() : Infinity,
+        ) -
+          allowances * 86400000,
+      );
+      const weeks = Math.max(
+        1,
+        Math.ceil(
+          (declaration.effectiveTo.getTime() - declaration.effectiveFrom.getTime()) /
+            (7 * 86400000),
+        ),
+      );
+      const simulationInput = {
+        requiredQuantity: quantity,
+        startDate: start.toISOString(),
+        deadline: deadline.toISOString(),
+        scenarios: [
+          {
+            name: 'Replacement of declined or expired quantity',
+            lines: [
+              {
+                artisanProfileId: profile.id,
+                quantity,
+                weeklyPieces: documented && !ambiguous ? documented.weeklyPieces : null,
+                committedPieces: Number(capacity.committed) + Number(capacity.reserved),
+                committedWeeks: weeks,
+                availableFrom: documented?.availableFrom ?? start.toISOString(),
+                materialReadiness:
+                  currentMaterials === 'READY'
+                    ? (documented?.materialReadiness ?? 'UNKNOWN')
+                    : 'UNKNOWN',
+                materialReadyAt: documented?.materialReadyAt,
+              },
+            ],
+          },
+        ],
+      };
+      const simulation = C.simulateDelivery(simulationInput);
+      const evaluation = simulation.scenarios[0];
+      const deliveryFeasibility =
+        quantity > Number(capacity.remaining) ? 'INFEASIBLE' : evaluation.deadlineFeasible;
+      result.push({
+        artisanProfileId: profile.id,
+        knownRemaining: capacity.remaining,
+        deliveryFeasibility,
+        explanation:
+          quantity > Number(capacity.remaining)
+            ? 'Replacement quantity exceeds current unreserved period capacity.'
+            : !documented || ambiguous
+              ? 'Reviewed unambiguous throughput and dated assumptions are missing for the current capacity declaration.'
+              : 'Deterministic simulation using reviewed dated assumptions and current capacity holds.',
+        evidence: {
+          asOf: now.toISOString(),
+          assessmentId: row.id,
+          capacity,
+          sourceScenarioId: source?.id ?? null,
+          reviewedAssumptions: reviewed ?? null,
+          currentMaterialReadiness: currentMaterials,
+          simulationInput,
+          simulation,
+        },
+      });
     }
     return result;
   }

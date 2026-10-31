@@ -333,6 +333,9 @@ export async function runExecutionScenarios({ db, register, check }: Harness) {
       const issuedOffer = issued.body as { version: number; termsSha256: string };
       const accepted = await send(artisan, `/api/v1/commerce/offers/${offer.id}/actions`, {
         next: 'ACCEPTED',
+        reviewLanguage: 'en',
+        sourceTermsLanguage: 'en',
+        acknowledgeOriginalTerms: true,
         version: issuedOffer.version,
         termsSha256: issuedOffer.termsSha256,
       });

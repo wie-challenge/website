@@ -199,7 +199,19 @@ export class LogisticsService {
         const shipment = loaded.shipment;
         this.version(shipment.version, input.version);
         const total = shipment.items.reduce((sum, item) => sum + item.quantity, 0);
-        if (input.quantity > total)
+        // Conservation counts every earlier handover, so a replayed or repeated movement cannot
+        // create pieces. Confirmation rows restate a movement rather than adding one, so only
+        // recording events consume custody.
+        const recorded = shipment.handovers
+          .filter((row) => !row.priorHandoverId)
+          .reduce((sum, row) => sum + row.quantity, 0);
+        if (input.eventType !== 'RECEIVED_AT_HUB')
+          C.custodyConservation({
+            shipped: total,
+            previousHandovers: recorded,
+            quantity: input.quantity,
+          });
+        else if (input.quantity > total)
           fail(409, 'EXCESS_HANDOVER', 'A handover cannot increase the shipment quantity.');
         const occurredAt = this.past(input.occurredAt);
         let status = shipment.status as C.ShipmentStatus;
@@ -352,13 +364,21 @@ export class LogisticsService {
             'INVALID_TRANSITION',
             'Buyer confirmation follows an operator delivery report.',
           );
+        // Reconcile against what was actually shipped, not against the operator's report. A short
+        // report previously became the baseline, so the pieces it omitted were never counted as a
+        // shortage. See C.buyerReceipt.
+        const shipped = shipment.items.reduce((sum, item) => sum + item.quantity, 0);
         const receipt = C.buyerReceipt({
+          shipped,
           reported: shipment.deliveryReport.quantity,
           received: input.received,
           accepted: input.accepted,
           missing: input.missing,
           damaged: input.damaged,
         });
+        // The recorded missing figure is the total unaccounted for, including pieces the operator
+        // never reported arriving. Otherwise a short report would look like a complete delivery.
+        const recordedMissing = receipt.shortage;
         const status = receipt.discrepancy ? 'DISCREPANCY' : 'BUYER_CONFIRMED';
         C.assertShipmentEdge(shipment.status as C.ShipmentStatus, status);
         const confirmation = await tx.buyerDeliveryConfirmation.create({
@@ -366,7 +386,7 @@ export class LogisticsService {
             shipmentId,
             received: input.received,
             accepted: input.accepted,
-            missing: input.missing,
+            missing: recordedMissing,
             damaged: receipt.damaged,
             actorId: actor.id,
             occurredAt: this.past(input.occurredAt),
@@ -374,7 +394,7 @@ export class LogisticsService {
             ...(receipt.discrepancy
               ? {
                   discrepancy: {
-                    create: { quantity: input.missing + receipt.damaged, note: input.note },
+                    create: { quantity: recordedMissing + receipt.damaged, note: input.note },
                   },
                 }
               : {}),
@@ -409,7 +429,7 @@ export class LogisticsService {
           status: saved.status,
           version: saved.version,
           accepted: input.accepted,
-          missing: input.missing,
+          missing: recordedMissing,
           damaged: receipt.damaged,
           orderStatus: shipment.order.status,
         };

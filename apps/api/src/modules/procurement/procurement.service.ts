@@ -25,6 +25,7 @@ import {
   viewCost,
 } from './commercial-decision.js';
 import { procurementAudit, revision, specificationSnapshot } from './records.js';
+import { projectBuyerDocument, projectBuyerSnapshot } from './buyer-document.js';
 const take = 30;
 const pageArgs = (page: number) => ({ skip: (page - 1) * take, take: take + 1 });
 const json = (v: unknown) => JSON.parse(JSON.stringify(v)) as Prisma.InputJsonObject;
@@ -1217,18 +1218,28 @@ export class ProcurementService {
           );
         if (input.kind === 'DELIVERY' && !['DELIVERED', 'SETTLED', 'CLOSED'].includes(order.status))
           fail(409, 'DELIVERY_REQUIRED', 'A persisted delivery record is required.');
+        // A buyer-facing invoice embeds only the buyer-facing terms. The full accepted snapshot,
+        // including cost lines and the margin basis, stays on the immutable quote record where
+        // internal roles already read it; copying it into the invoice is what leaked it.
+        const snapshot = order.acceptance.quote.snapshot;
+        const terms =
+          snapshot && typeof snapshot === 'object' && !Array.isArray(snapshot)
+            ? projectBuyerSnapshot(snapshot as Record<string, unknown>)
+            : {};
         const doc = await this.document(
           tx,
           actor,
           row,
           input.kind,
-          {
+          json({
             acceptanceId: order.acceptance.id,
-            terms: order.acceptance.quote.snapshot,
+            rfqId: row.id,
+            terms,
+            ...terms,
             ...(input.kind === 'DELIVERY'
               ? { delivered: order.delivered, orderStatus: order.status }
               : {}),
-          },
+          }) as Prisma.InputJsonObject,
           order.id,
         );
         await procurementAudit(tx, actor, row, 'document.issued', doc.id);
@@ -1281,10 +1292,27 @@ export class ProcurementService {
     return iamTransaction(this.db, actor, async (tx) => {
       const doc = await tx.procurementDocument.findUnique({ where: { id } });
       if (!doc) fail(404, 'NOT_FOUND', 'Document not found.');
-      await this.scoped(tx, actor, doc.rfqId);
+      const { access } = await this.scoped(tx, actor, doc.rfqId);
+      // The stored content embeds the accepted quote snapshot, which carries cost lines and the
+      // margin basis. Anyone without internal operator access receives only the allowlisted
+      // buyer-facing projection; internal staff keep the full immutable record.
+      const header = {
+        number: doc.number,
+        kind: doc.kind,
+        version: doc.version,
+        status: doc.status,
+        createdAt: doc.createdAt,
+      };
       return {
         filename: `synthetic-${doc.kind.toLowerCase()}-${doc.number}-v${doc.version}.json`,
-        document: json(doc),
+        document: access.operator
+          ? json(doc)
+          : (json({
+              id: doc.id,
+              rfqId: doc.rfqId,
+              orderId: doc.orderId,
+              ...projectBuyerDocument(doc.content, header),
+            }) as Prisma.InputJsonObject),
       };
     });
   }
@@ -1575,8 +1603,8 @@ function buyerSnapshot(snapshot: Prisma.JsonValue, operator: boolean) {
   if (operator || !snapshot || typeof snapshot !== 'object' || Array.isArray(snapshot))
     return snapshot;
   const record = snapshot as Record<string, unknown>;
-  if (!('internal' in record)) return snapshot;
-  const { internal, ...rest } = record;
-  void internal;
+  // Strip every confidential container, not only the conventional `internal` one. `costEstimate`
+  // and `feasibility` carry cost lines, margin basis and effort figures and are equally private.
+  const rest = projectBuyerSnapshot(record);
   return rest;
 }

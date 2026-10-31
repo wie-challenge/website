@@ -65,6 +65,20 @@ export class CollaborationController {
     return this.service.linkOrderFeedbackCase(a, id, i, k);
   }
 
+  @Post('counteroffers/preview') previewCounter(
+    @CurrentUser() a: Actor,
+    @Body(new ZodValidationPipe(C.counterofferSchema)) i: C.CounterofferInput,
+  ) {
+    return this.service.previewCounter(a, i);
+  }
+
+  @Post('schedule-revisions/preview') previewSchedule(
+    @CurrentUser() a: Actor,
+    @Body(new ZodValidationPipe(C.scheduleRevisionSchema)) i: C.ScheduleRevisionInput,
+  ) {
+    return this.service.previewSchedule(a, i);
+  }
+
   @Post('exceptions') report(
     @CurrentUser() a: Actor,
     @Body(new ZodValidationPipe(C.exceptionReportSchema)) i: C.ExceptionReportInput,

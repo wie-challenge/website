@@ -53,7 +53,17 @@ type Dispute = {
   history?: { id: string; status: string; reason: string }[];
 };
 type Adjustment = { id: string; amountTnd: string; kind: string; reason: string; status: string };
-type Closure = { status: string; blockers: (string | { code: string; message: string })[] };
+type Closure = {
+  status: string;
+  blockers: (string | { code: string; message: string })[];
+  history?: {
+    id: string;
+    actorId: string;
+    status: string;
+    createdAt: string;
+    snapshot: unknown;
+  }[];
+};
 type FinanceView = {
   orderVersion: number;
   orderId: string;
@@ -360,6 +370,28 @@ export function OrderFinance({ orderId }: { orderId: string }) {
             />
           )}
           <Blockers closure={data.closure} />
+          <p>
+            Stored assessments preserve the evidence available at review time. Synthetic readiness
+            does not verify payment or authorize financial closure.
+          </p>
+          {data.closure.history?.map((assessment) => (
+            <details key={assessment.id}>
+              <summary>
+                {humanize(assessment.status)} — {new Date(assessment.createdAt).toLocaleString()}
+              </summary>
+              <p>Recorded by {assessment.actorId}</p>
+              <pre className="assessment-snapshot">
+                {JSON.stringify(assessment.snapshot, null, 2)}
+              </pre>
+            </details>
+          ))}
+          {allowed('finance.closure.assess') && (
+            <ActionForm
+              label="Save closure assessment"
+              onSuccess={resource.reload}
+              action={() => post(`${root}/orders/${orderId}/closure`, {})}
+            />
+          )}
           {allowed('finance.closure.assess') && (
             <ActionForm
               label="Request financial closure"

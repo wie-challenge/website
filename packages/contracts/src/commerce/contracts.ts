@@ -68,6 +68,9 @@ export const offerActionSchema = z
   .object({
     next: z.enum(offerStates),
     version,
+    reviewLanguage: z.enum(['en', 'fr', 'ar']).optional(),
+    sourceTermsLanguage: z.literal('en').optional(),
+    acknowledgeOriginalTerms: z.literal(true).optional(),
     termsSha256: z
       .string()
       .regex(/^[a-f0-9]{64}$/)

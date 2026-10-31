@@ -939,6 +939,11 @@
     background: var(--muted);
     border-radius: 8px;
   }
+  .assessment-snapshot {
+    max-width: 100%;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+  }
   .sr-only,
   .skip-link:not(:focus) {
     position: absolute;

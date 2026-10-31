@@ -32,24 +32,12 @@ function errorMessage(failure: unknown) {
   return failure.message;
 }
 
-/**
- * One idempotency key per intended command, retained across failures and only replaced after a
- * successful submission, so a network retry cannot create a second record.
- */
-function useRetainedKey(scope: string) {
-  const key = useRef<string>('');
-  useEffect(() => {
-    key.current = '';
-  }, [scope]);
-  const take = useCallback(() => {
-    if (!key.current) key.current = crypto.randomUUID().replace(/-/g, '');
-    return key.current;
-  }, []);
-  const clear = useCallback(() => {
-    key.current = '';
-  }, []);
-  return { take, clear };
-}
+type PendingFeedback = {
+  readonly kind: 'create' | 'correction';
+  readonly path: string;
+  readonly key: string;
+  readonly payload: Readonly<Record<string, string | number>>;
+};
 
 function useCommand() {
   const [busy, setBusy] = useState(false);
@@ -74,10 +62,17 @@ function useCommand() {
 }
 
 export function BuyerOrderFeedback({ orderId }: { orderId: string }) {
+  // A different order must never inherit private drafts or an uncertain command.
+  return <BuyerFeedbackForm key={orderId} orderId={orderId} />;
+}
+
+function BuyerFeedbackForm({ orderId }: { orderId: string }) {
   const resource = useResource<FeedbackListResponse>(
     `${root}/order-feedback?orderId=${encodeURIComponent(orderId)}`,
   );
-  const data = resource.data;
+  const [refreshed, setRefreshed] = useState<FeedbackListResponse | null>(null);
+  const data = refreshed ?? resource.data;
+  useEffect(() => setRefreshed(null), [resource.data]);
   const reloadFeedback = resource.reload;
   useEffect(() => {
     const handler = () => void reloadFeedback();
@@ -91,8 +86,12 @@ export function BuyerOrderFeedback({ orderId }: { orderId: string }) {
   const [reason, setReason] = useState('');
   const [history, setHistory] = useState<OrderFeedbackHistoryView | null>(null);
   const command = useCommand();
-  const nextKey = useRetainedKey(`${orderId}:${data?.items[0]?.currentVersion ?? 0}`);
-  const correctionKey = useRetainedKey(`correction:${orderId}`);
+  const [pending, setPending] = useState<PendingFeedback | null>(null);
+  const [accepted, setAccepted] = useState<{ id: string; version: number; comment: string } | null>(
+    null,
+  );
+  const [preservedEdits, setPreservedEdits] = useState(false);
+  const inFlight = useRef(false);
   const fieldId = useId();
 
   const own: OrderFeedbackView | undefined = data?.items.find(
@@ -117,52 +116,102 @@ export function BuyerOrderFeedback({ orderId }: { orderId: string }) {
     if (own) void loadHistory(own.id);
   }, [own, loadHistory]);
 
-  async function submitCreate() {
-    const ok = await command.run(
-      () =>
-        apiFetch(`${root}/orders/${encodeURIComponent(orderId)}/feedback`, {
+  async function execute(operation: PendingFeedback) {
+    if (inFlight.current) return;
+    inFlight.current = true;
+    setPending(operation);
+    const ok = await command.run(async () => {
+      try {
+        const result = await apiFetch<{ id: string; version: number }>(operation.path, {
           method: 'POST',
-          idempotencyKey: nextKey.take(),
-          body: {
-            receiptConfirmationId: selectedReceipt,
-            category,
-            ...(rating ? { rating: Number(rating) } : {}),
-            comment,
-          },
-        }),
-      'Private assessment recorded. Only you and the assigned support team can see it.',
-    );
-    if (ok) {
-      nextKey.clear();
-      setComment('');
-      setRating('');
-      await resource.reload();
-    }
+          idempotencyKey: operation.key,
+          body: operation.payload,
+        });
+        // A replay receipt is not current authority or current state. Refresh through the scoped
+        // read endpoint before enabling a new edited intent against its latest revision.
+        const latest = await apiFetch<FeedbackListResponse>(
+          `${root}/order-feedback?orderId=${encodeURIComponent(orderId)}`,
+        );
+        if (!latest.items.some((item) => item.id === result.id))
+          throw new Error('Your accepted assessment is unavailable. Retry after restoring access.');
+        const edited =
+          comment !== operation.payload.comment ||
+          category !== operation.payload.category ||
+          rating !==
+            (operation.payload.rating === undefined ? '' : String(operation.payload.rating)) ||
+          (operation.kind === 'create' &&
+            (selectedReceipt !== operation.payload.receiptConfirmationId || reason.length > 0)) ||
+          (operation.kind === 'correction' &&
+            (reason.trim() || 'Buyer correction') !== operation.payload.reason);
+        setRefreshed(latest);
+        setAccepted({
+          id: result.id,
+          version: result.version,
+          comment: String(operation.payload.comment ?? ''),
+        });
+        setPending(null);
+        setPreservedEdits(edited);
+        if (!edited) {
+          setComment('');
+          setRating('');
+          setReason('');
+        }
+        await resource.reload();
+      } catch (failure) {
+        if (
+          failure instanceof ApiError &&
+          (failure.status === 400 ||
+            ['STALE_VERSION', 'DUPLICATE_FEEDBACK'].includes(failure.detail.code))
+        ) {
+          // These definitive rejections did not accept this command. Keep the draft; refresh
+          // authoritative version before a deliberate fresh-key submission.
+          setPending(null);
+          setPreservedEdits(true);
+          await resource.reload();
+        }
+        if (failure instanceof ApiError && [401, 403, 404].includes(failure.status)) {
+          setRefreshed(null);
+          setAccepted(null);
+          setHistory(null);
+          await resource.reload();
+        }
+        throw failure;
+      }
+    }, 'Accepted operation confirmed. Any edited draft remains separate until you submit it.');
+    inFlight.current = false;
+    return ok;
+  }
+
+  async function submitCreate() {
+    if (pending) return execute(pending);
+    return execute({
+      kind: 'create',
+      path: `${root}/orders/${encodeURIComponent(orderId)}/feedback`,
+      key: crypto.randomUUID(),
+      payload: Object.freeze({
+        receiptConfirmationId: selectedReceipt,
+        category,
+        ...(rating ? { rating: Number(rating) } : {}),
+        comment,
+      }),
+    });
   }
 
   async function submitCorrection() {
+    if (pending) return execute(pending);
     if (!own) return;
-    const ok = await command.run(
-      () =>
-        apiFetch(`${root}/order-feedback/${encodeURIComponent(own.id)}/corrections`, {
-          method: 'POST',
-          // A correction is a distinct command, so it keeps its own retained key.
-          idempotencyKey: correctionKey.take(),
-          body: {
-            expectedVersion: own.currentVersion,
-            category,
-            ...(rating ? { rating: Number(rating) } : {}),
-            comment,
-            reason: reason.trim() || 'Buyer correction',
-          },
-        }),
-      'Correction recorded as a new version. The original statement is preserved.',
-    );
-    if (ok) {
-      correctionKey.clear();
-      setReason('');
-      await resource.reload();
-    }
+    return execute({
+      kind: 'correction',
+      path: `${root}/order-feedback/${encodeURIComponent(own.id)}/corrections`,
+      key: crypto.randomUUID(),
+      payload: Object.freeze({
+        expectedVersion: own.currentVersion,
+        category,
+        ...(rating ? { rating: Number(rating) } : {}),
+        comment,
+        reason: reason.trim() || 'Buyer correction',
+      }),
+    });
   }
 
   return (
@@ -271,8 +320,12 @@ export function BuyerOrderFeedback({ orderId }: { orderId: string }) {
               disabled={command.busy}
             />
           </div>
-          <button type="button" onClick={submitCorrection} disabled={command.busy}>
-            Save correction
+          <button
+            type="button"
+            onClick={submitCorrection}
+            disabled={command.busy || Boolean(pending)}
+          >
+            {preservedEdits ? 'Submit edited correction with a new key' : 'Save correction'}
           </button>
         </article>
       )}
@@ -337,10 +390,33 @@ export function BuyerOrderFeedback({ orderId }: { orderId: string }) {
             Fragile or short delivery? You can still record feedback. Nothing received at all
             belongs in a support claim.
           </p>
-          <button type="button" onClick={submitCreate} disabled={command.busy}>
+          <button type="button" onClick={submitCreate} disabled={command.busy || Boolean(pending)}>
             Submit private assessment
           </button>
         </article>
+      )}
+      {pending && (
+        <div className="notice">
+          <p role="note">
+            An earlier operation is uncertain. Retry sends its original words and key; your edits
+            stay separate.
+          </p>
+          <button type="button" disabled={command.busy} onClick={() => execute(pending)}>
+            Retry original {pending.kind === 'create' ? 'assessment' : 'correction'}
+          </button>
+        </div>
+      )}
+      {accepted && data?.items.some((item) => item.id === accepted.id) && (
+        <section aria-label="Accepted feedback operation">
+          <h3>Accepted operation (version {accepted.version})</h3>
+          <p>{accepted.comment || 'No comment'}</p>
+          {preservedEdits && (
+            <p role="note">
+              Your edited draft is preserved. Review the current version, then explicitly submit
+              your edited correction with a new key.
+            </p>
+          )}
+        </section>
       )}
       {command.error && (
         <p className="notice" role="alert">

@@ -1,3 +1,6 @@
+import { runClosureMigrationScenarios } from './closure-migration.scenarios.js';
+import { runFinanceClosureScenarios } from './finance-closure.scenarios.js';
+import { runSecurityScenarios } from './security.scenarios.js';
 import { runOrderFeedbackScenarios } from './order-feedback.scenarios.js';
 import { runFeedbackMigrationScenarios } from './feedback-migration.scenarios.js';
 import { runDemoFeedbackMigrationScenarios } from './demo-feedback-migration.scenarios.js';
@@ -548,7 +551,10 @@ try {
     await runLifecycleScenarios({ db, client, register, mutate, check, config });
     await runMfaScenarios({ db, config, client, register, mutate, check, mail });
     await runE16Scenarios({ db, register, mutate, check, config });
+    await runSecurityScenarios({ databaseUrl: database.url, smtpPort: mail.port, check });
     await runCommerceScenarios({ db, register, check, config });
+    await runFinanceClosureScenarios({ db, register, check });
+    await runClosureMigrationScenarios(check);
     await runCapacityScenarios({ db, register, check });
     await runDirectoryScenarios({ db, register, check });
     await runCommercialScenarios({ db, register, check });

@@ -110,6 +110,7 @@ export function validateEnvironment(values: Record<string, unknown>) {
       throw new Error('Production PUBLIC_APP_URL requires HTTPS.');
     if (!config.ARCJET_ENABLED || !config.ARCJET_KEY)
       throw new Error('Production requires configured Arcjet protection.');
+    if (config.ARCJET_MODE !== 'LIVE') throw new Error('Production requires ARCJET_MODE=LIVE.');
     if (
       (!config.SMTP_REQUIRE_TLS && !config.SMTP_SECURE) ||
       !config.SMTP_USER ||

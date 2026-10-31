@@ -52,6 +52,19 @@ export async function seedBrowserProductionFixture(url: string, suffix: string) 
     await db.operatorAssignment.create({
       data: { operatorId: operator.id, organizationId: buyerOrg.id, assignedById: operator.id },
     });
+    if (suffix.startsWith('c08')) {
+      const membership = await db.organizationMember.findFirstOrThrow({
+        where: { organizationId: buyerOrg.id, userId: operator.id },
+      });
+      await db.membershipPermission.create({
+        data: {
+          membershipId: membership.id,
+          permission: 'buyer.quotation.approve',
+          grantedById: operator.id,
+          reason: 'Synthetic explicit buyer contract decision authority',
+        },
+      });
+    }
     if (suffix.startsWith('b12')) {
       const m = await db.organizationMember.findFirstOrThrow({
         where: { organizationId: operatorOrg.id, userId: operator.id },
@@ -142,15 +155,16 @@ export async function seedBrowserProductionFixture(url: string, suffix: string) 
         recordedById: coordinator.id,
       },
     });
-    await db.artisanAssignment.create({
-      data: {
-        artisanProfileId: accountless.id,
-        coordinatorId: coordinator.id,
-        organizationId: association.id,
-        assignedById: coordinator.id,
-        reason: 'Synthetic assignment',
-      },
-    });
+    for (const profileId of [linked.id, accountless.id])
+      await db.artisanAssignment.create({
+        data: {
+          artisanProfileId: profileId,
+          coordinatorId: coordinator.id,
+          organizationId: association.id,
+          assignedById: coordinator.id,
+          reason: 'Synthetic assignment',
+        },
+      });
     for (const profileId of [linked.id, accountless.id])
       await db.capacityDeclaration.create({
         data: {

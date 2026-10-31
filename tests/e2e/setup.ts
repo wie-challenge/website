@@ -18,6 +18,7 @@ import {
   captureMail,
   disposableDatabase,
   promoteDisposableAdmin,
+  expireDisposableDemoVisitor,
   testConfig,
 } from '../../apps/api/test/support';
 const root = fileURLToPath(new URL('../../', import.meta.url));
@@ -31,7 +32,7 @@ async function free(port: number) {
 export default async function setup() {
   return runBrowserSetup();
 }
-export async function runBrowserSetup(options: { demo?: boolean } = {}) {
+export async function runBrowserSetup(options: { demo?: boolean; feedbackRateMax?: number } = {}) {
   await free(3100);
   await free(3101);
   const database = await disposableDatabase({ demo: options.demo });
@@ -58,6 +59,13 @@ export async function runBrowserSetup(options: { demo?: boolean } = {}) {
         );
         res.setHeader('Content-Type', 'application/json');
         res.end(JSON.stringify({ token }));
+      } else if (
+        options.demo &&
+        url.pathname.endsWith('/expire-demo-visitor') &&
+        req.method === 'POST'
+      ) {
+        await expireDisposableDemoVisitor(database.url, url.searchParams.get('scenarioId') ?? '');
+        res.end('{}');
       } else if (url.pathname.endsWith('/promote') && req.method === 'POST') {
         await promoteDisposableAdmin(database.url, email);
         res.end('{}');
@@ -148,7 +156,7 @@ export async function runBrowserSetup(options: { demo?: boolean } = {}) {
     LOG_LEVEL: 'silent',
     // The browser suite shares one loopback client address, so the dedicated showroom-feedback
     // bucket is raised for the harness only. Production defaults stay conservative (env.ts).
-    RATE_FEEDBACK_MAX: 500,
+    RATE_FEEDBACK_MAX: options.feedbackRateMax ?? 500,
   });
   const environment = Object.fromEntries(
     Object.entries(config).map(([key, value]) => [

@@ -8,6 +8,7 @@ import {
   supportTicketCategories,
   type CollaborationWorkspaceView,
 } from '@nasj/contracts';
+import { CollaborationCreation, TermsComparison } from './collaboration-creation';
 import { OrderFeedbackSection } from './order-feedback-support';
 
 async function post(path: string, body: unknown) {
@@ -27,6 +28,21 @@ export function CollaborationWorkspace() {
       description="Production exceptions, schedule changes, counteroffers, availability and support cases. Every role sees only what it is entitled to."
     >
       <ResourceState loading={resource.loading} error={resource.error} retry={resource.reload} />
+      <CollaborationCreation
+        kind="counter"
+        targets={data?.creation.counterOffers ?? []}
+        reload={resource.reload}
+      />
+      <CollaborationCreation
+        kind="exception"
+        targets={data?.creation.exceptionBatches ?? []}
+        reload={resource.reload}
+      />
+      <CollaborationCreation
+        kind="schedule"
+        targets={data?.creation.scheduleBatches ?? []}
+        reload={resource.reload}
+      />
       {data && (
         <>
           <ExceptionsSection data={data} reload={resource.reload} />
@@ -98,6 +114,7 @@ function Feedback({ busy, message, error }: { busy: boolean; message: string; er
 
 function ExceptionsSection({ data, reload }: SectionProps) {
   const { busy, message, error, act } = useAction(reload);
+  const [resolutions, setResolutions] = useState<Record<string, string>>({});
   return (
     <section aria-labelledby="exceptions">
       <h2 id="exceptions">Production exceptions</h2>
@@ -106,71 +123,113 @@ function ExceptionsSection({ data, reload }: SectionProps) {
           No production exception is recorded for your work.
         </p>
       )}
-      <table className="data-table">
-        {data.exceptions.length > 0 && (
-          <>
-            <caption>Exception reports keep the original statement intact</caption>
-            <thead>
-              <tr>
-                <th scope="col">Category</th>
-                <th scope="col">Severity</th>
-                <th scope="col">Status</th>
-                <th scope="col">Reported by</th>
-                <th scope="col">Readiness</th>
-                <th scope="col">Action</th>
-              </tr>
-            </thead>
-            <tbody>
-              {data.exceptions.map((exception) => (
-                <tr key={exception.id}>
-                  <th scope="row">{humanize(exception.category)}</th>
-                  <td>{humanize(exception.severity)}</td>
-                  <td>{humanize(exception.status)}</td>
-                  <td>{humanize(exception.reporterRole)}</td>
-                  <td>{exception.blocksReadiness ? 'Blocks readiness' : 'Does not block'}</td>
-                  <td>
-                    {exception.status === 'OPEN' && (
-                      <button
-                        type="button"
-                        disabled={busy}
-                        onClick={() =>
-                          act(
-                            `/api/v1/collaboration/exceptions/${encodeURIComponent(exception.id)}`,
-                            { status: 'ACKNOWLEDGED', resolution: '' },
-                            'Exception acknowledged.',
-                          )
-                        }
-                      >
-                        Acknowledge
-                      </button>
-                    )}
-                    {['ACKNOWLEDGED', 'UNDER_REVIEW', 'ACTION_REQUIRED'].includes(
-                      exception.status,
-                    ) && (
-                      <button
-                        type="button"
-                        disabled={busy}
-                        onClick={() =>
-                          act(
-                            `/api/v1/collaboration/exceptions/${encodeURIComponent(exception.id)}`,
-                            {
-                              status: 'RESOLVED',
-                              resolution: 'Resolved by the assigned coordinator.',
-                            },
-                            'Exception resolved. The original report is preserved.',
-                          )
-                        }
-                      >
-                        Resolve
-                      </button>
-                    )}
-                  </td>
+      <section
+        className="table-scroll"
+        aria-label="Production exception reports"
+        // biome-ignore lint/a11y/noNoninteractiveTabindex: Keyboard users need to scroll the overflowing report table.
+        tabIndex={0}
+      >
+        <table className="data-table">
+          {data.exceptions.length > 0 && (
+            <>
+              <caption>Exception reports keep the original statement intact</caption>
+              <thead>
+                <tr>
+                  <th scope="col">Category</th>
+                  <th scope="col">Severity</th>
+                  <th scope="col">Status</th>
+                  <th scope="col">Reported by</th>
+                  <th scope="col">Readiness</th>
+                  <th scope="col">Action</th>
                 </tr>
-              ))}
-            </tbody>
-          </>
-        )}
-      </table>
+              </thead>
+              <tbody>
+                {data.exceptions.map((exception) => (
+                  <tr key={exception.id}>
+                    <th scope="row">
+                      {humanize(exception.category)}
+                      <p>{exception.description}</p>
+                      <p>
+                        Affected quantity: {exception.affectedQuantity ?? 'Not specified'}. Date:{' '}
+                        {exception.affectedDate
+                          ? new Date(exception.affectedDate).toLocaleString()
+                          : 'Not specified'}
+                        .
+                      </p>
+                      {exception.evidenceReference && (
+                        <p>Evidence: {exception.evidenceReference}</p>
+                      )}
+                      <p>
+                        Responsible coordinator:{' '}
+                        {exception.coordinator ??
+                          'Assigned coordinator will be identified on acknowledgement'}
+                        .
+                      </p>
+                      {exception.resolution && <p>Resolution: {exception.resolution}</p>}
+                    </th>
+                    <td>{humanize(exception.severity)}</td>
+                    <td>{humanize(exception.status)}</td>
+                    <td>{humanize(exception.reporterRole)}</td>
+                    <td>{exception.blocksReadiness ? 'Blocks readiness' : 'Does not block'}</td>
+                    <td>
+                      {exception.canManage && exception.status === 'OPEN' && (
+                        <button
+                          className="button"
+                          type="button"
+                          disabled={busy}
+                          onClick={() =>
+                            act(
+                              `/api/v1/collaboration/exceptions/${encodeURIComponent(exception.id)}`,
+                              { status: 'ACKNOWLEDGED', resolution: '' },
+                              'Exception acknowledged.',
+                            )
+                          }
+                        >
+                          Acknowledge
+                        </button>
+                      )}
+                      {exception.canManage &&
+                        ['ACKNOWLEDGED', 'UNDER_REVIEW', 'ACTION_REQUIRED'].includes(
+                          exception.status,
+                        ) && (
+                          <>
+                            <label>
+                              Resolution for {humanize(exception.category)}
+                              <textarea
+                                value={resolutions[exception.id] ?? ''}
+                                onChange={(e) =>
+                                  setResolutions({ ...resolutions, [exception.id]: e.target.value })
+                                }
+                                maxLength={2000}
+                              />
+                            </label>
+                            <button
+                              className="button"
+                              type="button"
+                              disabled={busy}
+                              onClick={() =>
+                                act(
+                                  `/api/v1/collaboration/exceptions/${encodeURIComponent(exception.id)}`,
+                                  {
+                                    status: 'RESOLVED',
+                                    resolution: resolutions[exception.id] ?? '',
+                                  },
+                                  'Exception resolved. The original report is preserved.',
+                                )
+                              }
+                            >
+                              Resolve
+                            </button>
+                          </>
+                        )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </>
+          )}
+        </table>
+      </section>
       <Feedback busy={busy} message={message} error={error} />
     </section>
   );
@@ -178,6 +237,7 @@ function ExceptionsSection({ data, reload }: SectionProps) {
 
 function ScheduleSection({ data, reload }: SectionProps) {
   const { busy, message, error, act } = useAction(reload);
+  const [notes, setNotes] = useState<Record<string, string>>({});
   return (
     <section aria-labelledby="schedule">
       <h2 id="schedule">Schedule revisions</h2>
@@ -198,47 +258,63 @@ function ScheduleSection({ data, reload }: SectionProps) {
             {new Date(revision.previousDeadline).toLocaleDateString()}, {revision.effect.deltaDays}{' '}
             day change). Effective deadline:{' '}
             {new Date(revision.effect.effectiveDeadline).toLocaleDateString()}.
-            {['PENDING_APPROVAL', 'AWAITING_ARTISAN'].includes(revision.status) && (
-              <>
-                {' '}
-                <button
-                  type="button"
-                  disabled={busy}
-                  onClick={() =>
-                    act(
-                      `/api/v1/collaboration/schedule-revisions/${encodeURIComponent(revision.id)}/decision`,
-                      { decision: 'APPROVED', note: '' },
-                      'Your decision is recorded. The effective deadline changes only after all parties approve.',
-                    )
-                  }
-                >
-                  Approve change
-                </button>
-                <button
-                  type="button"
-                  disabled={busy}
-                  onClick={() =>
-                    act(
-                      `/api/v1/collaboration/schedule-revisions/${encodeURIComponent(revision.id)}/decision`,
-                      { decision: 'REJECTED', note: 'Declined.' },
-                      'Schedule change rejected. The original deadline stands.',
-                    )
-                  }
-                >
-                  Reject change
-                </button>
-              </>
-            )}
+            {revision.canDecide &&
+              ['PENDING_APPROVAL', 'AWAITING_ARTISAN'].includes(revision.status) && (
+                <>
+                  <label>
+                    Schedule decision note
+                    <textarea
+                      value={notes[revision.id] ?? ''}
+                      onChange={(e) => setNotes({ ...notes, [revision.id]: e.target.value })}
+                      maxLength={2000}
+                    />
+                  </label>
+                  <button
+                    className="button"
+                    type="button"
+                    disabled={busy}
+                    onClick={() =>
+                      act(
+                        `/api/v1/collaboration/schedule-revisions/${encodeURIComponent(revision.id)}/decision`,
+                        { decision: 'APPROVED', note: notes[revision.id] ?? '' },
+                        'Your decision is recorded. The effective deadline changes only after all parties approve.',
+                      )
+                    }
+                  >
+                    Approve change
+                  </button>
+                  <button
+                    className="button"
+                    type="button"
+                    disabled={busy}
+                    onClick={() =>
+                      act(
+                        `/api/v1/collaboration/schedule-revisions/${encodeURIComponent(revision.id)}/decision`,
+                        { decision: 'REJECTED', note: notes[revision.id] ?? '' },
+                        'Schedule change rejected. The original deadline stands.',
+                      )
+                    }
+                  >
+                    Reject change
+                  </button>
+                </>
+              )}
             <p>Reason: {revision.reason}</p>
+            <ul aria-label="Schedule decision history">
+              {revision.decisions.map((decision) => (
+                <li key={`${decision.at}-${decision.party}-${decision.decision}`}>
+                  {decision.party}: {humanize(decision.decision)} — {decision.note || 'No note'} (
+                  {new Date(decision.at).toLocaleString()})
+                </li>
+              ))}
+            </ul>
             <p>
               Buyer approval: {revision.buyerApproved ? 'recorded' : 'pending'}. Artisan approval:{' '}
               {revision.artisanApproved ? 'recorded' : 'pending'}.
             </p>
             <details>
               <summary>Capacity, material and transport impact</summary>
-              <pre style={{ whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}>
-                {JSON.stringify(revision.impact, null, 2)}
-              </pre>
+              <ScheduleImpact impact={revision.impact} />
             </details>
           </li>
         ))}
@@ -250,6 +326,7 @@ function ScheduleSection({ data, reload }: SectionProps) {
 
 function CounterofferSection({ data, reload }: SectionProps) {
   const { busy, message, error, act } = useAction(reload);
+  const [notes, setNotes] = useState<Record<string, string>>({});
   return (
     <section aria-labelledby="counteroffers">
       <h2 id="counteroffers">Counteroffers</h2>
@@ -268,22 +345,52 @@ function CounterofferSection({ data, reload }: SectionProps) {
             <strong>{humanize(counteroffer.status)}</strong> — {counteroffer.proposedQuantity}{' '}
             pieces by {new Date(counteroffer.proposedDeadline).toLocaleDateString()}. Agreement
             created: {counteroffer.createsAgreement ? 'Yes' : 'No'}.
-            {counteroffer.status === 'PROPOSED' && (
-              <button
-                type="button"
-                disabled={busy}
-                onClick={() =>
-                  act(
-                    `/api/v1/collaboration/counteroffers/${encodeURIComponent(counteroffer.id)}/review`,
-                    { decision: 'APPROVE_TERMS', note: '' },
-                    'Changed terms accepted for review. The artisan must still accept them.',
-                  )
-                }
-              >
-                Manager approves terms
-              </button>
+            <TermsComparison original={counteroffer.original} proposed={counteroffer.proposed} />
+            <p>Clarification: {counteroffer.clarification || 'None'}</p>
+            <p>
+              Decision history: {humanize(counteroffer.status)}. {counteroffer.reviewNote}
+            </p>
+            {counteroffer.canReview && counteroffer.status === 'PROPOSED' && (
+              <>
+                <label>
+                  Review note
+                  <textarea
+                    value={notes[counteroffer.id] ?? ''}
+                    onChange={(e) => setNotes({ ...notes, [counteroffer.id]: e.target.value })}
+                    maxLength={2000}
+                  />
+                </label>
+                <button
+                  className="button"
+                  type="button"
+                  disabled={busy}
+                  onClick={() =>
+                    act(
+                      `/api/v1/collaboration/counteroffers/${encodeURIComponent(counteroffer.id)}/review`,
+                      { decision: 'APPROVE_TERMS', note: notes[counteroffer.id] ?? '' },
+                      'Changed terms accepted for review. The artisan must still accept them.',
+                    )
+                  }
+                >
+                  Manager approves terms
+                </button>
+                <button
+                  className="button"
+                  type="button"
+                  disabled={busy}
+                  onClick={() =>
+                    act(
+                      `/api/v1/collaboration/counteroffers/${encodeURIComponent(counteroffer.id)}/review`,
+                      { decision: 'DECLINE', note: notes[counteroffer.id] ?? '' },
+                      'Counteroffer declined. Original offer terms remain.',
+                    )
+                  }
+                >
+                  Decline counteroffer
+                </button>
+              </>
             )}
-            {counteroffer.status === 'MANAGER_REVIEW' && (
+            {counteroffer.canConfirm && counteroffer.status === 'MANAGER_REVIEW' && (
               <>
                 <p>
                   Review the newly issued offer in My offers and accept its exact terms there. This
@@ -291,6 +398,7 @@ function CounterofferSection({ data, reload }: SectionProps) {
                 </p>
                 <a href="/commerce/artisan">Review my offers</a>
                 <button
+                  className="button"
                   type="button"
                   disabled={busy}
                   onClick={() =>
@@ -329,6 +437,7 @@ function AvailabilitySection({ data, reload }: SectionProps) {
             eligibility.
           </p>
           <button
+            className="button"
             type="button"
             disabled={busy}
             onClick={() =>
@@ -357,6 +466,7 @@ function AvailabilitySection({ data, reload }: SectionProps) {
             <input type="text" value={reason} onChange={(event) => setReason(event.target.value)} />
           </label>
           <button
+            className="button"
             type="button"
             disabled={busy}
             onClick={() =>
@@ -410,6 +520,7 @@ function TicketSection({ data, reload }: SectionProps) {
               />
             </label>
             <button
+              className="button"
               type="button"
               disabled={busy || correction.trim().length < 2}
               onClick={() =>
@@ -455,6 +566,7 @@ function TicketSection({ data, reload }: SectionProps) {
                   <li key={attachment.id}>
                     {attachment.filename} ({attachment.mime}){' '}
                     <button
+                      className="button"
                       type="button"
                       onClick={async () => {
                         try {
@@ -496,6 +608,7 @@ function TicketSection({ data, reload }: SectionProps) {
             </p>
             {!['CLOSED', 'WITHDRAWN', 'RESOLVED'].includes(ticket.status) && (
               <button
+                className="button"
                 type="button"
                 disabled={busy}
                 onClick={() =>
@@ -511,6 +624,7 @@ function TicketSection({ data, reload }: SectionProps) {
             )}
             {['OPEN', 'ASSIGNED', 'IN_REVIEW', 'ESCALATED'].includes(ticket.status) && (
               <button
+                className="button"
                 type="button"
                 disabled={busy}
                 onClick={() =>
@@ -526,6 +640,7 @@ function TicketSection({ data, reload }: SectionProps) {
             )}
             {['IN_PROGRESS', 'WAITING_ON_REPORTER'].includes(ticket.status) && (
               <button
+                className="button"
                 type="button"
                 disabled={busy}
                 onClick={() =>
@@ -598,6 +713,7 @@ function TicketSection({ data, reload }: SectionProps) {
         />
       </label>
       <button
+        className="button"
         type="button"
         disabled={busy || (category !== 'SUPPORT_REQUEST' && description.trim().length < 2)}
         onClick={() =>
@@ -660,6 +776,7 @@ function DiscussionSection({ data, reload }: SectionProps) {
             <textarea value={body} onChange={(event) => setBody(event.target.value)} rows={3} />
           </label>
           <button
+            className="button"
             type="button"
             disabled={busy || body.trim().length < 2}
             onClick={() =>
@@ -719,6 +836,7 @@ function NotificationSection({ data, reload }: SectionProps) {
         </select>
       </label>
       <button
+        className="button"
         type="button"
         disabled={busy}
         onClick={() =>
@@ -749,6 +867,7 @@ function NotificationSection({ data, reload }: SectionProps) {
               <td>{preference.optedIn ? 'Yes' : 'No'}</td>
               <td>
                 <button
+                  className="button"
                   type="button"
                   disabled={busy}
                   onClick={() =>
@@ -788,6 +907,7 @@ function NotificationSection({ data, reload }: SectionProps) {
             {humanize(notification.channel)} on {new Date(notification.createdAt).toLocaleString()}
             {notification.status !== 'DELIVERED' && (
               <button
+                className="button"
                 type="button"
                 disabled={busy}
                 onClick={() =>
@@ -806,5 +926,43 @@ function NotificationSection({ data, reload }: SectionProps) {
       </ul>
       <Feedback busy={busy} message={message} error={error} />
     </section>
+  );
+}
+
+function ScheduleImpact({ impact }: { impact: unknown }) {
+  const value = impact as {
+    buyerDeadline?: string;
+    deltaDays?: number;
+    capacityPeriod?: { from?: string; to?: string; requiresReassessment?: boolean };
+    materialImpact?: { unresolvedExceptions?: string[] };
+  };
+  return (
+    <>
+      <p>
+        Buyer delivery deadline:{' '}
+        {value.buyerDeadline ? new Date(value.buyerDeadline).toLocaleString() : 'Unknown'}. Change:{' '}
+        {value.deltaDays ?? 'Unknown'} days.
+      </p>
+      <p>
+        Capacity period:{' '}
+        {value.capacityPeriod?.from
+          ? new Date(value.capacityPeriod.from).toLocaleDateString()
+          : 'Unknown'}{' '}
+        to{' '}
+        {value.capacityPeriod?.to
+          ? new Date(value.capacityPeriod.to).toLocaleDateString()
+          : 'Unknown'}
+        .{' '}
+        {value.capacityPeriod?.requiresReassessment
+          ? 'Reassessment required; final approval is blocked.'
+          : 'Within the recorded capacity period.'}
+      </p>
+      <p>
+        Material shortages: {value.materialImpact?.unresolvedExceptions?.length ?? 'Unknown'}{' '}
+        unresolved; coordinator confirmation required.
+      </p>
+      <p>Transport impact: unknown; coordinator review required.</p>
+      <p>Agreed quantity and compensation remain unchanged.</p>
+    </>
   );
 }

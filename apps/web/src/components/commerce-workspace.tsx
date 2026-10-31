@@ -1,4 +1,5 @@
 'use client';
+import { OfferReview } from './offer-review';
 import { EvidenceNotice } from './evidence-notice';
 import { useRef, useId } from 'react';
 import Link from 'next/link';
@@ -803,89 +804,13 @@ export function CommerceWorkspace({
               {data.offers
                 .filter((o) => mode === 'operator' || o.artisanProfileId === data.artisanProfileId)
                 .map((o) => (
-                  <Card
-                    role="article"
-                    className="panel commerce-card block gap-0 p-5"
-                    key={o.id}
-                    aria-label={`Artisan offer ${o.id}`}
-                  >
-                    <h3>Artisan offer · {humanize(o.status)}</h3>
-                    <p className="hint">{o.id} · Synthetic</p>
-                    <dl className="commerce-facts">
-                      <dt>Quantity</dt>
-                      <dd>{o.quantity} pieces</dd>
-                      <dt>Estimated effort</dt>
-                      <dd>{o.estimatedHours} hours</dd>
-                      <dt>Agreed unit pay</dt>
-                      <dd>{o.unitPayTnd ?? 'Restricted'} TND</dd>
-                      <dt>Total agreed pay</dt>
-                      <dd>{o.totalPayTnd ?? 'Restricted'} TND</dd>
-                      <dt>Craft specification</dt>
-                      <dd>{o.specification}</dd>
-                      <dt>Material responsibility</dt>
-                      <dd>{o.materials}</dd>
-                      <dt>Quality/rework terms</dt>
-                      <dd>{o.reworkTerms}</dd>
-                      <dt>Payment conditions</dt>
-                      <dd>{o.paymentConditions}</dd>
-                      {o.compensationMethod && (
-                        <>
-                          <dt>Compensation method</dt>
-                          <dd>{humanize(o.compensationMethod)}</dd>
-                        </>
-                      )}
-                      {o.collectionArrangement && (
-                        <>
-                          <dt>Collection</dt>
-                          <dd>{o.collectionArrangement}</dd>
-                        </>
-                      )}
-                      {o.instructions && (
-                        <>
-                          <dt>Instructions</dt>
-                          <dd>{o.instructions}</dd>
-                        </>
-                      )}
-                      <dt>Offer expires</dt>
-                      <dd>{new Date(o.expiresAt).toLocaleString()}</dd>
-                      <dt>Delivery deadline</dt>
-                      <dd>{new Date(o.deliveryAt).toLocaleString()}</dd>
-                    </dl>
-                    {o.preferredLanguage && o.preferredLanguage !== 'en' && (
-                      <p>
-                        These terms are recorded in English. A reviewed translation is not
-                        available. Your preferred language is {o.preferredLanguage}.
-                      </p>
-                    )}
-                    {o.artisanProfileId === data.artisanProfileId && o.status === 'OFFERED' && (
-                      <>
-                        <ActionForm
-                          label="Accept this offer voluntarily"
-                          action={() =>
-                            action(
-                              `offers/${o.id}`,
-                              'ACCEPTED',
-                              o.version,
-                              o.termsSha256 ? { termsSha256: o.termsSha256 } : {},
-                            )
-                          }
-                          onSuccess={resource.reload}
-                        />
-                        <ActionForm
-                          label="Decline offer without penalty"
-                          action={() =>
-                            action(
-                              `offers/${o.id}`,
-                              'DECLINED',
-                              o.version,
-                              o.termsSha256 ? { termsSha256: o.termsSha256 } : {},
-                            )
-                          }
-                          onSuccess={resource.reload}
-                        />
-                      </>
-                    )}
-                  </Card>
+                  <OfferReview
+                    key={`${o.id}-${o.version}`}
+                    offer={o}
+                    own={o.artisanProfileId === data.artisanProfileId}
+                    decide={action}
+                    reload={resource.reload}
+                  />
                 ))}
             </section>
           )}

@@ -1,5 +1,9 @@
 # Batch 14 verification report — E15-06 / #192
 
+For the subsequent B14-IV-02 client recovery remediation and current-source evidence, see
+[BATCH14_REMEDIATION_REPORT.md](BATCH14_REMEDIATION_REPORT.md). The execution totals below
+remain the historical 28 October implementation run.
+
 28 October 2026 · Africa/Tunis. Every figure below comes from a retained log in
 `docs/engineering/evidence/batch14/`. Nothing blocked, skipped or unexecuted is reported as a pass.
 
@@ -86,7 +90,7 @@ that `DEMO_VISITOR_FEEDBACK` exists with no invented duration.
 | B14-M01 new tables absent on the pre-migration baseline | PASS |
 | B14-M02 `migrate deploy` preserves every pre-existing row hash | PASS |
 | B14-M03 restrictive FKs, CHECKs, partial unique index and all four triggers present; `DemoCommand_operation_check` widened to include `feedback` | PASS |
-| B14-M04 valid row accepted; generation mismatch, foreign-visitor scenario, bad vocabulary, content rewrite, aggregate delete, event rewrite/delete and non-terminal-to-terminal rejection; failed event insert rolls the status change back | PASS |
+| B14-M04 valid row accepted; generation mismatch, foreign-visitor scenario, bad vocabulary, content rewrite, aggregate delete, event rewrite/delete and terminal-to-nonterminal reopening rejection; failed event insert rolls the status change back | PASS |
 | B14-M05 migration history matches every SQL file, none rolled back, historical migrations preserved | PASS |
 | B14-M06 `pg_dump`/`pg_restore` reproduces feedback and its attributed history exactly and retains the append-only trigger | PASS |
 
@@ -164,3 +168,17 @@ pnpm lint && pnpm typecheck && pnpm build && git diff --check
 
 All database work uses `disposableDatabase()` from `apps/api/test/support.ts`, which creates and
 removes a throwaway container per run.
+
+## 29 October focused remediation verification
+
+The original execution figures above are preserved. Following the independent P2 finding,
+[BATCH14_REMEDIATION_REPORT.md](BATCH14_REMEDIATION_REPORT.md) records the client fix and current-source
+147 API / 25 web units, 206 integration scenarios, and 54 application / 17 showroom browser tests, all
+passing. The current showroom total includes the original 5 plus 12 new recovery regressions; a focused
+rerun of those 12 is not additional unique coverage. One separate browser case verifies the actual
+8/300 rate policy at both widths; 13 focused adversarial groups corroborate server boundaries.
+
+C5 is now VERIFIED_SOFTWARE_CRITERIA; the earlier independent report's PARTIALLY_VERIFIED decision is
+preserved as historical evidence. B14-IV-01 and B14-IV-03 remain open LOW findings. Owner acceptance
+and E14-09 qualified privacy approval remain PENDING. Current source hashes and logs are in
+`evidence/batch14-remediation/`; original execution logs and independent artifacts are unchanged.

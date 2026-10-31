@@ -431,7 +431,12 @@ test('E15-06 visitor shares structured feedback that persists through reset and 
   await panel.getByLabel('Screen or story', { exact: true }).selectOption('PRESENTATION:workflow');
   const comment = 'The stage progress made the workflow easy to follow on mobile.';
   await panel.getByLabel('Comment (optional)', { exact: true }).fill(comment);
-  await panel.getByRole('button', { name: 'Send private feedback', exact: true }).click();
+  await panel.getByRole('button', { name: 'Retry original feedback', exact: true }).click();
+  await expect(panel.getByRole('region', { name: 'Accepted feedback' })).toContainText(draft);
+  await expect(panel.getByLabel('Comment (optional)', { exact: true })).toHaveValue(comment);
+  await panel
+    .getByRole('button', { name: 'Send edited feedback as new submission', exact: true })
+    .click();
   await expect(
     page.getByText(
       'Recorded as feedback about this synthetic demonstration. It is not customer satisfaction or published evidence.',

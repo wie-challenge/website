@@ -161,10 +161,13 @@ export class IntelligenceService {
         }
       }
 
+      // Paid participation requires independently verified payment, not merely the existence of a
+      // settlement row. A synthetic or unreconciled settlement is an intent to pay; counting it here
+      // would report unpaid artisans as paid. See C.isVerifiedSettlement.
       const paidProfiles = new Set(
         orders.flatMap((order) =>
           order.payables
-            .filter((payable) => payable.settlements.length > 0)
+            .filter((payable) => C.verifiedPaidMillimes(payable.settlements) > 0n)
             .map((payable) => payable.artisanProfileId),
         ),
       );
@@ -196,9 +199,17 @@ export class IntelligenceService {
         (sum, order) =>
           sum +
           order.payables.reduce(
-            (inner, payable) =>
-              inner +
-              payable.settlements.reduce((settled, row) => settled + row.amountMillimes, 0n),
+            (inner, payable) => inner + C.simulatedPaidMillimes(payable.settlements),
+            0n,
+          ),
+        0n,
+      );
+      // Verified paid is summed per payable so a replayed or duplicated settlement cannot inflate it.
+      const verifiedPaid = orders.reduce(
+        (sum, order) =>
+          sum +
+          order.payables.reduce(
+            (inner, payable) => inner + C.verifiedPaidMillimes(payable.settlements),
             0n,
           ),
         0n,
@@ -300,9 +311,11 @@ export class IntelligenceService {
             : C.compensationMetrics({
                 agreedMillimes: agreed.toString(),
                 earnedMillimes: earned.toString(),
-                payableMillimes: (earned - simulatedPaid).toString(),
+                // Owed now is earned less what was actually verified as paid. A synthetic settlement
+                // moves no money, so it cannot reduce the balance owed to an artisan.
+                payableMillimes: (earned > verifiedPaid ? earned - verifiedPaid : 0n).toString(),
                 simulatedPaidMillimes: simulatedPaid.toString(),
-                verifiedPaidMillimes: '0',
+                verifiedPaidMillimes: verifiedPaid.toString(),
               }),
         producerShare: C.producerShare({
           agreedCompensationMillimes: agreed.toString(),
@@ -583,6 +596,7 @@ export class IntelligenceService {
       const batch = await this.batchScope(tx, actor, batchId, false);
       const records = await tx.productionTimeRecord.findMany({
         where: { batchId, correctedBy: null },
+        orderBy: [{ periodFrom: 'asc' }, { id: 'asc' }],
       });
       const payables = await tx.artisanPayable.findMany({
         where: { batchId },
@@ -590,32 +604,30 @@ export class IntelligenceService {
       });
       const earned = payables.reduce((n, row) => n + row.amountMillimes, 0n);
       const simulated = payables.reduce(
-        (n, row) =>
-          n + row.settlements.reduce((m, settlement) => m + settlement.amountMillimes, 0n),
+        (n, row) => n + C.simulatedPaidMillimes(row.settlements),
         0n,
       );
+      const verified = payables.reduce((n, row) => n + C.verifiedPaidMillimes(row.settlements), 0n);
       return {
         batchId,
         unit: 'TND/hour',
         evidenceClasses: [...new Set(records.map((row) => row.evidence))],
         periods: records.map((row) => ({
-          from: row.periodFrom.toISOString(),
-          to: row.periodTo.toISOString(),
+          from: Number.isFinite(row.periodFrom.getTime()) ? row.periodFrom.toISOString() : null,
+          to: Number.isFinite(row.periodTo.getTime()) ? row.periodTo.toISOString() : null,
           unitContext: row.unitContext,
           provenance: row.provenance,
         })),
         compensation: C.compensationMetrics({
           agreedMillimes: (batch.offer.unitPayMillimes * BigInt(batch.offer.quantity)).toString(),
           earnedMillimes: earned.toString(),
-          payableMillimes: (earned - simulated).toString(),
+          payableMillimes: (earned > verified ? earned - verified : 0n).toString(),
           simulatedPaidMillimes: simulated.toString(),
-          verifiedPaidMillimes: '0',
+          verifiedPaidMillimes: verified.toString(),
         }),
         estimate: C.earningsFromObservedTime({
-          agreedMillimes:
-            records.reduce((sum, row) => sum + row.observedUnits, 0) === batch.offer.quantity
-              ? (batch.offer.unitPayMillimes * BigInt(batch.offer.quantity)).toString()
-              : null,
+          agreedMillimes: (batch.offer.unitPayMillimes * BigInt(batch.offer.quantity)).toString(),
+          coveredQuantity: batch.offer.quantity,
           records,
           scope: batchId,
         }),

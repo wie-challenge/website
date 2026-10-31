@@ -92,7 +92,7 @@ Use the configured browser origin consistently: `localhost` and `127.0.0.1` are 
 
 Local `.env` explicitly uses `ARCJET_ENABLED=false`: PostgreSQL rate limits still enforce, but remote Shield/bot/email protection is off. With a valid server-side key, set `ARCJET_ENABLED=true`, `ARCJET_MODE=DRY_RUN`, and observe legitimate traffic and decision logs. Switch to `LIVE` after validating the rules for your ingress and clients. There is one security boundary in Nest covering both authentication and application routes; Next does not count the same requests again.
 
-Production startup requires HTTPS `PUBLIC_APP_URL`, enabled/keyed Arcjet and authenticated TLS SMTP. Fail-closed provider behavior is the default. Full deployment, proxy and privacy assumptions are in [security.md](../docs/security.md). Live Arcjet decisions and real external SMTP delivery have not been validated without deployment credentials.
+Production startup requires HTTPS `PUBLIC_APP_URL`, enabled/keyed Arcjet with explicit `ARCJET_MODE=LIVE`, and authenticated TLS SMTP. Omitted mode and `DRY_RUN` are rejected in production; development/test may retain observational mode. Fail-closed provider behavior is the default. Full deployment, proxy and privacy assumptions are in [security.md](../docs/security.md). Live Arcjet decisions and real external SMTP delivery have not been validated without deployment credentials.
 
 ## Database changes
 

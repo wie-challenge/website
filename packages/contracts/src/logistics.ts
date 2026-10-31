@@ -136,7 +136,15 @@ export function plannedContribution(revenueMillimes: bigint, costMillimes: bigin
   if (costMillimes > revenueMillimes) return { status: 'UNAVAILABLE' as const, millimes: null };
   return { status: 'PLANNED' as const, millimes: revenueMillimes - costMillimes };
 }
+/**
+ * The delivery report states how many pieces the operator handed over at the destination. It is not
+ * the shipped quantity. A short report used to redefine "reported", which let the buyer's receipt
+ * reconcile against the short figure and made the shortfall disappear: shipped 100, reported 80,
+ * received 80, missing 0 read as a clean delivery. Conservation therefore reconciles against the
+ * shipped quantity, and any unexplained difference is an explicit shortage that cannot be netted out.
+ */
 export function buyerReceipt(input: {
+  shipped: number;
   reported: number;
   received: number;
   accepted: number;
@@ -150,12 +158,50 @@ export function buyerReceipt(input: {
       input.accepted >= 0 &&
       input.missing >= 0 &&
       damaged >= 0 &&
+      input.reported <= input.shipped &&
       input.received + input.missing === input.reported &&
       input.accepted + damaged === input.received,
     'DELIVERY_MISMATCH',
-    'Received and missing pieces must equal the reported delivery, and accepted plus damaged pieces must equal the received pieces.',
+    'Received and missing pieces must equal the reported delivery, accepted plus damaged pieces must equal the received pieces, and a report cannot exceed the shipped quantity.',
   );
-  return { damaged, discrepancy: input.missing > 0 || damaged > 0 };
+  // Everything shipped that the operator did not report arriving is unaccounted for, and everything
+  // received but not accepted is damaged. Neither may be silently absorbed.
+  const notReported = input.shipped - input.reported;
+  const shortage = notReported + input.missing;
+  requireRule(
+    shortage >= 0,
+    'DELIVERY_MISMATCH',
+    'A shortage cannot be negative: more pieces cannot arrive than were shipped.',
+  );
+  return {
+    damaged,
+    shortage,
+    notReported,
+    discrepancy: shortage > 0 || damaged > 0,
+  };
+}
+
+/**
+ * Custody conservation: the pieces leaving a holder must equal the pieces arriving with the next
+ * holder, and no handover may move more than the shipment contains. Cumulative handover quantities
+ * are summed per shipment so a repeated or replayed handover cannot create pieces.
+ */
+export function custodyConservation(input: {
+  shipped: number;
+  previousHandovers: number;
+  quantity: number;
+}) {
+  requireRule(
+    input.quantity > 0 &&
+      input.previousHandovers >= 0 &&
+      input.previousHandovers + input.quantity <= input.shipped,
+    'EXCESS_HANDOVER',
+    'Custody movement cannot exceed the quantity shipped, counting every earlier handover.',
+  );
+  return {
+    moved: input.previousHandovers + input.quantity,
+    remaining: input.shipped - input.previousHandovers - input.quantity,
+  };
 }
 
 export const shipmentCreateSchema = z

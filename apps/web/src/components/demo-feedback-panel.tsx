@@ -1,11 +1,14 @@
 'use client';
-import { useCallback, useEffect, useId, useRef, useState } from 'react';
+import { useCallback, useEffect, useId, useState } from 'react';
 import {
   demoFeedbackCategories,
   demoScreenKeys,
   demoFeedbackCommentMaxLength,
   demoFeedbackLimitations,
   type DemoFeedbackMineList,
+  type DemoFeedbackCreateInput,
+  type DemoFeedbackView,
+  type DemoFeedbackCategory,
   type DemoScreenKey,
 } from '@nasj/contracts';
 import { ApiError } from '@/lib/api';
@@ -47,13 +50,19 @@ export function DemoFeedbackPanel({
 }) {
   const fieldId = useId();
   const [screenKey, setScreenKey] = useState<DemoScreenKey>('SHOWROOM_OVERVIEW');
-  const [category, setCategory] = useState<string>('USABILITY');
+  const [category, setCategory] = useState<DemoFeedbackCategory>('USABILITY');
   const [comment, setComment] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const [status, setStatus] = useState('');
   const [mine, setMine] = useState<DemoFeedbackMineList | null>(null);
-  const key = useRef('');
+  // Only in component memory: the editable draft must never replace an uncertain operation.
+  const [pending, setPending] = useState<{
+    readonly payload: Readonly<DemoFeedbackCreateInput>;
+    readonly key: string;
+  } | null>(null);
+  const [accepted, setAccepted] = useState<DemoFeedbackView | null>(null);
+  const [preservedEdits, setPreservedEdits] = useState(false);
 
   const loadMine = useCallback(async () => {
     try {
@@ -74,22 +83,36 @@ export function DemoFeedbackPanel({
       setError('Your showroom proof is unavailable. Refresh the demonstration and try again.');
       return;
     }
-    if (!key.current) key.current = crypto.randomUUID().replace(/-/g, '');
+    const operation = pending ?? {
+      payload: Object.freeze({ scenarioId, screenKey, category, comment }),
+      key: crypto.randomUUID().replace(/-/g, ''),
+    };
+    setPending(operation);
     setBusy(true);
     setError('');
     setStatus('');
+    setAccepted(null);
     try {
-      await demoFeedbackRequest(
-        { scenarioId, screenKey, category: category as never, comment },
-        { csrfToken, idempotencyKey: key.current },
-      );
-      key.current = '';
-      setComment('');
+      const result = await demoFeedbackRequest(operation.payload, {
+        csrfToken,
+        idempotencyKey: operation.key,
+      });
+      const edited =
+        comment !== operation.payload.comment ||
+        category !== operation.payload.category ||
+        screenKey !== operation.payload.screenKey;
+      setPending(null);
+      setAccepted(result);
+      setPreservedEdits(edited);
+      if (!edited) setComment('');
       setStatus(
         'Recorded as feedback about this synthetic demonstration. It is not customer satisfaction or published evidence.',
       );
       await loadMine();
     } catch (failure) {
+      // A validation rejection did not create a receipt. Corrections may start a fresh operation.
+      // Network errors, 5xx, 429 and authority failures retain the exact pending request for retry.
+      if (failure instanceof ApiError && failure.status === 400) setPending(null);
       setError(messageFor(failure));
     } finally {
       setBusy(false);
@@ -129,7 +152,7 @@ export function DemoFeedbackPanel({
             <select
               id={`${fieldId}-category`}
               value={category}
-              onChange={(event) => setCategory(event.target.value)}
+              onChange={(event) => setCategory(event.target.value as DemoFeedbackCategory)}
             >
               {demoFeedbackCategories.map((item) => (
                 <option key={item} value={item}>
@@ -152,7 +175,26 @@ export function DemoFeedbackPanel({
               {comment.length} of {demoFeedbackCommentMaxLength} characters
             </p>
           </div>
-          <Button type="submit">{busy ? 'Sending…' : 'Send private feedback'}</Button>
+          {pending && !busy && (
+            <p role="note">
+              Retry sends your original feedback. Any edits stay in this form until the original
+              submission is confirmed.
+            </p>
+          )}
+          {preservedEdits && !pending && (
+            <p role="note">
+              Your edited draft is preserved. You can send it as a separate feedback submission.
+            </p>
+          )}
+          <Button type="submit">
+            {busy
+              ? 'Sending…'
+              : pending
+                ? 'Retry original feedback'
+                : preservedEdits
+                  ? 'Send edited feedback as new submission'
+                  : 'Send private feedback'}
+          </Button>
         </fieldset>
       </form>
       {error && (
@@ -164,6 +206,15 @@ export function DemoFeedbackPanel({
         <p className="notice success" role="status">
           {status}
         </p>
+      )}
+      {accepted && (
+        <section aria-label="Accepted feedback" className="notice success">
+          <h3>Accepted feedback</h3>
+          <p>
+            {humanize(accepted.category)} · {humanize(accepted.screenKey)}
+          </p>
+          {accepted.comment && <p>{accepted.comment}</p>}
+        </section>
       )}
       {mine && mine.items.length > 0 && (
         <details>

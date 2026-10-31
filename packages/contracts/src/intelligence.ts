@@ -10,7 +10,8 @@ import { formatTnd, addTnd, prorateTnd } from './domain.js';
  * verified measurement.
  */
 
-export const RISK_POLICY_VERSION = 2;
+export const RISK_POLICY_VERSION = 3;
+export const OBSERVED_EARNINGS_POLICY_VERSION = 2;
 export const METRICS_POLICY_VERSION = 1;
 export const MINIMUM_COHORT = 5;
 
@@ -76,6 +77,7 @@ export function assessDelayRisk(input: RiskInputs): RiskResult {
   if (
     input.lastProgressAt !== undefined &&
     (!input.lastProgressAt ||
+      !Number.isFinite(new Date(input.lastProgressAt).getTime()) ||
       now.getTime() - new Date(input.lastProgressAt).getTime() >
         (input.stalenessDays ?? 7) * 86400000)
   ) {
@@ -86,7 +88,8 @@ export function assessDelayRisk(input: RiskInputs): RiskResult {
         'The latest progress report is missing or older than the versioned seven-day review window.',
     });
   }
-  if (Number.isNaN(deadline.getTime())) {
+  if (Number.isNaN(deadline.getTime()) || Number.isNaN(now.getTime())) {
+    unknowns.push('INVALID_RISK_INSTANT');
     unknown(unknowns);
     return {
       policyVersion: RISK_POLICY_VERSION,
@@ -115,10 +118,10 @@ export function assessDelayRisk(input: RiskInputs): RiskResult {
       code: 'APPROVED_SCHEDULE_CHANGE',
       detail: 'An approved schedule change moves the applicable deadline.',
     });
-  if (daysToDeadline < 0 && remaining > 0) {
+  if (now.getTime() > deadline.getTime() && remaining > 0) {
     reasons.push({
       code: 'DEADLINE_PASSED',
-      detail: `The deadline passed ${Math.abs(daysToDeadline)} day(s) ago with ${remaining} piece(s) outstanding.`,
+      detail: `The applicable deadline ${deadline.toISOString()} has passed with ${remaining} piece(s) outstanding.`,
     });
     return {
       policyVersion: RISK_POLICY_VERSION,
@@ -377,6 +380,72 @@ export type CompensationMetrics = {
   verifiedPaidMillimes: string;
 };
 
+/* ------------------------------------------------------- settlement evidence */
+
+/**
+ * The single authoritative definition of "independently verified payment". A settlement counts as
+ * verified paid participation only when the finance stream has recorded it as settled AND the bank
+ * reconciliation flag is set. Every other state - planned, initiated, failed, retried, simulated,
+ * or settled-but-unreconciled - is evidence of an intent to pay, never of payment.
+ *
+ * This predicate is shared so that participation, timeliness and compensation figures cannot drift
+ * apart. `SimulatedSettlement` rows are synthetic tools: `advance` pins `bankVerified` to false, so
+ * a synthetic row can never satisfy this check.
+ */
+export function isVerifiedSettlement(row: { status: string; bankVerified: boolean }): boolean {
+  return row.status === 'VERIFIED_SETTLED' && row.bankVerified === true;
+}
+
+/**
+ * Settlement states that are still live attempts rather than completed or abandoned money movement.
+ * Used where a retry must be refused; never used to recognise payment.
+ */
+export function isOpenSettlement(row: { status: string }): boolean {
+  return ['SCHEDULED', 'INITIATED', 'PENDING', 'RETRY', 'SIMULATED_INITIATED'].includes(row.status);
+}
+
+/**
+ * Verified amounts are summed per payable rather than per settlement record so that a duplicated,
+ * replayed or retired attempt cannot inflate the total. Only the largest single verified amount for
+ * a payable is credited, and never more than the payable itself is worth.
+ */
+export function verifiedPaidMillimes(
+  settlements: {
+    status: string;
+    bankVerified: boolean;
+    amountMillimes: bigint;
+    subjectKey: string;
+  }[],
+): bigint {
+  const best = new Map<string, bigint>();
+  for (const row of settlements) {
+    if (!isVerifiedSettlement(row)) continue;
+    if (row.amountMillimes <= 0n) continue;
+    const seen = best.get(row.subjectKey);
+    if (seen === undefined || row.amountMillimes > seen)
+      best.set(row.subjectKey, row.amountMillimes);
+  }
+  let total = 0n;
+  for (const amount of best.values()) total += amount;
+  return total;
+}
+
+/**
+ * Simulated totals are reported separately and deliberately do not exclude anything: the point of
+ * the figure is to show how much synthetic money movement exists beside the verified figure.
+ */
+export function simulatedPaidMillimes(
+  settlements: { status: string; amountMillimes: bigint }[],
+): bigint {
+  let total = 0n;
+  for (const row of settlements) {
+    if (!['SIMULATED_SETTLED', 'SIMULATED_INITIATED'].includes(row.status)) continue;
+    if (row.amountMillimes <= 0n) continue;
+    total += row.amountMillimes;
+  }
+  return total;
+}
+
 /**
  * Compensation is split into four separate figures that are never summed into one "paid" number.
  * Agreed is a contractual figure, earned is recognised from accepted work, payable is owed now,
@@ -519,48 +588,79 @@ export function producerShare(input: {
 /* ------------------------------------------------------------------ observed time */
 
 /**
- * Effective earnings from a consented observed-time record. Without consent, or without a positive
- * measured duration, the result stays unavailable. It is never inferred from wearable data.
+ * Full-scope agreed compensation may be divided only by complete observed time for that scope.
+ * Every current record must retain consent, positive integer minutes/units, a valid nonoverlapping
+ * reporting period, and an accepted evidence class. Units must sum exactly to the covered quantity.
+ * Partial coverage is unavailable: no partial denominator is paired with the full compensation.
+ * SYNTHETIC evidence stays synthetic; this estimate is neither earned nor verified paid income.
  */
 export function earningsFromObservedTime(input: {
   agreedMillimes: string | null;
-  records: { consented: boolean; observedMinutes: number | null; evidence: string }[];
+  coveredQuantity: number;
+  records: {
+    consented: boolean;
+    observedMinutes: number | null;
+    observedUnits: number;
+    periodFrom: string | Date;
+    periodTo: string | Date;
+    evidence: string;
+  }[];
   scope: string;
 }) {
-  if (input.agreedMillimes === null)
-    return {
-      status: 'UNAVAILABLE' as const,
-      reason: 'Agreed compensation is not recorded.',
-      hourlyTnd: null,
-      observedMinutes: null,
-      scope: input.scope,
-    };
-  const usable = input.records.filter(
-    (row) =>
-      row.consented &&
-      row.observedMinutes !== null &&
-      ['SYNTHETIC', 'OBSERVED'].includes(row.evidence),
-  );
-  if (!usable.length)
-    return {
-      status: 'UNAVAILABLE' as const,
-      reason: 'No consented observed-time record exists. Unknown time is not zero.',
-      hourlyTnd: null,
-      observedMinutes: null,
-      scope: input.scope,
-    };
-  const minutes = usable.reduce((sum, row) => sum + (row.observedMinutes ?? 0), 0);
-  if (minutes <= 0)
-    return {
-      status: 'UNAVAILABLE' as const,
-      reason: 'Observed duration is zero, so no rate exists.',
-      hourlyTnd: null,
-      observedMinutes: minutes,
-      scope: input.scope,
-    };
+  const unavailable = (reason: string) => ({
+    policyVersion: OBSERVED_EARNINGS_POLICY_VERSION,
+    status: 'UNAVAILABLE' as const,
+    reason,
+    hourlyTnd: null,
+    observedMinutes: null,
+    scope: input.scope,
+  });
+  if (input.agreedMillimes === null) return unavailable('Agreed compensation is not recorded.');
+  if (!Number.isSafeInteger(input.coveredQuantity) || input.coveredQuantity <= 0)
+    return unavailable('The compensation scope must have a known positive covered quantity.');
+  if (!input.records.length)
+    return unavailable('Complete consented observed time is missing. Unknown time is not zero.');
+  // Sort a copy so validation is deterministic and never mutates caller-owned evidence.
+  const periods = input.records
+    .map((row) => ({
+      ...row,
+      start: new Date(row.periodFrom).getTime(),
+      end: new Date(row.periodTo).getTime(),
+    }))
+    .sort((a, b) => a.start - b.start || a.end - b.end);
+  if (periods.some((row) => !row.consented))
+    return unavailable('Consent is missing or withdrawn for part of the compensation scope.');
+  if (
+    periods.some(
+      (row) =>
+        !['SYNTHETIC', 'OBSERVED'].includes(row.evidence) ||
+        !Number.isSafeInteger(row.observedMinutes) ||
+        (row.observedMinutes ?? 0) <= 0 ||
+        !Number.isSafeInteger(row.observedUnits) ||
+        row.observedUnits <= 0 ||
+        !Number.isFinite(row.start) ||
+        !Number.isFinite(row.end) ||
+        row.end <= row.start ||
+        (row.observedMinutes ?? 0) > (row.end - row.start) / 60000,
+    )
+  )
+    return unavailable(
+      'Every covered record needs valid positive observed time, units and a reporting period. Unknown time is not zero.',
+    );
+  if (periods.some((row, i) => i > 0 && row.start < periods[i - 1]!.end))
+    return unavailable(
+      'Reporting periods overlap; full-scope observed time cannot be established.',
+    );
+  if (periods.reduce((sum, row) => sum + row.observedUnits, 0) !== input.coveredQuantity)
+    return unavailable('Observed units do not exactly cover the full compensation scope.');
+  const minutes = periods.reduce((sum, row) => sum + row.observedMinutes!, 0);
+  if (!Number.isSafeInteger(minutes))
+    return unavailable('Total observed time exceeds the supported integer range.');
   return {
+    policyVersion: OBSERVED_EARNINGS_POLICY_VERSION,
     status: 'AVAILABLE' as const,
-    reason: 'Computed from agreed compensation and consented observed time for the stated scope.',
+    reason:
+      'Full-scope agreed compensation divided by complete consented observed time; this is not verified paid income.',
     hourlyTnd: formatTnd(prorateTnd(BigInt(input.agreedMillimes), 60n, BigInt(minutes))),
     observedMinutes: minutes,
     scope: input.scope,

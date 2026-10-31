@@ -66,8 +66,14 @@ export class CollaborationService {
             : { orderId: { in: orderIds.length ? orderIds : [''] }, ...batchScope },
           orderBy: { createdAt: 'desc' },
           take: 50,
+          include: {
+            batch: true,
+            order: { include: { rfq: true } },
+            assignedCoordinator: { select: { name: true } },
+          },
         }),
         tx.scheduleRevision.findMany({
+          include: { batch: true, order: { include: { rfq: true } } },
           where: access.platform
             ? {}
             : { orderId: { in: orderIds.length ? orderIds : [''] }, ...batchScope },
@@ -75,7 +81,10 @@ export class CollaborationService {
           take: 50,
         }),
         tx.counteroffer.findMany({
-          include: { offer: true, revisedOffer: true },
+          include: {
+            offer: { include: { order: { include: { rfq: true } } } },
+            revisedOffer: true,
+          },
           where: access.artisanProfileId
             ? { offer: { artisanProfileId: access.artisanProfileId } }
             : access.platform
@@ -140,8 +149,79 @@ export class CollaborationService {
         })(),
       ]);
 
+      const batches = await tx.commercialBatch.findMany({
+        where: access.platform
+          ? {}
+          : {
+              OR: [
+                {
+                  artisanProfileId: {
+                    in: [access.artisanProfileId ?? '', ...access.coordinatorFor],
+                  },
+                },
+                {
+                  order: {
+                    rfq: { operatorOrganizationId: { in: access.operatorOrganizationIds } },
+                  },
+                },
+              ],
+            },
+        include: { offer: true, artisanProfile: true, order: { include: { rfq: true } } },
+        orderBy: { createdAt: 'desc' },
+        take: 100,
+      });
+      const coordinatorAssignments = await tx.artisanAssignment.findMany({
+        where: { artisanProfileId: { in: batches.map((b) => b.artisanProfileId) }, endedAt: null },
+        include: { coordinator: { select: { name: true } } },
+      });
+      const responsible = (profileId: string) =>
+        coordinatorAssignments
+          .filter((a) => a.artisanProfileId === profileId)
+          .map((a) => a.coordinator.name)
+          .join(', ') || null;
+      const ownOffers = access.artisanProfileId
+        ? await tx.commercialOffer.findMany({
+            where: {
+              artisanProfileId: access.artisanProfileId,
+              status: 'OFFERED',
+              expiresAt: { gt: new Date() },
+            },
+            include: { order: { include: { rfq: true } } },
+            orderBy: { createdAt: 'desc' },
+            take: 100,
+          })
+        : [];
+      const target = (batch: (typeof batches)[number]): C.CollaborationTarget => ({
+        id: batch.id,
+        label: `${batch.artisanProfile.displayName} — ${batch.id.slice(-8)}`,
+        coordinator: responsible(batch.artisanProfileId),
+        version: batch.offer.version,
+        terms: this.terms(batch.offer, batch.order.rfq.deliveryAt),
+      });
       const view: C.CollaborationWorkspaceView = {
+        creation: {
+          exceptionBatches: batches.map(target),
+          scheduleBatches: batches
+            .filter(
+              (b) =>
+                access.platform ||
+                access.coordinatorFor.includes(b.artisanProfileId) ||
+                access.operatorOrganizationIds.includes(b.order.rfq.operatorOrganizationId),
+            )
+            .map(target),
+          counterOffers: ownOffers.map((offer) => ({
+            id: offer.id,
+            label: `Offer ${offer.id.slice(-8)} — ${offer.quantity} pieces`,
+            version: offer.version,
+            terms: this.terms(offer, offer.order.rfq.deliveryAt),
+          })),
+        },
         exceptions: exceptions.map((row) => ({
+          canManage:
+            access.platform ||
+            access.coordinatorFor.includes(row.batch.artisanProfileId) ||
+            access.operatorOrganizationIds.includes(row.order.rfq.operatorOrganizationId),
+          coordinator: row.assignedCoordinator?.name ?? responsible(row.batch.artisanProfileId),
           id: row.id,
           affectedQuantity: row.affectedQuantity,
           affectedDate: row.affectedDate?.toISOString() ?? null,
@@ -162,6 +242,12 @@ export class CollaborationService {
           }),
         })),
         scheduleRevisions: revisions.map((row) => ({
+          decisions:
+            (row.impact as { decisions?: C.ScheduleRevisionView['decisions'] }).decisions ?? [],
+          canDecide:
+            (access.artisanProfileId === row.batch.artisanProfileId && !row.artisanApprovedById) ||
+            (access.buyerDecisionOrganizationIds.includes(row.order.rfq.buyerOrganizationId) &&
+              !row.buyerApprovedById),
           id: row.id,
           batchId: row.batchId,
           previousDeadline: row.previousDeadline.toISOString(),
@@ -179,6 +265,24 @@ export class CollaborationService {
           createdAt: row.createdAt.toISOString(),
         })),
         counteroffers: counteroffers.map((row) => ({
+          canReview:
+            access.operatorOrganizationIds.includes(row.offer.order.rfq.operatorOrganizationId) &&
+            access.assignedBuyerIds.includes(row.offer.order.rfq.buyerOrganizationId),
+          canConfirm: access.artisanProfileId === row.offer.artisanProfileId,
+          original:
+            row.originalTerms &&
+            typeof row.originalTerms === 'object' &&
+            'effort' in row.originalTerms
+              ? (row.originalTerms as unknown as C.CollaborationTerms)
+              : this.terms(row.offer, row.offer.order.rfq.deliveryAt),
+          proposed: row.revisedOffer
+            ? this.terms(row.revisedOffer, row.offer.order.rfq.deliveryAt)
+            : this.proposedTerms(
+                this.terms(row.offer, row.offer.order.rfq.deliveryAt),
+                row.proposedQuantity,
+                row.proposedDeadline.toISOString(),
+              ),
+          reviewNote: row.reviewNote,
           id: row.id,
           offerId: row.offerId,
           revisedOfferId: row.revisedOfferId,
@@ -287,6 +391,8 @@ export class CollaborationService {
         access.operatorOrganizationIds.includes(batch.order.rfq.operatorOrganizationId);
       if (!permitted) fail(404, 'NOT_FOUND', 'Batch not found.');
       return this.command(tx, actor, input.batchId, 'exception.report', key, input, async () => {
+        const offer = await tx.commercialOffer.findUniqueOrThrow({ where: { id: batch.offerId } });
+        this.expectVersion(input.expectedVersion, offer.version);
         const reported = await tx.productionException.create({
           data: {
             batchId: batch.id,
@@ -423,19 +529,7 @@ export class CollaborationService {
           previousDeadline: previous.toISOString(),
           proposedDeadline: input.proposedDeadline,
         });
-        const declaration = await tx.capacityDeclaration.findUniqueOrThrow({
-          where: { id: batch.offer.capacityDeclarationId },
-        });
-        const exceptions = await tx.productionException.findMany({
-          where: { batchId: batch.id, status: { notIn: ['RESOLVED', 'CLOSED'] } },
-          select: {
-            id: true,
-            category: true,
-            severity: true,
-            affectedQuantity: true,
-            affectedDate: true,
-          },
-        });
+        this.expectVersion(input.expectedVersion, batch.offer.version);
         const created = await tx.scheduleRevision.create({
           data: {
             batchId: batch.id,
@@ -443,31 +537,7 @@ export class CollaborationService {
             proposedDeadline: new Date(input.proposedDeadline),
             previousDeadline: previous,
             reason: input.reason,
-            impact: json({
-              offerVersion: batch.offer.version,
-              buyerDeadline: batch.order.rfq.deliveryAt.toISOString(),
-              capacityPeriod: {
-                from: declaration.effectiveFrom.toISOString(),
-                to: declaration.effectiveTo.toISOString(),
-                requiresReassessment:
-                  new Date(input.proposedDeadline) >= declaration.effectiveTo ||
-                  new Date(input.proposedDeadline) < declaration.effectiveFrom,
-              },
-              materialImpact: {
-                unresolvedExceptions: exceptions
-                  .filter((row) => row.category === 'MATERIAL_SHORTAGE')
-                  .map((row) => row.id),
-                confirmation: 'REQUIRES_COORDINATOR_REVIEW',
-              },
-              transportImpact: {
-                confirmation: 'UNKNOWN_REQUIRES_COORDINATOR_REVIEW',
-                buyerDeliveryAt: batch.order.rfq.deliveryAt.toISOString(),
-              },
-              deltaDays: effect.deltaDays,
-              requiresBuyerApproval: effect.requiresBuyerApproval,
-              acceptedQuantityUnchanged: true,
-              agreedCompensationUnchanged: true,
-            }),
+            impact: json(await this.scheduleImpact(tx, batch, input.proposedDeadline)),
             status: 'PENDING_APPROVAL',
             authorId: actor.id,
           },
@@ -543,11 +613,25 @@ export class CollaborationService {
             'The effective agreement changed. Propose and review new dates.',
           );
         const now = new Date();
+        const impactWithDecision = json({
+          ...(revision.impact as Record<string, unknown>),
+          decisions: [
+            ...((revision.impact as { decisions?: C.ScheduleRevisionView['decisions'] })
+              .decisions ?? []),
+            {
+              party: buyerAuthority ? 'Buyer' : 'Artisan',
+              decision: input.decision,
+              note: input.note,
+              at: now.toISOString(),
+            },
+          ],
+        });
         if (input.decision === 'REJECTED') {
           const rejected = await tx.scheduleRevision.update({
             where: { id: revisionId },
             data: {
               status: 'REJECTED',
+              impact: impactWithDecision,
               approvedById: actor.id,
               approvedAt: now,
             },
@@ -581,6 +665,7 @@ export class CollaborationService {
           where: { id: revisionId },
           data: {
             status,
+            impact: impactWithDecision,
             approvedById: buyerApproved && artisanApproved ? actor.id : revision.approvedById,
             approvedAt: buyerApproved && artisanApproved ? now : revision.approvedAt,
             ...(buyerAuthority && !revision.buyerApprovedById
@@ -640,18 +725,27 @@ export class CollaborationService {
 
   async counter(actor: Actor, input: C.CounterofferInput, key?: string) {
     return iamTransaction(this.db, actor, async (tx) => {
-      const offer = await tx.commercialOffer.findUnique({ where: { id: input.offerId } });
+      const offer = await tx.commercialOffer.findUnique({
+        where: { id: input.offerId },
+        include: { order: { include: { rfq: true } } },
+      });
       if (!offer) fail(404, 'NOT_FOUND', 'Offer not found.');
       const access = await this.access(tx, actor);
       if (access.artisanProfileId !== offer.artisanProfileId)
         fail(403, 'FORBIDDEN', 'Only the artisan receiving an offer can counter it.');
       return this.command(tx, actor, input.offerId, 'counter.propose', key, input, async () => {
+        this.expectVersion(input.expectedVersion, offer.version);
         if (!['PLANNED', 'OFFERED'].includes(offer.status))
           fail(409, 'OFFER_NOT_OPEN', 'Only an open offer can be countered.');
         if (offer.expiresAt <= new Date()) fail(409, 'OFFER_EXPIRED', 'This offer has expired.');
         const created = await tx.counteroffer.create({
           data: {
             offerId: input.offerId,
+            originalTerms: json({
+              ...this.terms(offer, offer.order.rfq.deliveryAt),
+              offerVersion: offer.version,
+              termsSha256: offer.termsSha256,
+            }),
             proposedQuantity: input.proposedQuantity,
             proposedDeadline: new Date(input.proposedDeadline),
             clarification: input.clarification,
@@ -696,6 +790,11 @@ export class CollaborationService {
       return this.command(tx, actor, counterId, 'counter.review', key, input, async () => {
         if (counter.status !== 'PROPOSED')
           fail(409, 'INVALID_TRANSITION', 'This counteroffer is already reviewed.');
+        if (input.decision === 'APPROVE_TERMS')
+          this.expectVersion(
+            (counter.originalTerms as { offerVersion?: number } | null)?.offerVersion,
+            counter.offer.version,
+          );
         const target = input.decision === 'APPROVE_TERMS' ? 'MANAGER_REVIEW' : 'DECLINED';
         const revised =
           input.decision === 'APPROVE_TERMS'
@@ -714,16 +813,6 @@ export class CollaborationService {
             reviewedById: actor.id,
             reviewNote: input.note,
             revisedOfferId: revised?.id,
-            originalTerms: json({
-              offerId: counter.offer.id,
-              quantity: counter.offer.quantity,
-              unitPayTnd: C.formatTnd(counter.offer.unitPayMillimes),
-              deadline: (
-                counter.offer.deliveryDeadline ?? counter.offer.order.rfq.deliveryAt
-              ).toISOString(),
-              termsSha256: counter.offer.termsSha256,
-              version: counter.offer.version,
-            }),
           },
         });
         await audit(tx, actor, {
@@ -1977,6 +2066,162 @@ export class CollaborationService {
     return platform || support || ticket.reporterId === actor.id;
   }
 
+  private expectVersion(expected: number | undefined, current: number) {
+    if (expected !== undefined && expected !== current)
+      fail(
+        409,
+        'STALE_PROPOSAL',
+        'The agreement changed. Refresh the choices and preview the current terms.',
+      );
+  }
+
+  private terms(
+    offer: {
+      quantity: number;
+      deliveryDeadline: Date | null;
+      unitPayMillimes: bigint;
+      estimatedHours: string;
+      materials: string;
+    },
+    fallback: Date,
+  ): C.CollaborationTerms {
+    return {
+      quantity: offer.quantity,
+      deadline: (offer.deliveryDeadline ?? fallback).toISOString(),
+      unitPayTnd: C.formatTnd(offer.unitPayMillimes),
+      totalPayTnd: C.formatTnd(C.payableForUnits(offer.unitPayMillimes, offer.quantity)),
+      effort: offer.estimatedHours,
+      materials: offer.materials,
+    };
+  }
+  private proposedTerms(
+    original: C.CollaborationTerms,
+    quantity: number,
+    deadline: string,
+  ): C.CollaborationTerms {
+    return {
+      ...original,
+      quantity,
+      deadline,
+      totalPayTnd: C.formatTnd(C.payableForUnits(C.parseTnd(original.unitPayTnd), quantity)),
+      effort:
+        'Unknown until manager review and newly issued terms. Pay shown uses the original unit rate pending review.',
+    };
+  }
+
+  private async scheduleImpact(
+    tx: Db,
+    batch: Prisma.CommercialBatchGetPayload<{
+      include: { offer: true; order: { include: { rfq: true } } };
+    }>,
+    proposedDeadline: string,
+  ) {
+    const effect = C.scheduleRevisionEffect({
+      status: 'PENDING_APPROVAL',
+      previousDeadline: (batch.offer.deliveryDeadline ?? batch.order.rfq.deliveryAt).toISOString(),
+      proposedDeadline,
+    });
+    const declaration = await tx.capacityDeclaration.findUniqueOrThrow({
+      where: { id: batch.offer.capacityDeclarationId },
+    });
+    const exceptions = await tx.productionException.findMany({
+      where: { batchId: batch.id, status: { notIn: ['RESOLVED', 'CLOSED'] } },
+      select: {
+        id: true,
+        category: true,
+        severity: true,
+        affectedQuantity: true,
+        affectedDate: true,
+      },
+    });
+    return {
+      offerVersion: batch.offer.version,
+      buyerDeadline: batch.order.rfq.deliveryAt.toISOString(),
+      capacityPeriod: {
+        from: declaration.effectiveFrom.toISOString(),
+        to: declaration.effectiveTo.toISOString(),
+        requiresReassessment:
+          new Date(proposedDeadline) >= declaration.effectiveTo ||
+          new Date(proposedDeadline) < declaration.effectiveFrom,
+      },
+      materialImpact: {
+        unresolvedExceptions: exceptions
+          .filter((row) => row.category === 'MATERIAL_SHORTAGE')
+          .map((row) => row.id),
+        confirmation: 'REQUIRES_COORDINATOR_REVIEW',
+      },
+      transportImpact: {
+        confirmation: 'UNKNOWN_REQUIRES_COORDINATOR_REVIEW',
+        buyerDeliveryAt: batch.order.rfq.deliveryAt.toISOString(),
+      },
+      deltaDays: effect.deltaDays,
+      requiresBuyerApproval: effect.requiresBuyerApproval,
+      acceptedQuantityUnchanged: true,
+      agreedCompensationUnchanged: true,
+    };
+  }
+
+  async previewCounter(actor: Actor, input: C.CounterofferInput): Promise<C.CollaborationPreview> {
+    return iamTransaction(this.db, actor, async (tx) => {
+      const offer = await tx.commercialOffer.findUnique({
+        where: { id: input.offerId },
+        include: { order: { include: { rfq: true } } },
+      });
+      const access = await this.access(tx, actor);
+      if (!offer || access.artisanProfileId !== offer.artisanProfileId)
+        fail(404, 'NOT_FOUND', 'Offer not found.');
+      this.expectVersion(input.expectedVersion, offer.version);
+      if (offer.status !== 'OFFERED' || offer.expiresAt <= new Date())
+        fail(409, 'OFFER_NOT_OPEN', 'Only a current issued offer can be countered.');
+      const original = this.terms(offer, offer.order.rfq.deliveryAt);
+      return {
+        original,
+        proposed: this.proposedTerms(original, input.proposedQuantity, input.proposedDeadline),
+        impact: [
+          'No agreement or additional capacity commitment is created by this proposal.',
+          'Materials responsibility is carried forward for review; quantities and availability still need manager confirmation.',
+          'Manager approval must issue new terms. The artisan must review and explicitly accept that offer.',
+        ],
+      };
+    });
+  }
+
+  async previewSchedule(
+    actor: Actor,
+    input: C.ScheduleRevisionInput,
+  ): Promise<C.CollaborationPreview> {
+    return iamTransaction(this.db, actor, async (tx) => {
+      const batch = await tx.commercialBatch.findUnique({
+        where: { id: input.batchId },
+        include: { offer: true, order: { include: { rfq: true } } },
+      });
+      const access = await this.access(tx, actor);
+      if (
+        !batch ||
+        !(
+          access.platform ||
+          access.coordinatorFor.includes(batch.artisanProfileId) ||
+          access.operatorOrganizationIds.includes(batch.order.rfq.operatorOrganizationId)
+        )
+      )
+        fail(404, 'NOT_FOUND', 'Batch not found.');
+      this.expectVersion(input.expectedVersion, batch.offer.version);
+      const original = this.terms(batch.offer, batch.order.rfq.deliveryAt);
+      const impact = await this.scheduleImpact(tx, batch, input.proposedDeadline);
+      return {
+        original,
+        proposed: { ...original, deadline: input.proposedDeadline },
+        impact: [
+          `Buyer delivery deadline: ${impact.buyerDeadline}. Proposed change: ${impact.deltaDays} days.`,
+          `Capacity period: ${impact.capacityPeriod.from} to ${impact.capacityPeriod.to}. ${impact.capacityPeriod.requiresReassessment ? 'Reassessment required; final approval is blocked.' : 'Within recorded period; readiness still requires review.'}`,
+          `Materials: ${impact.materialImpact.unresolvedExceptions.length} unresolved shortage report(s); coordinator confirmation required.`,
+          'Transport: unknown; coordinator review required.',
+          'Accepted quantity and agreed compensation remain unchanged. Both buyer and affected artisan must approve.',
+        ],
+      };
+    });
+  }
+
   private async access(tx: Db, actor: Actor) {
     const members = await tx.organizationMember.findMany({
       where: { userId: actor.id, status: 'ACTIVE', organization: { approvalStatus: 'APPROVED' } },
@@ -2017,6 +2262,19 @@ export class CollaborationService {
       }))
         orderIds.add(row.orderId);
     return {
+      buyerDecisionOrganizationIds: members
+        .filter(
+          (m) =>
+            m.organization.type === 'BUYER_BUSINESS' &&
+            C.permissionsForMembership(m).includes('buyer.quotation.approve'),
+        )
+        .map((m) => m.organizationId),
+      assignedBuyerIds: (
+        await tx.operatorAssignment.findMany({
+          where: { operatorId: actor.id, revokedAt: null },
+          select: { organizationId: true },
+        })
+      ).map((a) => a.organizationId),
       platform: permissions.has('platform.roles.manage'),
       internal: members.some((member) => member.organization.type === 'INTERNAL'),
       buyer: members.some((member) => member.organization.type === 'BUYER_BUSINESS'),

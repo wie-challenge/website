@@ -11,6 +11,7 @@ import { replaySafe, validateIdempotencyKey } from '../foundation/idempotency.js
 import type { Db } from '../foundation/transaction.js';
 import { iamTransaction } from '../foundation/transaction.js';
 import { commercialTermsHash } from './commercial-decision.js';
+import { requireCurrentEligibility } from './eligibility-guard.js';
 
 const orderInclude = {
   rfq: true,
@@ -606,6 +607,19 @@ export class ProductionOfferService {
     });
     const profile = await tx.artisanProfile.findUniqueOrThrow({
       where: { id: assessment.artisanProfileId },
+    });
+    // Prepare and issue both revalidate current state in this transaction. Ranking produced the
+    // assessment and it may already be stale by the time an offer is written; issuing re-runs
+    // prepare, so a change between preparation and issue cannot slip through on the stored terms.
+    await requireCurrentEligibility(tx, {
+      artisanProfileId: assessment.artisanProfileId,
+      userId: profile.userId,
+      orderId: order.id,
+      craftSkillId: order.rfq.craftSkillId,
+      capacityDeclarationId: declaration.id,
+      quantity: input.quantity,
+      periodFrom: assessment.periodFrom,
+      periodTo: assessment.periodTo,
     });
     const terms = {
       orderId: order.id,

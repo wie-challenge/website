@@ -272,6 +272,14 @@ export async function runIntelligenceCompletionScenarios(c: Context & { batchId:
         (await send(artisan, `${root}/time-records`, { ...input, consented: false })).status,
         400,
       );
+      assert.equal(
+        (await send(artisan, `${root}/time-records`, { ...input, observedMinutes: 0 })).status,
+        400,
+      );
+      assert.equal(
+        (await send(artisan, `${root}/time-records`, { ...input, observedMinutes: -1 })).status,
+        400,
+      );
       assert.equal(await db.productionTimeRecord.count({ where: { batchId } }), 0);
       const key = randomUUID();
       const results = await Promise.all([
@@ -305,6 +313,62 @@ export async function runIntelligenceCompletionScenarios(c: Context & { batchId:
         (report.body as { estimate: { observedMinutes: number } }).estimate.observedMinutes,
         45,
       );
+      // Full agreed pay must never be divided by only the known half of the batch time.
+      const correctedId = (correction.body as { id: string }).id;
+      const partial = await send(artisan, `${root}/time-records`, {
+        ...input,
+        observedMinutes: 30,
+        observedUnits: 20,
+        correctionOfId: correctedId,
+      });
+      assert.equal(partial.status, 201, JSON.stringify(partial.body));
+      type Earnings = {
+        estimate: {
+          status: string;
+          hourlyTnd: string | null;
+          observedMinutes: number | null;
+          policyVersion: number;
+        };
+        compensation: { agreed: string; verifiedPaid: string; verifiedAvailable: boolean };
+        evidenceClasses: string[];
+      };
+      const partialReport = await artisan.client.request(`${root}/earnings`);
+      assert.equal(partialReport.status, 200);
+      assert.equal((partialReport.body as Earnings).estimate.status, 'UNAVAILABLE');
+      const nextInput = {
+        ...input,
+        periodFrom: new Date(start.getTime() - 7200000).toISOString(),
+        periodTo: new Date(start.getTime() - 3600000).toISOString(),
+        observedUnits: 20,
+        observedMinutes: null,
+      };
+      const unknown = await send(artisan, `${root}/time-records`, nextInput);
+      assert.equal(unknown.status, 201, JSON.stringify(unknown.body));
+      const unknownReport = await artisan.client.request(`${root}/earnings`);
+      assert.equal(unknownReport.status, 200);
+      assert.equal((unknownReport.body as Earnings).estimate.status, 'UNAVAILABLE');
+      assert.equal((unknownReport.body as Earnings).estimate.hourlyTnd, null);
+      assert.equal((unknownReport.body as Earnings).estimate.observedMinutes, null);
+      assert.equal(
+        (unknownReport.body as Earnings).compensation.agreed,
+        (report.body as Earnings).compensation.agreed,
+      );
+      const completedTime = await send(artisan, `${root}/time-records`, {
+        ...nextInput,
+        observedMinutes: 30,
+        correctionOfId: (unknown.body as { id: string }).id,
+      });
+      assert.equal(completedTime.status, 201, JSON.stringify(completedTime.body));
+      const completeReport = await artisan.client.request(`${root}/earnings`);
+      assert.equal(completeReport.status, 200);
+      const complete = completeReport.body as Earnings;
+      assert.equal(complete.estimate.status, 'AVAILABLE');
+      assert.equal(complete.estimate.observedMinutes, 60);
+      assert.equal(complete.estimate.hourlyTnd, complete.compensation.agreed);
+      assert.equal(complete.estimate.policyVersion, 2);
+      assert.deepEqual(complete.evidenceClasses, ['SYNTHETIC']);
+      assert.equal(complete.compensation.verifiedPaid, '0.000');
+      assert.equal(complete.compensation.verifiedAvailable, false);
       assert.equal((await buyer.client.request(`${root}/earnings`)).status, 404);
       assert.equal((await stranger.client.request(`${root}/earnings`)).status, 404);
     },
@@ -361,6 +425,38 @@ export async function runIntelligenceCompletionScenarios(c: Context & { batchId:
 
 export async function runIntelligenceLifecycleScenarios(c: Context & { batchId: string }) {
   const { db, operator, buyer, artisan, stranger, orderId, batchId, send, check } = c;
+  await check(
+    'FPA-05 HTTP workspace reports a deadline passed six hours ago as overdue',
+    async () => {
+      const batch = await db.commercialBatch.findUniqueOrThrow({
+        where: { id: batchId },
+        include: { offer: true },
+      });
+      const deadline = new Date(Date.now() - 6 * 3600000);
+      try {
+        await db.commercialOffer.update({
+          where: { id: batch.offer.id },
+          data: { deliveryDeadline: deadline },
+        });
+        const response = await operator.client.request('/api/v1/intelligence');
+        assert.equal(response.status, 200, JSON.stringify(response.body));
+        const workspace = response.body as IntelligenceWorkspaceView;
+        const view = workspace.batches.find((row) => row.batchId === batchId);
+        assert.ok(view, 'the scoped batch must be present');
+        assert.ok((view.risk.remainingQuantity ?? 0) > 0);
+        assert.equal(view.risk.state, 'OVERDUE');
+        assert.equal(view.deadline, deadline.toISOString());
+        assert.equal(view.risk.policyVersion, 3);
+        assert.equal(workspace.riskPolicyVersion, 3);
+        assert.ok(view.risk.reasons.some((row) => row.code === 'DEADLINE_PASSED'));
+      } finally {
+        await db.commercialOffer.update({
+          where: { id: batch.offer.id },
+          data: { deliveryDeadline: batch.offer.deliveryDeadline },
+        });
+      }
+    },
+  );
   await check(
     'risk alerts deduplicate under concurrent evaluation and require scoped acknowledgement and resolution',
     async () => {
@@ -758,6 +854,9 @@ export async function runPlanningOfferLifecycleScenarios(c: Context) {
         (
           await send(stranger, `/api/v1/commerce/offers/${accepted.id}/actions`, {
             next: 'ACCEPTED',
+            reviewLanguage: 'en',
+            sourceTermsLanguage: 'en',
+            acknowledgeOriginalTerms: true,
             version: accepted.version,
             termsSha256: accepted.termsSha256,
           })
@@ -805,13 +904,205 @@ export async function runPlanningOfferLifecycleScenarios(c: Context) {
       };
       assert.equal(outcome.replacementSources.length, 2);
       assert.ok(outcome.replacementSources.every((source) => source.offerId !== accepted.id));
+      assert.equal(
+        outcome.replacements.length,
+        2,
+        'Nonempty declined/expired candidates; accepted artisan excluded',
+      );
       assert.ok(
         outcome.replacements.every(
           (candidate) =>
-            candidate.reason.includes('no penalty') &&
-            candidate.deliveryFeasibility === 'UNKNOWN_THROUGHPUT_NOT_RECORDED',
+            candidate.reason.includes('no penalty') && candidate.deliveryFeasibility === 'UNKNOWN',
         ),
       );
+      // FPA-06: reviewed operator assumptions are distinct from a declared period budget.
+      // These are synthetic test assumptions, not approvals of real production rates.
+      const assumptions = {
+        version: (await db.commercialOrder.findUniqueOrThrow({ where: { id: targetOrder.id } }))
+          .version,
+        startDate: period.effectiveFrom,
+        deadline: period.effectiveTo,
+        reviewedAssumptions: {
+          reference: 'SYNTHETIC operator review of throughput, materials and allowances.',
+          leadTimeDays: 0,
+          bufferDays: 0,
+        },
+        scenarios: [
+          {
+            name: 'Synthetic replacement rates',
+            lines: [
+              {
+                artisanProfileId: profiles[1].id,
+                quantity: 20,
+                weeklyPieces: 100,
+                committedPieces: 0,
+                committedWeeks: 1,
+                availableFrom: period.effectiveFrom,
+                materialReadiness: 'READY',
+              },
+              {
+                artisanProfileId: profiles[2].id,
+                quantity: 20,
+                weeklyPieces: 1,
+                committedPieces: 0,
+                committedWeeks: 1,
+                availableFrom: period.effectiveFrom,
+                materialReadiness: 'READY',
+              },
+            ],
+          },
+        ],
+      };
+      const simulated = await send(operator, `${root}/delivery-simulation`, assumptions);
+      assert.equal(simulated.status, 201, JSON.stringify(simulated.body));
+      type Candidate = {
+        artisanProfileId: string;
+        replacementForOfferIds: string[];
+        deliveryFeasibility: string;
+        knownRemaining: string;
+        evidence: {
+          sourceScenarioId: string | null;
+          capacity: { reserved: string; committed: string };
+          simulationInput: unknown;
+        };
+      };
+      async function evaluate(ids = profiles.map((profile) => profile.id), key = randomUUID()) {
+        const latest = await db.allocationPlan.findUniqueOrThrow({ where: { id: plan.id } });
+        const response = await send(
+          operator,
+          `/api/v1/procurement/allocation-plans/${plan.id}/reallocate`,
+          { version: latest.version, artisanProfileIds: ids },
+          key,
+        );
+        assert.equal(response.status, 201, JSON.stringify(response.body));
+        return response.body as { released: number; replacements: Candidate[] };
+      }
+      const evaluated = await evaluate();
+      assert.equal(evaluated.replacements.length, 2);
+      assert.equal(
+        evaluated.replacements.find((row) => row.artisanProfileId === profiles[1].id)
+          ?.deliveryFeasibility,
+        'FEASIBLE',
+      );
+      assert.equal(
+        evaluated.replacements.find((row) => row.artisanProfileId === profiles[2].id)
+          ?.deliveryFeasibility,
+        'INFEASIBLE',
+      );
+      assert.equal(evaluated.released, 0, 'Tentative quantity is released once');
+      for (const candidate of evaluated.replacements)
+        assert.deepEqual(
+          candidate.replacementForOfferIds.slice().sort(),
+          [declined.id, expired.id].sort(),
+          'Recomputed feasibility remains linked to the original released offers',
+        );
+      assert.ok(evaluated.replacements.every((row) => row.evidence.sourceScenarioId));
+      const savedOutcome = await db.commandOutcome.findFirstOrThrow({
+        where: { resourceId: plan.id, operation: 'planning.plan.reallocate' },
+        orderBy: { createdAt: 'desc' },
+      });
+      assert.deepEqual(
+        (savedOutcome.result as { replacements: unknown }).replacements,
+        evaluated.replacements,
+        'Exact evaluation and dated input snapshot are persisted atomically',
+      );
+      await db.allocationPlan.update({
+        where: { id: plan.id },
+        data: {
+          materialAssumptions: {
+            readiness: 'UNKNOWN',
+            reference: 'Synthetic material review expired.',
+          },
+        },
+      });
+      const unknownMaterials = await evaluate([profiles[1].id]);
+      assert.equal(unknownMaterials.replacements.length, 1);
+      assert.equal(
+        unknownMaterials.replacements[0].deliveryFeasibility,
+        'UNKNOWN',
+        'Old READY simulation cannot override current unknown materials',
+      );
+      await db.allocationPlan.update({
+        where: { id: plan.id },
+        data: {
+          materialAssumptions: { readiness: 'READY', reference: 'Synthetic materials rereviewed.' },
+        },
+      });
+      assert.equal((await evaluate([])).replacements.length, 0);
+      assert.equal(
+        (await evaluate([profiles[0].id])).replacements.length,
+        0,
+        'Accepted work is busy and never proposed',
+      );
+      // Eligibility and consent are reread even though the reviewed scenario still exists.
+      const assessment = await db.eligibilityAssessment.findFirstOrThrow({
+        where: { orderId: targetOrder.id, artisanProfileId: profiles[1].id },
+        orderBy: { version: 'desc' },
+      });
+      const { id: _assessmentId, createdAt: _assessmentCreatedAt, ...assessmentData } = assessment;
+      await db.eligibilityAssessment.create({
+        data: {
+          ...assessmentData,
+          reasons: assessment.reasons as import('@prisma/client').Prisma.InputJsonValue,
+          unknowns: assessment.unknowns as import('@prisma/client').Prisma.InputJsonValue,
+          version: assessment.version + 1,
+          decision: 'INELIGIBLE',
+        },
+      });
+      assert.equal((await evaluate([profiles[1].id])).replacements.length, 0);
+      await db.eligibilityAssessment.create({
+        data: {
+          ...assessmentData,
+          reasons: assessment.reasons as import('@prisma/client').Prisma.InputJsonValue,
+          unknowns: assessment.unknowns as import('@prisma/client').Prisma.InputJsonValue,
+          version: assessment.version + 2,
+          decision: 'ELIGIBLE',
+        },
+      });
+      await db.consentRecord.updateMany({
+        where: { userId: buyer.me.user.id, purpose: 'artisan.profile' },
+        data: { withdrawnAt: new Date() },
+      });
+      assert.equal((await evaluate([profiles[1].id])).replacements.length, 0);
+      await db.consentRecord.updateMany({
+        where: { userId: buyer.me.user.id, purpose: 'artisan.profile' },
+        data: { withdrawnAt: null },
+      });
+      async function reviseCapacity(quantity: number) {
+        const capacity = await db.capacityDeclaration.findFirstOrThrow({
+          where: { artisanProfileId: profiles[1].id, supersededAt: null },
+        });
+        await db.capacityDeclaration.update({
+          where: { id: capacity.id },
+          data: { supersededAt: new Date() },
+        });
+        return db.capacityDeclaration.create({
+          data: {
+            artisanProfileId: capacity.artisanProfileId,
+            craftSkillId: capacity.craftSkillId,
+            unitType: capacity.unitType,
+            quantity,
+            effectiveFrom: capacity.effectiveFrom,
+            effectiveTo: capacity.effectiveTo,
+            declaredByUserId: capacity.declaredByUserId,
+            previousDeclarationId: capacity.id,
+            version: capacity.version + 1,
+          },
+        });
+      }
+      await reviseCapacity(100);
+      const stale = await evaluate([profiles[1].id]);
+      assert.equal(stale.replacements.length, 1);
+      assert.equal(
+        stale.replacements[0].deliveryFeasibility,
+        'UNKNOWN',
+        'Revised capacity needs fresh throughput review',
+      );
+      await reviseCapacity(5);
+      const insufficient = await evaluate([profiles[1].id]);
+      assert.equal(insufficient.replacements.length, 1);
+      assert.equal(insufficient.replacements[0].deliveryFeasibility, 'INFEASIBLE');
+      await reviseCapacity(100);
       const updated = await db.allocationPlan.findUniqueOrThrow({ where: { id: plan.id } });
       const again = await send(
         operator,
