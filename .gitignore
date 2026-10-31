@@ -3,6 +3,9 @@ node_modules/
 .env.*
 !.env.example
 .next/
+# Alternate Next.js output directories used by local browser test harnesses.
+.next-*/
+/docs/engineering/**/browser-build/
 dist/
 *.tsbuildinfo
 coverage/
