@@ -1,4 +1,0 @@
-{"case":"requested craft removed; unrelated craft retained","denials":[],"craftMismatchDenied":false,"classification":"COUNTEREXAMPLE_CONFIRMED"}
-{"case":"full own offered reservation counted twice","denials":[{"code":"CAPACITY_EXCEEDED","detail":"This commitment exceeds currently remaining capacity."}],"classification":"COUNTEREXAMPLE_CONFIRMED"}
-{"case":"current pause","denied":true}
-{"case":"genuine multi-connection PostgreSQL","distinctBackendIds":true,"competingLockBlocked":true}

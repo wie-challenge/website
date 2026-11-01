@@ -11,18 +11,22 @@ docs/
 ├── 01-product/                    Feature and workspace documentation
 ├── 02-architecture/               System, data, authorization, transactions, API
 ├── 03-engineering/                Setup, migrations, testing
-├── 04-ai/                         AI service (planned section)
-├── 05-iot/                        Wearable (planned section)
+├── 04-ai/                         (empty, declared in DOCUMENTATION_GAPS.md)
+├── 05-iot/                        Wearable boundary
 ├── 06-security-and-governance/    Security, privacy, financial controls
 ├── 07-operations/                 Deployment, monitoring, jobs, runbooks
 ├── 08-backlog-and-acceptance/     Backlog, gaps, owner decisions
 ├── 09-verification-and-quality/   Testing, concurrency, coverage
-├── 10-research-and-pilots/        Pilot and competition material
-├── 99-archive/                    All historical evidence, indexed
+├── 10-research-and-pilots/        (empty, declared in DOCUMENTATION_GAPS.md)
+├── 99-archive/                    All historical reports, indexed
 ├── competition/                   Frozen submission artefacts (hash-pinned)
 ├── engineering/                   Surviving raw evidence only
 └── documentation-maintenance/     This maintenance record
 ```
+
+Two folders are deliberately empty. `04-ai/` and `10-research-and-pilots/` have no grounded source
+material; [Documentation gaps](DOCUMENTATION_GAPS.md) says so rather than filling them with
+placeholder documents. Git does not track empty folders, so both exist only in a working tree.
 
 ## Authoritative entry points
 

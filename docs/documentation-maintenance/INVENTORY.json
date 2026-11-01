@@ -1,27 +1,27 @@
 {
- "_note": "Regenerated 1 November 2026. The previous revision listed 1525 artefacts discovered across four repositories with pre-move paths and no reference to 99-archive; it described a filesystem that no longer existed.",
+ "_note": "Regenerated 1 November 2026 after deduplication. Every file under docs/ appears once; no two entries share a sha256 outside preservation-backup.",
  "generatedAt": "2026-11-01",
  "root": "docs",
- "totalFiles": 827,
- "tracked": 683,
- "untracked": 144,
- "totalBytes": 27966330,
+ "totalFiles": 771,
+ "tracked": 635,
+ "untracked": 136,
+ "totalBytes": 26896256,
  "byCategory": {
   "documentation": {
-   "files": 58,
-   "bytes": 465330
+   "files": 59,
+   "bytes": 470301
   },
   "evidence": {
-   "files": 464,
-   "bytes": 11161219
+   "files": 434,
+   "bytes": 11119489
   },
   "other": {
-   "files": 121,
-   "bytes": 11701136
+   "files": 112,
+   "bytes": 11292767
   },
   "recovered-copy": {
-   "files": 19,
-   "bytes": 671403
+   "files": 1,
+   "bytes": 46457
   },
   "preservation-backup": {
    "files": 54,
@@ -35,9 +35,17 @@
  "entries": [
   {
    "path": "docs/README.md",
-   "bytes": 3975,
-   "sha256": "74b80a99f8dd86f77e9aed96e50590168d443237beddf188db6339ce3a28e792",
+   "bytes": 4996,
+   "sha256": "6708ad203d3896ee5266ad4a54bde92a157253afb895d9e620ddac9d581580dc",
    "tracked": true,
+   "category": "documentation",
+   "type": "md"
+  },
+  {
+   "path": "docs/engineering/README.md",
+   "bytes": 2082,
+   "sha256": "60a3f475d46ed518fcf1e336932d162ba828f40ead76fe56942fc25cf238069c",
+   "tracked": false,
    "category": "documentation",
    "type": "md"
   },
@@ -213,14 +221,6 @@
    "path": "docs/engineering/evidence/final-local/08-test-e2e.log",
    "bytes": 2891,
    "sha256": "1d6ba7b417877f9a851741b49d2b7306bd8b49d82891195e14f71d79655c04f5",
-   "tracked": true,
-   "category": "evidence",
-   "type": "log"
-  },
-  {
-   "path": "docs/engineering/evidence/final-local/09-audit.log",
-   "bytes": 31,
-   "sha256": "15950a68a7ed99c59779717acefdceb3f69cfd31bde67d2c954f2a3cea4d7955",
    "tracked": true,
    "category": "evidence",
    "type": "log"
@@ -754,22 +754,6 @@
    "type": "log"
   },
   {
-   "path": "docs/engineering/evidence/batch6-20261027/migration-readiness.log",
-   "bytes": 3303,
-   "sha256": "cec767e0e7021f842f666a8fa9cdb64b699c557753fbdcd85eccf128ca0b9beb",
-   "tracked": true,
-   "category": "evidence",
-   "type": "log"
-  },
-  {
-   "path": "docs/engineering/evidence/batch6-20261027/schema-validation.log",
-   "bytes": 142,
-   "sha256": "e1344514cb0e93026a245afd134e0c874287a64f7c5798cbda02eff700d2aa22",
-   "tracked": true,
-   "category": "evidence",
-   "type": "log"
-  },
-  {
    "path": "docs/engineering/evidence/batch6-20261027/showroom-e2e.log",
    "bytes": 1127,
    "sha256": "0b2522e5889bdfdd4e61c78e59acf2e568c357b5726ee185e906c7ec9e1a0617",
@@ -789,14 +773,6 @@
    "path": "docs/engineering/evidence/batch6-20261027/typecheck.log",
    "bytes": 732,
    "sha256": "b8375ee5905efab8d7166d9bad792f2b8ccb1ece3e18123743e427db32d34df5",
-   "tracked": true,
-   "category": "evidence",
-   "type": "log"
-  },
-  {
-   "path": "docs/engineering/evidence/batch6-20261027/web-final-typecheck.log",
-   "bytes": 90,
-   "sha256": "99d7c2179cdd316467c51f37901025a0753453664d741214ba56fc631fa6c0bc",
    "tracked": true,
    "category": "evidence",
    "type": "log"
@@ -845,14 +821,6 @@
    "path": "docs/engineering/evidence/batch7-20261027/demo-http-final.log",
    "bytes": 881,
    "sha256": "342df9ca0496f7cb6d63f228eaa42beed83085ddb6c4abf5de28b9aee226601a",
-   "tracked": true,
-   "category": "evidence",
-   "type": "log"
-  },
-  {
-   "path": "docs/engineering/evidence/batch7-20261027/diff-check.log",
-   "bytes": 0,
-   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
    "tracked": true,
    "category": "evidence",
    "type": "log"
@@ -960,14 +928,6 @@
    "tracked": true,
    "category": "evidence",
    "type": "txt"
-  },
-  {
-   "path": "docs/engineering/evidence/batch7-20261027/schema-validation.log",
-   "bytes": 142,
-   "sha256": "e1344514cb0e93026a245afd134e0c874287a64f7c5798cbda02eff700d2aa22",
-   "tracked": true,
-   "category": "evidence",
-   "type": "log"
   },
   {
    "path": "docs/engineering/evidence/batch7-20261027/showroom-capture-before-visual-fix.log",
@@ -1170,14 +1130,6 @@
    "type": "log"
   },
   {
-   "path": "docs/engineering/evidence/batch12/diff-check.log",
-   "bytes": 0,
-   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
-   "tracked": true,
-   "category": "evidence",
-   "type": "log"
-  },
-  {
    "path": "docs/engineering/evidence/batch12/format-final-reviewed.log",
    "bytes": 42,
    "sha256": "dc013af564d0ebe44ac03b714e32a3e68d4e07a132ea0a5b03ef02b6369911db",
@@ -1368,14 +1320,6 @@
    "tracked": true,
    "category": "evidence",
    "type": "json"
-  },
-  {
-   "path": "docs/engineering/evidence/batch12/schema-validated.log",
-   "bytes": 142,
-   "sha256": "e1344514cb0e93026a245afd134e0c874287a64f7c5798cbda02eff700d2aa22",
-   "tracked": true,
-   "category": "evidence",
-   "type": "log"
   },
   {
    "path": "docs/engineering/evidence/batch12/schema-validation.log",
@@ -1650,14 +1594,6 @@
    "type": "log"
   },
   {
-   "path": "docs/engineering/evidence/batch13/schema.log",
-   "bytes": 142,
-   "sha256": "e1344514cb0e93026a245afd134e0c874287a64f7c5798cbda02eff700d2aa22",
-   "tracked": true,
-   "category": "evidence",
-   "type": "log"
-  },
-  {
    "path": "docs/engineering/evidence/batch13/typecheck.log",
    "bytes": 749,
    "sha256": "2696cef28d9cf13da7b09d49f01cea51e958dacffa4f346d61d66fb3d60cfb7c",
@@ -1746,14 +1682,6 @@
    "type": "log"
   },
   {
-   "path": "docs/engineering/evidence/batch14/diff-check.log",
-   "bytes": 5,
-   "sha256": "c26de83abdc9496cd1301470918ec39ecca1cf389ef0ae1c6504da1800d1c431",
-   "tracked": true,
-   "category": "evidence",
-   "type": "log"
-  },
-  {
    "path": "docs/engineering/evidence/batch14/e2e-all.log",
    "bytes": 8769,
    "sha256": "6e29b00570e758082a6e12cf336164d40d05c716a1d1efed7798c693eb76a34c",
@@ -1800,14 +1728,6 @@
    "tracked": true,
    "category": "evidence",
    "type": "json"
-  },
-  {
-   "path": "docs/engineering/evidence/batch14/schema.log",
-   "bytes": 142,
-   "sha256": "e1344514cb0e93026a245afd134e0c874287a64f7c5798cbda02eff700d2aa22",
-   "tracked": true,
-   "category": "evidence",
-   "type": "log"
   },
   {
    "path": "docs/engineering/evidence/batch14/typecheck.log",
@@ -1890,14 +1810,6 @@
    "type": "log"
   },
   {
-   "path": "docs/engineering/evidence/batch14-verification/adversarial.ts",
-   "bytes": 13908,
-   "sha256": "e5bde5c7ef40737e92877e02a81fa181f5ee289a02c1e916ac0a6f5a242181e8",
-   "tracked": true,
-   "category": "evidence",
-   "type": "ts"
-  },
-  {
    "path": "docs/engineering/evidence/batch14-verification/artifact-sha256.json",
    "bytes": 2840,
    "sha256": "62a845bde375ef4518298a59f4100c9229bf4eb078f2fcd43cdfb6d4ca04e469",
@@ -1917,14 +1829,6 @@
    "path": "docs/engineering/evidence/batch14-verification/build.log",
    "bytes": 3331,
    "sha256": "7dd3312b88203b98eaf54cb38bb3a4003d2c8af45f5dfb03cef19b5b4dcf1715",
-   "tracked": true,
-   "category": "evidence",
-   "type": "log"
-  },
-  {
-   "path": "docs/engineering/evidence/batch14-verification/diff-check.log",
-   "bytes": 0,
-   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
    "tracked": true,
    "category": "evidence",
    "type": "log"
@@ -2026,14 +1930,6 @@
    "type": "png"
   },
   {
-   "path": "docs/engineering/evidence/batch14-verification/schema.log",
-   "bytes": 142,
-   "sha256": "e1344514cb0e93026a245afd134e0c874287a64f7c5798cbda02eff700d2aa22",
-   "tracked": true,
-   "category": "evidence",
-   "type": "log"
-  },
-  {
    "path": "docs/engineering/evidence/batch14-verification/showroom-isolation.log",
    "bytes": 1325,
    "sha256": "4bac9b0e6eafd48b96549126cbdd351328f08819aa605a72ae0cac0131b4c0e7",
@@ -2080,14 +1976,6 @@
    "tracked": false,
    "category": "evidence",
    "type": "png"
-  },
-  {
-   "path": "docs/engineering/evidence/batch14-verification/browser-artifacts/.last-run.json",
-   "bytes": 45,
-   "sha256": "91d1c43004802cd49950d78eb11c8fa7d05da8ffffe219a8b13b2f561bc00903",
-   "tracked": true,
-   "category": "evidence",
-   "type": "json"
   },
   {
    "path": "docs/engineering/evidence/batch14-remediation/README.md",
@@ -2208,14 +2096,6 @@
    "tracked": true,
    "category": "evidence",
    "type": "json"
-  },
-  {
-   "path": "docs/engineering/evidence/batch14-remediation/diff-check.log",
-   "bytes": 0,
-   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
-   "tracked": true,
-   "category": "evidence",
-   "type": "log"
   },
   {
    "path": "docs/engineering/evidence/batch14-remediation/e2e-all.log",
@@ -2387,22 +2267,6 @@
   },
   {
    "path": "docs/engineering/evidence/batch14-remediation/baseline-artifacts/.last-run.json",
-   "bytes": 45,
-   "sha256": "91d1c43004802cd49950d78eb11c8fa7d05da8ffffe219a8b13b2f561bc00903",
-   "tracked": true,
-   "category": "evidence",
-   "type": "json"
-  },
-  {
-   "path": "docs/engineering/evidence/batch14-remediation/focused-artifacts/.last-run.json",
-   "bytes": 45,
-   "sha256": "91d1c43004802cd49950d78eb11c8fa7d05da8ffffe219a8b13b2f561bc00903",
-   "tracked": true,
-   "category": "evidence",
-   "type": "json"
-  },
-  {
-   "path": "docs/engineering/evidence/batch14-remediation/rate-artifacts/.last-run.json",
    "bytes": 45,
    "sha256": "91d1c43004802cd49950d78eb11c8fa7d05da8ffffe219a8b13b2f561bc00903",
    "tracked": true,
@@ -2810,14 +2674,6 @@
    "type": "py"
   },
   {
-   "path": "docs/engineering/audits/batch12/evidence/schema.log",
-   "bytes": 142,
-   "sha256": "e1344514cb0e93026a245afd134e0c874287a64f7c5798cbda02eff700d2aa22",
-   "tracked": true,
-   "category": "evidence",
-   "type": "log"
-  },
-  {
    "path": "docs/engineering/audits/batch12/evidence/showroom.log",
    "bytes": 1296,
    "sha256": "cfdd7e830bfd68f12fc5d794035abdc96e31850c902b43b6c81e93476bf80222",
@@ -3082,14 +2938,6 @@
    "type": "log"
   },
   {
-   "path": "docs/engineering/batch8-11-completion/evidence/diff-check.log",
-   "bytes": 0,
-   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
-   "tracked": true,
-   "category": "evidence",
-   "type": "log"
-  },
-  {
    "path": "docs/engineering/batch8-11-completion/evidence/github-issues-current.json",
    "bytes": 485784,
    "sha256": "d5df19424f990a8ec77ada3e225f07de56b1a5e649561cd7642cf6c34b4bfcc5",
@@ -3242,14 +3090,6 @@
    "type": "log"
   },
   {
-   "path": "docs/engineering/batch8-11-completion/evidence/schema-validate.log",
-   "bytes": 142,
-   "sha256": "e1344514cb0e93026a245afd134e0c874287a64f7c5798cbda02eff700d2aa22",
-   "tracked": true,
-   "category": "evidence",
-   "type": "log"
-  },
-  {
    "path": "docs/engineering/batch8-11-completion/evidence/story-evidence.json",
    "bytes": 133100,
    "sha256": "d368420fa7085c01cb14b49b299412e19e415126ea17f70b56d25057617da54a",
@@ -3264,14 +3104,6 @@
    "tracked": true,
    "category": "evidence",
    "type": "json"
-  },
-  {
-   "path": "docs/engineering/batch8-11-completion/evidence/test-typecheck.log",
-   "bytes": 0,
-   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
-   "tracked": true,
-   "category": "evidence",
-   "type": "log"
   },
   {
    "path": "docs/engineering/batch8-11-completion/evidence/typecheck-final.log",
@@ -3442,14 +3274,6 @@
    "type": "log"
   },
   {
-   "path": "docs/engineering/batch12-remediation/evidence/diff.log",
-   "bytes": 0,
-   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
-   "tracked": true,
-   "category": "evidence",
-   "type": "log"
-  },
-  {
    "path": "docs/engineering/batch12-remediation/evidence/format-final.log",
    "bytes": 43,
    "sha256": "ebb156d034aca4bfced61c0a6df74339839c1e9aea5637b0e4b870abc015bad0",
@@ -3560,14 +3384,6 @@
    "tracked": true,
    "category": "evidence",
    "type": "json"
-  },
-  {
-   "path": "docs/engineering/batch12-remediation/evidence/schema.log",
-   "bytes": 142,
-   "sha256": "e1344514cb0e93026a245afd134e0c874287a64f7c5798cbda02eff700d2aa22",
-   "tracked": true,
-   "category": "evidence",
-   "type": "log"
   },
   {
    "path": "docs/engineering/batch12-remediation/evidence/targeted-final.log",
@@ -3786,22 +3602,6 @@
    "type": "json"
   },
   {
-   "path": "docs/engineering/full-backlog-remediation/evidence/backlog-code-alignment-review/alignment-guard-probe.mts",
-   "bytes": 3141,
-   "sha256": "f9d349f62ca020c9f72ca918d7a2405f5a25c7eb4f57e36ccd1f81c296f3b51a",
-   "tracked": true,
-   "category": "evidence",
-   "type": "mts"
-  },
-  {
-   "path": "docs/engineering/full-backlog-remediation/evidence/backlog-code-alignment-review/alignment-jobs-probe.mts",
-   "bytes": 2300,
-   "sha256": "8fc5eb9f4d1f6d8898171502bbfb0bdf605aa932b4dac0bc1f0e0352bb57bab8",
-   "tracked": true,
-   "category": "evidence",
-   "type": "mts"
-  },
-  {
    "path": "docs/engineering/full-backlog-remediation/evidence/backlog-code-alignment-review/alignment-probes.spec.ts",
    "bytes": 4557,
    "sha256": "e8d5dbcd9904ac09ad26f33799ec5bfba84dc1af061be409377b15470b54be07",
@@ -3890,14 +3690,6 @@
    "type": "log"
   },
   {
-   "path": "docs/engineering/full-backlog-remediation/evidence/backlog-code-alignment-review/logs/native-guard.log",
-   "bytes": 490,
-   "sha256": "e6cb360bccdb1316daa4e4109d1754b9320afcb1639f7414cb8df13105ed014c",
-   "tracked": true,
-   "category": "evidence",
-   "type": "log"
-  },
-  {
    "path": "docs/engineering/full-backlog-remediation/evidence/backlog-code-alignment-review/logs/native-jobs.log",
    "bytes": 1756,
    "sha256": "919d2a89bdb0bfead5e0bc44369c0c8dc36c8b029869824cce02d2dee2d75bf8",
@@ -3920,30 +3712,6 @@
    "tracked": true,
    "category": "evidence",
    "type": "log"
-  },
-  {
-   "path": "docs/engineering/full-backlog-remediation/evidence/backlog-code-alignment-review/probes/v-g27-http.mts",
-   "bytes": 9846,
-   "sha256": "b8ec165a443037809b98c7086937697cdb28c132777bca7af3b1b0e82e2aa3da",
-   "tracked": true,
-   "category": "evidence",
-   "type": "mts"
-  },
-  {
-   "path": "docs/engineering/full-backlog-remediation/evidence/backlog-code-alignment-review/probes/verify-g95-service.mts",
-   "bytes": 6697,
-   "sha256": "7012ce12f788fbfc9aec55f06e34fb06c1091fed99f45ccfd458d86379d3ec28",
-   "tracked": true,
-   "category": "evidence",
-   "type": "mts"
-  },
-  {
-   "path": "docs/engineering/full-backlog-remediation/evidence/backlog-code-alignment-review/probes/wire-session.mjs",
-   "bytes": 506,
-   "sha256": "ed730b91407fb1e3b6d6ea3e6c21e94f6a228a30ef295f22ae7c95000ce868b1",
-   "tracked": true,
-   "category": "evidence",
-   "type": "mjs"
   },
   {
    "path": "docs/engineering/backlog-code-verification-2026-10-31/CAPACITY_AND_CRAFT_DEFECTS.md",
@@ -4234,14 +4002,6 @@
    "type": "log"
   },
   {
-   "path": "docs/engineering/backlog-code-verification-2026-10-31/logs/contracts-final-build.log",
-   "bytes": 23,
-   "sha256": "29c5ee0f6b0b20dbb259b99d01276198c3d28190090706394608d4deda6d2c0b",
-   "tracked": false,
-   "category": "other",
-   "type": "log"
-  },
-  {
    "path": "docs/engineering/backlog-code-verification-2026-10-31/logs/custody-chain.log",
    "bytes": 812,
    "sha256": "017e4605967cce6885fcf966a0432eca909246b935463ba67773e0005689a2b9",
@@ -4314,62 +4074,6 @@
    "type": "log"
   },
   {
-   "path": "docs/engineering/backlog-code-verification-2026-10-31/logs/github-cli-errors.log",
-   "bytes": 0,
-   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
-   "tracked": false,
-   "category": "other",
-   "type": "log"
-  },
-  {
-   "path": "docs/engineering/backlog-code-verification-2026-10-31/logs/github-comments-errors.log",
-   "bytes": 0,
-   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
-   "tracked": false,
-   "category": "other",
-   "type": "log"
-  },
-  {
-   "path": "docs/engineering/backlog-code-verification-2026-10-31/logs/github-fields-errors.log",
-   "bytes": 0,
-   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
-   "tracked": false,
-   "category": "other",
-   "type": "log"
-  },
-  {
-   "path": "docs/engineering/backlog-code-verification-2026-10-31/logs/github-final-issues-errors.log",
-   "bytes": 0,
-   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
-   "tracked": false,
-   "category": "other",
-   "type": "log"
-  },
-  {
-   "path": "docs/engineering/backlog-code-verification-2026-10-31/logs/github-final-project-errors.log",
-   "bytes": 0,
-   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
-   "tracked": false,
-   "category": "other",
-   "type": "log"
-  },
-  {
-   "path": "docs/engineering/backlog-code-verification-2026-10-31/logs/github-hierarchy-errors.log",
-   "bytes": 0,
-   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
-   "tracked": false,
-   "category": "other",
-   "type": "log"
-  },
-  {
-   "path": "docs/engineering/backlog-code-verification-2026-10-31/logs/github-project-errors.log",
-   "bytes": 0,
-   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
-   "tracked": false,
-   "category": "other",
-   "type": "log"
-  },
-  {
    "path": "docs/engineering/backlog-code-verification-2026-10-31/logs/guard-native.log",
    "bytes": 490,
    "sha256": "e6cb360bccdb1316daa4e4109d1754b9320afcb1639f7414cb8df13105ed014c",
@@ -4437,14 +4141,6 @@
    "path": "docs/engineering/backlog-code-verification-2026-10-31/logs/migrations.log",
    "bytes": 29,
    "sha256": "c542dbf55e3fb1041df20c255f307dc9b9179d120f50e8699e12ac625dda10fb",
-   "tracked": false,
-   "category": "other",
-   "type": "log"
-  },
-  {
-   "path": "docs/engineering/backlog-code-verification-2026-10-31/logs/prisma.log",
-   "bytes": 142,
-   "sha256": "e1344514cb0e93026a245afd134e0c874287a64f7c5798cbda02eff700d2aa22",
    "tracked": false,
    "category": "other",
    "type": "log"
@@ -4602,153 +4298,9 @@
    "type": "png"
   },
   {
-   "path": "docs/engineering/backlog-code-verification-2026-10-31/recovered-git/docs/engineering/full-backlog-remediation/AI_SERVICE_VERIFICATION.md",
-   "bytes": 4936,
-   "sha256": "e0332c1c1888163bd9f6ec0209a595707b1937ae93099a3fd7f66bc40184e86e",
-   "tracked": true,
-   "category": "recovered-copy",
-   "type": "md"
-  },
-  {
-   "path": "docs/engineering/backlog-code-verification-2026-10-31/recovered-git/docs/engineering/full-backlog-remediation/DONE_ISSUES_CORRECTION_REPORT.md",
-   "bytes": 5125,
-   "sha256": "f6bbb78a0dcba0691cd337a24517ed687e0eb5c6428fd9e401caf915ba1874f1",
-   "tracked": true,
-   "category": "recovered-copy",
-   "type": "md"
-  },
-  {
-   "path": "docs/engineering/backlog-code-verification-2026-10-31/recovered-git/docs/engineering/full-backlog-remediation/FINAL_VERIFICATION.md",
-   "bytes": 50240,
-   "sha256": "3d13da79d2e5fe0c91ffc15c105db9ae94f6ae384778c8c1d6c4fe922c8d2828",
-   "tracked": true,
-   "category": "recovered-copy",
-   "type": "md"
-  },
-  {
-   "path": "docs/engineering/backlog-code-verification-2026-10-31/recovered-git/docs/engineering/full-backlog-remediation/GITHUB_UPDATE_PROPOSAL.md",
-   "bytes": 5146,
-   "sha256": "772234b165d918fa46c43919c2494aec81c722096ea796245f78967fb28ee47a",
-   "tracked": true,
-   "category": "recovered-copy",
-   "type": "md"
-  },
-  {
-   "path": "docs/engineering/backlog-code-verification-2026-10-31/recovered-git/docs/engineering/full-backlog-remediation/IMPLEMENTATION_REPORT.md",
-   "bytes": 3657,
-   "sha256": "c4fac72ab9b55b9c934a43cd7e1d423f3964deb178cc41e8084c236b5146b8d1",
-   "tracked": true,
-   "category": "recovered-copy",
-   "type": "md"
-  },
-  {
    "path": "docs/engineering/backlog-code-verification-2026-10-31/recovered-git/docs/engineering/full-backlog-remediation/REMAINING_GAPS.md",
    "bytes": 46457,
    "sha256": "8c191493a2c0d12397cd93b47acfd08d7e7c3d5e62bee6c17a7e4ce8122a1793",
-   "tracked": true,
-   "category": "recovered-copy",
-   "type": "md"
-  },
-  {
-   "path": "docs/engineering/backlog-code-verification-2026-10-31/recovered-git/docs/engineering/full-backlog-remediation/REMEDIATION_BACKLOG.md",
-   "bytes": 19045,
-   "sha256": "3bfee7943302a2b472d5a2612ca6f4607a791e408b8c6dce2bc5d57a84f12009",
-   "tracked": true,
-   "category": "recovered-copy",
-   "type": "md"
-  },
-  {
-   "path": "docs/engineering/backlog-code-verification-2026-10-31/recovered-git/docs/engineering/full-backlog-remediation/REMEDIATION_PROGRESS.md",
-   "bytes": 52975,
-   "sha256": "82f4fd2fe59facf19cfd27b9de3e61fbb82094a26441a80716e1e466582cdd59",
-   "tracked": true,
-   "category": "recovered-copy",
-   "type": "md"
-  },
-  {
-   "path": "docs/engineering/backlog-code-verification-2026-10-31/recovered-git/docs/engineering/full-backlog-remediation/remediation-registry.json",
-   "bytes": 136209,
-   "sha256": "0d36b15222a2283c2978978d97547f9d290286688b8490f9aa9ad6b02da91d2c",
-   "tracked": true,
-   "category": "recovered-copy",
-   "type": "json"
-  },
-  {
-   "path": "docs/engineering/backlog-code-verification-2026-10-31/recovered-git/docs/engineering/full-backlog-remediation/verification-summary.json",
-   "bytes": 268013,
-   "sha256": "6fd7f09e706b7681762ad64b714d64d8565910f92e7c211c5f8a1204b0fadecb",
-   "tracked": true,
-   "category": "recovered-copy",
-   "type": "json"
-  },
-  {
-   "path": "docs/engineering/backlog-code-verification-2026-10-31/recovered-git/docs/engineering/full-backlog-audit/AI_ML_REALITY_AUDIT.md",
-   "bytes": 2823,
-   "sha256": "e02f8228a6af5a2d8879e0619478a96a2110256c617145a8b67cf46a46bd895d",
-   "tracked": true,
-   "category": "recovered-copy",
-   "type": "md"
-  },
-  {
-   "path": "docs/engineering/backlog-code-verification-2026-10-31/recovered-git/docs/engineering/full-backlog-audit/AUDIT_EXECUTIVE_SUMMARY.md",
-   "bytes": 9362,
-   "sha256": "4654e04d153c579ac7c0200b1f438ba9b6de7af6fa7a496e915b422251d03ccc",
-   "tracked": true,
-   "category": "recovered-copy",
-   "type": "md"
-  },
-  {
-   "path": "docs/engineering/backlog-code-verification-2026-10-31/recovered-git/docs/engineering/full-backlog-audit/CORRECTION_PLAN.md",
-   "bytes": 2239,
-   "sha256": "e7311d677d5136fe2071eaae2599fbdf610f89232d093423d432db19044d0c85",
-   "tracked": true,
-   "category": "recovered-copy",
-   "type": "md"
-  },
-  {
-   "path": "docs/engineering/backlog-code-verification-2026-10-31/recovered-git/docs/engineering/full-backlog-audit/DONE_ISSUES_REAUDIT.md",
-   "bytes": 20553,
-   "sha256": "be5c3c96281169c8d08d32f9e38f204515ec813ea9cff60629afd7046a3ebe31",
-   "tracked": true,
-   "category": "recovered-copy",
-   "type": "md"
-  },
-  {
-   "path": "docs/engineering/backlog-code-verification-2026-10-31/recovered-git/docs/engineering/full-backlog-audit/FULL_PROJECT_ARCHITECTURE.md",
-   "bytes": 10981,
-   "sha256": "1f4c75914685f9cdb5c0ccbdb9528e9bb5a1e5f0676ca9723b377a5344270dc4",
-   "tracked": true,
-   "category": "recovered-copy",
-   "type": "md"
-  },
-  {
-   "path": "docs/engineering/backlog-code-verification-2026-10-31/recovered-git/docs/engineering/full-backlog-audit/GITHUB_CORRECTION_PROPOSAL.md",
-   "bytes": 3796,
-   "sha256": "418e84a20238c2cbefd33c31c3b4518572d0495e1a81d47b5ae882e1b2aa78e5",
-   "tracked": true,
-   "category": "recovered-copy",
-   "type": "md"
-  },
-  {
-   "path": "docs/engineering/backlog-code-verification-2026-10-31/recovered-git/docs/engineering/full-backlog-audit/OPEN_ISSUES_REAUDIT.md",
-   "bytes": 14345,
-   "sha256": "5a2d510141bbe93a9552ee28119e1024aa1877dfaacfe6286c93e7d01f537a01",
-   "tracked": true,
-   "category": "recovered-copy",
-   "type": "md"
-  },
-  {
-   "path": "docs/engineering/backlog-code-verification-2026-10-31/recovered-git/docs/engineering/full-backlog-audit/PROGRESS.md",
-   "bytes": 1313,
-   "sha256": "51c773cbe352451ee5de249325fd021f70c1af4a6c9e1b63fb90b0eec1d3e10e",
-   "tracked": true,
-   "category": "recovered-copy",
-   "type": "md"
-  },
-  {
-   "path": "docs/engineering/backlog-code-verification-2026-10-31/recovered-git/docs/engineering/full-backlog-audit/SECURITY_BUSINESS_INVARIANTS.md",
-   "bytes": 14188,
-   "sha256": "6753b79d92092b916ebe3ac139339d29f414e4d95a50b3187ee6f885946fcbe0",
    "tracked": true,
    "category": "recovered-copy",
    "type": "md"
@@ -4979,8 +4531,8 @@
   },
   {
    "path": "docs/documentation-maintenance/CONVENTIONS.md",
-   "bytes": 3140,
-   "sha256": "bfccda3512c4c673fe65cc11ff12b46641ec32a792d1c11ee00718976616d6d8",
+   "bytes": 4229,
+   "sha256": "2e3372c94461f763273c12f93f86063c970a6a79f8a58fec7af1886f03cc028f",
    "tracked": true,
    "category": "documentation",
    "type": "md"
@@ -4995,16 +4547,16 @@
   },
   {
    "path": "docs/documentation-maintenance/DOCUMENTATION_MAP.md",
-   "bytes": 4252,
-   "sha256": "b609939d03d06237afaa61c8a6c3419407bc36c514e7e24a647831601bf5c1b9",
+   "bytes": 4555,
+   "sha256": "b5cbfa0e83ade0a8aff67f7a0004ab08d5ce4c2ceee5b605c9d1e2b7b7a000b4",
    "tracked": true,
    "category": "documentation",
    "type": "md"
   },
   {
    "path": "docs/documentation-maintenance/DUPLICATE_AND_OBSOLETE_FILES.md",
-   "bytes": 4082,
-   "sha256": "db2e9a0e71cc19f4dc278b526723ee5bdae988d33718c49987ab36e6db7c0a20",
+   "bytes": 4558,
+   "sha256": "6715dee4e5a5aaa09cd455790e023b86ee54e3a260ff273eef9dd9bf212a26cf",
    "tracked": true,
    "category": "documentation",
    "type": "md"
@@ -5035,16 +4587,16 @@
   },
   {
    "path": "docs/documentation-maintenance/INVENTORY.csv",
-   "bytes": 288471,
-   "sha256": "606cdee80e4cc059df966a281b7c9403d1522e65c2ea09dbc892b42c27e05aed",
+   "bytes": 132325,
+   "sha256": "75e866c792d2d4e917c34a433b0b06255c7ee3be45fe0ca6616997c5dd2aee0c",
    "tracked": true,
    "category": "other",
    "type": "csv"
   },
   {
    "path": "docs/documentation-maintenance/INVENTORY.json",
-   "bytes": 465315,
-   "sha256": "8ac85fc0c20d7fddf622a6f2dabec84973fe97463a25d96594bd1533e557ae44",
+   "bytes": 213257,
+   "sha256": "9a3b9e7413b7a45053573bfa6ca7cd9be104360eac094bd3c230bf179d703e8d",
    "tracked": true,
    "category": "other",
    "type": "json"
@@ -5578,7 +5130,7 @@
    "type": "md"
   },
   {
-   "path": "docs/01-product/traceability.md",
+   "path": "docs/01-product/public-traceability.md",
    "bytes": 1836,
    "sha256": "00e0dcd3fdaccee0730371b30d1024ec08bc21877ca1cc0edfc9ef4578e223e5",
    "tracked": true,

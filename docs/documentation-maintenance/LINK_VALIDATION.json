@@ -1,7 +1,7 @@
 {
   "_note": "Machine-readable companion to LINK_VALIDATION.md. Regenerated 1 November 2026. The previous revision claimed 229 documents, 1020 links and zero broken, measured against a tree in which docs/99-archive/ did not exist on disk.",
-  "documents": 183,
-  "links": 453,
+  "documents": 184,
+  "links": 476,
   "broken": [
     {
       "file": "docs/99-archive/remediation-batches/batch13-planning/scope-audit.md",

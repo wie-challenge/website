@@ -80,11 +80,11 @@ that cannot be regenerated, and stays.
 
 | Measure | Value |
 |---|---|
-| Files under `docs/` | 827 |
-| Markdown files | 226 |
+| Files under `docs/` | 771 |
+| Markdown files | 211 |
 | Tracked files | 683 |
-| Tracked payload | 9.6 MB |
-| Working-tree size | 27 MB |
+| Tracked payload | 9.2 MB |
+| Working-tree size | 25.7 MB |
 
 The gap between tracked payload and working-tree size is gitignored evidence on this machine. It is
 not part of the repository and does not affect clone size or CI.

@@ -54,6 +54,9 @@ operate or audit it.
 | Document | Use it for |
 |---|---|
 | [Workspace UI](01-product/workspace-ui.md) | Layout and navigation conventions |
+| [Finance and settlement](01-product/finance-and-settlement.md) | Ledgers, payables and the simulated-settlement boundary |
+| [Logistics and traceability](01-product/logistics-and-traceability.md) | Quantities, custody and shipment gates |
+| [Public traceability](01-product/public-traceability.md) | The read-only `/trace/:token` provenance page |
 | [UI verification](09-verification-and-quality/ui-verification.md) | What was checked |
 | [Wearable overview](05-iot/wearable-overview.md) | The IoT simulator and its separation |
 
@@ -63,7 +66,7 @@ operate or audit it.
 |---|---|
 | [Archive index](99-archive/README.md) | All historical audits and batch reports |
 | [Competition package](competition/PHASE1_TECHNICAL_REPORT.md) | Frozen submission artefacts |
-| [Engineering evidence](engineering/evidence/) | Surviving raw logs and artefacts |
+| [Engineering evidence](engineering/README.md) | Surviving raw logs and artefacts, by batch |
 
 Historical records are point-in-time. A historical PASS does not mean the current commit passes.
 

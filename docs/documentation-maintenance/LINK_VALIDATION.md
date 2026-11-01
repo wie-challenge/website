@@ -16,8 +16,8 @@ the file's directory, testing that the target exists on disk.
 
 | Measure | Value |
 |---|---|
-| Markdown files scanned | 183 |
-| Internal links parsed | 453 |
+| Markdown files scanned | 184 |
+| Internal links parsed | 476 |
 | **Broken internal links** | **4** |
 
 All four are pre-existing breaks inside archived historical reports, not navigation links.

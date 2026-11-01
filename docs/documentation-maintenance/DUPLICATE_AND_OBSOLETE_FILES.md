@@ -4,24 +4,31 @@
 
 ## Exact duplicates
 
-**57 redundant copies in 33 groups, 0.64 MB.** Content-hash comparison across the 827 files now under
-`docs/`, excluding `preservation-backup/`, found 33 groups of byte-identical files. In each group the
-highest-ranked copy is authoritative and the rest are redundant.
+**None.** Content-hash comparison across every file under `docs/`, excluding `preservation-backup/`,
+found no two files with identical bytes.
 
-The previous revision of this document claimed **none**, across 1,525 artefacts. That count was
-taken before the archive move completed and before the verification bundle was de-duplicated; it no
-longer describes the tree.
+This is the result of a deduplication pass, not of the tree having been clean. It previously held
+57 redundant copies in 33 groups (0.64 MB). Four earlier statements in this document were wrong on
+this point; the history is below so the correction is traceable rather than silent.
 
-| Group | Copies | What it is |
+| Was claimed | Was true | Corrected |
 |---|---|---|
-| `recovered-git/**` | 16 files | Recovery copies, 16 of 19 byte-identical to their `99-archive/` originals |
-| `schema.log` | 11 | The same Prisma schema validation, captured once per batch |
-| `diff.log` / `diff-check.log` | 15 | Empty or near-empty diff output, captured once per batch |
-| Various logs and JSON exports | 15 | Batch-scoped repeats of one another |
+| No duplicates across 1,525 artefacts | 57 redundant copies in 33 groups, before the archive move completed | 1 November 2026 |
+| `recovered-git/` was a 19-file recovery scaffold | 18 of its 19 files were byte-identical to copies elsewhere | Removed; 1 unique file kept |
+| 11 copies of one `schema.log` were distinct batch records | The file is 142 bytes: "The schema at prisma/schema.prisma is valid" | Collapsed to one |
+| 15 copies of `diff.log` were distinct batch records | Every one was **0 bytes** | Removed |
 
-These are retained. They are batch-scoped evidence whose value is that each batch captured it at
-its own moment; deleting an 11th copy because its bytes match the 10th would remove the record that
-that batch ran the check at all. The 0.64 MB they occupy is not worth that loss.
+## What was kept and why
+
+Each byte-identical group now has exactly one copy, placed in the folder that produced it:
+
+- **Batch evidence** stays in its own `evidence/batchN-*/` folder, even where an aggregate folder
+  also held a copy. The batch folder is what a report cites.
+- **Probe scripts** connected to the 31 October verification stay in that bundle's `probes/`.
+- **`recovered-git/.../REMAINING_GAPS.md`** is the one survivor of that recovery tree. It is
+  byte-identical to no other file, and it records the pre-edit text that later became
+  `08-backlog-and-acceptance/known-gaps.md`. Keeping the recovery copy preserves what the file said
+  before the move; keeping only the renamed version would lose it.
 
 ## Near-duplicates examined
 
@@ -70,9 +77,8 @@ retained, and its `README.md` records what went and why.
 
 | Measure | Value |
 |---|---|
-| Files under `docs/` | 827 |
-| Markdown files | 226 |
-| Markdown outside backup and recovery copies | 183 |
+| Files under `docs/` | 771 |
+| Markdown files | 211 |
 | Tracked files | 683 |
-| Tracked payload | 9.6 MB |
-| Working-tree size | 29 MB |
+| Tracked payload | 9.2 MB |
+| Working-tree size | 25.7 MB |
