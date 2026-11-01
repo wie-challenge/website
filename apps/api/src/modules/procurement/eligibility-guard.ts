@@ -26,6 +26,7 @@ export async function commitmentDenials(
     quantity: number;
     periodFrom: Date | null;
     periodTo: Date | null;
+    acceptingOfferId?: string;
   },
 ): Promise<CommitmentDenial[]> {
   const denied: CommitmentDenial[] = [];
@@ -111,7 +112,9 @@ export async function commitmentDenials(
       id: input.capacityDeclarationId,
       artisanProfileId: profile.id,
       craftSkillId: input.craftSkillId,
-      supersededAt: null,
+      // An issued offer keeps its declaration reference across revisions of the same period.
+      // projectCapacity and the period check below still require sufficient current capacity.
+      ...(input.acceptingOfferId ? {} : { supersededAt: null }),
     },
   });
   if (!declaration)
@@ -120,7 +123,7 @@ export async function commitmentDenials(
       detail: 'The capacity declaration behind this offer is no longer current.',
     });
   else {
-    const projection = await projectCapacity(tx, declaration);
+    const projection = await projectCapacity(tx, declaration, new Date(), input.acceptingOfferId);
     if (!projection.availabilityKnown)
       denied.push({
         code: 'CAPACITY_UNKNOWN',

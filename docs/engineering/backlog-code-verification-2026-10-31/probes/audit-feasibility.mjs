@@ -1,4 +1,0 @@
-import assert from 'node:assert/strict';
-import {assessFeasibility} from './packages/contracts/dist/index.js';
-const input={quantity:10,unit:'PIECES',deliveryAt:new Date('2027-01-03T00:00:00Z'),periodFrom:new Date('2027-01-01T00:00:00Z'),periodTo:new Date('2027-01-02T00:00:00Z'),capacityKnown:true,knownRemaining:'100.00',capacityConstraints:[],effort:{minPerUnit:'1.00',maxPerUnit:'2.00',version:1,source:'Synthetic audit input'},materialStatus:'CONFIRMED_AVAILABLE',sample:'APPROVED',calendarCleared:true};
-const a=assessFeasibility({...input,logisticsLeadDays:0}),b=assessFeasibility({...input,logisticsLeadDays:365});assert.equal(a.result,'FEASIBLE');assert.deepEqual(a,b);console.log(JSON.stringify({counterexampleReproduced:true,zeroDay:a,threeHundredSixtyFiveDays:b,meaning:'Known 365-day transport cannot meet one-day post-production delivery but does not affect result.'},null,2));

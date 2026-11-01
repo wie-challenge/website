@@ -23,6 +23,16 @@ no test establishes the behaviour. **PARTIAL** — some of the described behavio
 | Append-only audit trail | VERIFIED | `modules/foundation/audit.ts` | DB trigger `audit_append_only`; `test/unit/foundation.test.ts` |
 | Rate limiting (Arcjet, development limiter) | VERIFIED | `modules/foundation/` | `test/unit/security.test.ts` |
 
+## Current branch regression work — 1 November 2026
+
+The acceptance guard converts the offer's own reservation instead of counting it twice, and
+rechecks revised declarations for the same production period. Custody conservation applies per
+leg; partial collection can reach the full total before hub confirmation and onward dispatch.
+Buyer quote projections retain tax-review status while excluding internal costing containers.
+The regression assertions are in `apps/api/test/commerce.scenarios.ts`, `capacity.scenarios.ts`,
+`execution.scenarios.ts`, `procurement.scenarios.ts` and `unit/remediation-batch1.test.ts`.
+These bounded corrections do not grant whole-backlog or external acceptance.
+
 ## Commerce
 
 | Capability | Status | Code | Test evidence |

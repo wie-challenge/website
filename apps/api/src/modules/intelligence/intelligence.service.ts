@@ -54,7 +54,14 @@ export class IntelligenceService {
             select: { artisanProfileId: true, decision: true, version: true },
             orderBy: { version: 'desc' },
           },
-          payables: { include: { settlements: true } },
+          payables: {
+            include: {
+              settlements: true,
+              // Real payout evidence. Synthetic settlements stay separate and are never read as
+              // verified payment; verified figures come from execution records only.
+              payouts: { include: { executions: true } },
+            },
+          },
           shipments: {
             include: {
               items: true,
@@ -167,7 +174,9 @@ export class IntelligenceService {
       const paidProfiles = new Set(
         orders.flatMap((order) =>
           order.payables
-            .filter((payable) => C.verifiedPaidMillimes(payable.settlements) > 0n)
+            .filter(
+              (payable) => C.verifiedPaidMillimes(C.payoutEvidenceEvents(payable.payouts)) > 0n,
+            )
             .map((payable) => payable.artisanProfileId),
         ),
       );
@@ -204,12 +213,19 @@ export class IntelligenceService {
           ),
         0n,
       );
-      // Verified paid is summed per payable so a replayed or duplicated settlement cannot inflate it.
+      // Verified paid is deduplicated by payment identity inside the helper, then clamped to each
+      // payable here, where the obligation is known. A replay cannot inflate it and an overpayment
+      // cannot exceed what was owed.
       const verifiedPaid = orders.reduce(
         (sum, order) =>
           sum +
           order.payables.reduce(
-            (inner, payable) => inner + C.verifiedPaidMillimes(payable.settlements),
+            (inner, payable) =>
+              inner +
+              C.clampVerifiedToObligation(
+                C.verifiedPaidMillimes(C.payoutEvidenceEvents(payable.payouts)),
+                payable.amountMillimes,
+              ),
             0n,
           ),
         0n,
@@ -316,6 +332,8 @@ export class IntelligenceService {
                 payableMillimes: (earned > verifiedPaid ? earned - verifiedPaid : 0n).toString(),
                 simulatedPaidMillimes: simulatedPaid.toString(),
                 verifiedPaidMillimes: verifiedPaid.toString(),
+                // No approved settlement-verification authority exists (owner decision D1 open).
+                authorityApproved: false,
               }),
         producerShare: C.producerShare({
           agreedCompensationMillimes: agreed.toString(),
@@ -600,14 +618,22 @@ export class IntelligenceService {
       });
       const payables = await tx.artisanPayable.findMany({
         where: { batchId },
-        include: { settlements: true },
+        include: { settlements: true, payouts: { include: { executions: true } } },
       });
       const earned = payables.reduce((n, row) => n + row.amountMillimes, 0n);
       const simulated = payables.reduce(
         (n, row) => n + C.simulatedPaidMillimes(row.settlements),
         0n,
       );
-      const verified = payables.reduce((n, row) => n + C.verifiedPaidMillimes(row.settlements), 0n);
+      const verified = payables.reduce(
+        (n, row) =>
+          n +
+          C.clampVerifiedToObligation(
+            C.verifiedPaidMillimes(C.payoutEvidenceEvents(row.payouts)),
+            row.amountMillimes,
+          ),
+        0n,
+      );
       return {
         batchId,
         unit: 'TND/hour',
@@ -624,6 +650,8 @@ export class IntelligenceService {
           payableMillimes: (earned > verified ? earned - verified : 0n).toString(),
           simulatedPaidMillimes: simulated.toString(),
           verifiedPaidMillimes: verified.toString(),
+          // No approved settlement-verification authority exists (owner decision D1 open).
+          authorityApproved: false,
         }),
         estimate: C.earningsFromObservedTime({
           agreedMillimes: (batch.offer.unitPayMillimes * BigInt(batch.offer.quantity)).toString(),

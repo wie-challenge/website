@@ -1,9 +1,0 @@
-
-Running 2 tests using 1 worker
-
-(node:46098) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
-(Use `node --trace-warnings ...` to show where the warning was created)
-  ✓  1 docs/engineering/evidence/batch14-remediation/baseline-independent.spec.ts:16:2 › lost committed response followed by edited retry conflicts 390 (1.1s)
-  ✓  2 docs/engineering/evidence/batch14-remediation/baseline-independent.spec.ts:16:2 › lost committed response followed by edited retry conflicts 1280 (1.0s)
-
-  2 passed (17.1s)

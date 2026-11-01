@@ -51,6 +51,7 @@ test('timeliness excludes synthetic, partial, disputed, overpaid and unknown dat
         date: '2026-10-14T00:00:00.000Z',
         verified: true,
         status: 'VERIFIED_SETTLED',
+        reference: 'ref-b12-a',
       },
     ],
   };
@@ -99,12 +100,14 @@ test('timeliness requires full settlement and reports completion on final partia
             date: '2026-10-09T00:00:00.000Z',
             verified: true,
             status: 'VERIFIED_SETTLED',
+            reference: 'ref-b12-b',
           },
           {
             amount: 501n,
             date: '2026-10-11T00:00:00.000Z',
             verified: true,
             status: 'VERIFIED_SETTLED',
+            reference: 'ref-b12-c',
           },
         ],
       },

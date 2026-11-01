@@ -42,7 +42,8 @@ PICKUP_SCHEDULED → COLLECTED → IN_TRANSIT → DELIVERY_REPORTED → BUYER_CO
 | Receive at hub | Operator | logistics | Confirms `RECEIVED_AT_HUB`; shipment becomes `COLLECTED` |
 | Hand to transport | Operator | logistics | `HANDED_TO_TRANSPORT`; becomes `IN_TRANSIT` |
 
-A short collection is stored and **cannot** be confirmed as a full hub receipt. Hand-to-transport is
+Partial collections are retained and may accumulate to the shipment total. Hub receipt confirms
+that full collected total; an incomplete collection cannot be confirmed. Hand-to-transport is
 synthetic; it is not carrier confirmation.
 
 No actor can record another actor's step. The operator cannot record the association's collection or
@@ -60,8 +61,9 @@ Enforced in `packages/contracts/src/logistics.ts`, all rejected with `DELIVERY_M
 | `accepted + damaged = received` | Inspection must account for every received piece |
 | `shortage ≥ 0` | Derived from the above; never negative |
 
-Custody is cumulative: the sum of handovers cannot exceed the shipped quantity, so a replayed
-handover cannot create pieces.
+Custody is cumulative **per leg**: collections cannot exceed the shipment total, and dispatch has
+its own balance. Moving the same pieces from association to hub and then to transport does not
+consume quantity twice. Hub confirmation restates receipt rather than adding movement.
 
 ## Buyer confirmation
 

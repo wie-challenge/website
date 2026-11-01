@@ -585,10 +585,10 @@ export async function runProcurementScenarios({
       assert.ok(docs.documents.some((d) => d.kind === 'QUOTE' && d.superseded));
       assert.ok(docs.documents.some((d) => d.kind === 'CONTRACT'));
       const download = await get<{
-        document: { content: { terms: { totalTnd: string; quantity: number } } };
+        document: { totalTnd: string; quantity: number };
       }>(buyer, `/documents/${invoice.id}/download`);
-      assert.equal(download.document.content.terms.totalTnd, '88.888');
-      assert.equal(download.document.content.terms.quantity, 8);
+      assert.equal(download.document.totalTnd, '88.888');
+      assert.equal(download.document.quantity, 8);
       assert.equal(
         (await outsider.client.request(`${root}/documents/${invoice.id}/download`)).status,
         404,
@@ -608,11 +608,11 @@ export async function runProcurementScenarios({
       const delivery = await ok(assigned, `/rfqs/${id}/documents`, { kind: 'DELIVERY' });
       assert.ok(
         (
-          await get<{ document: { content: { delivered: number } } }>(
+          await get<{ document: { delivered: number } }>(
             buyer,
             `/documents/${delivery.id}/download`,
           )
-        ).document.content.delivered === 8,
+        ).document.delivered === 8,
       );
       const list = await get<{ items: { kind: string }[] }>(buyer, '/documents');
       assert.ok(list.items.some((d) => d.kind === 'INVOICE'));

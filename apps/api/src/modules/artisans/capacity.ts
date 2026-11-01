@@ -49,6 +49,7 @@ export async function projectCapacity(
   db: Db,
   declaration: Declaration,
   now = new Date(),
+  acceptingOfferId?: string,
 ): Promise<CapacitySummary> {
   const period = {
     artisanProfileId: declaration.artisanProfileId,
@@ -77,6 +78,10 @@ export async function projectCapacity(
       artisanProfileId: declaration.artisanProfileId,
       capacityDeclaration: period,
       status: { in: ['PLANNED', 'OFFERED', 'ACCEPTED'] },
+      // Acceptance converts this existing reservation; every other hold still counts.
+      ...(acceptingOfferId
+        ? { NOT: { id: acceptingOfferId, status: { in: ['PLANNED', 'OFFERED'] } } }
+        : {}),
     },
     select: {
       quantity: true,

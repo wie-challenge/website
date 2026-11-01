@@ -120,8 +120,8 @@ test('buyer accepts the exact costed quotation after feasibility review', async 
   await page.goto(`/procurement/${fixture.rfqId}`);
   await page.getByRole('tab', { name: 'Quotes', exact: true }).click();
   await expect(page.getByRole('heading', { name: 'Quotation v1 · 660.000 TND' })).toBeVisible();
-  await expect(page.getByText('Tax is pending legal review')).toBeVisible();
-  await expect(page.getByText('Acceptance does not reserve capacity')).toBeVisible();
+  await expect(page.getByText('Tax is pending legal review', { exact: false })).toBeVisible();
+  await expect(page.getByText(/Acceptance does not\s+reserve capacity/)).toBeVisible();
   await expect(page.getByRole('main')).not.toContainText('ARTISAN_LABOR');
   const detail = await page.request.get(`/api/v1/procurement/rfqs/${fixture.rfqId}`);
   expect(detail.ok()).toBeTruthy();

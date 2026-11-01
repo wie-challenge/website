@@ -787,7 +787,9 @@ export async function runBatch12Scenarios({ db, register, check }: Harness) {
       assert.equal(r.actualContributionTnd, null);
     },
   );
-  const query = '?from=2026-10-01T00:00:00.000Z&to=2026-11-01T00:00:00.000Z';
+  // Include newly recorded fixture events after the calendar crosses into November.
+  const through = new Date(Date.now() + 86400000).toISOString();
+  const query = `?from=2026-10-01T00:00:00.000Z&to=${encodeURIComponent(through)}`;
   await check(
     'B12 accounting export reconciles immutable sources with period, audit and financial disclosure scopes',
     async () => {

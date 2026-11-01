@@ -1,9 +1,0 @@
-{"level":40,"time":1793486458662,"pid":250486,"hostname":"ashenix-crawlere40","eventId":"audit-jobs-event","correlationId":"synthetic-audit","status":"RETRY","attempts":1,"durationMs":1,"msg":"Outbox delivery"}
-{"level":40,"time":1793486458676,"pid":250486,"hostname":"ashenix-crawlere40","eventId":"audit-jobs-event","correlationId":"synthetic-audit","status":"RETRY","attempts":2,"durationMs":1,"msg":"Outbox delivery"}
-{"level":40,"time":1793486458684,"pid":250486,"hostname":"ashenix-crawlere40","eventId":"audit-jobs-event","correlationId":"synthetic-audit","status":"RETRY","attempts":3,"durationMs":0,"msg":"Outbox delivery"}
-{"level":40,"time":1793486458694,"pid":250486,"hostname":"ashenix-crawlere40","eventId":"audit-jobs-event","correlationId":"synthetic-audit","status":"RETRY","attempts":4,"durationMs":1,"msg":"Outbox delivery"}
-{"level":40,"time":1793486458703,"pid":250486,"hostname":"ashenix-crawlere40","eventId":"audit-jobs-event","correlationId":"synthetic-audit","status":"FAILED","attempts":5,"durationMs":1,"msg":"Outbox delivery"}
-(node:250486) DeprecationWarning: Calling client.query() when the client is already executing a query is deprecated and will be removed in pg@9.0. Use async/await or an external async flow control mechanism instead.
-(Use `node --trace-deprecation ...` to show where the warning was created)
-{"level":30,"time":1793486458743,"pid":250486,"hostname":"ashenix-crawlere40","eventId":"audit-jobs-event","correlationId":"synthetic-audit","status":"DELIVERED","attempts":1,"durationMs":28,"msg":"Outbox delivery"}
-{"nativePostgres":true,"tenantMismatchRejected":true,"lagMilliseconds":60049,"failedAttempts":5,"errorCodeExposed":true,"replayDelivered":true,"rebuildPreservesPayables":true,"receiptCount":1}

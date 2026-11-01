@@ -1694,6 +1694,10 @@ model ArtisanPayable {
   provenance        String           @default("SYNTHETIC")
   createdAt         DateTime         @default(now())
   settlements       SimulatedSettlement[]
+  // Real payout evidence. `PayoutRequest_payableId_fkey` already exists in the database
+  // (20261027080000_financial_controls); these back-relations expose it to Prisma so verified
+  // payment evidence can be read from the payable without a schema migration.
+  payouts           PayoutRequest[]
   sampleRequestId   String? @unique
   sampleRequest     ProductSampleRequest? @relation("SampleLedger", fields: [sampleRequestId], references: [id], onDelete: Restrict, onUpdate: NoAction)
 
@@ -1859,6 +1863,8 @@ model PayoutRequest {
   id String @id @default(cuid())
   orderId String
   payableId String
+  payable ArtisanPayable @relation(fields: [payableId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  executions PayoutExecutionRecord[]
   amountMillimes BigInt
   payableSnapshotMillimes BigInt
   requesterId String
@@ -1875,6 +1881,7 @@ model PayoutRequest {
 model PayoutExecutionRecord {
   id String @id @default(cuid())
   payoutId String
+  payout PayoutRequest @relation(fields: [payoutId], references: [id], onDelete: Restrict, onUpdate: Cascade)
   amountMillimes BigInt
   reference String @unique
   evidence String

@@ -199,11 +199,10 @@ export class LogisticsService {
         const shipment = loaded.shipment;
         this.version(shipment.version, input.version);
         const total = shipment.items.reduce((sum, item) => sum + item.quantity, 0);
-        // Conservation counts every earlier handover, so a replayed or repeated movement cannot
-        // create pieces. Confirmation rows restate a movement rather than adding one, so only
-        // recording events consume custody.
+        // The same pieces move through successive legs. Only earlier movements on this leg
+        // consume its balance; a hub confirmation restates the incoming collection.
         const recorded = shipment.handovers
-          .filter((row) => !row.priorHandoverId)
+          .filter((row) => row.eventType === input.eventType && !row.priorHandoverId)
           .reduce((sum, row) => sum + row.quantity, 0);
         if (input.eventType !== 'RECEIVED_AT_HUB')
           C.custodyConservation({
@@ -244,7 +243,10 @@ export class LogisticsService {
           const prior = shipment.handovers.find((row) => row.id === input.priorHandoverId);
           if (prior?.eventType !== 'COLLECTED_FROM_ASSOCIATION' || prior.confirmation)
             fail(409, 'CONFIRMATION_REQUIRED', 'Confirm a pending association collection.');
-          if (prior.quantity !== total)
+          const collected = shipment.handovers
+            .filter((row) => row.eventType === 'COLLECTED_FROM_ASSOCIATION')
+            .reduce((sum, row) => sum + row.quantity, 0);
+          if (collected !== total || input.quantity !== total)
             fail(
               409,
               'HANDOVER_SHORT',
@@ -1177,6 +1179,24 @@ export class LogisticsService {
   ) {
     const quantity = row.items.reduce((total, item) => total + item.quantity, 0);
     const pickup = row.pickups.at(-1);
+    // Reconstructed from immutable facts - shipped items, the operator's delivery report and the
+    // buyer's received count. The stored `missing` column is deliberately NOT read: its meaning
+    // changed in Batch 1, and deriving from facts is exact under either rule. If the recorded facts
+    // do not conserve, the provenance is reported as absent rather than guessed.
+    const confirmationProvenance = row.buyerConfirmation
+      ? (() => {
+          try {
+            return C.reconstructReceipt({
+              shipped: quantity,
+              operatorReported: row.deliveryReport?.quantity ?? 0,
+              buyerReceived: row.buyerConfirmation.received,
+              storedMissing: row.buyerConfirmation.missing,
+            });
+          } catch {
+            return null;
+          }
+        })()
+      : null;
     return {
       id: row.id,
       status: row.status,
@@ -1189,8 +1209,16 @@ export class LogisticsService {
       windowEnd: pickup?.windowEnd.toISOString() ?? null,
       provenance: 'SYNTHETIC' as const,
       carrierConfirmed: false,
+      // Separated quantities. `delivered` is the operator's report and is not the shipped figure;
+      // the buyer's own declaration is distinct from the operator's reporting gap. `missing` is
+      // retained for existing consumers and carries the same total it always has.
       delivered: row.deliveryReport?.quantity ?? 0,
+      buyerReceived: row.buyerConfirmation?.received ?? 0,
       buyerAccepted: row.buyerConfirmation?.accepted ?? 0,
+      buyerDeclaredMissing: confirmationProvenance?.buyerDeclaredMissing ?? 0,
+      notReportedByOperator: confirmationProvenance?.operatorNotReported ?? 0,
+      totalUnaccounted: confirmationProvenance?.totalUnaccounted ?? 0,
+      provenanceComplete: Boolean(confirmationProvenance),
       missing: row.buyerConfirmation?.missing ?? 0,
       damaged: row.buyerConfirmation?.damaged ?? 0,
       discrepancy: row.buyerConfirmation?.discrepancy?.status ?? null,

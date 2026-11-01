@@ -1487,6 +1487,15 @@ export class CollaborationService {
                   missing: true,
                   damaged: true,
                   provenance: true,
+                  // Immutable facts needed to attribute an unaccounted piece to the operator or the
+                  // buyer without reading the stored `missing` value, whose meaning changed in
+                  // Batch 1.
+                  shipment: {
+                    select: {
+                      items: { select: { quantity: true } },
+                      deliveryReport: { select: { quantity: true } },
+                    },
+                  },
                 },
                 orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
                 take: 20,
@@ -1517,15 +1526,33 @@ export class CollaborationService {
           total,
           page: query.page,
           pageSize: query.pageSize,
-          eligibleReceipts: receipts.map((receipt) => ({
-            confirmationId: receipt.id,
-            shipmentId: receipt.shipmentId,
-            received: receipt.received,
-            accepted: receipt.accepted,
-            missing: receipt.missing,
-            damaged: receipt.damaged,
-            provenance: receipt.provenance,
-          })),
+          eligibleReceipts: receipts.map((receipt) => {
+            const shipped = receipt.shipment.items.reduce((n, item) => n + item.quantity, 0);
+            let provenance: ReturnType<typeof C.reconstructReceipt> | null = null;
+            try {
+              provenance = C.reconstructReceipt({
+                shipped,
+                operatorReported: receipt.shipment.deliveryReport?.quantity ?? 0,
+                buyerReceived: receipt.received,
+                storedMissing: receipt.missing,
+              });
+            } catch {
+              // Facts do not conserve: report the limitation instead of guessing an attribution.
+              provenance = null;
+            }
+            return {
+              confirmationId: receipt.id,
+              shipmentId: receipt.shipmentId,
+              received: receipt.received,
+              accepted: receipt.accepted,
+              missing: receipt.missing,
+              damaged: receipt.damaged,
+              buyerDeclaredMissing: provenance?.buyerDeclaredMissing ?? 0,
+              notReportedByOperator: provenance?.operatorNotReported ?? 0,
+              provenanceComplete: Boolean(provenance),
+              provenance: receipt.provenance,
+            };
+          }),
           followUpOwners: owners,
           limitations: feedbackLimitationNotes,
         } satisfies C.FeedbackListResponse;

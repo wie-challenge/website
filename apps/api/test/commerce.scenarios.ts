@@ -332,6 +332,22 @@ export async function runCommerceScenarios({ db, register, check, config }: Harn
         acknowledgeOriginalTerms: true,
         version: 1,
       };
+      const boundOffer = await db.commercialOffer.findUniqueOrThrow({ where: { id: offerId } });
+      const boundCapacity = await db.capacityDeclaration.findUniqueOrThrow({
+        where: { id: boundOffer.capacityDeclarationId },
+      });
+      await db.capacityDeclaration.update({
+        where: { id: boundCapacity.id },
+        data: { quantity: boundOffer.quantity - 1 },
+      });
+      const noLongerCovered = await command(artisan, `offers/${offerId}/actions`, decision);
+      assert.equal(noLongerCovered.status, 409);
+      assert.equal((noLongerCovered.body as { code: string }).code, 'CAPACITY_UNAVAILABLE');
+      // Exact-fill acceptance converts its own hold, while retaining all other reservations.
+      await db.capacityDeclaration.update({
+        where: { id: boundCapacity.id },
+        data: { quantity: boundOffer.quantity },
+      });
       const accepted = await Promise.all([
         command(artisan, `offers/${offerId}/actions`, decision, key),
         command(artisan, `offers/${offerId}/actions`, decision, key),
@@ -339,6 +355,10 @@ export async function runCommerceScenarios({ db, register, check, config }: Harn
       assert.equal(accepted[0].status, 201);
       assert.deepEqual(accepted[0].body, accepted[1].body);
       assert.equal(await db.commercialBatch.count({ where: { offerId } }), 1);
+      await db.capacityDeclaration.update({
+        where: { id: boundCapacity.id },
+        data: { quantity: boundCapacity.quantity },
+      });
       batchId = (await db.commercialBatch.findUniqueOrThrow({ where: { offerId } })).id;
       assert.equal((await workspace(buyer)).offers.length, 0);
       assert.equal(

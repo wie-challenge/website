@@ -342,8 +342,11 @@ function BuyerFeedbackForm({ orderId }: { orderId: string }) {
             >
               {eligible.map((receipt) => (
                 <option key={receipt.confirmationId} value={receipt.confirmationId}>
-                  Received {receipt.received}, accepted {receipt.accepted}, missing{' '}
-                  {receipt.missing}, damaged {receipt.damaged}
+                  Received {receipt.received}, accepted {receipt.accepted}, damaged{' '}
+                  {receipt.damaged}.{' '}
+                  {receipt.provenanceComplete
+                    ? `${receipt.missing} unaccounted for: ${receipt.notReportedByOperator} not reported delivered by the operator; ${receipt.buyerDeclaredMissing} declared missing by the buyer.`
+                    : `${receipt.missing} unaccounted for; operator and buyer attribution unavailable.`}
                 </option>
               ))}
             </select>

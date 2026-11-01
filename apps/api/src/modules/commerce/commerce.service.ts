@@ -696,6 +696,7 @@ export class CommerceService {
             orderId: order.id,
             craftSkillId: order.rfq.craftSkillId,
             capacityDeclarationId: row.capacityDeclarationId,
+            acceptingOfferId: row.id,
             quantity: row.quantity,
             periodFrom: capacity.effectiveFrom ?? null,
             periodTo: capacity.effectiveTo ?? null,

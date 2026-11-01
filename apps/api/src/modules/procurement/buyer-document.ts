@@ -147,6 +147,8 @@ const QUOTE_BUYER_FIELDS = [
   'version',
   'totalTnd',
   'taxTnd',
+  'taxStatus',
+  'taxPolicyReference',
   'netTnd',
   'subtotalTnd',
   'taxBasisPoints',

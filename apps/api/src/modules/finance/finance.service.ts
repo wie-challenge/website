@@ -1022,7 +1022,12 @@ export class FinanceService {
           where: { payableId: { in: payables.map((p) => p.id) } },
           orderBy: { version: 'desc' },
         }),
-        verificationAvailability: 'UNAVAILABLE_NO_APPROVED_SETTLEMENT_POLICY',
+        // Owner decision D1 is open: no approved settlement-verification authority exists, so the
+        // capability is reported unavailable rather than as a measured zero.
+        verificationAvailability: C.verificationAvailability({
+          authorityApproved: false,
+          verifiedPaid: 0n,
+        }),
       };
     });
   }
@@ -1120,13 +1125,19 @@ export class FinanceService {
               date: e.occurredAt.toISOString(),
               verified: e.bankVerified,
               status: e.status,
+              reference: e.reference,
             })),
         };
       });
       const metric = paymentTimeliness(rows, period.from, period.to);
       return {
         ...metric,
-        verificationAvailability: 'UNAVAILABLE_NO_APPROVED_SETTLEMENT_POLICY',
+        // Owner decision D1 is open: no approved settlement-verification authority exists, so the
+        // capability is reported unavailable rather than as a measured zero.
+        verificationAvailability: C.verificationAvailability({
+          authorityApproved: false,
+          verifiedPaid: 0n,
+        }),
         contractualDateHistory: dates.map((d) => ({ ...d, dueAt: d.dueAt?.toISOString() ?? null })),
         details: metric.details.map((detail) => {
           const request = payouts.filter((r) => r.payableId === detail.id);

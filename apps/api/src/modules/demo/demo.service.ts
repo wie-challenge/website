@@ -392,7 +392,7 @@ export class DemoService {
       body: { email: user.email, password: this.password(identity!.scenarioId) },
       headers: fromNodeHeaders({
         origin: this.config.PUBLIC_APP_URL,
-        'user-agent': req.headers['user-agent'] ?? 'HirfaCare synthetic showroom',
+        'user-agent': req.headers['user-agent'] ?? 'NASJ synthetic showroom',
       }),
       asResponse: true,
     });

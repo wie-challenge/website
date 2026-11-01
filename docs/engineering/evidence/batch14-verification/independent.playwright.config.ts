@@ -1,2 +1,0 @@
-import { defineConfig } from '@playwright/test';
-export default defineConfig({testDir:'.',testMatch:'independent.spec.ts',workers:1,timeout:120000,globalSetup:'../../../../tests/demo-e2e/setup.ts',outputDir:'./browser-artifacts',use:{baseURL:'http://127.0.0.1:3100',launchOptions:{executablePath:process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE??'/usr/bin/chromium'}},reporter:[['list'],['json',{outputFile:'independent-browser.json'}]]});

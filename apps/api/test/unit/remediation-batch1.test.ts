@@ -16,12 +16,16 @@ import {
 
 /* ---------------------------------------------------------------- CP5-G71 */
 
+// Batch 2 changed the verified-payment identity from `subjectKey` (the payable) to `reference`
+// (the unique payment reference). These fixtures gain a reference derived from their arguments so
+// each distinct fixture is a distinct payment, which is what the Batch 1 assertions intend.
 const settlement = (
   status: string,
   bankVerified: boolean,
   amountMillimes: bigint,
   subjectKey = 'payable-1',
-) => ({ status, bankVerified, amountMillimes, subjectKey });
+  reference = `ref-${subjectKey}-${amountMillimes}`,
+) => ({ status, bankVerified, amountMillimes, subjectKey, reference });
 
 test('G71: a synthetic settlement is never a verified payment, whatever its status', () => {
   for (const status of [
@@ -77,6 +81,8 @@ test('G71: a partial verified payment credits only the amount actually paid', ()
     payableMillimes: '40000',
     simulatedPaidMillimes: '0',
     verifiedPaidMillimes: verifiedPaidMillimes(rows).toString(),
+    // Batch 2: availability is a capability fact, not a consequence of a positive amount.
+    authorityApproved: true,
   });
   assert.equal(metrics.verifiedPaid, '60.000');
   assert.equal(metrics.payable, '40.000');
@@ -140,6 +146,8 @@ const internalSnapshot = {
   taxTnd: '228.000',
   netTnd: '972.000',
   taxBasisPoints: 1900,
+  taxStatus: 'PENDING_LEGAL_REVIEW',
+  taxPolicyReference: 'SYNTHETIC_POLICY',
   currency: 'TND',
   paymentTerms: 'Fifty percent on acceptance.',
   deliveryConditions: 'Delivered to the workshop door.',
@@ -154,6 +162,8 @@ test('G27: buyer projection keeps commercial terms and drops every costing conta
   const projected = projectBuyerSnapshot(internalSnapshot);
   assert.equal(projected.totalTnd, '1200.000');
   assert.equal(projected.taxTnd, '228.000');
+  assert.equal(projected.taxStatus, 'PENDING_LEGAL_REVIEW');
+  assert.equal(projected.taxPolicyReference, 'SYNTHETIC_POLICY');
   assert.equal(projected.paymentTerms, 'Fifty percent on acceptance.');
   for (const key of ['internal', 'costEstimate', 'feasibility', 'marginBasisPoints', 'lines'])
     assert.equal(key in projected, false, `${key} must not reach a buyer`);
@@ -263,9 +273,11 @@ test('G20: damaged and rejected pieces are counted separately from shortage', ()
 });
 
 test('G20: a report cannot exceed the shipped quantity', () => {
+  // Batch 2 split the combined guard into ordered invariants, so the message changed while the
+  // rule code did not. Assert the code: it is the contract, the prose is not.
   assert.throws(
     () => buyerReceipt({ shipped: 100, reported: 120, received: 120, accepted: 120, missing: 0 }),
-    /DELIVERY_MISMATCH|Reported|reported/,
+    (error: { code?: string }) => error.code === 'DELIVERY_MISMATCH',
   );
 });
 

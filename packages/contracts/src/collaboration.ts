@@ -242,6 +242,17 @@ export function feedbackEligibility(input: {
   return {
     eligible: true as const,
     reason: 'CONFIRMED_RECEIPT' as const,
+    // Batch 2 (D2 OPEN): the input `missing` is the stored total unaccounted for, so this flag is
+    // true for an operator reporting gap as well as for a buyer-declared or damaged receipt. That
+    // is the pre-existing meaning and it is preserved deliberately, not silently changed.
+    //
+    // Proposed alternatives, pending owner decision D2:
+    //   (a) Any unaccounted piece  - the current behaviour; the flag means "this receipt does not
+    //       reconcile cleanly", regardless of who reported the gap.
+    //   (b) Buyer-attributable only - `buyerDeclaredMissing > 0 || damaged > 0`; the flag would
+    //       mean "the buyer reported a problem", and an operator-only gap would be false.
+    // Choosing (b) is a breaking change for any consumer that treats the flag as "something is
+    // wrong with this receipt", so it needs the owner's definition before it is made.
     partialOrDamaged: input.missing > 0 || input.damaged > 0,
     acceptedZero: input.accepted === 0,
   };
@@ -680,8 +691,15 @@ export type FeedbackEligibleReceipt = {
   shipmentId: string;
   received: number;
   accepted: number;
+  /** Total unaccounted for. Retained; prefer the separated fields below for display. */
   missing: number;
   damaged: number;
+  /** Buyer's own declaration, reconstructed from immutable facts. */
+  buyerDeclaredMissing: number;
+  /** Pieces the operator never reported delivering. */
+  notReportedByOperator: number;
+  /** False when the recorded facts do not conserve and provenance cannot be reconstructed. */
+  provenanceComplete: boolean;
   provenance: string;
 };
 

@@ -178,7 +178,15 @@ test('an accepted batch is prepared, collected, confirmed and published as synth
   await page.goto(`/procurement/${fixture.rfqId}`);
   await page.getByRole('tab', { name: 'Delivery', exact: true }).click();
   const shipment = page.getByRole('article', { name: 'Shipment PICKUP_SCHEDULED' });
+  await expect(shipment).toBeVisible();
+  // Finance and preparation panels insert content above custody when their reads finish.
+  // Wait for the workspace to settle so a layout shift cannot move the button mid-click.
+  await expect(page.getByText('Loading workspace…', { exact: true })).toHaveCount(0);
+  const hubResponse = page.waitForResponse(
+    (response) => response.url().endsWith('/handovers') && response.request().method() === 'POST',
+  );
   await shipment.getByRole('button', { name: 'Confirm hub receipt', exact: true }).click();
+  expect((await hubResponse).status()).toBe(201);
   await page
     .getByRole('article', { name: 'Shipment COLLECTED' })
     .getByRole('button', { name: 'Record synthetic dispatch', exact: true })
@@ -193,7 +201,8 @@ test('an accepted batch is prepared, collected, confirmed and published as synth
   await receipt.getByRole('button', { name: 'Confirm buyer receipt', exact: true }).click();
   const discrepancy = page.getByRole('article', { name: 'Shipment DISCREPANCY' });
   await expect(discrepancy).toContainText('Buyer accepted 9');
-  await expect(discrepancy).toContainText('Missing 1');
+  await expect(discrepancy).toContainText('1 declared missing by the buyer');
+  await expect(discrepancy).toContainText('0 not reported delivered by the operator');
   await expect(page.getByText('No buyer-accepted payable is recognized.')).toBeVisible();
   const story = page
     .locator('form')
