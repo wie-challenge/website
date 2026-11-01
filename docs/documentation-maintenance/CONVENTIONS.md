@@ -58,9 +58,36 @@ record. If superseded, add a line at the top pointing to the newer document; lea
 
 Documentation and evidence are version-controlled. `.gitignore` previously excluded whole evidence
 trees, which allowed ~257 MB of audit evidence to be deleted with no recoverable copy. Only oversized
-binary artefacts (`.zip`, `.png`, Playwright traces) are ignored, each named explicitly.
+binary artefacts (`.zip`, `.png`, Playwright traces) and regenerable machine output are ignored, each
+named explicitly rather than by a broad pattern.
 
 **Before deleting any documentation, verify it is recoverable.** This is not optional.
+
+A deletion is recoverable only if the content is committed. `git show HEAD:<path>` is the test. A
+file that is gitignored, or staged for deletion but never committed, has no second copy: deleting it
+removes the only one. Stage nothing you intend to keep as the sole record.
+
+### What may be deleted without a retention decision
+
+- Machine output reproducible from a command (`gh` snapshots, build logs, Playwright traces).
+- Byte-identical duplicates where the authoritative copy is named and verified first.
+- Empty directories.
+
+Everything else — dated reports, acceptance matrices, evidence captures — is a record of a moment
+that cannot be regenerated, and stays.
+
+## Current size
+
+| Measure | Value |
+|---|---|
+| Files under `docs/` | 827 |
+| Markdown files | 226 |
+| Tracked files | 683 |
+| Tracked payload | 9.6 MB |
+| Working-tree size | 27 MB |
+
+The gap between tracked payload and working-tree size is gitignored evidence on this machine. It is
+not part of the repository and does not affect clone size or CI.
 
 ## When code changes
 

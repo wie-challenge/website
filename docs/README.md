@@ -75,4 +75,9 @@ Historical records are point-in-time. A historical PASS does not mean the curren
 | [Source of truth](documentation-maintenance/SOURCE_OF_TRUTH.md) | Which file is authoritative per topic |
 | [Conventions](documentation-maintenance/CONVENTIONS.md) | Where new documents belong |
 | [Evidence recovery status](documentation-maintenance/EVIDENCE_RECOVERY_STATUS.md) | The 31 October evidence loss |
-| [Final restructuring report](documentation-maintenance/FINAL_DOCUMENTATION_RESTRUCTURING_REPORT.md) | What this cleanup changed |
+| [Final restructuring report](documentation-maintenance/FINAL_DOCUMENTATION_RESTRUCTURING_REPORT.md) | What the restructuring changed, and section I correcting its own unfinished claims |
+| [Link validation](documentation-maintenance/LINK_VALIDATION.md) | Current broken-link count and its four known exceptions |
+| [Archive manifest](documentation-maintenance/ARCHIVE_MANIFEST.md) | What moved into `99-archive/` |
+| [Duplicates and obsolete files](documentation-maintenance/DUPLICATE_AND_OBSOLETE_FILES.md) | What is duplicated and why it is retained |
+| [Documentation gaps](documentation-maintenance/DOCUMENTATION_GAPS.md) | What is deliberately not documented |
+| [Inventory](documentation-maintenance/INVENTORY.json) | Machine-readable file list with sizes, hashes and tracked status |

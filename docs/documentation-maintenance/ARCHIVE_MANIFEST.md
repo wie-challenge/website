@@ -25,10 +25,9 @@ reconciliation and audit passes, tied to a snapshot date.
 `delivery-report`, `role-restructuring-audit`, `role-story-access-matrix`, `try-the-foundation`, moved
 from `docs/foundation/`. Reason: foundation-era documents describing a completed extraction.
 
-## superseded-plans/
-
-Reserved. Batch planning documents currently sit under `remediation-batches/` with the audits that
-superseded them.
+There is no `superseded-plans/` folder. Batch planning documents sit under `remediation-batches/`
+with the audits that superseded them, which keeps a plan beside the verdict on it. The reserved
+folder listed in the previous revision of this document was never created.
 
 ## What was NOT archived
 
@@ -36,14 +35,21 @@ superseded them.
 |---|---|
 | `docs/competition/` | Frozen submission artefacts. Content hash pinned in `artifact-validation.json`; moving or editing breaks `pnpm competition:validate`. |
 | `docs/engineering/evidence/` | Surviving raw evidence, referenced by archive reports. Binary artefacts remain gitignored. |
-| `docs/engineering/remediation-batch2/` | Active proposal awaiting owner decisions D1 and D2. |
+
+`docs/engineering/remediation-batch2/` is absent, not retained. It appears in the previous revision
+of this document as an active proposal awaiting owner decisions D1 and D2, but it holds no files and
+never has in any commit. The proposal it referred to does not exist in this repository.
 
 ## Verification
 
-All 380 tracked historical files were compared against `git show HEAD:<path>` after restructuring:
+The archive holds 111 files across four folders, plus [README.md](../99-archive/README.md) indexing
+them.
 
-- 368 byte-identical
-- 12 differ only by CRLF→LF normalization applied by `.gitattributes` (`* text=auto eol=lf`)
-- **0 genuinely modified**
+The original move was staged in the Git index and never written to the working tree, so for a period
+the 110 moved files existed only in `HEAD`. They were restored on 1 November 2026 and checked
+file-by-file: every restored file is byte-identical to its `HEAD` blob, 110 of 110, with SHA-256
+recorded in `MIGRATION_MANIFEST.json`. See section I of
+`FINAL_DOCUMENTATION_RESTRUCTURING_REPORT.md`.
 
-See `HASH_VERIFICATION.json`.
+`HASH_VERIFICATION.json` records the earlier comparison (368 identical, 12 CRLF-normalised, 0
+modified). It is retained as the record of that pass and does not cover the restore above.
