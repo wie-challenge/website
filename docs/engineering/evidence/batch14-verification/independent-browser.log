@@ -1,0 +1,13 @@
+
+Running 6 tests using 1 worker
+
+(node:42801) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓  1 docs/engineering/evidence/batch14-verification/independent.spec.ts:5:2 › visitor keyboard, invalid draft correction, retry and accessibility 390 (1.6s)
+  ✓  2 docs/engineering/evidence/batch14-verification/independent.spec.ts:16:2 › lost committed response followed by edited retry conflicts 390 (856ms)
+  ✓  3 docs/engineering/evidence/batch14-verification/independent.spec.ts:25:2 › ADMIN archived moderation and accessibility 390 (2.2s)
+  ✓  4 docs/engineering/evidence/batch14-verification/independent.spec.ts:5:2 › visitor keyboard, invalid draft correction, retry and accessibility 1280 (1.4s)
+  ✓  5 docs/engineering/evidence/batch14-verification/independent.spec.ts:16:2 › lost committed response followed by edited retry conflicts 1280 (874ms)
+  ✓  6 docs/engineering/evidence/batch14-verification/independent.spec.ts:25:2 › ADMIN archived moderation and accessibility 1280 (2.1s)
+
+  6 passed (23.7s)

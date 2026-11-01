@@ -1,0 +1,224 @@
+[
+  {
+    "file": "apps/api/prisma/migrations/202610150001_foundation/migration.sql",
+    "previousSha256": "29740de0863bc3ad2cf232bd970cfe564d9307502fd952afeb448c701f6e396d",
+    "currentSha256": "29740de0863bc3ad2cf232bd970cfe564d9307502fd952afeb448c701f6e396d",
+    "unchanged": true
+  },
+  {
+    "file": "apps/api/prisma/migrations/202610170001_identity_organizations/migration.sql",
+    "previousSha256": "b9559cc7c2d35ba8901765d314a146a0e82b65ecea0659a73c2fdec71ca2859d",
+    "currentSha256": "b9559cc7c2d35ba8901765d314a146a0e82b65ecea0659a73c2fdec71ca2859d",
+    "unchanged": true
+  },
+  {
+    "file": "apps/api/prisma/migrations/202610170002_privileged_mfa/migration.sql",
+    "previousSha256": "909dca296d3eac49e2ae4a41bb12a4b378eb34b8fd6e23da7914842b30917243",
+    "currentSha256": "909dca296d3eac49e2ae4a41bb12a4b378eb34b8fd6e23da7914842b30917243",
+    "unchanged": true
+  },
+  {
+    "file": "apps/api/prisma/migrations/202610170003_capacity_revisions/migration.sql",
+    "previousSha256": "552e261c4aa8177a47bbebc61d47cacf8acd80c6d845221aeabcc18035593b12",
+    "currentSha256": "552e261c4aa8177a47bbebc61d47cacf8acd80c6d845221aeabcc18035593b12",
+    "unchanged": true
+  },
+  {
+    "file": "apps/api/prisma/migrations/202610200001_e16_reliability/migration.sql",
+    "previousSha256": "cf120614773bb4aac625e5a304ca126dc599e98a6c544c846091243147b6ecd0",
+    "currentSha256": "cf120614773bb4aac625e5a304ca126dc599e98a6c544c846091243147b6ecd0",
+    "unchanged": true
+  },
+  {
+    "file": "apps/api/prisma/migrations/202610200001_nasj_rename/migration.sql",
+    "previousSha256": "738fbf3f13a1cd6e5934d3c6b1229bb9a0fac42db83246c7e523f32cbb5e9bf5",
+    "currentSha256": "738fbf3f13a1cd6e5934d3c6b1229bb9a0fac42db83246c7e523f32cbb5e9bf5",
+    "unchanged": true
+  },
+  {
+    "file": "apps/api/prisma/migrations/202610200002_synthetic_commerce/migration.sql",
+    "previousSha256": "a52b18e83bc45f0052f674f9812e845d4421a05b7dbfab877bcc87adb6593713",
+    "currentSha256": "a52b18e83bc45f0052f674f9812e845d4421a05b7dbfab877bcc87adb6593713",
+    "unchanged": true
+  },
+  {
+    "file": "apps/api/prisma/migrations/202610200003_commerce_projections/migration.sql",
+    "previousSha256": "e4b61ca0e239117dfc7cc66dd16cb489b60927784d40fdf2f3c7d6cf48433132",
+    "currentSha256": "e4b61ca0e239117dfc7cc66dd16cb489b60927784d40fdf2f3c7d6cf48433132",
+    "unchanged": true
+  },
+  {
+    "file": "apps/api/prisma/migrations/20261021010000_revised_foundation/migration.sql",
+    "previousSha256": "5240131f7b5820815ac6a5a3797b70308ea796c7499880d0a03aec79f823ccde",
+    "currentSha256": "5240131f7b5820815ac6a5a3797b70308ea796c7499880d0a03aec79f823ccde",
+    "unchanged": true
+  },
+  {
+    "file": "apps/api/prisma/migrations/20261021020000_buyer_purchasing_authority/migration.sql",
+    "previousSha256": "21369dfa6ed316e34550477ca0b7e7a4cde1632c6fe5453964f6ec6c89824d9f",
+    "currentSha256": "21369dfa6ed316e34550477ca0b7e7a4cde1632c6fe5453964f6ec6c89824d9f",
+    "unchanged": true
+  },
+  {
+    "file": "apps/api/prisma/migrations/20261021030000_buyer_procurement/migration.sql",
+    "previousSha256": "97162095f0b169ec23baeb9df3860c132734ed7249d32add52d04865825e006c",
+    "currentSha256": "97162095f0b169ec23baeb9df3860c132734ed7249d32add52d04865825e006c",
+    "unchanged": true
+  },
+  {
+    "file": "apps/api/prisma/migrations/20261021040000_nasj_operator_role/migration.sql",
+    "previousSha256": "7b12455e21b4fbfca4d48a0ee4346c62c7755f0ceb70a5f55b7471ad824325f9",
+    "currentSha256": "7b12455e21b4fbfca4d48a0ee4346c62c7755f0ceb70a5f55b7471ad824325f9",
+    "unchanged": true
+  },
+  {
+    "file": "apps/api/prisma/migrations/20261027010000_capacity_revisions/migration.sql",
+    "previousSha256": "6179da8012a2daefc2eea55cf440ecc1dd8f3c853b7b278590643d48daab3966",
+    "currentSha256": "6179da8012a2daefc2eea55cf440ecc1dd8f3c853b7b278590643d48daab3966",
+    "unchanged": true
+  },
+  {
+    "file": "apps/api/prisma/migrations/20261027020000_commercial_decisions/migration.sql",
+    "previousSha256": "4f255ce526e0377afd351c9bd4447b6412137428b775754afb21a1888f1a090e",
+    "currentSha256": "4f255ce526e0377afd351c9bd4447b6412137428b775754afb21a1888f1a090e",
+    "unchanged": true
+  },
+  {
+    "file": "apps/api/prisma/migrations/20261027030000_production_offers/migration.sql",
+    "previousSha256": "02ea8e82961e5c31db360d57df4d8c530a3949e9eef9311faf9ccac573656587",
+    "currentSha256": "02ea8e82961e5c31db360d57df4d8c530a3949e9eef9311faf9ccac573656587",
+    "unchanged": true
+  },
+  {
+    "file": "apps/api/prisma/migrations/20261027040000_production_execution/migration.sql",
+    "previousSha256": "221801ec61b3bf0bcf010dcee6d09ffb01488a0470fd9ccd41515e7eeaf5d9b6",
+    "currentSha256": "221801ec61b3bf0bcf010dcee6d09ffb01488a0470fd9ccd41515e7eeaf5d9b6",
+    "unchanged": true
+  },
+  {
+    "file": "apps/api/prisma/migrations/20261027050000_logistics_traceability/migration.sql",
+    "previousSha256": "dd20e0cf36158ecd1be1a5034590295ff90fe449473e5f027dcb540cfae5da6d",
+    "currentSha256": "dd20e0cf36158ecd1be1a5034590295ff90fe449473e5f027dcb540cfae5da6d",
+    "unchanged": true
+  },
+  {
+    "file": "apps/api/prisma/migrations/20261027060000_shipment_cancel_damage/migration.sql",
+    "previousSha256": "21f55f269f1e2cf24830a2201966ab1fda2cba10f59fb62b55585564f272718b",
+    "currentSha256": "21f55f269f1e2cf24830a2201966ab1fda2cba10f59fb62b55585564f272718b",
+    "unchanged": true
+  },
+  {
+    "file": "apps/api/prisma/migrations/20261027070000_inventory_controls/migration.sql",
+    "previousSha256": "e2d6c4fe269b01cc652d3a5f8bbdb1c32b039ea66b251cfb8ed2d73db074c8c5",
+    "currentSha256": "e2d6c4fe269b01cc652d3a5f8bbdb1c32b039ea66b251cfb8ed2d73db074c8c5",
+    "unchanged": true
+  },
+  {
+    "file": "apps/api/prisma/migrations/20261027080000_financial_controls/migration.sql",
+    "previousSha256": "ee4e8ebc8dab303c9c8c80b5397b06d8ed83dec3fca5a95440ae68a2a1d444c1",
+    "currentSha256": "ee4e8ebc8dab303c9c8c80b5397b06d8ed83dec3fca5a95440ae68a2a1d444c1",
+    "unchanged": true
+  },
+  {
+    "file": "apps/api/prisma/migrations/20261027090000_demo_scenarios/migration.sql",
+    "previousSha256": "8f4f682abf381ed9184884380b4dff277e3434bb945155d0c6a5d2f16ebd0611",
+    "currentSha256": "8f4f682abf381ed9184884380b4dff277e3434bb945155d0c6a5d2f16ebd0611",
+    "unchanged": true
+  },
+  {
+    "file": "apps/api/prisma/migrations/20261028010000_production_planning/migration.sql",
+    "previousSha256": "ef846aad77fdaa10b513116cf2b81c06d2cd951a0ecf5dcfbf8f1f46e53af1f9",
+    "currentSha256": "ef846aad77fdaa10b513116cf2b81c06d2cd951a0ecf5dcfbf8f1f46e53af1f9",
+    "unchanged": true
+  },
+  {
+    "file": "apps/api/prisma/migrations/20261028020000_product_catalog/migration.sql",
+    "previousSha256": "82209f596a2e32fddfb86d7218da13342f142303e45a3a102f21cb50f0106d55",
+    "currentSha256": "82209f596a2e32fddfb86d7218da13342f142303e45a3a102f21cb50f0106d55",
+    "unchanged": true
+  },
+  {
+    "file": "apps/api/prisma/migrations/20261028030000_collaboration/migration.sql",
+    "previousSha256": "f5806cd3a2d8d6fb47dc23845f691a25ec8acbb42e759a9cb203d803cfb358ad",
+    "currentSha256": "f5806cd3a2d8d6fb47dc23845f691a25ec8acbb42e759a9cb203d803cfb358ad",
+    "unchanged": true
+  },
+  {
+    "file": "apps/api/prisma/migrations/20261028040000_schedule_consent_and_spec_binding/migration.sql",
+    "previousSha256": "54a9f2202cd4ec3b6ad913144c87ecace1441f996671dc809cc6d4c6ce9ae547",
+    "currentSha256": "54a9f2202cd4ec3b6ad913144c87ecace1441f996671dc809cc6d4c6ce9ae547",
+    "unchanged": true
+  },
+  {
+    "file": "apps/api/prisma/migrations/20261028050000_sample_payables/migration.sql",
+    "previousSha256": "678d3d93cc4c90dda861612cf02c10ffb72cc79829eaff5ac81493ed699b54ce",
+    "currentSha256": "678d3d93cc4c90dda861612cf02c10ffb72cc79829eaff5ac81493ed699b54ce",
+    "unchanged": true
+  },
+  {
+    "file": "apps/api/prisma/migrations/20261028060000_sample_material_cost/migration.sql",
+    "previousSha256": "13f49910cbe1be1959405ebcecaafb20c58ce7087c33820b89f47d6065636997",
+    "currentSha256": "13f49910cbe1be1959405ebcecaafb20c58ce7087c33820b89f47d6065636997",
+    "unchanged": true
+  },
+  {
+    "file": "apps/api/prisma/migrations/20261028070000_order_specification_binding/migration.sql",
+    "previousSha256": "099e5c4f41f3353d3767735e2b83213f6e74887280899f0d01ea15f73a12a29f",
+    "currentSha256": "099e5c4f41f3353d3767735e2b83213f6e74887280899f0d01ea15f73a12a29f",
+    "unchanged": true
+  },
+  {
+    "file": "apps/api/prisma/migrations/20261028080000_intelligence_completion/migration.sql",
+    "previousSha256": "9407f9a8ab38ad4fe7cdf14959f9938dee2df4e125c0a5ad91ac205afb0f57dc",
+    "currentSha256": "9407f9a8ab38ad4fe7cdf14959f9938dee2df4e125c0a5ad91ac205afb0f57dc",
+    "unchanged": true
+  },
+  {
+    "file": "apps/api/prisma/migrations/20261028090000_exception_impact/migration.sql",
+    "previousSha256": "842c282a23720ca3fb6a755c2b8fcd5bf7fba92e45366d6fa5b8412126ec3b25",
+    "currentSha256": "842c282a23720ca3fb6a755c2b8fcd5bf7fba92e45366d6fa5b8412126ec3b25",
+    "unchanged": true
+  },
+  {
+    "file": "apps/api/prisma/migrations/20261028100000_inapp_notification_channel/migration.sql",
+    "previousSha256": "3e2e94fe622ecd77c5d6ff4a8178b188d809cbb44945fc7d73ef6dcd467b614a",
+    "currentSha256": "3e2e94fe622ecd77c5d6ff4a8178b188d809cbb44945fc7d73ef6dcd467b614a",
+    "unchanged": true
+  },
+  {
+    "file": "apps/api/prisma/migrations/20261028110000_collaboration_integrity/migration.sql",
+    "previousSha256": "47364b7dd1faadc2bb9c4f3fd9a92abad5ae7cc9ca1d7a759bfa0906f3df0164",
+    "currentSha256": "47364b7dd1faadc2bb9c4f3fd9a92abad5ae7cc9ca1d7a759bfa0906f3df0164",
+    "unchanged": true
+  },
+  {
+    "file": "apps/api/prisma/migrations/20261028120000_sample_ledger_and_approval_authority/migration.sql",
+    "previousSha256": "0e279143777fddfd44f2f6c1f050bc53a2527cba81d73afee13e35f25c6c57cc",
+    "currentSha256": "0e279143777fddfd44f2f6c1f050bc53a2527cba81d73afee13e35f25c6c57cc",
+    "unchanged": true
+  },
+  {
+    "file": "apps/api/prisma/migrations/20261028130000_planning_intelligence_authority/migration.sql",
+    "previousSha256": "fe11d74533269e250f5904e7c13bb7f585373376a774a9f05a0829c4ded21bcd",
+    "currentSha256": "fe11d74533269e250f5904e7c13bb7f585373376a774a9f05a0829c4ded21bcd",
+    "unchanged": true
+  },
+  {
+    "file": "apps/api/prisma/migrations/20261028140000_batch12_commercial_operations/migration.sql",
+    "previousSha256": "272ec4262826fa5bfe809fe3b6ca998e69ebbed3702c38aef2fea728db22621f",
+    "currentSha256": "272ec4262826fa5bfe809fe3b6ca998e69ebbed3702c38aef2fea728db22621f",
+    "unchanged": true
+  },
+  {
+    "file": "apps/api/prisma/migrations/20261028150000_financial_remediation_dates/migration.sql",
+    "previousSha256": "1719f0316f6877446c991b9695bd4a9d5a0e81de5d4ec0b07f3a0e8d5d6c344c",
+    "currentSha256": "1719f0316f6877446c991b9695bd4a9d5a0e81de5d4ec0b07f3a0e8d5d6c344c",
+    "unchanged": true
+  },
+  {
+    "file": "apps/api/prisma/migrations/20261028160000_buyer_order_feedback/migration.sql",
+    "previousSha256": "ba064aae85c93abb36ff3774ff1a95265a656b3247be8b3d998082b9283c9bc3",
+    "currentSha256": "ba064aae85c93abb36ff3774ff1a95265a656b3247be8b3d998082b9283c9bc3",
+    "unchanged": true
+  }
+]

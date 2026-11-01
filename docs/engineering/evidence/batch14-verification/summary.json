@@ -1,0 +1,68 @@
+{
+  "batch": 14,
+  "story": "E15-06",
+  "issue": 192,
+  "date": "2026-10-29",
+  "timezone": "Africa/Tunis",
+  "head": "f0b3d756dce0ea4ec3bde0addcb92fcff7d54844",
+  "verdict": "QUALIFIED_VERIFICATION_C5_PARTIAL",
+  "ownerAcceptance": "PENDING",
+  "criteria": {
+    "C1": "VERIFIED_SOFTWARE",
+    "C2": "VERIFIED_SOFTWARE",
+    "C3": "VERIFIED_SOFTWARE",
+    "C4": "VERIFIED_SOFTWARE",
+    "C5": "PARTIALLY_VERIFIED"
+  },
+  "findings": {
+    "P0": 0,
+    "P1": 0,
+    "P2": 1,
+    "LOW": 2,
+    "INFO": 1
+  },
+  "tests": {
+    "apiUnits": 147,
+    "webUnits": 25,
+    "integration": 206,
+    "showroomIsolationSubset": 9,
+    "batch14MigrationSubset": 6,
+    "separateShowroomRerun": 9,
+    "applicationBrowsers": 54,
+    "showroomBrowsers": 5,
+    "newOriginalE15BrowserTests": 2,
+    "independentAdversarialGroups": 13,
+    "independentBrowsers": 6,
+    "independentBrowserKnownDefectReproductions": 2,
+    "independentBrowserFunctionalAccessibilityCases": 4,
+    "independentAxeViolations": 0
+  },
+  "checks": {
+    "lint": "PASS_426_FILES",
+    "typecheck": "PASS",
+    "build": "PASS",
+    "prismaValidation": "PASS",
+    "diffCheck": "PASS"
+  },
+  "migration": {
+    "count": 38,
+    "historicalSqlUnchanged": 37,
+    "populatedUpgradePreservedBaselineTables": 132
+  },
+  "sourcePreservation": {
+    "files": 459,
+    "changed": 0,
+    "originalEvidenceChanged": 0
+  },
+  "gates": {
+    "E14-09": "PENDING_QUALIFIED_PRIVACY_REVIEW",
+    "ownerAcceptance": "PENDING",
+    "realCollectionEnabled": false,
+    "publicationAuthorized": false
+  },
+  "readyForUnconditionalOwnerAcceptanceRecommendation": false,
+  "backlogReconciliation": "READ_ONLY_INVENTORY_ONLY_CARRY_QUALIFIED_RESULT",
+  "persistentDatabaseTouched": false,
+  "productCodeChanged": false,
+  "githubChanged": false
+}

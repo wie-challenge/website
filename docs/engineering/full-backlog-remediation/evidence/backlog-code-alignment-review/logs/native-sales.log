@@ -1,0 +1,32 @@
+(node:251643) DeprecationWarning: Calling client.query() when the client is already executing a query is deprecated and will be removed in pg@9.0. Use async/await or an external async flow control mechanism instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+{"level":40,"time":1793486465357,"pid":251643,"hostname":"ashenix-crawlere40","code":"DOMAIN_TRANSACTION_REJECTED","msg":"Domain transaction rejected"}
+{"level":40,"time":1793486465415,"pid":251643,"hostname":"ashenix-crawlere40","code":"DOMAIN_TRANSACTION_REJECTED","msg":"Domain transaction rejected"}
+{"level":40,"time":1793486465448,"pid":251643,"hostname":"ashenix-crawlere40","code":"DOMAIN_TRANSACTION_REJECTED","msg":"Domain transaction rejected"}
+{
+ "noEvidence": {
+  "accepted": false,
+  "code": "CONTRACT_EVIDENCE_REQUIRED",
+  "msg": "Contracted status requires an accepted procurement order or a recorded signed-contract reference for this buyer organization."
+ },
+ "revisionAndStaleAssertions": {
+  "revisionPreserved": true,
+  "staleRejected": true
+ },
+ "acceptedRfq": {
+  "accepted": true,
+  "storedSnapshotEvidence": {
+   "kind": "SYNTHETIC_ACCEPTANCE",
+   "reference": "rfq-g95b",
+   "recordedAt": "2026-10-31T22:41:05.395Z"
+  },
+  "storedProvenance": "SYNTHETIC_APPLICATION_ACCEPTANCE",
+  "storedConversionMeaning": "EVIDENCE_RECORDED_NOT_LEGAL_SIGNATURE_VERIFIED",
+  "storedStatus": "CONTRACTED"
+ },
+ "smuggledReference": {
+  "accepted": false,
+  "code": "CONTRACT_EVIDENCE_REQUIRED",
+  "msg": "Contracted status requires an accepted procurement order or a recorded signed-contract reference for this buyer organization."
+ }
+}

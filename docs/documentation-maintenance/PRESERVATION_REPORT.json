@@ -1,0 +1,82 @@
+{
+ "generatedAt": "2026-11-01",
+ "repositories": {
+  "website": {
+   "path": "/home/ashenix/Projects/wie-challenge/website",
+   "head": "70a390061d83a47f8ae9af51120831aef7f789b1",
+   "branch": "feat/nasj-showroom-competition-package"
+  },
+  "docs": {
+   "path": "/home/ashenix/Projects/wie-challenge/docs",
+   "head": "2af3c699df2156fab57347b9f2e5d85f5d1a848f",
+   "branch": "main"
+  },
+  "ai-backend": {
+   "path": "/home/ashenix/Projects/wie-challenge/ai-backend",
+   "head": "48767c30a4e2752ad6373c76ea667ed4fbce5ed3",
+   "branch": "main"
+  },
+  "iot": {
+   "path": "/home/ashenix/Projects/wie-challenge/iot",
+   "head": "62fc3b61e7f3930b3324b0fe4231a0602b06a33a",
+   "branch": "main"
+  }
+ },
+ "sourceIntegrity": {
+  "productSourceModifiedByThisTask": false,
+  "productSourceModifiedInWorkingTree": true,
+  "workingTreeSourceChangesAreFrom": "Earlier authorized Remediation Batch 2 work and the NASJ brand rename, both predating this documentation task",
+  "documentationTaskTouchedOnlyDocsAndGitignore": true,
+  "migrationsModified": false,
+  "migrationCount": 39,
+  "githubStateChanged": false,
+  "commitsMade": 0,
+  "deployments": 0,
+  "head": "70a390061d83a47f8ae9af51120831aef7f789b1"
+ },
+ "historicalEvidence": {
+  "trackedFilesChecked": 380,
+  "byteIdentical": 368,
+  "crlfNormalisedOnly": 12,
+  "genuinelyModified": 0,
+  "note": "The 12 differ only because .gitattributes applies '* text=auto eol=lf' on checkout."
+ },
+ "evidenceLoss": {
+  "occurred": true,
+  "date": "2026-10-31T23:39 local",
+  "lostPaths": [
+   "docs/engineering/full-backlog-remediation/evidence/",
+   "docs/engineering/full-backlog-audit/evidence/"
+  ],
+  "lostScale": "approximately 1445 files, 257 MB",
+  "recoveredTracked": 19,
+  "preservedConcurrentProcessFiles": 34,
+  "recoverable": false,
+  "detail": "docs/documentation-maintenance/EVIDENCE_RECOVERY_STATUS.md"
+ },
+ "backup": {
+  "location": "docs/documentation-maintenance/preservation-backup/",
+  "files": 54,
+  "manifest": "MANIFEST.json with per-file sha256",
+  "verifiedReadable": true,
+  "gitTracked": false,
+  "reason": "Recovery evidence for the incident; excluded from navigation so it is not counted as a documentation duplicate."
+ },
+ "gitignoreChanges": [
+  {
+   "rule": "/reports/",
+   "change": "narrowed to /reports/*.log and /reports/tmp/",
+   "reason": "Cleanup reports are documentation and must be recoverable"
+  },
+  {
+   "rule": "/docs/engineering/**/evidence/",
+   "change": "narrowed to explicit *.zip, *.png, trace.zip",
+   "reason": "The broad rule allowed 257 MB of evidence to be deleted with no recoverable copy"
+  },
+  {
+   "rule": "/docs/documentation-maintenance/preservation-backup/",
+   "change": "added",
+   "reason": "Recovery copy, not navigation content"
+  }
+ ]
+}

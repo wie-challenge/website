@@ -1,0 +1,318 @@
+{
+  "config": {
+    "argv": [
+      "/home/ashenix/.local/share/mise/installs/node/24.20.0/bin/node",
+      "/home/ashenix/Projects/wie-challenge/website/node_modules/@playwright/test/cli.js",
+      "test",
+      "--config",
+      "docs/engineering/evidence/batch14-verification/independent.playwright.config.ts"
+    ],
+    "configFile": "/home/ashenix/Projects/wie-challenge/website/docs/engineering/evidence/batch14-verification/independent.playwright.config.ts",
+    "rootDir": "/home/ashenix/Projects/wie-challenge/website/docs/engineering/evidence/batch14-verification",
+    "failOnFlakyTests": false,
+    "forbidOnly": false,
+    "fullyParallel": false,
+    "globalSetup": "/home/ashenix/Projects/wie-challenge/website/tests/demo-e2e/setup.ts",
+    "globalTeardown": null,
+    "globalTimeout": 0,
+    "grep": {},
+    "grepInvert": null,
+    "maxFailures": 0,
+    "metadata": {
+      "actualWorkers": 1
+    },
+    "preserveOutput": "always",
+    "projects": [
+      {
+        "outputDir": "/home/ashenix/Projects/wie-challenge/website/docs/engineering/evidence/batch14-verification/browser-artifacts",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "",
+        "name": "",
+        "testDir": "/home/ashenix/Projects/wie-challenge/website/docs/engineering/evidence/batch14-verification",
+        "testIgnore": [],
+        "testMatch": [
+          "independent.spec.ts"
+        ],
+        "timeout": 120000
+      }
+    ],
+    "filteredProjects": [
+      {
+        "grep": {},
+        "grepInvert": null,
+        "outputDir": "/home/ashenix/Projects/wie-challenge/website/docs/engineering/evidence/batch14-verification/browser-artifacts",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "name": "",
+        "testDir": "/home/ashenix/Projects/wie-challenge/website/docs/engineering/evidence/batch14-verification",
+        "snapshotDir": "/home/ashenix/Projects/wie-challenge/website/docs/engineering/evidence/batch14-verification",
+        "testIgnore": [],
+        "testMatch": "independent.spec.ts",
+        "timeout": 120000,
+        "use": {
+          "baseURL": "http://127.0.0.1:3100",
+          "launchOptions": {
+            "executablePath": "/usr/bin/chromium"
+          }
+        },
+        "dependencies": [],
+        "ignoreSnapshots": false,
+        "__projectId": ""
+      }
+    ],
+    "quiet": false,
+    "reporter": [
+      [
+        "list",
+        null
+      ],
+      [
+        "json",
+        {
+          "outputFile": "docs/engineering/evidence/batch14-verification/independent-browser.json"
+        }
+      ]
+    ],
+    "reportSlowTests": {
+      "max": 5,
+      "threshold": 300000
+    },
+    "shard": null,
+    "tags": [],
+    "updateSnapshots": "default",
+    "updateSourceMethod": "patch",
+    "version": "1.64.1",
+    "workers": 1,
+    "webServer": null
+  },
+  "suites": [
+    {
+      "title": "independent.spec.ts",
+      "file": "independent.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "visitor keyboard, invalid draft correction, retry and accessibility 390",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 120000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 1617,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-29T20:00:08.730Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "82f714dc92b415937ba4-d690244a662dd2a01b44",
+          "file": "independent.spec.ts",
+          "line": 5,
+          "column": 2
+        },
+        {
+          "title": "lost committed response followed by edited retry conflicts 390",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 120000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 856,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-29T20:00:10.506Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "82f714dc92b415937ba4-a53bba63d43fccddf72c",
+          "file": "independent.spec.ts",
+          "line": 16,
+          "column": 2
+        },
+        {
+          "title": "ADMIN archived moderation and accessibility 390",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 120000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 2199,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-29T20:00:11.371Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "82f714dc92b415937ba4-5002c232de5c72e13f9a",
+          "file": "independent.spec.ts",
+          "line": 25,
+          "column": 2
+        },
+        {
+          "title": "visitor keyboard, invalid draft correction, retry and accessibility 1280",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 120000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 1369,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-29T20:00:13.578Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "82f714dc92b415937ba4-e440f80f92ee7d72a385",
+          "file": "independent.spec.ts",
+          "line": 5,
+          "column": 2
+        },
+        {
+          "title": "lost committed response followed by edited retry conflicts 1280",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 120000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 874,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-29T20:00:14.954Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "82f714dc92b415937ba4-64aa333df25f5895811c",
+          "file": "independent.spec.ts",
+          "line": 16,
+          "column": 2
+        },
+        {
+          "title": "ADMIN archived moderation and accessibility 1280",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 120000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 2095,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-29T20:00:15.838Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "82f714dc92b415937ba4-e4fd92f1f1b1f5e4816a",
+          "file": "independent.spec.ts",
+          "line": 25,
+          "column": 2
+        }
+      ]
+    }
+  ],
+  "errors": [],
+  "stats": {
+    "startTime": "2026-10-29T19:59:55.462Z",
+    "duration": 23721.166,
+    "expected": 6,
+    "skipped": 0,
+    "unexpected": 0,
+    "flaky": 0
+  }
+}

@@ -1,0 +1,76 @@
+{
+  "date": "2026-10-29",
+  "timezone": "Africa/Tunis",
+  "story": "E15-06",
+  "githubIssue": 192,
+  "head": "f0b3d756dce0ea4ec3bde0addcb92fcff7d54844",
+  "verdict": "B14_IV_02_REMEDIATED_ALL_FIVE_SOFTWARE_CRITERIA_VERIFIED",
+  "ownerAcceptance": "PENDING",
+  "criteria": {
+    "C1": "VERIFIED_SOFTWARE_CRITERIA",
+    "C2": "VERIFIED_SOFTWARE_CRITERIA",
+    "C3": "VERIFIED_SOFTWARE_CRITERIA",
+    "C4": "VERIFIED_SOFTWARE_CRITERIA",
+    "C5": "VERIFIED_SOFTWARE_CRITERIA"
+  },
+  "findings": {
+    "B14-IV-02": "REMEDIATED_VERIFIED",
+    "B14-IV-01": "OPEN_LOW_UNCHANGED",
+    "B14-IV-03": "OPEN_LOW_UNCHANGED",
+    "B14-IV-04": "METADATA_CORRECTED_HISTORICAL_EVIDENCE_PRESERVED"
+  },
+  "tests": {
+    "apiUnits": 147,
+    "webUnits": 25,
+    "integrationScenarios": 206,
+    "showroomIsolationSubset": 9,
+    "batch14MigrationSubset": 6,
+    "applicationBrowsers": 54,
+    "currentShowroomBrowsers": 17,
+    "originalShowroomBrowsers": 5,
+    "originalNewBatch14Journeys": 2,
+    "newRemediationRegressions": 12,
+    "focusedRemediationSubsetRerun": 12,
+    "additionalRateBrowserCase": 1,
+    "additionalRateBrowserViewports": [
+      390,
+      1280
+    ],
+    "adversarialAssertionGroups": 13,
+    "historicalIndependentBrowserProbes": 6,
+    "baselineBugReproductions": 2,
+    "currentIndependentP2SequenceCorrections": 2,
+    "focusedAxeCheckpoints": 14,
+    "rateAxeCheckpoints": 2,
+    "axeViolations": 0
+  },
+  "checks": {
+    "lint": "PASS_427_FILES",
+    "typecheck": "PASS",
+    "build": "PASS",
+    "prismaValidation": "PASS",
+    "diffCheck": "PASS"
+  },
+  "scope": {
+    "productFilesChanged": [
+      "apps/web/src/components/demo-feedback-panel.tsx"
+    ],
+    "serverGuaranteesChanged": false,
+    "migrationsChanged": false,
+    "ratePolicyChanged": false,
+    "persistentBrowserDraftStorageAdded": false,
+    "priorIndependentArtifactsChanged": false,
+    "persistentDatabaseTouched": false,
+    "gitIndexChanged": false,
+    "githubChanged": false,
+    "deployed": false,
+    "batch15Started": false
+  },
+  "readyForOwnerAcceptanceReview": true,
+  "externalGates": {
+    "ownerAcceptance": "PENDING",
+    "E14-09": "PENDING_QUALIFIED_PRIVACY_REVIEW",
+    "realCollectionAuthorized": false,
+    "publicationAuthorized": false
+  }
+}

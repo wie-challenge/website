@@ -1,0 +1,86 @@
+[
+  {
+    "command": "pnpm exec playwright test --config docs/engineering/evidence/batch14-remediation/baseline.playwright.config.ts",
+    "exitCode": 0,
+    "log": "baseline-reproducer.log",
+    "result": "2 confirmations of the original defect; original source",
+    "sourceManifest": "baseline.json"
+  },
+  {
+    "command": "pnpm exec playwright test --config docs/engineering/evidence/batch14-remediation/focused.playwright.config.ts",
+    "exitCode": 0,
+    "log": "focused-browser.log",
+    "result": "12 current-source recovery cases, subset of 17",
+    "sourceManifest": "tested-source-hashes.json"
+  },
+  {
+    "command": "pnpm exec playwright test --config docs/engineering/evidence/batch14-remediation/rate.playwright.config.ts",
+    "exitCode": 0,
+    "log": "rate-browser.log",
+    "result": "1 case checks two widths under actual rate policy",
+    "sourceManifest": "tested-source-hashes.json"
+  },
+  {
+    "command": "pnpm test",
+    "exitCode": 0,
+    "log": "units.log",
+    "result": "147 API + 25 web",
+    "sourceManifest": "tested-source-hashes.json"
+  },
+  {
+    "command": "pnpm test:integration",
+    "exitCode": 0,
+    "log": "integration.log",
+    "result": "206 including 9 isolation and 6 migration",
+    "sourceManifest": "tested-source-hashes.json"
+  },
+  {
+    "command": "pnpm test:e2e",
+    "exitCode": 0,
+    "log": "e2e-all.log",
+    "result": "54 application + 17 showroom",
+    "sourceManifest": "tested-source-hashes.json"
+  },
+  {
+    "command": "pnpm exec tsx --tsconfig apps/api/tsconfig.json docs/engineering/evidence/batch14-remediation/adversarial.ts",
+    "exitCode": 0,
+    "log": "adversarial.log",
+    "result": "13 groups, including two retained LOW counterexamples",
+    "sourceManifest": "tested-source-hashes.json"
+  },
+  {
+    "command": "pnpm lint",
+    "exitCode": 0,
+    "log": "lint.log",
+    "result": "427 files",
+    "sourceManifest": "tested-source-hashes.json"
+  },
+  {
+    "command": "pnpm typecheck",
+    "exitCode": 0,
+    "log": "typecheck.log",
+    "result": "pass",
+    "sourceManifest": "tested-source-hashes.json"
+  },
+  {
+    "command": "pnpm build",
+    "exitCode": 0,
+    "log": "build.log",
+    "result": "pass",
+    "sourceManifest": "tested-source-hashes.json"
+  },
+  {
+    "command": "DATABASE_URL=postgresql://unused:unused@127.0.0.1:1/unused MIGRATION_DATABASE_URL=postgresql://unused:unused@127.0.0.1:1/unused pnpm --filter @nasj/api exec prisma validate",
+    "exitCode": 0,
+    "log": "schema.log",
+    "result": "offline validation",
+    "sourceManifest": "tested-source-hashes.json"
+  },
+  {
+    "command": "git diff --check",
+    "exitCode": 0,
+    "log": "diff-check.log",
+    "result": "pass",
+    "sourceManifest": "tested-source-hashes.json"
+  }
+]
