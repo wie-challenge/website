@@ -94,14 +94,22 @@ test('an artisan accepts issued work and an accountless report stays unverified'
   await login(page, emails.artisan, '/commerce/artisan');
   await page.setViewportSize({ width: 390, height: 844 });
   await expect(page.getByText('30.000 TND', { exact: true })).toBeVisible();
-  await expect(page.getByText('A reviewed translation is not available.')).toBeVisible();
+  await page.getByLabel('Offer language', { exact: true }).selectOption('en');
+  await expect(page.getByText(/A reviewed translation is not available/)).toBeVisible();
   expect(
     await page.evaluate(
       () => document.documentElement.scrollWidth <= document.documentElement.clientWidth,
     ),
   ).toBe(true);
+  await page.getByLabel('Offer language', { exact: true }).selectOption('en');
+  await page
+    .getByRole('checkbox', {
+      name: 'I understand and have reviewed the original English terms for this exact offer version.',
+      exact: true,
+    })
+    .check();
   await page.getByRole('button', { name: 'Accept this offer voluntarily', exact: true }).click();
-  await expect(page.getByRole('heading', { name: 'Artisan offer · Accepted' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'État de l’offre: Accepted' })).toBeVisible();
   await page.context().clearCookies();
   await page.setViewportSize({ width: 1280, height: 800 });
   await login(page, emails.coordinator, '/association');

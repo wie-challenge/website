@@ -103,6 +103,14 @@ export const RETENTION_INVENTORY = [
     'Buyer corrections append a new version instead of rewriting history; no deletion endpoint exists; any erasure requires the qualified privacy review below',
   ),
   entry(
+    'DEMO_VISITOR_FEEDBACK',
+    'Voluntary structured feedback about a synthetic demonstration, used only to improve the demonstration',
+    ['Visitor for their own submissions', 'Qualified team reviewer with administrator identity'],
+    'Feedback triage closes or the whole exhibition is retired',
+    'Preserve the submitted words unchanged plus every attributable moderation decision so a review can be reconstructed; a showroom reset archives a scenario and must not destroy this evidence',
+    'The visitor may only read their own submissions; a reviewer may not alter submitted text; no deletion endpoint exists and any erasure requires the qualified review below',
+  ),
+  entry(
     'DEMO_SYNTHETIC',
     'Isolated demonstration and executable tests',
     ['Visitor within generation', 'Test harness'],

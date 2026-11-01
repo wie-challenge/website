@@ -47,6 +47,39 @@ export class SalesService {
       fn,
     );
   }
+  /**
+   * Contracted status is an evidentiary claim, not a stage label. Two records can support it: an
+   * accepted procurement order for this buyer organization (the same path issue #205 already trusts
+   * for a won pilot proposal), or a signed-contract reference the sales owner recorded on the
+   * prospect snapshot. Absent both, the transition is refused. No signature or legal status is
+   * inferred, and the recorded provenance says so.
+   */
+  private async contractedEvidence(
+    tx: Db,
+    prospect: {
+      id: string;
+      buyerOrganizationId: string;
+      operatorOrganizationId: string;
+      snapshot: unknown;
+    },
+  ): Promise<{ ok: true; kind: string; reference: string } | { ok: false }> {
+    const accepted = await tx.commercialRfq.findFirst({
+      where: {
+        buyerOrganizationId: prospect.buyerOrganizationId,
+        operatorOrganizationId: prospect.operatorOrganizationId,
+        status: 'ACCEPTED',
+        order: { isNot: null },
+      },
+      select: { id: true, status: true },
+      orderBy: { updatedAt: 'desc' },
+    });
+    if (accepted) return { ok: true, kind: 'SYNTHETIC_ACCEPTANCE', reference: accepted.id };
+    const snapshot = prospect.snapshot as Record<string, unknown> | null;
+    const reference = snapshot?.signedContractReference;
+    if (typeof reference === 'string' && reference.trim().length >= 6)
+      return { ok: true, kind: 'SIGNED_CONTRACT_REFERENCE', reference: reference.trim() };
+    return { ok: false };
+  }
   private async owner(tx: Db, orgId: string, userId: string) {
     const m = await tx.organizationMember.findFirst({
       where: { organizationId: orgId, userId, status: 'ACTIVE' },
@@ -203,7 +236,10 @@ export class SalesService {
         const edges: Record<string, string[]> = {
           LEAD: ['QUALIFIED', 'LOST'],
           QUALIFIED: ['PROPOSAL', 'LOST'],
-          PROPOSAL: ['QUALIFIED', 'LOST'],
+          // CONTRACTED is deliberately reachable from PROPOSAL. The edge is listed so the stage is
+          // not a dead end, but the guard below demands accepted procurement or signed-contract
+          // evidence; selecting the enum alone never satisfies it.
+          PROPOSAL: ['QUALIFIED', 'CONTRACTED', 'LOST'],
           CONTRACTED: [],
           LOST: ['LEAD'],
         };
@@ -213,7 +249,30 @@ export class SalesService {
             'INVALID_TRANSITION',
             'Use the reviewed sales stages; contracted status requires separately reviewed signed-contract evidence.',
           );
+        const contractedEvidence =
+          input.status === 'CONTRACTED' && old.status !== 'CONTRACTED'
+            ? await this.contractedEvidence(tx, p)
+            : null;
+        if (contractedEvidence && !contractedEvidence.ok)
+          fail(
+            409,
+            'CONTRACT_EVIDENCE_REQUIRED',
+            'Contracted status requires an accepted procurement order or a recorded signed-contract reference for this buyer organization.',
+          );
         const { version, organizationName, ...snapshot } = input;
+        if (contractedEvidence?.ok)
+          Object.assign(snapshot, {
+            contractedEvidence: {
+              kind: contractedEvidence.kind,
+              reference: contractedEvidence.reference,
+              recordedAt: new Date().toISOString(),
+            },
+            stageProvenance:
+              contractedEvidence.kind === 'SYNTHETIC_ACCEPTANCE'
+                ? 'SYNTHETIC_APPLICATION_ACCEPTANCE'
+                : 'APPLICATION_CONTRACT_REFERENCE_LEGAL_STATUS_UNVERIFIED',
+            conversionMeaning: 'EVIDENCE_RECORDED_NOT_LEGAL_SIGNATURE_VERIFIED',
+          });
         if (organizationName) {
           const organization = await tx.organization.findUniqueOrThrow({
             where: { id: p.buyerOrganizationId },

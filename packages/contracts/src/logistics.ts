@@ -136,7 +136,15 @@ export function plannedContribution(revenueMillimes: bigint, costMillimes: bigin
   if (costMillimes > revenueMillimes) return { status: 'UNAVAILABLE' as const, millimes: null };
   return { status: 'PLANNED' as const, millimes: revenueMillimes - costMillimes };
 }
+/**
+ * The delivery report states how many pieces the operator handed over at the destination. It is not
+ * the shipped quantity. A short report used to redefine "reported", which let the buyer's receipt
+ * reconcile against the short figure and made the shortfall disappear: shipped 100, reported 80,
+ * received 80, missing 0 read as a clean delivery. Conservation therefore reconciles against the
+ * shipped quantity, and any unexplained difference is an explicit shortage that cannot be netted out.
+ */
 export function buyerReceipt(input: {
+  shipped: number;
   reported: number;
   received: number;
   accepted: number;
@@ -144,18 +152,225 @@ export function buyerReceipt(input: {
   damaged?: number;
 }) {
   const damaged = input.damaged ?? input.received - input.accepted;
+  // Every ordering invariant is established before any subtraction. `reported > shipped` used to be
+  // checked here while `notReported = shipped - reported` was computed before the non-negative
+  // assertion that guarded it; the ordering checks now come first so no negative can be produced.
   requireRule(
-    input.reported >= 0 &&
+    input.shipped >= 0 &&
+      input.reported >= 0 &&
       input.received >= 0 &&
       input.accepted >= 0 &&
       input.missing >= 0 &&
-      damaged >= 0 &&
-      input.received + input.missing === input.reported &&
-      input.accepted + damaged === input.received,
+      damaged >= 0,
     'DELIVERY_MISMATCH',
-    'Received and missing pieces must equal the reported delivery, and accepted plus damaged pieces must equal the received pieces.',
+    'Quantities cannot be negative.',
   );
-  return { damaged, discrepancy: input.missing > 0 || damaged > 0 };
+  requireRule(
+    input.reported <= input.shipped,
+    'DELIVERY_MISMATCH',
+    'A delivery report cannot exceed the quantity shipped.',
+  );
+  requireRule(
+    input.received <= input.reported,
+    'DELIVERY_MISMATCH',
+    'The buyer cannot receive more pieces than the operator reported delivering.',
+  );
+  requireRule(
+    input.received + input.missing === input.reported,
+    'DELIVERY_MISMATCH',
+    'Received and missing pieces must equal the reported delivery.',
+  );
+  requireRule(
+    input.accepted + damaged === input.received,
+    'DELIVERY_MISMATCH',
+    'Accepted plus damaged pieces must equal the received pieces.',
+  );
+  // Everything shipped that the operator did not report arriving is unaccounted for, and everything
+  // received but not accepted is damaged. Neither may be silently absorbed.
+  const notReported = input.shipped - input.reported;
+  const shortage = notReported + input.missing;
+  return {
+    damaged,
+    shortage,
+    notReported,
+    discrepancy: shortage > 0 || damaged > 0,
+  };
+}
+
+/* ------------------------------------------------------- shipment provenance */
+
+/**
+ * The separated quantities behind a shipment's delivery. Each has its own source and its own
+ * meaning; none may be netted into another.
+ *
+ *   operatorNotReported  - shipped but never reported delivered by the operator
+ *   buyerDeclaredMissing - declared missing by the buyer
+ *   totalUnaccounted     - the sum of the two
+ *
+ * `damaged` is deliberately outside `totalUnaccounted`: a damaged piece arrived and was received,
+ * it was not unaccounted for.
+ */
+export type ShipmentProvenance = {
+  shipped: number;
+  operatorReported: number;
+  buyerReceived: number;
+  accepted: number;
+  damaged: number;
+  operatorNotReported: number;
+  buyerDeclaredMissing: number;
+  totalUnaccounted: number;
+  discrepancy: boolean;
+};
+
+export function shipmentProvenance(input: {
+  shipped: number;
+  operatorReported: number;
+  buyerReceived: number;
+  buyerDeclaredMissing: number;
+  accepted: number;
+  damaged: number;
+}): ShipmentProvenance {
+  requireRule(
+    input.shipped >= 0 &&
+      input.operatorReported >= 0 &&
+      input.buyerReceived >= 0 &&
+      input.buyerDeclaredMissing >= 0 &&
+      input.accepted >= 0 &&
+      input.damaged >= 0,
+    'DELIVERY_MISMATCH',
+    'Quantities cannot be negative.',
+  );
+  requireRule(
+    input.operatorReported <= input.shipped,
+    'DELIVERY_MISMATCH',
+    'A delivery report cannot exceed the quantity shipped.',
+  );
+  requireRule(
+    input.buyerReceived + input.buyerDeclaredMissing === input.operatorReported,
+    'DELIVERY_MISMATCH',
+    'Received and buyer-declared missing pieces must equal the operator-reported delivery.',
+  );
+  requireRule(
+    input.accepted + input.damaged === input.buyerReceived,
+    'DELIVERY_MISMATCH',
+    'Accepted plus damaged pieces must equal the received pieces.',
+  );
+  const operatorNotReported = input.shipped - input.operatorReported;
+  const totalUnaccounted = operatorNotReported + input.buyerDeclaredMissing;
+  return {
+    shipped: input.shipped,
+    operatorReported: input.operatorReported,
+    buyerReceived: input.buyerReceived,
+    accepted: input.accepted,
+    damaged: input.damaged,
+    operatorNotReported,
+    buyerDeclaredMissing: input.buyerDeclaredMissing,
+    totalUnaccounted,
+    discrepancy: totalUnaccounted > 0 || input.damaged > 0,
+  };
+}
+
+/**
+ * Reconstruction of a stored receipt's separated quantities.
+ *
+ * The stored `missing` column changed meaning in Batch 1: before the change it held the buyer's
+ * declaration, after it holds the total shortage. Neither version is read here - both are derived
+ * from immutable facts, so reconstruction is exact under either rule:
+ *
+ *   buyerDeclaredMissing = operatorReported - buyerReceived
+ *   operatorNotReported  = shipped - operatorReported
+ *   totalUnaccounted     = shipped - buyerReceived
+ */
+export type ReceiptRuleVersion = 'BUYER_DECLARATION' | 'TOTAL_SHORTAGE' | 'AMBIGUOUS';
+
+export type ReconstructedReceipt = {
+  shipped: number;
+  operatorReported: number;
+  buyerReceived: number;
+  operatorNotReported: number;
+  buyerDeclaredMissing: number;
+  totalUnaccounted: number;
+  /** Which stored-value rule the row's `missing` column is consistent with, if determinable. */
+  storedValueRule: ReceiptRuleVersion;
+};
+
+export function reconstructReceipt(input: {
+  shipped: number;
+  operatorReported: number;
+  buyerReceived: number;
+  /** The value persisted in BuyerDeliveryConfirmation.missing. Used only for classification. */
+  storedMissing: number;
+}): ReconstructedReceipt {
+  requireRule(
+    input.shipped >= 0 && input.operatorReported >= 0 && input.buyerReceived >= 0,
+    'DELIVERY_MISMATCH',
+    'Quantities cannot be negative.',
+  );
+  requireRule(
+    input.operatorReported <= input.shipped,
+    'DELIVERY_MISMATCH',
+    'A delivery report cannot exceed the quantity shipped.',
+  );
+  requireRule(
+    input.buyerReceived <= input.operatorReported,
+    'DELIVERY_MISMATCH',
+    'The buyer cannot have received more pieces than were reported delivered.',
+  );
+  const buyerDeclaredMissing = input.operatorReported - input.buyerReceived;
+  const operatorNotReported = input.shipped - input.operatorReported;
+  return {
+    shipped: input.shipped,
+    operatorReported: input.operatorReported,
+    buyerReceived: input.buyerReceived,
+    operatorNotReported,
+    buyerDeclaredMissing,
+    totalUnaccounted: operatorNotReported + buyerDeclaredMissing,
+    storedValueRule: receiptRuleVersion(input),
+  };
+}
+
+/**
+ * Classify which rule a stored `missing` value is consistent with. This is a reporting aid, not
+ * an input to reconstruction. Where both rules coincide (a clean delivery, or a receipt whose
+ * declaration happens to equal the total) the answer is AMBIGUOUS and must not be over-claimed.
+ */
+export function receiptRuleVersion(input: {
+  shipped: number;
+  operatorReported: number;
+  buyerReceived: number;
+  storedMissing: number;
+}): ReceiptRuleVersion {
+  const declared = input.operatorReported - input.buyerReceived;
+  const total = input.shipped - input.buyerReceived;
+  const matchesDeclared = input.storedMissing === declared;
+  const matchesTotal = input.storedMissing === total;
+  if (matchesDeclared && matchesTotal) return 'AMBIGUOUS';
+  if (matchesDeclared) return 'BUYER_DECLARATION';
+  if (matchesTotal) return 'TOTAL_SHORTAGE';
+  return 'AMBIGUOUS';
+}
+
+/**
+ * Custody conservation: the pieces leaving a holder must equal the pieces arriving with the next
+ * holder, and no handover may move more than the shipment contains. The caller sums earlier
+ * movements on the same custody leg, keeping confirmations and subsequent legs separate.
+ */
+export function custodyConservation(input: {
+  shipped: number;
+  previousHandovers: number;
+  quantity: number;
+}) {
+  requireRule(
+    input.quantity > 0 &&
+      input.previousHandovers >= 0 &&
+      input.previousHandovers + input.quantity <= input.shipped,
+    'EXCESS_HANDOVER',
+    'Custody movement cannot exceed the quantity shipped, counting every earlier handover.',
+  );
+  return {
+    moved: input.previousHandovers + input.quantity,
+    remaining: input.shipped - input.previousHandovers - input.quantity,
+  };
 }
 
 export const shipmentCreateSchema = z

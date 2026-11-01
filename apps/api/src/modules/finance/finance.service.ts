@@ -191,7 +191,10 @@ export class FinanceService {
             orderBy: { createdAt: 'asc' },
           })),
         ],
-        closure: await this.assess(tx, orderId),
+        closure: {
+          ...(await this.assess(tx, orderId)),
+          history: await this.assessmentHistory(tx, orderId),
+        },
       };
     });
   }
@@ -1019,7 +1022,12 @@ export class FinanceService {
           where: { payableId: { in: payables.map((p) => p.id) } },
           orderBy: { version: 'desc' },
         }),
-        verificationAvailability: 'UNAVAILABLE_NO_APPROVED_SETTLEMENT_POLICY',
+        // Owner decision D1 is open: no approved settlement-verification authority exists, so the
+        // capability is reported unavailable rather than as a measured zero.
+        verificationAvailability: C.verificationAvailability({
+          authorityApproved: false,
+          verifiedPaid: 0n,
+        }),
       };
     });
   }
@@ -1117,13 +1125,19 @@ export class FinanceService {
               date: e.occurredAt.toISOString(),
               verified: e.bankVerified,
               status: e.status,
+              reference: e.reference,
             })),
         };
       });
       const metric = paymentTimeliness(rows, period.from, period.to);
       return {
         ...metric,
-        verificationAvailability: 'UNAVAILABLE_NO_APPROVED_SETTLEMENT_POLICY',
+        // Owner decision D1 is open: no approved settlement-verification authority exists, so the
+        // capability is reported unavailable rather than as a measured zero.
+        verificationAvailability: C.verificationAvailability({
+          authorityApproved: false,
+          verifiedPaid: 0n,
+        }),
         contractualDateHistory: dates.map((d) => ({ ...d, dueAt: d.dueAt?.toISOString() ?? null })),
         details: metric.details.map((detail) => {
           const request = payouts.filter((r) => r.payableId === detail.id);
@@ -1489,6 +1503,21 @@ export class FinanceService {
       paidVerifiedTnd: '0.000',
     };
   }
+  private assessmentHistory(tx: Db, orderId: string) {
+    return tx.orderClosureAssessment.findMany({
+      where: { orderId },
+      select: {
+        id: true,
+        actorId: true,
+        status: true,
+        blockers: true,
+        snapshot: true,
+        createdAt: true,
+      },
+      orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
+      take: 20,
+    });
+  }
   async closure(actor: Actor, orderId: string, persist = false, key?: string) {
     return iamTransaction(this.db, actor, async (tx) => {
       const access = await this.access(
@@ -1499,7 +1528,11 @@ export class FinanceService {
       );
       if (!access.finance && !persist)
         fail(404, 'NOT_FOUND', 'Financial closure requires scoped finance access.');
-      if (!persist) return this.assess(tx, orderId);
+      if (!persist)
+        return {
+          ...(await this.assess(tx, orderId)),
+          history: await this.assessmentHistory(tx, orderId),
+        };
       return this.command(tx, actor, orderId, 'closure.assess', key, {}, async () => {
         const result = await this.assess(tx, orderId);
         const row = await tx.orderClosureAssessment.create({

@@ -69,6 +69,8 @@ export const envSchema = z.object({
   RATE_API_WINDOW: positive.default(60),
   RATE_ADMIN_MAX: positive.default(30),
   RATE_ADMIN_WINDOW: positive.default(60),
+  RATE_FEEDBACK_MAX: positive.default(8),
+  RATE_FEEDBACK_WINDOW: positive.default(300),
   NOTIFICATION_EMAIL_ENABLED: bool.default(false),
   SMTP_HOST: z.string().min(1).default('127.0.0.1'),
   SMTP_PORT: z.coerce.number().int().min(1).max(65535).default(1026),
@@ -108,6 +110,7 @@ export function validateEnvironment(values: Record<string, unknown>) {
       throw new Error('Production PUBLIC_APP_URL requires HTTPS.');
     if (!config.ARCJET_ENABLED || !config.ARCJET_KEY)
       throw new Error('Production requires configured Arcjet protection.');
+    if (config.ARCJET_MODE !== 'LIVE') throw new Error('Production requires ARCJET_MODE=LIVE.');
     if (
       (!config.SMTP_REQUIRE_TLS && !config.SMTP_SECURE) ||
       !config.SMTP_USER ||

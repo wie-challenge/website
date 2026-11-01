@@ -48,7 +48,14 @@ export type TimelinessObligation = {
   createdAt: string;
   provenance: string;
   disputed: boolean;
-  settlements: { amount: bigint; date: string | null; verified: boolean; status: string }[];
+  settlements: {
+    amount: bigint;
+    date: string | null;
+    verified: boolean;
+    status: string;
+    /** Authoritative payment identity. Timeliness deduplicates by it, like the paid totals. */
+    reference: string;
+  }[];
 };
 export function paymentTimeliness(
   rows: TimelinessObligation[],
@@ -69,10 +76,21 @@ export function paymentTimeliness(
   for (const r of rows) {
     const periodDate = new Date(r.dueAt ?? r.createdAt);
     if (periodDate < start || periodDate >= end) continue;
+    // Timeliness keeps its own requirement that a settlement has a usable date; that is what makes
+    // an on-time judgement possible at all. Identity deduplication is applied first so a replayed
+    // reference cannot move the completion instant or inflate the paid figure.
+    const seenReferences = new Set<string>();
     const verified = r.settlements
       .filter(
         (s) => s.verified && s.status === 'VERIFIED_SETTLED' && s.date && new Date(s.date) <= now,
       )
+      .filter((s) => {
+        const reference = s.reference?.trim();
+        if (!reference) return false;
+        if (seenReferences.has(reference)) return false;
+        seenReferences.add(reference);
+        return true;
+      })
       .sort((a, b) => new Date(a.date!).getTime() - new Date(b.date!).getTime());
     let paid = 0n;
     let completion: string | null = null;

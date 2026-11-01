@@ -10,7 +10,8 @@ import { formatTnd, addTnd, prorateTnd } from './domain.js';
  * verified measurement.
  */
 
-export const RISK_POLICY_VERSION = 2;
+export const RISK_POLICY_VERSION = 3;
+export const OBSERVED_EARNINGS_POLICY_VERSION = 2;
 export const METRICS_POLICY_VERSION = 1;
 export const MINIMUM_COHORT = 5;
 
@@ -76,6 +77,7 @@ export function assessDelayRisk(input: RiskInputs): RiskResult {
   if (
     input.lastProgressAt !== undefined &&
     (!input.lastProgressAt ||
+      !Number.isFinite(new Date(input.lastProgressAt).getTime()) ||
       now.getTime() - new Date(input.lastProgressAt).getTime() >
         (input.stalenessDays ?? 7) * 86400000)
   ) {
@@ -86,7 +88,8 @@ export function assessDelayRisk(input: RiskInputs): RiskResult {
         'The latest progress report is missing or older than the versioned seven-day review window.',
     });
   }
-  if (Number.isNaN(deadline.getTime())) {
+  if (Number.isNaN(deadline.getTime()) || Number.isNaN(now.getTime())) {
+    unknowns.push('INVALID_RISK_INSTANT');
     unknown(unknowns);
     return {
       policyVersion: RISK_POLICY_VERSION,
@@ -115,10 +118,10 @@ export function assessDelayRisk(input: RiskInputs): RiskResult {
       code: 'APPROVED_SCHEDULE_CHANGE',
       detail: 'An approved schedule change moves the applicable deadline.',
     });
-  if (daysToDeadline < 0 && remaining > 0) {
+  if (now.getTime() > deadline.getTime() && remaining > 0) {
     reasons.push({
       code: 'DEADLINE_PASSED',
-      detail: `The deadline passed ${Math.abs(daysToDeadline)} day(s) ago with ${remaining} piece(s) outstanding.`,
+      detail: `The applicable deadline ${deadline.toISOString()} has passed with ${remaining} piece(s) outstanding.`,
     });
     return {
       policyVersion: RISK_POLICY_VERSION,
@@ -375,7 +378,163 @@ export type CompensationMetrics = {
   payableMillimes: string;
   simulatedPaidMillimes: string;
   verifiedPaidMillimes: string;
+  /** Whether an approved verification authority exists. Never inferred from the paid amount. */
+  authorityApproved?: boolean;
 };
+
+/* ------------------------------------------------------- settlement evidence */
+
+/**
+ * The single authoritative definition of "independently verified payment". A settlement counts as
+ * verified paid participation only when the finance stream has recorded it as settled AND the bank
+ * reconciliation flag is set. Every other state - planned, initiated, failed, retried, simulated,
+ * or settled-but-unreconciled - is evidence of an intent to pay, never of payment.
+ *
+ * This predicate is shared so that participation, timeliness and compensation figures cannot drift
+ * apart. `SimulatedSettlement` rows are synthetic tools: `advance` pins `bankVerified` to false, so
+ * a synthetic row can never satisfy this check.
+ */
+export function isVerifiedSettlement(row: { status: string; bankVerified: boolean }): boolean {
+  return row.status === 'VERIFIED_SETTLED' && row.bankVerified === true;
+}
+
+/**
+ * Settlement states that are still live attempts rather than completed or abandoned money movement.
+ * Used where a retry must be refused; never used to recognise payment.
+ */
+export function isOpenSettlement(row: { status: string }): boolean {
+  return ['SCHEDULED', 'INITIATED', 'PENDING', 'RETRY', 'SIMULATED_INITIATED'].includes(row.status);
+}
+
+/**
+ * A verified payment event. `reference` is the authoritative payment identity recorded on the
+ * execution record (unique in the database). It is what makes two rows the same payment.
+ */
+export type VerifiedPaymentEvent = {
+  status: string;
+  bankVerified: boolean;
+  amountMillimes: bigint;
+  /** The unique, authoritative payment reference. An event without one has no identity. */
+  reference: string;
+  /**
+   * Legacy grouping key. Retained so existing call sites keep compiling; it is NOT an aggregation
+   * key for verified amounts, because one payable legitimately receives many partial payments.
+   */
+  subjectKey?: string;
+};
+
+/**
+ * Verified paid total, deduplicated by payment identity.
+ *
+ * Each distinct payment reference is credited exactly once; distinct references on the same payable
+ * are distinct payments and all count. The Batch 1 implementation aggregated by maximum per
+ * `subjectKey`, which silently discarded every partial payment after the largest on a payable
+ * (60,000 + 40,000 read as 60,000). Identity is now the payment reference, never the payable.
+ *
+ * An event with no reference has no identity and is not credited: crediting it would make a
+ * replay indistinguishable from a new payment. Non-positive amounts are not credited.
+ *
+ * The helper deliberately does not clamp to the obligation - it is not given one. Overpayment is
+ * handled by `clampVerifiedToObligation` at the call site, which knows the payable.
+ */
+export function verifiedPaidMillimes(events: VerifiedPaymentEvent[]): bigint {
+  const credited = new Map<string, bigint>();
+  for (const row of events) {
+    if (!isVerifiedSettlement(row)) continue;
+    if (row.amountMillimes <= 0n) continue;
+    const reference = row.reference?.trim();
+    if (!reference) continue;
+    if (credited.has(reference)) continue;
+    credited.set(reference, row.amountMillimes);
+  }
+  let total = 0n;
+  for (const amount of credited.values()) total += amount;
+  return total;
+}
+
+/**
+ * Clamp a verified total to the obligation it settles. Used at the call site where the payable
+ * amount is known; never inside `verifiedPaidMillimes`, which cannot see the obligation.
+ * Evidence of overpayment is preserved rather than hidden - only the credited figure is capped.
+ */
+export function clampVerifiedToObligation(
+  verifiedMillimes: bigint,
+  obligationMillimes: bigint,
+): bigint {
+  if (verifiedMillimes < 0n || obligationMillimes < 0n) return 0n;
+  return verifiedMillimes > obligationMillimes ? obligationMillimes : verifiedMillimes;
+}
+
+/**
+ * Project persisted payout evidence onto the verified-payment event shape.
+ *
+ * `PayoutExecutionRecord.reference` is unique in the database and is the authoritative payment
+ * identity. `status` and `bankVerified` are carried through unchanged: only a row that satisfies
+ * `isVerifiedSettlement` can ever be credited, and the database currently forbids that combination,
+ * so this projection cannot manufacture a verified payment on its own.
+ */
+export function payoutEvidenceEvents(
+  payouts:
+    | {
+        payableId: string;
+        executions?: {
+          status: string;
+          bankVerified: boolean;
+          amountMillimes: bigint;
+          reference: string;
+        }[];
+      }[]
+    | undefined
+    | null,
+): VerifiedPaymentEvent[] {
+  // Absent relations mean "no payout evidence loaded", which is zero evidence - never a licence to
+  // fall back to another table. Synthetic settlements are deliberately not read here.
+  return (payouts ?? []).flatMap((payout) =>
+    (payout.executions ?? []).map((execution) => ({
+      status: execution.status,
+      bankVerified: execution.bankVerified,
+      amountMillimes: execution.amountMillimes,
+      reference: execution.reference,
+      subjectKey: payout.payableId,
+    })),
+  );
+}
+
+/**
+ * The verification capability states. Availability is a property of the approved authority, never
+ * of whether money happens to have been paid: a supported system with no payments yet must not be
+ * indistinguishable from a system that cannot verify at all.
+ */
+export const verificationAvailabilityStates = [
+  'UNAVAILABLE_NO_APPROVED_SETTLEMENT_POLICY',
+  'AVAILABLE_NO_VERIFIED_PAYMENTS',
+  'AVAILABLE_VERIFIED_PAYMENTS',
+] as const;
+export type VerificationAvailability = (typeof verificationAvailabilityStates)[number];
+
+export function verificationAvailability(input: {
+  authorityApproved: boolean;
+  verifiedPaid: bigint;
+}): VerificationAvailability {
+  if (!input.authorityApproved) return 'UNAVAILABLE_NO_APPROVED_SETTLEMENT_POLICY';
+  return input.verifiedPaid > 0n ? 'AVAILABLE_VERIFIED_PAYMENTS' : 'AVAILABLE_NO_VERIFIED_PAYMENTS';
+}
+
+/**
+ * Simulated totals are reported separately and deliberately do not exclude anything: the point of
+ * the figure is to show how much synthetic money movement exists beside the verified figure.
+ */
+export function simulatedPaidMillimes(
+  settlements: { status: string; amountMillimes: bigint }[],
+): bigint {
+  let total = 0n;
+  for (const row of settlements) {
+    if (!['SIMULATED_SETTLED', 'SIMULATED_INITIATED'].includes(row.status)) continue;
+    if (row.amountMillimes <= 0n) continue;
+    total += row.amountMillimes;
+  }
+  return total;
+}
 
 /**
  * Compensation is split into four separate figures that are never summed into one "paid" number.
@@ -388,6 +547,13 @@ export function compensationMetrics(input: CompensationMetrics) {
   const payable = BigInt(input.payableMillimes);
   const simulated = BigInt(input.simulatedPaidMillimes);
   const verified = BigInt(input.verifiedPaidMillimes);
+  // Availability is a capability fact, not a consequence of the total. A system with an approved
+  // authority and no payments yet reports 0.000 *and* available; a system without one reports
+  // unavailable even if rows claim a positive amount.
+  const availability = verificationAvailability({
+    authorityApproved: input.authorityApproved ?? false,
+    verifiedPaid: verified,
+  });
   return {
     policyVersion: METRICS_POLICY_VERSION,
     currency: 'TND' as const,
@@ -396,7 +562,8 @@ export function compensationMetrics(input: CompensationMetrics) {
     payable: formatTnd(payable),
     simulatedPaid: formatTnd(simulated),
     verifiedPaid: formatTnd(verified),
-    verifiedAvailable: verified > 0n,
+    verifiedAvailable: availability !== 'UNAVAILABLE_NO_APPROVED_SETTLEMENT_POLICY',
+    verificationAvailability: availability,
     note: 'Agreed, earned, payable, simulated and verified amounts are distinct. They are never combined.',
   };
 }
@@ -519,48 +686,79 @@ export function producerShare(input: {
 /* ------------------------------------------------------------------ observed time */
 
 /**
- * Effective earnings from a consented observed-time record. Without consent, or without a positive
- * measured duration, the result stays unavailable. It is never inferred from wearable data.
+ * Full-scope agreed compensation may be divided only by complete observed time for that scope.
+ * Every current record must retain consent, positive integer minutes/units, a valid nonoverlapping
+ * reporting period, and an accepted evidence class. Units must sum exactly to the covered quantity.
+ * Partial coverage is unavailable: no partial denominator is paired with the full compensation.
+ * SYNTHETIC evidence stays synthetic; this estimate is neither earned nor verified paid income.
  */
 export function earningsFromObservedTime(input: {
   agreedMillimes: string | null;
-  records: { consented: boolean; observedMinutes: number | null; evidence: string }[];
+  coveredQuantity: number;
+  records: {
+    consented: boolean;
+    observedMinutes: number | null;
+    observedUnits: number;
+    periodFrom: string | Date;
+    periodTo: string | Date;
+    evidence: string;
+  }[];
   scope: string;
 }) {
-  if (input.agreedMillimes === null)
-    return {
-      status: 'UNAVAILABLE' as const,
-      reason: 'Agreed compensation is not recorded.',
-      hourlyTnd: null,
-      observedMinutes: null,
-      scope: input.scope,
-    };
-  const usable = input.records.filter(
-    (row) =>
-      row.consented &&
-      row.observedMinutes !== null &&
-      ['SYNTHETIC', 'OBSERVED'].includes(row.evidence),
-  );
-  if (!usable.length)
-    return {
-      status: 'UNAVAILABLE' as const,
-      reason: 'No consented observed-time record exists. Unknown time is not zero.',
-      hourlyTnd: null,
-      observedMinutes: null,
-      scope: input.scope,
-    };
-  const minutes = usable.reduce((sum, row) => sum + (row.observedMinutes ?? 0), 0);
-  if (minutes <= 0)
-    return {
-      status: 'UNAVAILABLE' as const,
-      reason: 'Observed duration is zero, so no rate exists.',
-      hourlyTnd: null,
-      observedMinutes: minutes,
-      scope: input.scope,
-    };
+  const unavailable = (reason: string) => ({
+    policyVersion: OBSERVED_EARNINGS_POLICY_VERSION,
+    status: 'UNAVAILABLE' as const,
+    reason,
+    hourlyTnd: null,
+    observedMinutes: null,
+    scope: input.scope,
+  });
+  if (input.agreedMillimes === null) return unavailable('Agreed compensation is not recorded.');
+  if (!Number.isSafeInteger(input.coveredQuantity) || input.coveredQuantity <= 0)
+    return unavailable('The compensation scope must have a known positive covered quantity.');
+  if (!input.records.length)
+    return unavailable('Complete consented observed time is missing. Unknown time is not zero.');
+  // Sort a copy so validation is deterministic and never mutates caller-owned evidence.
+  const periods = input.records
+    .map((row) => ({
+      ...row,
+      start: new Date(row.periodFrom).getTime(),
+      end: new Date(row.periodTo).getTime(),
+    }))
+    .sort((a, b) => a.start - b.start || a.end - b.end);
+  if (periods.some((row) => !row.consented))
+    return unavailable('Consent is missing or withdrawn for part of the compensation scope.');
+  if (
+    periods.some(
+      (row) =>
+        !['SYNTHETIC', 'OBSERVED'].includes(row.evidence) ||
+        !Number.isSafeInteger(row.observedMinutes) ||
+        (row.observedMinutes ?? 0) <= 0 ||
+        !Number.isSafeInteger(row.observedUnits) ||
+        row.observedUnits <= 0 ||
+        !Number.isFinite(row.start) ||
+        !Number.isFinite(row.end) ||
+        row.end <= row.start ||
+        (row.observedMinutes ?? 0) > (row.end - row.start) / 60000,
+    )
+  )
+    return unavailable(
+      'Every covered record needs valid positive observed time, units and a reporting period. Unknown time is not zero.',
+    );
+  if (periods.some((row, i) => i > 0 && row.start < periods[i - 1]!.end))
+    return unavailable(
+      'Reporting periods overlap; full-scope observed time cannot be established.',
+    );
+  if (periods.reduce((sum, row) => sum + row.observedUnits, 0) !== input.coveredQuantity)
+    return unavailable('Observed units do not exactly cover the full compensation scope.');
+  const minutes = periods.reduce((sum, row) => sum + row.observedMinutes!, 0);
+  if (!Number.isSafeInteger(minutes))
+    return unavailable('Total observed time exceeds the supported integer range.');
   return {
+    policyVersion: OBSERVED_EARNINGS_POLICY_VERSION,
     status: 'AVAILABLE' as const,
-    reason: 'Computed from agreed compensation and consented observed time for the stated scope.',
+    reason:
+      'Full-scope agreed compensation divided by complete consented observed time; this is not verified paid income.',
     hourlyTnd: formatTnd(prorateTnd(BigInt(input.agreedMillimes), 60n, BigInt(minutes))),
     observedMinutes: minutes,
     scope: input.scope,

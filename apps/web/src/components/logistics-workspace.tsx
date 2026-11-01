@@ -170,7 +170,21 @@ export function LogisticsOrder({ orderId }: { orderId: string }) {
           )}
           <p>
             Reported delivered {shipment.delivered}. Buyer accepted {shipment.buyerAccepted}.
-            Missing {shipment.missing}. Damaged {shipment.damaged}.
+            Damaged {shipment.damaged}.
+          </p>
+          <p>
+            {shipment.provenanceComplete ? (
+              <>
+                {shipment.totalUnaccounted} pieces unaccounted for: {shipment.notReportedByOperator}{' '}
+                not reported delivered by the operator; {shipment.buyerDeclaredMissing} declared
+                missing by the buyer.
+              </>
+            ) : (
+              <>
+                Unaccounted-for pieces cannot be attributed: the recorded delivery quantities do not
+                reconcile, so the operator gap and the buyer declaration are not separable.
+              </>
+            )}
           </p>
           {shipment.discrepancy && <p>Open discrepancy: {humanize(shipment.discrepancy)}.</p>}
           {shipment.status === 'PICKUP_SCHEDULED' &&
@@ -352,7 +366,16 @@ type ShipmentView = {
   version: number;
   quantity: number;
   delivered: number;
+  buyerReceived: number;
   buyerAccepted: number;
+  /** The buyer's own declaration. Distinct from the operator's reporting gap. */
+  buyerDeclaredMissing: number;
+  /** Pieces shipped but never reported delivered by the operator. */
+  notReportedByOperator: number;
+  /** The two above, summed. */
+  totalUnaccounted: number;
+  /** False when the recorded facts do not conserve and provenance cannot be reconstructed. */
+  provenanceComplete: boolean;
   missing: number;
   damaged: number;
   coordinatorId: string | null;

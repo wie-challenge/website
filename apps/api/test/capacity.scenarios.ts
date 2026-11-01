@@ -181,6 +181,9 @@ export async function runCapacityScenarios({ db, register, check }: Harness) {
         (
           await command(artisan, `/api/v1/commerce/offers/${accepted.id}/actions`, {
             next: 'ACCEPTED',
+            reviewLanguage: 'en',
+            sourceTermsLanguage: 'en',
+            acknowledgeOriginalTerms: true,
             version: accepted.version,
           })
         ).status,
@@ -241,6 +244,9 @@ export async function runCapacityScenarios({ db, register, check }: Harness) {
         (
           await command(artisan, `/api/v1/commerce/offers/${reserved.id}/actions`, {
             next: 'ACCEPTED',
+            reviewLanguage: 'en',
+            sourceTermsLanguage: 'en',
+            acknowledgeOriginalTerms: true,
             version: reserved.version,
           })
         ).status,
@@ -336,6 +342,9 @@ export async function runCapacityScenarios({ db, register, check }: Harness) {
         (
           await command(artisan, `/api/v1/commerce/offers/${pending.id}/actions`, {
             next: 'ACCEPTED',
+            reviewLanguage: 'en',
+            sourceTermsLanguage: 'en',
+            acknowledgeOriginalTerms: true,
             version: pending.version,
           })
         ).status,
@@ -421,6 +430,9 @@ export async function runCapacityScenarios({ db, register, check }: Harness) {
         (
           await command(artisan, `/api/v1/commerce/offers/${held.id}/actions`, {
             next: 'ACCEPTED',
+            reviewLanguage: 'en',
+            sourceTermsLanguage: 'en',
+            acknowledgeOriginalTerms: true,
             version: held.version,
           })
         ).status,

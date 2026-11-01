@@ -185,3 +185,19 @@ export async function promoteDisposableAdmin(url: string, email: string) {
     await db.end();
   }
 }
+
+// Test control only: expire the visitor for one disposable scenario without handling raw cookies.
+export async function expireDisposableDemoVisitor(url: string, scenarioId: string) {
+  const db = new Client({ connectionString: url });
+  await db.connect();
+  try {
+    const result = await db.query(
+      `UPDATE "DemoVisitor" v SET "expiresAt"=to_timestamp(0)
+       FROM "DemoScenario" s WHERE s.id=$1 AND s."visitorId"=v.id RETURNING v.id`,
+      [scenarioId],
+    );
+    if (result.rowCount !== 1) throw new Error('A disposable visitor scenario is required.');
+  } finally {
+    await db.end();
+  }
+}

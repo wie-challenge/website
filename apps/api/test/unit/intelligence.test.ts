@@ -240,17 +240,42 @@ test('producer share is aggregate-only and suppresses a small cohort', () => {
 });
 
 test('observed-time earnings require consent and a measured duration', () => {
-  const none = earningsFromObservedTime({ agreedMillimes: '120000', records: [], scope: 'batch' });
+  const none = earningsFromObservedTime({
+    agreedMillimes: '120000',
+    coveredQuantity: 100,
+    records: [],
+    scope: 'batch',
+  });
   assert.equal(none.status, 'UNAVAILABLE');
   const unconsented = earningsFromObservedTime({
     agreedMillimes: '120000',
-    records: [{ consented: false, observedMinutes: 90, evidence: 'OBSERVED' }],
+    coveredQuantity: 100,
+    records: [
+      {
+        consented: false,
+        observedMinutes: 90,
+        observedUnits: 100,
+        periodFrom: '2026-01-01T00:00:00Z',
+        periodTo: '2026-01-01T02:00:00Z',
+        evidence: 'OBSERVED',
+      },
+    ],
     scope: 'batch',
   });
   assert.equal(unconsented.status, 'UNAVAILABLE');
   const ok = earningsFromObservedTime({
     agreedMillimes: '120000',
-    records: [{ consented: true, observedMinutes: 90, evidence: 'OBSERVED' }],
+    coveredQuantity: 100,
+    records: [
+      {
+        consented: true,
+        observedMinutes: 90,
+        observedUnits: 100,
+        periodFrom: '2026-01-01T00:00:00Z',
+        periodTo: '2026-01-01T02:00:00Z',
+        evidence: 'OBSERVED',
+      },
+    ],
     scope: 'batch',
   });
   assert.equal(ok.status, 'AVAILABLE');

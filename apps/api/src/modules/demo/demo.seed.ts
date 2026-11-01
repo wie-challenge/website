@@ -122,7 +122,7 @@ export async function seedDemoScenario(
       },
     });
   const buyer = await organization('BUYER_BUSINESS', 'Jasmin buyer studio', users.buyer);
-  const internal = await organization('INTERNAL', 'HirfaCare operations', owner);
+  const internal = await organization('INTERNAL', 'NASJ operations', owner);
   const association = await organization(
     'ASSOCIATION',
     'Noura artisan association',

@@ -941,11 +941,41 @@ export async function runOrderFeedbackScenarios({ db, register, check }: Harness
       const membership = await db.organizationMember.findFirstOrThrow({
         where: { userId: buyer.me.user.id, organizationId: buyerOrg.id },
       });
-      const current = await db.buyerOrderFeedback.findUniqueOrThrow({ where: { id: feedbackId } });
+      let current = await db.buyerOrderFeedback.findUniqueOrThrow({ where: { id: feedbackId } });
+      const retainedKey = randomUUID();
+      const retainedInput = {
+        expectedVersion: current.currentVersion,
+        category: 'OVERALL',
+        reason: 'Synthetic command accepted before membership revocation',
+      };
+      assert.equal(
+        (
+          await post(
+            buyer,
+            `${root}/order-feedback/${feedbackId}/corrections`,
+            retainedInput,
+            retainedKey,
+          )
+        ).status,
+        201,
+      );
+      current = await db.buyerOrderFeedback.findUniqueOrThrow({ where: { id: feedbackId } });
       await db.organizationMember.update({
         where: { id: membership.id },
         data: { status: 'SUSPENDED' },
       });
+      assert.equal(
+        (
+          await post(
+            buyer,
+            `${root}/order-feedback/${feedbackId}/corrections`,
+            retainedInput,
+            retainedKey,
+          )
+        ).status,
+        404,
+        'a retained receipt is not authority after membership revocation',
+      );
       assert.equal(
         (await buyer.client.request(`${root}/order-feedback?orderId=${orderId}`)).status,
         404,

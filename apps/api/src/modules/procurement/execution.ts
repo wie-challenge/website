@@ -1177,7 +1177,7 @@ export class ProductionExecutionService {
       compensationTnd: pay
         ? C.formatTnd(C.payableForUnits(batch.offer.unitPayMillimes, batch.offer.quantity))
         : null,
-      supportContact: 'Assigned HirfaCare operator',
+      supportContact: 'Assigned NASJ operator',
       preferredLanguage: batch.artisanProfile.preferredLanguage,
       termsLanguage: instructionLanguage,
       produced: batch.produced,

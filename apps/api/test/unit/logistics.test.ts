@@ -53,7 +53,10 @@ test('accepted pieces are allocated without exceeding a shipment part', () => {
 });
 
 test('buyer receipt keeps missing and damaged pieces out of the accepted count', () => {
+  // Conservation is measured against the shipped quantity, not the operator's report, so the
+  // caller must state both. See CP5-G20.
   const receipt = buyerReceipt({
+    shipped: 100,
     reported: 100,
     received: 95,
     accepted: 90,
@@ -61,13 +64,27 @@ test('buyer receipt keeps missing and damaged pieces out of the accepted count',
     damaged: 5,
   });
   assert.equal(receipt.damaged, 5);
+  assert.equal(receipt.shortage, 5);
   assert.equal(receipt.discrepancy, true);
-  assert.deepEqual(buyerReceipt({ reported: 10, received: 10, accepted: 10, missing: 0 }), {
-    damaged: 0,
-    discrepancy: false,
-  });
+  assert.deepEqual(
+    buyerReceipt({ shipped: 10, reported: 10, received: 10, accepted: 10, missing: 0 }),
+    {
+      damaged: 0,
+      shortage: 0,
+      notReported: 0,
+      discrepancy: false,
+    },
+  );
   assert.throws(
-    () => buyerReceipt({ reported: 10, received: 10, accepted: 10, missing: 0, damaged: 2 }),
+    () =>
+      buyerReceipt({
+        shipped: 10,
+        reported: 10,
+        received: 10,
+        accepted: 10,
+        missing: 0,
+        damaged: 2,
+      }),
     CommerceRuleError,
   );
 });

@@ -54,7 +54,14 @@ export class IntelligenceService {
             select: { artisanProfileId: true, decision: true, version: true },
             orderBy: { version: 'desc' },
           },
-          payables: { include: { settlements: true } },
+          payables: {
+            include: {
+              settlements: true,
+              // Real payout evidence. Synthetic settlements stay separate and are never read as
+              // verified payment; verified figures come from execution records only.
+              payouts: { include: { executions: true } },
+            },
+          },
           shipments: {
             include: {
               items: true,
@@ -161,10 +168,15 @@ export class IntelligenceService {
         }
       }
 
+      // Paid participation requires independently verified payment, not merely the existence of a
+      // settlement row. A synthetic or unreconciled settlement is an intent to pay; counting it here
+      // would report unpaid artisans as paid. See C.isVerifiedSettlement.
       const paidProfiles = new Set(
         orders.flatMap((order) =>
           order.payables
-            .filter((payable) => payable.settlements.length > 0)
+            .filter(
+              (payable) => C.verifiedPaidMillimes(C.payoutEvidenceEvents(payable.payouts)) > 0n,
+            )
             .map((payable) => payable.artisanProfileId),
         ),
       );
@@ -196,9 +208,24 @@ export class IntelligenceService {
         (sum, order) =>
           sum +
           order.payables.reduce(
+            (inner, payable) => inner + C.simulatedPaidMillimes(payable.settlements),
+            0n,
+          ),
+        0n,
+      );
+      // Verified paid is deduplicated by payment identity inside the helper, then clamped to each
+      // payable here, where the obligation is known. A replay cannot inflate it and an overpayment
+      // cannot exceed what was owed.
+      const verifiedPaid = orders.reduce(
+        (sum, order) =>
+          sum +
+          order.payables.reduce(
             (inner, payable) =>
               inner +
-              payable.settlements.reduce((settled, row) => settled + row.amountMillimes, 0n),
+              C.clampVerifiedToObligation(
+                C.verifiedPaidMillimes(C.payoutEvidenceEvents(payable.payouts)),
+                payable.amountMillimes,
+              ),
             0n,
           ),
         0n,
@@ -300,9 +327,13 @@ export class IntelligenceService {
             : C.compensationMetrics({
                 agreedMillimes: agreed.toString(),
                 earnedMillimes: earned.toString(),
-                payableMillimes: (earned - simulatedPaid).toString(),
+                // Owed now is earned less what was actually verified as paid. A synthetic settlement
+                // moves no money, so it cannot reduce the balance owed to an artisan.
+                payableMillimes: (earned > verifiedPaid ? earned - verifiedPaid : 0n).toString(),
                 simulatedPaidMillimes: simulatedPaid.toString(),
-                verifiedPaidMillimes: '0',
+                verifiedPaidMillimes: verifiedPaid.toString(),
+                // No approved settlement-verification authority exists (owner decision D1 open).
+                authorityApproved: false,
               }),
         producerShare: C.producerShare({
           agreedCompensationMillimes: agreed.toString(),
@@ -583,15 +614,24 @@ export class IntelligenceService {
       const batch = await this.batchScope(tx, actor, batchId, false);
       const records = await tx.productionTimeRecord.findMany({
         where: { batchId, correctedBy: null },
+        orderBy: [{ periodFrom: 'asc' }, { id: 'asc' }],
       });
       const payables = await tx.artisanPayable.findMany({
         where: { batchId },
-        include: { settlements: true },
+        include: { settlements: true, payouts: { include: { executions: true } } },
       });
       const earned = payables.reduce((n, row) => n + row.amountMillimes, 0n);
       const simulated = payables.reduce(
+        (n, row) => n + C.simulatedPaidMillimes(row.settlements),
+        0n,
+      );
+      const verified = payables.reduce(
         (n, row) =>
-          n + row.settlements.reduce((m, settlement) => m + settlement.amountMillimes, 0n),
+          n +
+          C.clampVerifiedToObligation(
+            C.verifiedPaidMillimes(C.payoutEvidenceEvents(row.payouts)),
+            row.amountMillimes,
+          ),
         0n,
       );
       return {
@@ -599,23 +639,23 @@ export class IntelligenceService {
         unit: 'TND/hour',
         evidenceClasses: [...new Set(records.map((row) => row.evidence))],
         periods: records.map((row) => ({
-          from: row.periodFrom.toISOString(),
-          to: row.periodTo.toISOString(),
+          from: Number.isFinite(row.periodFrom.getTime()) ? row.periodFrom.toISOString() : null,
+          to: Number.isFinite(row.periodTo.getTime()) ? row.periodTo.toISOString() : null,
           unitContext: row.unitContext,
           provenance: row.provenance,
         })),
         compensation: C.compensationMetrics({
           agreedMillimes: (batch.offer.unitPayMillimes * BigInt(batch.offer.quantity)).toString(),
           earnedMillimes: earned.toString(),
-          payableMillimes: (earned - simulated).toString(),
+          payableMillimes: (earned > verified ? earned - verified : 0n).toString(),
           simulatedPaidMillimes: simulated.toString(),
-          verifiedPaidMillimes: '0',
+          verifiedPaidMillimes: verified.toString(),
+          // No approved settlement-verification authority exists (owner decision D1 open).
+          authorityApproved: false,
         }),
         estimate: C.earningsFromObservedTime({
-          agreedMillimes:
-            records.reduce((sum, row) => sum + row.observedUnits, 0) === batch.offer.quantity
-              ? (batch.offer.unitPayMillimes * BigInt(batch.offer.quantity)).toString()
-              : null,
+          agreedMillimes: (batch.offer.unitPayMillimes * BigInt(batch.offer.quantity)).toString(),
+          coveredQuantity: batch.offer.quantity,
           records,
           scope: batchId,
         }),

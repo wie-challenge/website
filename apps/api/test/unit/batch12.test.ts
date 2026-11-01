@@ -51,6 +51,7 @@ test('timeliness excludes synthetic, partial, disputed, overpaid and unknown dat
         date: '2026-10-14T00:00:00.000Z',
         verified: true,
         status: 'VERIFIED_SETTLED',
+        reference: 'ref-b12-a',
       },
     ],
   };
@@ -99,12 +100,14 @@ test('timeliness requires full settlement and reports completion on final partia
             date: '2026-10-09T00:00:00.000Z',
             verified: true,
             status: 'VERIFIED_SETTLED',
+            reference: 'ref-b12-b',
           },
           {
             amount: 501n,
             date: '2026-10-11T00:00:00.000Z',
             verified: true,
             status: 'VERIFIED_SETTLED',
+            reference: 'ref-b12-c',
           },
         ],
       },
@@ -192,10 +195,14 @@ test('structured logs redact contact, finance, health and credentials without dr
   assert.doesNotMatch(output, /private-/);
 });
 test('retention inventory covers material classes without inventing approved periods or wearable datasets', () => {
-  assert.equal(RETENTION_INVENTORY.length, 10);
+  assert.equal(RETENTION_INVENTORY.length, 11);
   assert.ok(
     RETENTION_INVENTORY.some((row) => row.dataClass === 'BUYER_ORDER_FEEDBACK'),
     'private buyer feedback has its own purpose, access and preservation entry',
+  );
+  assert.ok(
+    RETENTION_INVENTORY.some((row) => row.dataClass === 'DEMO_VISITOR_FEEDBACK'),
+    'showroom visitor feedback has its own purpose, access and preservation entry',
   );
   for (const row of RETENTION_INVENTORY) {
     assert.equal(row.retentionDuration, null);

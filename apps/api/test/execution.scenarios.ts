@@ -333,6 +333,9 @@ export async function runExecutionScenarios({ db, register, check }: Harness) {
       const issuedOffer = issued.body as { version: number; termsSha256: string };
       const accepted = await send(artisan, `/api/v1/commerce/offers/${offer.id}/actions`, {
         next: 'ACCEPTED',
+        reviewLanguage: 'en',
+        sourceTermsLanguage: 'en',
+        acknowledgeOriginalTerms: true,
         version: issuedOffer.version,
         termsSha256: issuedOffer.termsSha256,
       });
@@ -787,16 +790,35 @@ export async function runExecutionScenarios({ db, register, check }: Harness) {
         (await db.shipment.findUniqueOrThrow({ where: { id: shipmentId } })).status,
         'PICKUP_SCHEDULED',
       );
-      const collected = await send(coordinator, `${root}/shipments/${shipmentId}/handovers`, {
+      // Partial collection consumes this leg's balance. A second full shipment would overdraw it.
+      const overCollection = await send(coordinator, `${root}/shipments/${shipmentId}/handovers`, {
         version: (collectedShort.body as { version: number }).version,
         eventType: 'COLLECTED_FROM_ASSOCIATION',
         quantity: 35,
         occurredAt: '2026-10-03T11:30:00.000Z',
-        note: 'Synthetic collection',
+      });
+      assert.equal(overCollection.status, 409);
+      const shortCollection = await db.custodyHandover.findFirstOrThrow({
+        where: { shipmentId, eventType: 'COLLECTED_FROM_ASSOCIATION' },
+      });
+      const shortReceipt = await send(operator, `${root}/shipments/${shipmentId}/handovers`, {
+        version: (collectedShort.body as { version: number }).version,
+        eventType: 'RECEIVED_AT_HUB',
+        quantity: 30,
+        occurredAt: '2026-10-03T11:35:00.000Z',
+        priorHandoverId: shortCollection.id,
+      });
+      assert.equal(shortReceipt.status, 409);
+      const collected = await send(coordinator, `${root}/shipments/${shipmentId}/handovers`, {
+        version: (collectedShort.body as { version: number }).version,
+        eventType: 'COLLECTED_FROM_ASSOCIATION',
+        quantity: 5,
+        occurredAt: '2026-10-03T11:40:00.000Z',
+        note: 'Remaining synthetic collection',
       });
       assert.equal(collected.status, 201, JSON.stringify(collected.body));
       const collection = await db.custodyHandover.findFirstOrThrow({
-        where: { shipmentId, quantity: 35, eventType: 'COLLECTED_FROM_ASSOCIATION' },
+        where: { shipmentId, quantity: 5, eventType: 'COLLECTED_FROM_ASSOCIATION' },
       });
       assert.equal(
         (

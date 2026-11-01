@@ -52,6 +52,7 @@ import { replaySafe, validateIdempotencyKey } from '../foundation/idempotency.js
 import { audit } from '../foundation/audit.js';
 import { findCatalogExample, projectBuyerCatalog } from './catalog.js';
 import { projectCapacity } from '../artisans/capacity.js';
+import { requireCurrentEligibility } from '../procurement/eligibility-guard.js';
 import { activity, revision } from '../procurement/records.js';
 
 type Order = Prisma.CommercialOrderGetPayload<{
@@ -212,6 +213,7 @@ export class CommerceService {
     action: string,
     targetType: string,
     targetId: string,
+    details: Prisma.InputJsonObject = {},
   ) {
     if (targetType === 'CommercialRfq' || targetType === 'CommercialOrder') {
       const current = await tx.commercialRfq.findUniqueOrThrow({ where: { id: rfq.id } });
@@ -229,7 +231,7 @@ export class CommerceService {
       targetType,
       targetId,
       organizationId: rfq.buyerOrganizationId,
-      after: { provenance: 'SYNTHETIC' },
+      after: { provenance: 'SYNTHETIC', ...details },
     });
   }
   async report(actor: Actor, id: string) {
@@ -654,6 +656,17 @@ export class CommerceService {
             'PARTICIPATION_INACTIVE',
             'Active, available participation is required to accept this offer.',
           );
+          // No reviewed commercial translations exist. This records personal source-language
+          // review, never qualified translation approval or consent on another artisan's behalf.
+          requireRule(
+            (!input.reviewLanguage || input.reviewLanguage === 'en') &&
+              (profile.preferredLanguage === 'en' ||
+                (input.reviewLanguage === 'en' &&
+                  input.sourceTermsLanguage === 'en' &&
+                  input.acknowledgeOriginalTerms === true)),
+            'SOURCE_TERMS_REVIEW_REQUIRED',
+            'Reviewed translations are unavailable. Review and explicitly acknowledge the original English terms, or request clarification.',
+          );
         }
         if (input.next === 'ACCEPTED') {
           const capacity = await tx.capacityDeclaration.findUniqueOrThrow({
@@ -667,6 +680,27 @@ export class CommerceService {
             'CAPACITY_UNAVAILABLE',
             'Capacity changed; request a revised offer.',
           );
+          // Acceptance is the commitment boundary. The check above reads the declaration this offer
+          // was prepared from; the guard re-reads authoritative current state - consent, delegation,
+          // availability, participation and equipment period - so a snapshot taken at ranking or
+          // preparation cannot create an obligation that is no longer supportable.
+          await requireCurrentEligibility(tx, {
+            artisanProfileId: row.artisanProfileId,
+            userId:
+              (
+                await tx.artisanProfile.findUnique({
+                  where: { id: row.artisanProfileId },
+                  select: { userId: true },
+                })
+              )?.userId ?? null,
+            orderId: order.id,
+            craftSkillId: order.rfq.craftSkillId,
+            capacityDeclarationId: row.capacityDeclarationId,
+            acceptingOfferId: row.id,
+            quantity: row.quantity,
+            periodFrom: capacity.effectiveFrom ?? null,
+            periodTo: capacity.effectiveTo ?? null,
+          });
           await tx.commercialBatch.create({
             data: { orderId: order.id, offerId: id, artisanProfileId: row.artisanProfileId },
           });
@@ -688,6 +722,16 @@ export class CommerceService {
           `offer.${input.next.toLowerCase()}`,
           'CommercialOffer',
           id,
+          input.next === 'ACCEPTED'
+            ? {
+                offerVersion: row.version,
+                termsSha256: row.termsSha256,
+                reviewLanguage: input.reviewLanguage ?? 'en',
+                sourceTermsLanguage: 'en',
+                acknowledgeOriginalTerms: input.acknowledgeOriginalTerms ?? false,
+                reviewedTranslationAvailable: false,
+              }
+            : {},
         );
         return saved(result);
       });
@@ -1072,7 +1116,7 @@ export class CommerceService {
       const offers = await tx.commercialOffer.findMany({
         where: privateWhere,
         include: {
-          order: { include: { rfq: true } },
+          order: { include: { rfq: true, productSpecificationRevision: true } },
           artisanProfile: { select: { preferredLanguage: true } },
         },
         take: 100,
@@ -1204,8 +1248,10 @@ export class CommerceService {
             materials: o.materials,
             reworkTerms: o.reworkTerms,
             paymentConditions: o.paymentConditions,
-            specification: o.order.rfq.specification,
-            deliveryAt: o.order.rfq.deliveryAt.toISOString(),
+            specification: o.order.productSpecificationRevision
+              ? `${o.order.productSpecificationRevision.description} [Approved specification ${o.order.productSpecificationRevision.id}, revision ${o.order.productSpecificationRevision.revisionNumber}]`
+              : o.order.rfq.specification,
+            deliveryAt: (o.deliveryDeadline ?? o.order.rfq.deliveryAt).toISOString(),
             status: o.status as OfferState,
             version: o.version,
             provenance: 'SYNTHETIC',

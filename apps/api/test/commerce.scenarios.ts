@@ -186,7 +186,10 @@ export async function runCommerceScenarios({ db, register, check, config }: Harn
       });
       const row = await db.commercialRfq.findUniqueOrThrow({ where: { id: rfqId } });
       const key = randomUUID();
-      const payload = { next: 'ACCEPTED', version: row.version };
+      const payload = {
+        next: 'ACCEPTED',
+        version: row.version,
+      };
       const results = await Promise.all([
         command(buyer, `rfqs/${rfqId}/actions`, payload, key),
         command(buyer, `rfqs/${rfqId}/actions`, payload, key),
@@ -277,8 +280,15 @@ export async function runCommerceScenarios({ db, register, check, config }: Harn
         version: number;
       };
       assert.equal(
-        (await command(operator, `offers/${reserved.id}/actions`, { next: 'ACCEPTED', version: 1 }))
-          .status,
+        (
+          await command(operator, `offers/${reserved.id}/actions`, {
+            next: 'ACCEPTED',
+            reviewLanguage: 'en',
+            sourceTermsLanguage: 'en',
+            acknowledgeOriginalTerms: true,
+            version: 1,
+          })
+        ).status,
         403,
       );
       await ok(artisan, `offers/${reserved.id}/actions`, { next: 'DECLINED', version: 1 });
@@ -288,20 +298,56 @@ export async function runCommerceScenarios({ db, register, check, config }: Harn
         data: { expiresAt: new Date(0) },
       });
       assert.equal(
-        (await command(artisan, `offers/${expiring.id}/actions`, { next: 'ACCEPTED', version: 1 }))
-          .status,
+        (
+          await command(artisan, `offers/${expiring.id}/actions`, {
+            next: 'ACCEPTED',
+            reviewLanguage: 'en',
+            sourceTermsLanguage: 'en',
+            acknowledgeOriginalTerms: true,
+            version: 1,
+          })
+        ).status,
         409,
       );
       await ok(operator, `offers/${expiring.id}/actions`, { next: 'EXPIRED', version: 1 });
       const offer = await ok(operator, 'offers', offerInput());
       offerId = offer.id;
       assert.equal(
-        (await command(outsider, `offers/${offerId}/actions`, { next: 'ACCEPTED', version: 1 }))
-          .status,
+        (
+          await command(outsider, `offers/${offerId}/actions`, {
+            next: 'ACCEPTED',
+            reviewLanguage: 'en',
+            sourceTermsLanguage: 'en',
+            acknowledgeOriginalTerms: true,
+            version: 1,
+          })
+        ).status,
         403,
       );
       const key = randomUUID();
-      const decision = { next: 'ACCEPTED', version: 1 };
+      const decision = {
+        next: 'ACCEPTED',
+        reviewLanguage: 'en',
+        sourceTermsLanguage: 'en',
+        acknowledgeOriginalTerms: true,
+        version: 1,
+      };
+      const boundOffer = await db.commercialOffer.findUniqueOrThrow({ where: { id: offerId } });
+      const boundCapacity = await db.capacityDeclaration.findUniqueOrThrow({
+        where: { id: boundOffer.capacityDeclarationId },
+      });
+      await db.capacityDeclaration.update({
+        where: { id: boundCapacity.id },
+        data: { quantity: boundOffer.quantity - 1 },
+      });
+      const noLongerCovered = await command(artisan, `offers/${offerId}/actions`, decision);
+      assert.equal(noLongerCovered.status, 409);
+      assert.equal((noLongerCovered.body as { code: string }).code, 'CAPACITY_UNAVAILABLE');
+      // Exact-fill acceptance converts its own hold, while retaining all other reservations.
+      await db.capacityDeclaration.update({
+        where: { id: boundCapacity.id },
+        data: { quantity: boundOffer.quantity },
+      });
       const accepted = await Promise.all([
         command(artisan, `offers/${offerId}/actions`, decision, key),
         command(artisan, `offers/${offerId}/actions`, decision, key),
@@ -309,6 +355,10 @@ export async function runCommerceScenarios({ db, register, check, config }: Harn
       assert.equal(accepted[0].status, 201);
       assert.deepEqual(accepted[0].body, accepted[1].body);
       assert.equal(await db.commercialBatch.count({ where: { offerId } }), 1);
+      await db.capacityDeclaration.update({
+        where: { id: boundCapacity.id },
+        data: { quantity: boundCapacity.quantity },
+      });
       batchId = (await db.commercialBatch.findUniqueOrThrow({ where: { offerId } })).id;
       assert.equal((await workspace(buyer)).offers.length, 0);
       assert.equal(

@@ -855,6 +855,14 @@ export type ReallocationInput = z.infer<typeof reallocationSchema>;
 
 export const deliverySimulationSchema = z
   .object({
+    reviewedAssumptions: z
+      .object({
+        reference: z.string().trim().min(20).max(1000),
+        leadTimeDays: z.number().int().min(0).max(365),
+        bufferDays: z.number().int().min(0).max(365),
+      })
+      .strict()
+      .optional(),
     version: z.number().int().positive(),
     startDate: z.iso.datetime({ offset: true }),
     deadline: z.iso.datetime({ offset: true }),

@@ -392,7 +392,7 @@ export class DemoService {
       body: { email: user.email, password: this.password(identity!.scenarioId) },
       headers: fromNodeHeaders({
         origin: this.config.PUBLIC_APP_URL,
-        'user-agent': req.headers['user-agent'] ?? 'HirfaCare synthetic showroom',
+        'user-agent': req.headers['user-agent'] ?? 'NASJ synthetic showroom',
       }),
       asResponse: true,
     });
@@ -422,6 +422,154 @@ export class DemoService {
     for (const cookie of cookies) res.append('Set-Cookie', cookie);
     return this.present(req, visitor.id, token, persona);
   }
+  /* --------------------------------------------------- E15-06 showroom feedback */
+
+  /**
+   * Visitor capture. Ownership is resolved from the HttpOnly visitor cookie and re-checked against
+   * the scenario, so a forged body can never name another visitor, generation or provenance.
+   */
+  async submitFeedback(req: Request, input: C.DemoFeedbackCreateInput, key?: string) {
+    const { visitor } = await this.control(req, true);
+    if (!key)
+      fail(400, 'IDEMPOTENCY_REQUIRED', 'Use a unique idempotency key for showroom feedback.');
+    validateIdempotencyKey(key);
+    const result = await this.transaction(async (tx) => {
+      // Reuse the showroom's own idempotency receipt: one key, one payload, one stored submission.
+      const replay = await this.replayFeedback(tx, visitor.id, key, input);
+      if (replay) return replay;
+      const scenario = await tx.demoScenario.findUnique({ where: { id: input.scenarioId } });
+      // A scenario this visitor does not own is indistinguishable from a missing one.
+      if (!scenario || scenario.visitorId !== visitor.id)
+        fail(404, 'NOT_FOUND', 'Scenario not found.');
+      if (scenario.status !== 'ACTIVE')
+        fail(
+          409,
+          'STALE_DEMO_SCENARIO',
+          'This generation is archived. Resume your current scenario before leaving feedback.',
+        );
+      const used = await tx.demoFeedback.count({
+        where: { scenarioId: scenario.id, visitorId: visitor.id },
+      });
+      if (used >= C.demoFeedbackPerScenarioLimit)
+        fail(
+          409,
+          'FEEDBACK_LIMIT',
+          'You have reached the feedback limit for this scenario. Start a fresh generation to continue.',
+        );
+      const created = await tx.demoFeedback.create({
+        data: {
+          scenarioId: scenario.id,
+          visitorId: visitor.id,
+          generation: scenario.generation,
+          // Provenance is server-derived; the capture schema cannot supply it.
+          sourceClass: 'VISITOR_SUBMITTED',
+          screenKey: input.screenKey,
+          category: input.category,
+          comment: input.comment,
+          dedupeKey: input.dedupeKey ?? null,
+        },
+      });
+      await tx.demoFeedbackEvent.create({
+        data: { feedbackId: created.id, kind: 'SUBMITTED', toStatus: 'NEW' },
+      });
+      await tx.demoCommand.create({
+        data: {
+          visitorId: visitor.id,
+          keyHash: demoTokenHash(key),
+          operation: 'feedback',
+          payloadHash: demoTokenHash(JSON.stringify(input)),
+          scenarioId: scenario.id,
+          feedbackId: created.id,
+        },
+      });
+      return this.feedbackView(created);
+    });
+    return result;
+  }
+
+  /** Replay and conflict detection for feedback, sharing the showroom command receipt table. */
+  private async replayFeedback(
+    tx: Db,
+    visitorId: string,
+    key: string,
+    input: C.DemoFeedbackCreateInput,
+  ): Promise<C.DemoFeedbackView | null> {
+    const keyHash = demoTokenHash(key);
+    const old = await tx.demoCommand.findUnique({
+      where: { visitorId_keyHash: { visitorId, keyHash } },
+    });
+    if (!old) return null;
+    if (old.operation !== 'feedback' || old.payloadHash !== demoTokenHash(JSON.stringify(input)))
+      fail(
+        409,
+        'IDEMPOTENCY_CONFLICT',
+        'This feedback key already belongs to a different submission.',
+      );
+    // Re-check current authority before disclosing a stored response.
+    const visitor = await tx.demoVisitor.findUnique({ where: { id: visitorId } });
+    if (!visitor || visitor.expiresAt <= new Date())
+      fail(403, 'DEMO_VISITOR_REQUIRED', 'Open the showroom to resume your scenario.');
+    const previous = old.feedbackId
+      ? await tx.demoFeedback.findUnique({ where: { id: old.feedbackId } })
+      : null;
+    if (!previous) fail(409, 'STALE_FEEDBACK_COMMAND', 'Resubmit the feedback.');
+    if (previous.visitorId !== visitorId)
+      fail(409, 'STALE_FEEDBACK_COMMAND', 'Resubmit the feedback.');
+    return this.feedbackView(previous);
+  }
+
+  /** A visitor reads only feedback they personally submitted, never another visitor's. */
+  async myFeedback(req: Request, query: { page: number; pageSize: number; scenarioId?: string }) {
+    const { visitor } = await this.control(req);
+    const where = {
+      visitorId: visitor.id,
+      ...(query.scenarioId ? { scenarioId: query.scenarioId } : {}),
+    };
+    const [rows, total] = await Promise.all([
+      this.db.demoFeedback.findMany({
+        where,
+        orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
+        skip: (query.page - 1) * query.pageSize,
+        take: query.pageSize,
+      }),
+      this.db.demoFeedback.count({ where }),
+    ]);
+    return {
+      items: rows.map((row) => this.feedbackView(row)),
+      total,
+      page: query.page,
+      pageSize: query.pageSize,
+      scenarioId: query.scenarioId ?? null,
+      limitations: C.demoFeedbackLimitations,
+    } satisfies C.DemoFeedbackMineList;
+  }
+
+  private feedbackView(row: {
+    id: string;
+    scenarioId: string;
+    generation: number;
+    screenKey: string;
+    category: string;
+    comment: string;
+    status: string;
+    sourceClass: string;
+    createdAt: Date;
+  }): C.DemoFeedbackView {
+    const provenance = C.demoFeedbackLabel(row.sourceClass as C.DemoFeedbackSourceClass);
+    return {
+      id: row.id,
+      scenarioId: row.scenarioId,
+      generation: row.generation,
+      screenKey: row.screenKey as C.DemoScreenKey,
+      category: row.category as C.DemoFeedbackCategory,
+      comment: row.comment,
+      status: row.status as C.DemoFeedbackStatus,
+      sourceClass: row.sourceClass as C.DemoFeedbackSourceClass,
+      sourceLabel: provenance.label,
+      createdAt: row.createdAt.toISOString(),
+    };
+  }
+
   async reset(req: Request, res: Response, input: C.DemoResetInput, key?: string) {
     const { token, visitor } = await this.control(req, true);
     const scenarioId = randomUUID();

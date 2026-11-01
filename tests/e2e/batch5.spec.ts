@@ -109,6 +109,15 @@ test('Batch 5 real synthetic material custody, payout governance, dispute and bl
   });
   await expect(page.getByText(/Return 1.000.*Awaiting inspection/)).toBeVisible();
   await finances(page, fixture.orderId);
+  await page.getByRole('button', { name: 'Save closure assessment', exact: true }).click();
+  const assessment = page.locator('details').filter({ has: page.getByText(/^Recorded by /) });
+  await expect(assessment).toHaveCount(1);
+  await assessment.locator('summary').click();
+  await expect(assessment.locator('pre')).toContainText('"verifiedPaidTnd": "0.000"');
+  await expect(page.getByText(/Synthetic readiness does not verify payment/)).toBeVisible();
+  await page.setViewportSize({ width: 390, height: 844 });
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+  await page.setViewportSize({ width: 1280, height: 800 });
   await fill(page, 'Record pending buyer deposit', {
     'Claimed deposit amount (TND)': '10.000',
     'Buyer payment reference': `SYNTHETIC-${suffix}`,

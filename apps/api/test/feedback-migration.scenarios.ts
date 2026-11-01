@@ -97,7 +97,12 @@ export async function runFeedbackMigrationScenarios(
       ).rows;
       const result: Record<string, { count: number; sha256: string }> = {};
       for (const { tablename } of tables) {
-        if (tablename === 'BuyerOrderFeedback' || tablename === 'BuyerOrderFeedbackRevision')
+        // Tables introduced by this migration and by later migrations do not exist on the baseline.
+        if (
+          tablename === 'BuyerOrderFeedback' ||
+          tablename === 'BuyerOrderFeedbackRevision' ||
+          tablename.startsWith('DemoFeedback')
+        )
           continue;
         if (!columns.has(tablename))
           columns.set(

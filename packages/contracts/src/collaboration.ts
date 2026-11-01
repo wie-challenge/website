@@ -242,6 +242,17 @@ export function feedbackEligibility(input: {
   return {
     eligible: true as const,
     reason: 'CONFIRMED_RECEIPT' as const,
+    // Batch 2 (D2 OPEN): the input `missing` is the stored total unaccounted for, so this flag is
+    // true for an operator reporting gap as well as for a buyer-declared or damaged receipt. That
+    // is the pre-existing meaning and it is preserved deliberately, not silently changed.
+    //
+    // Proposed alternatives, pending owner decision D2:
+    //   (a) Any unaccounted piece  - the current behaviour; the flag means "this receipt does not
+    //       reconcile cleanly", regardless of who reported the gap.
+    //   (b) Buyer-attributable only - `buyerDeclaredMissing > 0 || damaged > 0`; the flag would
+    //       mean "the buyer reported a problem", and an operator-only gap would be false.
+    // Choosing (b) is a breaking change for any consumer that treats the flag as "something is
+    // wrong with this receipt", so it needs the owner's definition before it is made.
     partialOrDamaged: input.missing > 0 || input.damaged > 0,
     acceptedZero: input.accepted === 0,
   };
@@ -374,6 +385,7 @@ const text = z.string().trim().min(2).max(4000);
 export const exceptionReportSchema = z
   .object({
     batchId: id,
+    expectedVersion: z.number().int().positive().optional(),
     category: z.enum(exceptionCategories),
     severity: z.enum(['LOW', 'MEDIUM', 'HIGH', 'CRITICAL']),
     description: text,
@@ -394,6 +406,7 @@ export const exceptionUpdateSchema = z
 export const scheduleRevisionSchema = z
   .object({
     batchId: id,
+    expectedVersion: z.number().int().positive().optional(),
     proposedDeadline: z.iso.datetime({ offset: true }),
     reason: text,
   })
@@ -409,6 +422,7 @@ export const scheduleDecisionSchema = z
 export const counterofferSchema = z
   .object({
     offerId: id,
+    expectedVersion: z.number().int().positive().optional(),
     proposedQuantity: z.number().int().positive().max(1000000),
     proposedDeadline: z.iso.datetime({ offset: true }),
     clarification: z.string().trim().max(2000).default(''),
@@ -578,7 +592,30 @@ export function sanitizeDiscussionBody(value: string) {
   return cleaned.slice(0, 4000);
 }
 
+export type CollaborationTerms = {
+  quantity: number;
+  deadline: string;
+  unitPayTnd: string;
+  totalPayTnd: string;
+  effort: string;
+  materials: string;
+};
+export type CollaborationTarget = {
+  coordinator?: string | null;
+  id: string;
+  label: string;
+  version: number;
+  terms: CollaborationTerms;
+};
+export type CollaborationPreview = {
+  original: CollaborationTerms;
+  proposed: CollaborationTerms;
+  impact: string[];
+};
+
 export type ExceptionView = {
+  canManage: boolean;
+  coordinator: string | null;
   id: string;
   affectedQuantity: number | null;
   affectedDate: string | null;
@@ -596,6 +633,8 @@ export type ExceptionView = {
 };
 
 export type ScheduleRevisionView = {
+  decisions: { party: string; decision: string; note: string; at: string }[];
+  canDecide: boolean;
   id: string;
   batchId: string;
   previousDeadline: string;
@@ -610,6 +649,11 @@ export type ScheduleRevisionView = {
 };
 
 export type CounterofferView = {
+  canReview: boolean;
+  canConfirm: boolean;
+  original: CollaborationTerms;
+  proposed: CollaborationTerms;
+  reviewNote: string;
   id: string;
   offerId: string;
   revisedOfferId: string | null;
@@ -647,8 +691,15 @@ export type FeedbackEligibleReceipt = {
   shipmentId: string;
   received: number;
   accepted: number;
+  /** Total unaccounted for. Retained; prefer the separated fields below for display. */
   missing: number;
   damaged: number;
+  /** Buyer's own declaration, reconstructed from immutable facts. */
+  buyerDeclaredMissing: number;
+  /** Pieces the operator never reported delivering. */
+  notReportedByOperator: number;
+  /** False when the recorded facts do not conserve and provenance cannot be reconstructed. */
+  provenanceComplete: boolean;
   provenance: string;
 };
 
@@ -719,6 +770,11 @@ export type FeedbackListResponse = {
 };
 
 export type CollaborationWorkspaceView = {
+  creation: {
+    exceptionBatches: CollaborationTarget[];
+    scheduleBatches: CollaborationTarget[];
+    counterOffers: CollaborationTarget[];
+  };
   exceptions: ExceptionView[];
   scheduleRevisions: ScheduleRevisionView[];
   counteroffers: CounterofferView[];

@@ -1,0 +1,6 @@
+PASS B14-M01 the feedback tables are absent before migrate deploy
+PASS B14-M02 populated upgrade preserves every pre-existing row hash
+PASS B14-M03 the new tables carry restrictive keys, CHECKs and append-only guards
+PASS B14-M04 valid feedback is accepted and every guard rejects misuse
+PASS B14-M05 migration history matches every SQL file with none rolled back
+PASS B14-M06 dump and restore reproduce feedback and its attributed history exactly

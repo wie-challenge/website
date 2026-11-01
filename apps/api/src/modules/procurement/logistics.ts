@@ -199,7 +199,18 @@ export class LogisticsService {
         const shipment = loaded.shipment;
         this.version(shipment.version, input.version);
         const total = shipment.items.reduce((sum, item) => sum + item.quantity, 0);
-        if (input.quantity > total)
+        // The same pieces move through successive legs. Only earlier movements on this leg
+        // consume its balance; a hub confirmation restates the incoming collection.
+        const recorded = shipment.handovers
+          .filter((row) => row.eventType === input.eventType && !row.priorHandoverId)
+          .reduce((sum, row) => sum + row.quantity, 0);
+        if (input.eventType !== 'RECEIVED_AT_HUB')
+          C.custodyConservation({
+            shipped: total,
+            previousHandovers: recorded,
+            quantity: input.quantity,
+          });
+        else if (input.quantity > total)
           fail(409, 'EXCESS_HANDOVER', 'A handover cannot increase the shipment quantity.');
         const occurredAt = this.past(input.occurredAt);
         let status = shipment.status as C.ShipmentStatus;
@@ -232,7 +243,10 @@ export class LogisticsService {
           const prior = shipment.handovers.find((row) => row.id === input.priorHandoverId);
           if (prior?.eventType !== 'COLLECTED_FROM_ASSOCIATION' || prior.confirmation)
             fail(409, 'CONFIRMATION_REQUIRED', 'Confirm a pending association collection.');
-          if (prior.quantity !== total)
+          const collected = shipment.handovers
+            .filter((row) => row.eventType === 'COLLECTED_FROM_ASSOCIATION')
+            .reduce((sum, row) => sum + row.quantity, 0);
+          if (collected !== total || input.quantity !== total)
             fail(
               409,
               'HANDOVER_SHORT',
@@ -352,13 +366,21 @@ export class LogisticsService {
             'INVALID_TRANSITION',
             'Buyer confirmation follows an operator delivery report.',
           );
+        // Reconcile against what was actually shipped, not against the operator's report. A short
+        // report previously became the baseline, so the pieces it omitted were never counted as a
+        // shortage. See C.buyerReceipt.
+        const shipped = shipment.items.reduce((sum, item) => sum + item.quantity, 0);
         const receipt = C.buyerReceipt({
+          shipped,
           reported: shipment.deliveryReport.quantity,
           received: input.received,
           accepted: input.accepted,
           missing: input.missing,
           damaged: input.damaged,
         });
+        // The recorded missing figure is the total unaccounted for, including pieces the operator
+        // never reported arriving. Otherwise a short report would look like a complete delivery.
+        const recordedMissing = receipt.shortage;
         const status = receipt.discrepancy ? 'DISCREPANCY' : 'BUYER_CONFIRMED';
         C.assertShipmentEdge(shipment.status as C.ShipmentStatus, status);
         const confirmation = await tx.buyerDeliveryConfirmation.create({
@@ -366,7 +388,7 @@ export class LogisticsService {
             shipmentId,
             received: input.received,
             accepted: input.accepted,
-            missing: input.missing,
+            missing: recordedMissing,
             damaged: receipt.damaged,
             actorId: actor.id,
             occurredAt: this.past(input.occurredAt),
@@ -374,7 +396,7 @@ export class LogisticsService {
             ...(receipt.discrepancy
               ? {
                   discrepancy: {
-                    create: { quantity: input.missing + receipt.damaged, note: input.note },
+                    create: { quantity: recordedMissing + receipt.damaged, note: input.note },
                   },
                 }
               : {}),
@@ -409,7 +431,7 @@ export class LogisticsService {
           status: saved.status,
           version: saved.version,
           accepted: input.accepted,
-          missing: input.missing,
+          missing: recordedMissing,
           damaged: receipt.damaged,
           orderStatus: shipment.order.status,
         };
@@ -1157,6 +1179,24 @@ export class LogisticsService {
   ) {
     const quantity = row.items.reduce((total, item) => total + item.quantity, 0);
     const pickup = row.pickups.at(-1);
+    // Reconstructed from immutable facts - shipped items, the operator's delivery report and the
+    // buyer's received count. The stored `missing` column is deliberately NOT read: its meaning
+    // changed in Batch 1, and deriving from facts is exact under either rule. If the recorded facts
+    // do not conserve, the provenance is reported as absent rather than guessed.
+    const confirmationProvenance = row.buyerConfirmation
+      ? (() => {
+          try {
+            return C.reconstructReceipt({
+              shipped: quantity,
+              operatorReported: row.deliveryReport?.quantity ?? 0,
+              buyerReceived: row.buyerConfirmation.received,
+              storedMissing: row.buyerConfirmation.missing,
+            });
+          } catch {
+            return null;
+          }
+        })()
+      : null;
     return {
       id: row.id,
       status: row.status,
@@ -1169,8 +1209,16 @@ export class LogisticsService {
       windowEnd: pickup?.windowEnd.toISOString() ?? null,
       provenance: 'SYNTHETIC' as const,
       carrierConfirmed: false,
+      // Separated quantities. `delivered` is the operator's report and is not the shipped figure;
+      // the buyer's own declaration is distinct from the operator's reporting gap. `missing` is
+      // retained for existing consumers and carries the same total it always has.
       delivered: row.deliveryReport?.quantity ?? 0,
+      buyerReceived: row.buyerConfirmation?.received ?? 0,
       buyerAccepted: row.buyerConfirmation?.accepted ?? 0,
+      buyerDeclaredMissing: confirmationProvenance?.buyerDeclaredMissing ?? 0,
+      notReportedByOperator: confirmationProvenance?.operatorNotReported ?? 0,
+      totalUnaccounted: confirmationProvenance?.totalUnaccounted ?? 0,
+      provenanceComplete: Boolean(confirmationProvenance),
       missing: row.buyerConfirmation?.missing ?? 0,
       damaged: row.buyerConfirmation?.damaged ?? 0,
       discrepancy: row.buyerConfirmation?.discrepancy?.status ?? null,

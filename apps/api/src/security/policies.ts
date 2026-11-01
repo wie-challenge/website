@@ -1,5 +1,12 @@
 import type { AppConfig } from '../config/env.js';
-export type PolicyName = 'login' | 'registration' | 'reset' | 'verification' | 'api' | 'admin';
+export type PolicyName =
+  | 'login'
+  | 'registration'
+  | 'reset'
+  | 'verification'
+  | 'api'
+  | 'admin'
+  | 'feedback';
 export function policyName(path: string): PolicyName {
   if (path === '/api/auth/sign-in/email' || path.startsWith('/api/auth/two-factor/'))
     return 'login';
@@ -17,6 +24,9 @@ export function policyName(path: string): PolicyName {
   if (['/api/auth/send-verification-email', '/api/auth/verify-email'].includes(path))
     return 'verification';
   if (path.startsWith('/api/v1/admin/')) return 'admin';
+  // A showroom feedback write is bounded separately so anonymous submissions cannot consume the
+  // generic API budget needed to explore the demonstration.
+  if (path === '/api/v1/demo/feedback') return 'feedback';
   return 'api';
 }
 export function ratePolicy(config: AppConfig, name: PolicyName) {
@@ -27,6 +37,7 @@ export function ratePolicy(config: AppConfig, name: PolicyName) {
     verification: [config.RATE_VERIFICATION_MAX, config.RATE_VERIFICATION_WINDOW],
     api: [config.RATE_API_MAX, config.RATE_API_WINDOW],
     admin: [config.RATE_ADMIN_MAX, config.RATE_ADMIN_WINDOW],
+    feedback: [config.RATE_FEEDBACK_MAX, config.RATE_FEEDBACK_WINDOW],
   };
   const [max, window] = map[name];
   return { max, window };

@@ -712,6 +712,38 @@ export async function runCommercialScenarios({ db, register, check }: Harness) {
     assert.equal(accept.status, 409);
     assert.equal((accept.body as { code: string }).code, 'STALE_TERMS');
     assert.equal(await db.commercialBatch.count({ where: { offerId: betaOffer.id } }), 0);
+
+    // A French profile must not silently accept English commercial terms.
+    for (const review of [
+      {},
+      { reviewLanguage: 'fr', sourceTermsLanguage: 'en', acknowledgeOriginalTerms: true },
+    ]) {
+      const denied = await artisan.client.request(
+        `/api/v1/commerce/offers/${betaOffer.id}/actions`,
+        'POST',
+        {
+          next: 'ACCEPTED',
+          version: (issued.body as { version: number }).version,
+          termsSha256: betaOffer.termsSha256,
+          ...review,
+        },
+        {
+          'X-CSRF-Token': (
+            (await artisan.client.request('/api/v1/me')).body as { csrfToken: string }
+          ).csrfToken,
+          'Idempotency-Key': randomUUID(),
+        },
+      );
+      assert.equal(denied.status, 409, JSON.stringify(denied.body));
+      assert.equal((denied.body as { code: string }).code, 'SOURCE_TERMS_REVIEW_REQUIRED');
+      assert.equal(await db.commercialBatch.count({ where: { offerId: betaOffer.id } }), 0);
+      assert.equal(
+        await db.auditEvent.count({
+          where: { targetId: betaOffer.id, action: 'commerce.offer.accepted' },
+        }),
+        0,
+      );
+    }
     const acceptedOffer = await artisan.client.request(
       `/api/v1/commerce/offers/${betaOffer.id}/actions`,
       'POST',
@@ -719,6 +751,9 @@ export async function runCommercialScenarios({ db, register, check }: Harness) {
         next: 'ACCEPTED',
         version: (issued.body as { version: number }).version,
         termsSha256: betaOffer.termsSha256,
+        reviewLanguage: 'en',
+        sourceTermsLanguage: 'en',
+        acknowledgeOriginalTerms: true,
       },
       {
         'X-CSRF-Token': ((await artisan.client.request('/api/v1/me')).body as { csrfToken: string })
@@ -727,6 +762,18 @@ export async function runCommercialScenarios({ db, register, check }: Harness) {
       },
     );
     assert.equal(acceptedOffer.status, 201, JSON.stringify(acceptedOffer.body));
+    const languageAudit = await db.auditEvent.findFirstOrThrow({
+      where: { targetId: betaOffer.id, action: 'commerce.offer.accepted' },
+    });
+    assert.equal(
+      (languageAudit.after as { reviewedTranslationAvailable: boolean })
+        .reviewedTranslationAvailable,
+      false,
+    );
+    assert.equal(
+      (languageAudit.after as { termsSha256: string }).termsSha256,
+      betaOffer.termsSha256,
+    );
     assert.equal(await db.commercialBatch.count({ where: { offerId: betaOffer.id } }), 1);
     assert.equal(
       (await db.commercialOffer.findUniqueOrThrow({ where: { id: betaOffer.id } })).status,
