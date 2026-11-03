@@ -124,10 +124,10 @@ export async function runRoleScenarios({ db, register, mutate, check, mail }: Ha
         3,
       );
       for (const [who, persona, path] of [
-        [admin, 'PLATFORM_ADMIN', '/admin'],
-        [a, 'ASSOCIATION_COORDINATOR', '/association'],
-        [buyer, 'BUYER_REPRESENTATIVE', '/buyer'],
-        [operator, 'NASJ_OPERATOR', '/operator'],
+        [admin, 'PLATFORM_ADMIN', '/nasj/organizations'],
+        [a, 'ASSOCIATION_COORDINATOR', '/association/requests'],
+        [buyer, 'BUYER_REPRESENTATIVE', '/catalog'],
+        [operator, 'NASJ_OPERATOR', '/nasj/organizations'],
       ] as const) {
         const r = await who.client.request('/api/v1/me/context');
         assert.equal(r.status, 200);

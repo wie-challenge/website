@@ -1,6 +1,5 @@
 import { redirect } from 'next/navigation';
 import { getIdentityContext } from '@/lib/server-api';
-import { FoundationDashboard } from '@/components/foundation-workspace';
 export default async function Page() {
   const context = await getIdentityContext();
   if (!context)
@@ -11,5 +10,5 @@ export default async function Page() {
       </>
     );
   if (context.landingPath !== '/dashboard') redirect(context.landingPath);
-  return <FoundationDashboard context={context} mode="onboarding" />;
+  redirect('/welcome');
 }

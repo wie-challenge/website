@@ -1,5 +1,4 @@
 'use client';
-import { EvidenceNotice } from './evidence-notice';
 import { useId, useRef, useState, type ReactNode } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -791,16 +790,6 @@ export function ProcurementDetail({ id }: { id: string }) {
                           <h3>
                             Feasibility v{item.version} · {item.result.replaceAll('_', ' ')}
                           </h3>
-                          <EvidenceNotice
-                            compact
-                            claimId={`feasibility.${item.id}`}
-                            claimType="Feasibility projection"
-                            status="SYNTHETIC"
-                            sourceReference="/evidence#software"
-                            limitations={[
-                              'Synthetic assumptions and declared capacity support a projection; they are not measured production throughput or a delivery commitment.',
-                            ]}
-                          />
                           <p>{item.explanation}</p>
                           <p>
                             Known remaining {item.knownRemaining ?? 'Unknown'} · Shortage{' '}
@@ -820,16 +809,6 @@ export function ProcurementDetail({ id }: { id: string }) {
                             {cost.incomplete ? 'Incomplete' : cost.sellingTnd}{' '}
                             {cost.incomplete ? '' : 'TND'}
                           </h3>
-                          <EvidenceNotice
-                            compact
-                            claimId={`costing.${cost.id}`}
-                            claimType="Costing example"
-                            status="SYNTHETIC"
-                            sourceReference="/evidence#software"
-                            limitations={[
-                              'Exact TND calculations use synthetic cost assumptions. Planned contribution is not realized profit; tax treatment remains unapproved.',
-                            ]}
-                          />
                           <p>
                             Subtotal {cost.subtotalTnd} TND · {cost.marginMethod} · Tax{' '}
                             {cost.taxStatus}

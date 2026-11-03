@@ -1,5 +1,4 @@
-import { ProductCatalogWorkspace } from '@/components/product-catalog-workspace';
-export const metadata = { title: 'Product design and sampling' };
+import { Catalog } from '@/components/market/buyer';
 export default function Page() {
-  return <ProductCatalogWorkspace />;
+  return <Catalog />;
 }

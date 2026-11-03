@@ -2,7 +2,6 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import { TraceQr } from '@/components/trace-qr';
-import { EvidenceNotice } from '@/components/evidence-notice';
 
 type PublicTrace = {
   status: 'PUBLISHED' | 'REVOKED';
@@ -77,15 +76,6 @@ export default function Page() {
               Provenance: synthetic demonstration. This page does not show personal contacts,
               individual pay, or monitoring data.
             </p>
-            <EvidenceNotice
-              claimId="trace.public-story"
-              claimType="Public craft record"
-              status="SYNTHETIC"
-              sourceReference="/evidence#scenario"
-              limitations={[
-                'Reviewed synthetic craft content is not a physical provenance certificate, independent testimonial or verified delivery record.',
-              ]}
-            />
             <h2>{record.content.productTitle}</h2>
             <p>
               Craft: {record.content.craftName}. Region: {record.content.coarseRegion}.
@@ -103,16 +93,6 @@ export default function Page() {
             )}
             {href && <TraceQr value={href} />}
             <h2>Producer share</h2>
-            <EvidenceNotice
-              compact
-              claimId="trace.producer-share"
-              claimType="Agreed producer-share metric"
-              status="SYNTHETIC"
-              sourceReference="/evidence#producer-share"
-              limitations={[
-                'Agreed compensation divided by accepted quotation is not verified paid income, realized profit or a fairness guarantee.',
-              ]}
-            />
             <p>
               The metric is agreed direct artisan compensation divided by the accepted quotation for
               this order. It is not earned pay, not verified paid income, and not a fairness

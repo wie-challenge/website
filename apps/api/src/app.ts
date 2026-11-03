@@ -66,11 +66,15 @@ export async function createApp(options: { config?: AppConfig; arcjet?: ArcjetNe
   });
   const ordinaryJson = express.json({ limit: '32kb' });
   const attachmentJson = express.json({ limit: '384kb' });
+  const marketFileJson = express.json({ limit: '6mb' });
   app.use((req: Request, res: Response, next: NextFunction) =>
-    (/^\/api\/v1\/procurement\/rfqs\/[a-zA-Z0-9_-]{1,128}\/attachments$/.test(req.path) &&
+    (['/api/v1/market/files', '/api/v1/market/products/import'].includes(req.path) &&
       req.method === 'POST'
-      ? attachmentJson
-      : ordinaryJson)(req, res, next),
+      ? marketFileJson
+      : /^\/api\/v1\/procurement\/rfqs\/[a-zA-Z0-9_-]{1,128}\/attachments$/.test(req.path) &&
+          req.method === 'POST'
+        ? attachmentJson
+        : ordinaryJson)(req, res, next),
   );
   app.use((req: Request, _res: Response, next: NextFunction) => {
     try {

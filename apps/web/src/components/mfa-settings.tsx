@@ -1,7 +1,7 @@
 'use client';
 import { useState } from 'react';
 import { apiFetch } from '@/lib/api';
-import { Workspace, ResourceState, ActionForm, Input, useResource, text } from './workspace-ui';
+import { SectionShell, ResourceState, ActionForm, Input, useResource, text } from './workspace-ui';
 type Security = {
   sessionVerified: boolean;
   twoFactorEnabled: boolean;
@@ -9,11 +9,12 @@ type Security = {
   hasPrivilegedAccess: boolean;
 };
 type Enrollment = { totpURI: string; backupCodes: string[] };
-export function MfaSettings() {
+export function MfaSettings({ embedded = false }: { embedded?: boolean }) {
   const resource = useResource<Security>('/api/v1/settings/security');
   const [enrollment, setEnrollment] = useState<Enrollment | null>(null);
   return (
-    <Workspace
+    <SectionShell
+      embedded={embedded}
       title="Account security."
       description="Protect your account with an authenticator app and recovery codes."
     >
@@ -118,6 +119,6 @@ export function MfaSettings() {
             )}
         </section>
       )}
-    </Workspace>
+    </SectionShell>
   );
 }

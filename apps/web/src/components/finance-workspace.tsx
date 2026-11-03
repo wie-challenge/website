@@ -1,6 +1,5 @@
 'use client';
 import { FinancialAnalysis, RfqFinanceReview } from './financial-analysis';
-import { EvidenceNotice } from './evidence-notice';
 import { useState } from 'react';
 import Link from 'next/link';
 import { apiFetch } from '@/lib/api';
@@ -101,16 +100,6 @@ export function FinanceWorkspace() {
       title="Finance and order closure"
       description="Review deposits, payable obligations, independent approvals and closure blockers. Bank verification and live transfers remain unavailable."
     >
-      <EvidenceNotice
-        compact
-        claimId="finance.workspace"
-        claimType="Financial-control demonstration"
-        status="SYNTHETIC"
-        sourceReference="/evidence#payments"
-        limitations={[
-          'Reported deposits and payout execution are unverified. Simulations do not count as real receipts or paid compensation.',
-        ]}
-      />
       <ActionForm
         label="Open order finances"
         action={async (form) => {
@@ -504,13 +493,6 @@ export function ArtisanFinancialStatement() {
   return (
     <section className="section-gap" aria-label="Payment history and disputes">
       <h2>Payment history and disputes</h2>
-      <EvidenceNotice
-        compact
-        claimId="artisan.financial-history"
-        claimType="Financial history demonstration"
-        status="SYNTHETIC"
-        sourceReference="/evidence#payments"
-      />
       <ResourceState {...resource} retry={resource.reload} />
       {!resource.loading && !resource.error && !resource.data?.items.length && (
         <p>No financial statement lines are available.</p>

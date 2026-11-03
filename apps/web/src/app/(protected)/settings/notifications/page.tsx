@@ -1,4 +1,4 @@
-import { Notifications } from '@/components/governance';
+import { redirect } from 'next/navigation';
 export default function Page() {
-  return <Notifications />;
+  redirect('/settings/profile');
 }

@@ -8,7 +8,6 @@ import {
   signedScenarioTnd,
   type FinancialScenarioInput,
 } from '@nasj/contracts';
-import { EvidenceNotice } from './evidence-notice';
 
 const fields: {
   key: Exclude<keyof FinancialScenarioInput, 'compensationMode'>;
@@ -185,13 +184,6 @@ export function FinancialSimulator({ compact = false }: { compact?: boolean }) {
           order, inventory or payable is changed. Inputs remain only in this view.
         </p>
       </div>
-      <EvidenceNotice
-        claimId="simulator.financial-scenarios"
-        claimType="financial scenario model"
-        status="SYNTHETIC"
-        sourceReference="/evidence#payments"
-        compact
-      />
       {compact ? (
         <details>
           <summary className="cursor-pointer font-semibold">Change financial assumptions</summary>

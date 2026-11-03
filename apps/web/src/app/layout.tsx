@@ -13,7 +13,7 @@ const tajawal = Tajawal({
 export const metadata: Metadata = {
   title: { default: 'NASJ | نسج', template: '%s · NASJ' },
   description:
-    'NASJ: a Tunisian artisan-production concept and explicitly synthetic software demonstration. Field and payment verification remain pending.',
+    'NASJ connects companies with rural women artisans and the associations that support them.',
   robots: { index: false, follow: false },
   icons: { icon: '/brand/nasj-mark.png' },
 };

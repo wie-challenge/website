@@ -1,6 +1,5 @@
 'use client';
 import Link from 'next/link';
-import { EvidenceNotice } from './evidence-notice';
 import { useState } from 'react';
 import type {
   DirectoryContributorView,
@@ -67,16 +66,6 @@ export function DirectoryWorkspace({
       title="Production directory"
       description="Find declared production capacity by craft, region and period. Results are not reservations or feasibility guarantees."
     >
-      <EvidenceNotice
-        compact
-        claimId="directory.declared-capacity"
-        claimType="Declared production capacity"
-        status="SYNTHETIC"
-        sourceReference="/evidence#software"
-        limitations={[
-          'Synthetic declarations and calculated availability are not physically verified stock, production measurements or delivery guarantees.',
-        ]}
-      />
       <p>
         Figures are synthetic declared capacity. Hours and pieces stay separate. Unknown
         availability is withheld rather than shown as free capacity.

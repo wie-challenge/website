@@ -1,288 +1,249 @@
 import Image from 'next/image';
 import Link from 'next/link';
-import { SiteFooter, Weave, Wordmark } from '@/components/brand';
-import { EvidenceNotice } from '@/components/evidence-notice';
+import { Weave, Wordmark } from '@/components/brand';
+import { nasoujArt } from '@/components/assistant/nasouj-assets';
+import { LandingMotion } from '@/components/landing/landing-motion';
+import { LandingNasouj } from '@/components/landing/landing-nasouj';
+import styles from './landing.module.css';
 
-const ecosystem = [
+const people = [
   {
-    tone: 'light',
-    title: 'Commercial buyers',
-    text: 'The proposal starts with a product brief, quantities, delivery needs and an explicit quotation rather than a promise of available supply.',
+    title: 'Companies',
+    text: 'Source employee gifts, event gifts and CSR projects that mean something, and see the full quotation before you commit.',
   },
   {
-    tone: 'dark',
-    title: 'A managed production workflow',
-    text: 'Scoped operators assess declared capacity, prepare costed offers and track production, quality and custody in a synthetic software demonstration.',
+    title: 'NASJ, the connector',
+    text: 'Plans capacity, prepares costed offers and follows quality and delivery for every order.',
   },
   {
-    tone: 'light',
-    title: 'Association coordinators',
-    text: 'Coordinators can assist assigned artisans within consent and organization permissions. A coordinator report is separate from an artisan’s direct decision.',
+    title: 'Associations and cooperatives',
+    text: 'Bring each request to their artisans and support them, within consent and permissions.',
   },
   {
-    tone: 'light',
-    title: 'Artisan choice',
-    text: 'Authenticated artisans review work, compensation and terms before accepting. Unverified accountless acceptance remains pending and cannot create a commitment.',
+    title: 'Artisanes',
+    text: 'Receive requests through their association and decide for themselves which work to take on.',
   },
 ];
 const crafts = [
-  { name: 'Embroidery', detail: 'Initial product and production hypothesis', swatch: 'forest' },
-  { name: 'Textile weaving', detail: 'Reference craft vocabulary', swatch: 'terracotta' },
-  { name: 'Basket making', detail: 'Reference craft vocabulary', swatch: 'gold' },
-  { name: 'Pottery', detail: 'Reference craft vocabulary', swatch: 'charcoal' },
-  { name: 'Other crafts', detail: 'Reference craft vocabulary', swatch: 'ring' },
+  {
+    name: 'Embroidery',
+    text: 'Our starting craft, and the first production journey NASJ is built around.',
+  },
+  { name: 'Textile weaving', text: 'Patterned textiles, the craft our name comes from.' },
+  { name: 'Basket making', text: 'Natural fibers, shaped by hand.' },
+  { name: 'Pottery', text: 'Handmade ceramics.' },
+  { name: 'Other crafts', text: 'More crafts will join as the network grows.' },
 ];
 export default function Home() {
   return (
-    <>
-      <header className="site-header">
+    <div className={styles.page} data-landing>
+      <LandingMotion activeClass={styles.motionOn} />
+      <header className={styles.bar}>
         <Wordmark />
         <nav aria-label="Main">
-          <a href="#how">Workflow</a>
-          <Link href="/evidence">Evidence</Link>
-          <Link href="/presentation">Presentation</Link>
+          <a href="#how">How it works</a>
+          <a href="#nasouj">Nasouj</a>
+          <a href="#crafts">Crafts</a>
         </nav>
-        <div className="site-header-actions">
-          <Link className="button secondary" href="/auth/login">
-            Sign in
-          </Link>
-          <Link className="button" href="/demo">
-            Explore demo
+        <div className={styles.barActions}>
+          <Link href="/auth/login">Sign in</Link>
+          <Link className={styles.btnSmall} href="/auth/register">
+            Get started
           </Link>
         </div>
       </header>
+
       <main id="main-content">
-        <section className="hero">
-          <div className="hero-copy">
-            <p className="kicker">NASJ · a Tunisian artisan-production concept</p>
+        <section className={styles.hero}>
+          <div className={styles.heroCopy}>
             <h1>
-              Craft, with
-              <br />a clearer path to market.
+              Meaningful gifts.
+              <br />
+              Greater impact.
             </h1>
-            <p className="lead">
-              A managed B2B approach to connect commercial product requests with artisan production
-              networks. Our starting hypothesis is Tunisian embroidery, coordinated through
-              associations while preserving each artisan’s voluntary decision.
+            <p className={styles.lead}>
+              NASJ connects companies with rural women artisans and the associations and
+              cooperatives that support them, turning employee gifts, event gifts and CSR budgets
+              into work and visibility for handmade craft.
             </p>
-            <EvidenceNotice
-              claimId="landing.market-hypothesis"
-              claimType="Market-access hypothesis"
-              status="PROPOSED"
-              limitations={[
-                'Buyer demand, artisan income benefits and production economics require field research. No verified field outcomes are claimed.',
-              ]}
-            />
-            <div className="action-row">
-              <Link className="button large" href="/demo">
-                Explore the synthetic demo <span aria-hidden="true">→</span>
+            <div className={styles.actions}>
+              <Link className={styles.btn} href="/catalog">
+                Browse the catalog
               </Link>
-              <Link className="button secondary large" href="/evidence">
-                Evidence and limitations
+              <Link className={styles.textLink} href="/auth/register">
+                Create an account
               </Link>
             </div>
-            <ul className="values" aria-label="Design intentions">
-              <li>Voluntary participation</li>
-              <li>Scoped coordination</li>
-              <li>Traceable decisions</li>
-            </ul>
           </div>
-          <div className="hero-visual">
-            <div className="arch">
-              <Image
-                src="/brand/artisan-weaving.jpg"
-                alt="Illustrative photograph of hands weaving a patterned textile; not a documented NASJ participant"
-                width={685}
-                height={753}
-                fetchPriority="high"
-                sizes="(max-width: 750px) 100vw, 520px"
-              />
-            </div>
-            <p className="story-card">
-              <Image src="/brand/nasj-mark.png" alt="" width={36} height={38} />
-              <span>
-                <strong>A craft-inspired concept.</strong> This representative image is not
-                participant or field-validation evidence.
-              </span>
-            </p>
+          <div className={styles.arch}>
+            <Image
+              src="/brand/artisan-weaving.jpg"
+              alt="Hands weaving a patterned textile"
+              width={685}
+              height={753}
+              fetchPriority="high"
+              sizes="(max-width: 750px) 90vw, 42vw"
+            />
           </div>
         </section>
         <Weave />
-        <section className="section" id="how">
-          <div className="section-intro">
-            <p className="kicker">The managed supply-chain track</p>
-            <h2>From a product request to accountable production.</h2>
-            <p className="lead">
-              The software connects quotation, artisan offers, production tracking, quality checks
-              and logistics. The demonstration uses fictional organizations and synthetic commercial
-              records.
-            </p>
-          </div>
-          <EvidenceNotice
-            claimId="landing.software-workflow"
-            claimType="Implemented software workflow"
-            status="SYNTHETIC"
-            sourceReference="/evidence#software"
-            limitations={[
-              'Working application workflows are demonstrated with controlled synthetic inputs. Software checks do not establish live operational readiness, partner endorsement or delivery reliability.',
-            ]}
-          />
-          <div className="card-grid">
-            {ecosystem.map((item) => (
-              <article key={item.title} className={`eco-card eco-${item.tone}`}>
-                <h3>{item.title}</h3>
-                <p>{item.text}</p>
-              </article>
-            ))}
+
+        <section id="how" className={styles.how} aria-labelledby="how-title">
+          <h2 id="how-title" className={`${styles.heading} ${styles.frame}`} data-reveal>
+            From a brief to a delivered gift.
+          </h2>
+          <div className={styles.weaveGrid}>
+            <article className={`${styles.step} ${styles.stepDeep}`} data-reveal>
+              <h3>Share your brief</h3>
+              <p>
+                Tell NASJ the product, the quantity and the delivery date your gifts need, then
+                review a clear quotation in Tunisian dinars.
+              </p>
+            </article>
+            <div className={styles.stepPicture} data-reveal>
+              <Image
+                src="/landing/workshop.jpg"
+                alt="A workshop with embroidered fabric on a wooden table"
+                width={1400}
+                height={1864}
+                sizes="(max-width: 750px) 100vw, 30vw"
+                loading="lazy"
+              />
+            </div>
+            <article className={`${styles.step} ${styles.stepTerracotta}`} data-reveal>
+              <h3>Artisans choose</h3>
+              <p>
+                Associations bring each request to their artisanes. Every woman hears the work, the
+                pay and the terms, then decides for herself.
+              </p>
+            </article>
+            <div className={`${styles.stepPicture} ${styles.stepPictureWide}`} data-reveal>
+              <Image
+                src="/landing/embroidery.jpg"
+                alt="A hand stitching gold thread onto fabric"
+                width={1800}
+                height={1197}
+                sizes="(max-width: 750px) 100vw, 42vw"
+                loading="lazy"
+              />
+            </div>
+            <article className={`${styles.step} ${styles.stepGreen}`} data-reveal>
+              <h3>Made by hand</h3>
+              <p>
+                Production, quality checks and material handovers are recorded from the workshop to
+                the shipment.
+              </p>
+            </article>
+            <article className={`${styles.step} ${styles.stepGold}`} data-reveal>
+              <h3>Delivered</h3>
+              <p>You confirm what arrived, and a QR page tells the story behind each piece.</p>
+            </article>
           </div>
         </section>
-        <section className="section" id="start">
-          <div className="section-intro">
-            <p className="kicker">What the prototype can demonstrate</p>
-            <h2>Follow decisions, quantities and obligations.</h2>
-          </div>
-          <div className="paths">
-            <article className="path">
-              <h3>A commercial production journey</h3>
-              <EvidenceNotice
-                compact
-                claimId="landing.commercial-journey"
-                claimType="Commercial demonstration"
-                status="SYNTHETIC"
-                sourceReference="/evidence#scenario"
-              />
-              <ol className="steps">
-                <li>
-                  <strong>Define and quote the work.</strong> Review product requirements, declared
-                  capacity, feasibility assumptions and exact TND costing.
-                </li>
-                <li>
-                  <strong>Offer work voluntarily.</strong> Authenticated artisans review
-                  compensation and accept their own offers. Accountless reports stay blocked pending
-                  an approved method.
-                </li>
-                <li>
-                  <strong>Track production and custody.</strong> Record progress, quality-approved
-                  quantities, material handovers, shipments and buyer-confirmed receipt through
-                  scoped workspaces.
-                </li>
-              </ol>
-            </article>
-            <article className="path">
-              <h3>Financial transparency and public traceability</h3>
-              <EvidenceNotice
-                compact
-                claimId="landing.finance-traceability"
-                claimType="Financial and traceability demonstration"
-                status="SYNTHETIC"
-                sourceReference="/evidence#payments"
-                limitations={[
-                  'Simulations are not bank transfers. Manual material records are not independently verified physical stock. Agreed producer share is not verified paid income.',
-                ]}
-              />
-              <ol className="steps">
-                <li>
-                  <strong>Keep obligations visible.</strong> Recognized payables, separate payout
-                  approvals and dispute history preserve unresolved artisan claims.
-                </li>
-                <li>
-                  <strong>Review the QR story.</strong> Published craft summaries and privacy-aware
-                  producer-share calculations retain their synthetic label.
-                </li>
-                <li>
-                  <strong>Show the blockers.</strong> Deposits and payout reports stay unverified
-                  without approved evidence. Financial closure remains blocked while required
-                  evidence or obligations are missing.
-                </li>
-              </ol>
-            </article>
-          </div>
-          <div className="coming-next">
-            <div>
-              <h3>What still needs validation</h3>
-              <EvidenceNotice
-                compact
-                claimId="landing.future-validation"
-                claimType="Field-validation and rollout plans"
-                status="PROPOSED"
-                sourceReference="/evidence#limitations"
-                limitations={[
-                  'No validated partner network, verified artisan-count metric, income uplift, delivery guarantee, approved live bank settlement or pilot readiness is claimed.',
-                ]}
-              />
-              <p>
-                Field research, commercial agreements, physical-stock verification, payment
-                evidence, tax policy and owner acceptance remain separate gates.
+
+        <section className={styles.people} aria-labelledby="people-title">
+          <div className={`${styles.frame} ${styles.peopleGrid}`}>
+            <div data-reveal>
+              <h2 id="people-title" className={styles.heading}>
+                One order, woven through three communities.
+              </h2>
+              <p className={styles.peopleIntro}>
+                NASJ isn’t about donating money or buying generic merchandise. It turns the
+                purchasing companies already do into practical work for women artisans.
               </p>
             </div>
-          </div>
-        </section>
-        <section className="crafts" id="crafts">
-          <div className="section">
-            <div className="section-intro">
-              <p className="kicker">A focused starting point</p>
-              <h2>Embroidery first, broader crafts as a hypothesis.</h2>
-            </div>
-            <EvidenceNotice
-              claimId="landing.craft-scope"
-              claimType="Product-scope hypothesis"
-              status="PROPOSED"
-              limitations={[
-                'The craft list is reference vocabulary, not a count of active producers or a catalogue of verified supply.',
-              ]}
-            />
-            <ul className="craft-grid">
-              {crafts.map((craft) => (
-                <li key={craft.name}>
-                  <span className={`swatch ${craft.swatch}`} aria-hidden="true" />
-                  <strong>{craft.name}</strong>
-                  <span>{craft.detail}</span>
-                </li>
+            <div className={styles.peopleList}>
+              {people.map((person) => (
+                <article key={person.title} data-reveal>
+                  <h3>{person.title}</h3>
+                  <p>{person.text}</p>
+                </article>
               ))}
-            </ul>
+            </div>
           </div>
         </section>
-        <section className="section" id="safety">
-          <div className="section-intro">
-            <p className="kicker">Optional, separate research track</p>
-            <h2>A local safety companion concept.</h2>
-            <p>
-              Wearable safety support is a separate proposed research direction. Any local safety
-              simulation remains outside the commerce API; individual health or monitoring data must
-              not determine work eligibility, pay or public traceability.
-            </p>
-          </div>
-          <EvidenceNotice
-            claimId="landing.local-safety"
-            claimType="Optional local safety concept"
-            status="PROPOSED"
-            sourceReference="/evidence#safety"
-            limitations={[
-              'No clinical injury-prevention result, certified device, hardware deployment or health-effectiveness claim is established.',
-            ]}
-          />
-        </section>
-        <section className="cta-band">
-          <div className="section">
-            <div>
-              <h2>Explore the implementation, with its limits.</h2>
-              <p>
-                The demo is synthetic. Review sources and blockers before drawing conclusions about
-                real-world use.
+
+        <section id="nasouj" className={styles.nasouj} aria-labelledby="nasouj-title">
+          <div className={styles.frame}>
+            <div className={styles.nasoujHead} data-reveal>
+              <h2 id="nasouj-title" className={styles.heading}>
+                Meet Nasouj
+              </h2>
+              <p className={styles.nasoujArabic} lang="ar" dir="rtl">
+                نسوج
               </p>
             </div>
-            <div className="action-row">
-              <Link className="button gold large" href="/demo">
-                Open demo
-              </Link>
-              <Link className="button outline-light large" href="/presentation">
-                Presentation mode
-              </Link>
+            <p className={styles.lead} data-reveal>
+              Your guide inside NASJ. Pick who you are and see how Nasouj helps with your next step.
+            </p>
+            <LandingNasouj />
+          </div>
+        </section>
+
+        <section id="crafts" className={styles.crafts} aria-labelledby="crafts-title">
+          <div className={`${styles.frame} ${styles.craftsGrid}`}>
+            <div>
+              <h2 id="crafts-title" className={styles.heading} data-reveal>
+                Crafts your team will keep.
+              </h2>
+              <div className={styles.bars}>
+                {crafts.map((craft, index) => (
+                  <details key={craft.name} className={styles.barRow} open={index === 0}>
+                    <summary>{craft.name}</summary>
+                    <p>{craft.text}</p>
+                  </details>
+                ))}
+              </div>
+            </div>
+            <div className={styles.craftsPicture} data-reveal>
+              <Image
+                src="/landing/nasj-gifting.jpg"
+                alt="A NASJ tote bag, a woven basket and a printed NASJ card on a sunlit table"
+                width={960}
+                height={1024}
+                sizes="(max-width: 750px) 100vw, 40vw"
+                loading="lazy"
+              />
             </div>
           </div>
-          <Weave />
+        </section>
+
+        <section className={styles.cta} aria-labelledby="cta-title">
+          <div className={`${styles.frame} ${styles.ctaInner}`}>
+            <div>
+              <h2 id="cta-title" className={styles.heading}>
+                See how NASJ works.
+              </h2>
+              <p>
+                NASJ is a working prototype, shown with fictional organizations and sample data.
+              </p>
+            </div>
+            <Link className={styles.btnGold} href="/catalog">
+              Browse the catalog
+            </Link>
+          </div>
         </section>
       </main>
-      <SiteFooter />
-    </>
+
+      <footer className={styles.footer}>
+        <Weave />
+        <div className={`${styles.frame} ${styles.footerInner}`}>
+          <div className={styles.footerBrand}>
+            <Image src={nasoujArt.avatar} alt="" width={64} height={64} loading="lazy" />
+            <p>
+              Weaving Connections. Creating Impact. <span lang="ar">نسج</span>
+            </p>
+          </div>
+          <nav aria-label="Footer">
+            <a href="#how">How it works</a>
+            <a href="#nasouj">Nasouj</a>
+            <a href="#crafts">Crafts</a>
+            <Link href="/catalog">Catalog</Link>
+            <Link href="/auth/login">Sign in</Link>
+            <Link href="/auth/register">Create an account</Link>
+          </nav>
+        </div>
+      </footer>
+    </div>
   );
 }

@@ -1,4 +1,5 @@
 // Single source of truth for signed-in navigation. Add a route here, not in the layout.
+import type { OperationalPersona } from '@nasj/contracts';
 export type NavIcon =
   | 'organization'
   | 'artisan'
@@ -6,8 +7,25 @@ export type NavIcon =
   | 'approval'
   | 'users'
   | 'audit'
-  | 'privacy';
-export type NavItem = { href: string; label: string; icon: NavIcon; match?: string };
+  | 'privacy'
+  | 'catalog'
+  | 'custom'
+  | 'cart'
+  | 'orders'
+  | 'requests'
+  | 'products'
+  | 'finance'
+  | 'profile'
+  | 'delivery'
+  | 'tasks';
+export type NavCount = 'requests' | 'finance' | 'organizations' | 'orders' | 'cart';
+export type NavItem = {
+  href: string;
+  label: string;
+  icon: NavIcon;
+  match?: string;
+  count?: NavCount;
+};
 export type NavSection = { label: string; items: NavItem[]; adminOnly?: boolean };
 
 export type WorkspaceCapabilities = {
@@ -57,12 +75,6 @@ export const dashboardActions: Record<
       label: 'Participant concerns',
       icon: 'support',
       description: 'Review concerns independently of association operations.',
-    },
-    {
-      href: '/admin/demo-feedback',
-      label: 'Showroom feedback',
-      icon: 'support',
-      description: 'Triage structured feedback visitors left about the synthetic demonstration.',
     },
     {
       href: '/admin/privacy-requests',
@@ -127,7 +139,7 @@ export const dashboardActions: Record<
       description: 'Manage your company and independently authorized purchasing access.',
     },
     {
-      href: '/catalog',
+      href: '/product-design',
       label: 'Product design and sampling',
       icon: 'organization',
       description: 'Review specification versions and approve or reject production samples.',
@@ -221,7 +233,7 @@ export const dashboardActions: Record<
       description: 'Search privacy-safe declared capacity by craft, region and period.',
     },
     {
-      href: '/catalog',
+      href: '/product-design',
       label: 'Product design and sampling',
       icon: 'organization',
       description: 'Versioned specifications, paid sample terms and buyer sample approval.',
@@ -253,58 +265,80 @@ export const dashboardActions: Record<
     },
   ],
 };
+const people: NavSection = {
+  label: 'People',
+  items: [
+    {
+      href: '/nasj/organizations',
+      label: 'Companies and associations',
+      icon: 'organization',
+      count: 'organizations',
+    },
+  ],
+};
+const delivery: NavSection = {
+  label: 'Delivery',
+  items: [{ href: '/nasj/requests', label: 'Requests', icon: 'requests', count: 'requests' }],
+};
+const finance: NavSection = {
+  label: 'Finance',
+  items: [
+    { href: '/nasj/finance', label: 'Prices and invoices', icon: 'finance', count: 'finance' },
+  ],
+};
+const personaNavigation: Record<OperationalPersona, NavSection[]> = {
+  // The NASJ admin can do the work of the operator, the coordinator and finance.
+  PLATFORM_ADMIN: [
+    people,
+    delivery,
+    finance,
+    {
+      label: 'Platform',
+      items: [
+        { href: '/admin/users', label: 'Users', icon: 'users' },
+        { href: '/admin/audit', label: 'Activity history', icon: 'audit' },
+      ],
+    },
+  ],
+  NASJ_OPERATOR: [people],
+  NASJ_COORDINATOR: [delivery],
+  NASJ_FINANCE: [finance],
+  BUYER_REPRESENTATIVE: [
+    {
+      label: 'Buy',
+      items: [
+        { href: '/catalog', label: 'Catalog', icon: 'catalog' },
+        { href: '/custom-request', label: 'Custom request', icon: 'custom' },
+        { href: '/cart', label: 'Cart', icon: 'cart', count: 'cart' },
+        { href: '/orders', label: 'Your orders', icon: 'orders', count: 'orders' },
+      ],
+    },
+  ],
+  ASSOCIATION_COORDINATOR: [
+    {
+      label: 'Association',
+      items: [
+        { href: '/association/requests', label: 'Requests', icon: 'requests', count: 'requests' },
+        { href: '/association/products', label: 'Your products', icon: 'products' },
+        { href: '/association/artisanes', label: 'Artisanes', icon: 'artisan' },
+      ],
+    },
+  ],
+};
 export function workspaceNavigation(
   context: import('@nasj/contracts').IdentityContext | null | undefined,
-  legacy: WorkspaceCapabilities,
+  _legacy: WorkspaceCapabilities,
 ): NavSection[] {
   const personas = context?.personas ?? [];
-  const sections: NavSection[] = [];
-  const roles = [
-    ['PLATFORM_ADMIN', 'Administration', 'admin', '/admin'],
-    ['NASJ_OPERATOR', 'Coordination', 'operator', '/operator'],
-    ['BUYER_REPRESENTATIVE', 'Purchasing', 'buyer', '/buyer'],
-    ['ASSOCIATION_COORDINATOR', 'Association', 'association', '/association'],
-  ] as const;
-  for (const [persona, label, mode, home] of roles) {
-    if (personas.includes(persona))
-      sections.push({
-        label,
-        items: [
-          { href: home, label: 'Dashboard', icon: 'organization' },
-          ...dashboardActions[mode].filter(
-            (a) => mode !== 'association' || a.href !== '/association/artisans/new',
-          ),
-        ],
-      });
-  }
-  if (!personas.length)
-    sections.push({
-      label: 'Workspace',
-      items: [
-        { href: '/dashboard', label: 'Dashboard', icon: 'organization' },
-        { href: '/commerce/catalog', label: 'Craft catalog', icon: 'artisan' },
-      ],
-    });
-  const historical: NavItem[] = [];
-  if (legacy.artisan && context?.linkedArtisanProfileId)
-    historical.push({ href: '/commerce/artisan', label: 'Offers & production', icon: 'artisan' });
-  if (legacy.operator)
-    historical.push({ href: '/commerce/operator', label: 'Operator review', icon: 'organization' });
-  if (historical.length) sections.push({ label: 'Existing workflows', items: historical });
+  const sections = [...new Set(personas.flatMap((persona) => personaNavigation[persona]))];
+  const own = context?.organizations.find(
+    (org) => org.type !== 'INTERNAL' && org.approvalStatus === 'APPROVED',
+  );
   sections.push({
     label: 'Account',
     items: [
-      { href: '/settings/organizations', label: 'Organizations', icon: 'organization' },
-      ...(context?.linkedArtisanProfileId
-        ? [
-            { href: '/artisan/profile', label: 'Your artisan profile', icon: 'artisan' as const },
-            { href: '/artisan/materials', label: 'Your materials', icon: 'artisan' as const },
-            { href: '/artisan/compensation', label: 'Your compensation', icon: 'audit' as const },
-          ]
-        : []),
-      { href: '/settings/profile', label: 'Your account', icon: 'users' },
-      { href: '/settings/security', label: 'Security', icon: 'privacy' },
-      { href: '/support/cases', label: 'Support', icon: 'support' },
+      ...(own ? [{ href: '/team', label: 'Your team', icon: 'users' as const }] : []),
+      { href: '/settings/profile', label: 'Your profile', icon: 'profile' },
     ],
   });
   return sections;
@@ -313,20 +347,15 @@ export function workspaceRoleLabel(
   context: import('@nasj/contracts').IdentityContext | null | undefined,
 ) {
   const labels = {
-    PLATFORM_ADMIN: 'Platform admin',
+    PLATFORM_ADMIN: 'NASJ admin',
     NASJ_OPERATOR: 'NASJ operator',
-    BUYER_REPRESENTATIVE: 'Buyer representative',
-    ASSOCIATION_COORDINATOR: 'Association coordinator',
+    NASJ_COORDINATOR: 'NASJ coordinator',
+    NASJ_FINANCE: 'NASJ finance',
+    BUYER_REPRESENTATIVE: 'Company representative',
+    ASSOCIATION_COORDINATOR: 'Association representative',
   };
   return context?.personas.map((p) => labels[p]).join(' · ') || 'Your account';
 }
-
-export const profileMenuItems = [
-  { href: '/settings/profile', label: 'Account and email' },
-  { href: '/settings/security', label: 'Security and two-factor' },
-  { href: '/settings/notifications', label: 'Language and notifications' },
-  { href: '/support/privacy', label: 'Privacy and your data' },
-];
 
 export function isActive(pathname: string, item: NavItem) {
   if (pathname === item.href) return true;

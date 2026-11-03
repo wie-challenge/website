@@ -1,6 +1,5 @@
 'use client';
 import { OfferReview } from './offer-review';
-import { EvidenceNotice } from './evidence-notice';
 import { useRef, useId } from 'react';
 import Link from 'next/link';
 import { CommerceReport } from './commerce-report';
@@ -562,13 +561,6 @@ export function CommerceWorkspace({
             : 'Manage requests, production and fulfillment. Records and payments in this demo are simulated.'
       }
     >
-      <EvidenceNotice
-        compact
-        claimId={`commerce.${mode}`}
-        claimType="Commercial workflow demonstration"
-        status="SYNTHETIC"
-        sourceReference="/evidence#scenario"
-      />
       <nav className="workspace-tabs" aria-label="Commerce journeys">
         {(mode === 'buyer' || Boolean(data?.buyerOrganizations.length)) && (
           <Link href="/commerce/buyer" aria-current={mode === 'buyer' ? 'page' : undefined}>

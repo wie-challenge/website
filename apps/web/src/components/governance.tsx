@@ -7,6 +7,7 @@ import type { Page, OrganizationView, MeView } from '@nasj/contracts';
 import { apiFetch } from '@/lib/api';
 import {
   Workspace,
+  SectionShell,
   ResourceState,
   ActionForm,
   Input,
@@ -204,12 +205,13 @@ function Consents() {
     </>
   );
 }
-export function Notifications() {
+export function Notifications({ embedded = false }: { embedded?: boolean }) {
   const resource = useResource<{ items: Preference[] }>('/api/v1/notifications/preferences');
   const language = useResource<{ preferredLanguage: string }>('/api/v1/settings/preferences');
   const categories = ['PRODUCT_UPDATES', 'OPPORTUNITIES', 'SUPPORT_UPDATES'];
   return (
-    <Workspace
+    <SectionShell
+      embedded={embedded}
       title="Language and notifications."
       description="Choose your communication language and which optional emails you receive."
     >
@@ -288,7 +290,7 @@ export function Notifications() {
           )}
         </section>
       </div>
-    </Workspace>
+    </SectionShell>
   );
 }
 export function AuditLog({ organizationId }: { organizationId?: string }) {

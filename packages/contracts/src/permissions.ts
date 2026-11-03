@@ -50,6 +50,8 @@ export type FoundationPermission = (typeof foundationPermissions)[number];
 export const operationalPersonas = [
   'PLATFORM_ADMIN',
   'NASJ_OPERATOR',
+  'NASJ_COORDINATOR',
+  'NASJ_FINANCE',
   'BUYER_REPRESENTATIVE',
   'ASSOCIATION_COORDINATOR',
 ] as const;

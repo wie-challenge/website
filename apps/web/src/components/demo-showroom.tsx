@@ -24,7 +24,6 @@ import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Alert, AlertDescription } from './ui/alert';
 import { Badge } from './ui/badge';
 import { LoaderCircle } from 'lucide-react';
-import { DemoFeedbackPanel } from './demo-feedback-panel';
 
 function useDemoState() {
   const pathname = usePathname();
@@ -209,8 +208,6 @@ export function DemoShowroom() {
       </header>
       <nav aria-label="Showroom information" className="flex flex-wrap gap-4">
         <Link href="/">About NASJ</Link>
-        <Link href="/evidence">Evidence and limitations</Link>
-        <Link href="/presentation">Presentation</Link>
       </nav>
       {session.loading && (
         <p role="status" className="flex items-center gap-2">
@@ -381,17 +378,6 @@ export function DemoShowroom() {
               </div>
             </CardContent>
           </Card>
-          {scenario && (
-            <Card>
-              <CardContent className="pt-6">
-                <DemoFeedbackPanel
-                  key={`${scenario.id}:${scenario.generation}`}
-                  scenarioId={scenario.id}
-                  csrfToken={data.csrfToken}
-                />
-              </CardContent>
-            </Card>
-          )}
           {scenario && (
             <section aria-labelledby="choose-persona">
               <h2 id="choose-persona">Choose Persona</h2>

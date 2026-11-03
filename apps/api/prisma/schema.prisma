@@ -280,6 +280,12 @@ enum CaseStatus {
 }
 
 model Organization {
+  marketProducts      MarketProduct[]
+  marketCartItems     MarketCartItem[]
+  marketBuyerOrders   MarketOrder[] @relation("MarketBuyer")
+  marketAssociationOrders MarketOrder[] @relation("MarketAssociation")
+  marketFiles         MarketFile[]
+  marketBilling       MarketBillingProfile?
  salesOperatorProspects CommercialProspect[] @relation("SalesOperator")
  salesBuyerProspects CommercialProspect[] @relation("SalesBuyer")
   managingArtisans       ArtisanManagement[]
@@ -379,6 +385,8 @@ model Invitation {
 }
 
 model ArtisanProfile {
+  marketOrders          MarketOrderArtisan[]
+  marketDetail          MarketArtisanDetail?
   createdBy             User?                     @relation("ArtisanCreator", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: NoAction, map: "ArtisanProfile_createdById_fk")
   createdById           String?
   participantStatus     String                    @default("ACTIVE")
@@ -2762,4 +2770,193 @@ model DemoFeedbackEvent {
 
   @@index([feedbackId, createdAt, id])
   @@index([actorId, createdAt])
+}
+
+model MarketFile {
+  id             String       @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  purpose        String
+  filename       String
+  mime           String
+  bytes          Bytes
+  sha256         String
+  uploadedById   String
+  createdAt      DateTime     @default(now())
+
+  @@index([organizationId, purpose, createdAt])
+}
+
+model MarketProduct {
+  id                 String            @id @default(cuid())
+  associationId      String
+  association        Organization      @relation(fields: [associationId], references: [id])
+  name               String
+  description        String
+  craft              String
+  priceMillimes      BigInt
+  artisanPayMillimes BigInt
+  leadTimeDays       Int
+  minQuantity        Int
+  imagePath          String?
+  imageFileId        String?
+  imageUrl           String?
+  status             String            @default("PENDING_REVIEW")
+  reviewNote         String?
+  reviewedById       String?
+  reviewedAt         DateTime?
+  createdById        String
+  createdAt          DateTime          @default(now())
+  updatedAt          DateTime          @updatedAt
+  cartItems          MarketCartItem[]
+  orderItems         MarketOrderItem[]
+
+  @@index([status, craft])
+  @@index([associationId, status])
+}
+
+model MarketCartItem {
+  id         String        @id @default(cuid())
+  buyerOrgId String
+  buyerOrg   Organization  @relation(fields: [buyerOrgId], references: [id])
+  productId  String
+  product    MarketProduct @relation(fields: [productId], references: [id], onDelete: Cascade)
+  quantity   Int
+  updatedAt  DateTime      @updatedAt
+
+  @@unique([buyerOrgId, productId])
+}
+
+model MarketOrder {
+  id                 String               @id @default(cuid())
+  number             Int                  @unique @default(autoincrement())
+  buyerOrgId         String
+  buyerOrg           Organization         @relation("MarketBuyer", fields: [buyerOrgId], references: [id])
+  associationId      String?
+  association        Organization?        @relation("MarketAssociation", fields: [associationId], references: [id])
+  kind               String
+  status             String               @default("SENT")
+  title              String
+  description        String?
+  note               String?
+  neededBy           DateTime?
+  photoFileId        String?
+  quantity           Int
+  totalMillimes      BigInt?
+  artisanPayMillimes BigInt?
+  priceStatus        String               @default("NOT_NEEDED")
+  qualityStatus      String               @default("NOT_CHECKED")
+  invoiceCheckedAt   DateTime?
+  invoiceCheckedById String?
+  billingSnapshot    Json?
+  acceptedAt         DateTime?
+  assignedAt         DateTime?
+  estimatedFinishAt  DateTime?
+  almostReadyAt      DateTime?
+  associationDelivery Json?
+  nasjDelivery       Json?
+  qrToken            String?              @unique
+  createdById        String
+  createdAt          DateTime             @default(now())
+  updatedAt          DateTime             @updatedAt
+  items              MarketOrderItem[]
+  events             MarketOrderEvent[]
+  women              MarketOrderArtisan[]
+  ratings            MarketOrderRating[]
+
+  @@index([buyerOrgId, createdAt])
+  @@index([associationId, status])
+  @@index([status, createdAt])
+}
+
+model MarketOrderItem {
+  id                String        @id @default(cuid())
+  orderId           String
+  order             MarketOrder   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  productId         String
+  product           MarketProduct @relation(fields: [productId], references: [id])
+  name              String
+  quantity          Int
+  unitPriceMillimes BigInt
+  unitPayMillimes   BigInt
+
+  @@index([orderId])
+}
+
+model MarketOrderEvent {
+  id        String      @id @default(cuid())
+  orderId   String
+  order     MarketOrder @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  status    String
+  title     String
+  note      String?
+  actorId   String
+  actorName String
+  createdAt DateTime    @default(now())
+
+  @@index([orderId, createdAt])
+}
+
+model MarketOrderArtisan {
+  id               String         @id @default(cuid())
+  orderId          String
+  order            MarketOrder    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  artisanProfileId String
+  artisanProfile   ArtisanProfile @relation(fields: [artisanProfileId], references: [id])
+  recordedById     String
+  payMillimes      BigInt         @default(0)
+  paidRecordedAt   DateTime?
+  paymentProofFileId String?
+  paymentCheckedAt DateTime?
+  paymentCheckedById String?
+  createdAt        DateTime       @default(now())
+
+  @@unique([orderId, artisanProfileId])
+}
+
+model MarketBillingProfile {
+  id              String       @id @default(cuid())
+  buyerOrgId      String       @unique
+  buyerOrg        Organization @relation(fields: [buyerOrgId], references: [id])
+  legalName       String
+  taxId           String
+  billingAddress  String
+  shippingAddress String
+  contactName     String
+  contactPhone    String
+  paymentMethod   String
+  updatedAt       DateTime     @updatedAt
+}
+
+model MarketArtisanDetail {
+  id               String         @id @default(cuid())
+  artisanProfileId String         @unique
+  artisanProfile   ArtisanProfile @relation(fields: [artisanProfileId], references: [id])
+  idNumber         String
+  phone            String?
+}
+
+model MarketOrderRating {
+  id           String      @id @default(cuid())
+  orderId      String
+  order        MarketOrder @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  role         String
+  stars        Int
+  qualityStars Int?
+  comment      String
+  createdById  String
+  createdAt    DateTime    @default(now())
+
+  @@unique([orderId, role])
+}
+
+model MarketNotification {
+  id        String    @id @default(cuid())
+  userId    String
+  title     String
+  link      String
+  readAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  @@index([userId, createdAt])
 }
