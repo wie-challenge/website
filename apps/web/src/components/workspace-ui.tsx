@@ -21,7 +21,8 @@ import { Input as ShadcnInput } from './ui/input';
 import { Label } from './ui/label';
 import { NativeSelect } from './ui/native-select';
 import { Alert, AlertDescription } from './ui/alert';
-import { CircleCheck, LoaderCircle, ArrowUpRight } from 'lucide-react';
+import { ArrowLeft, CircleCheck, LoaderCircle, ArrowUpRight } from 'lucide-react';
+import { Modal } from './ui/modal';
 
 const FieldErrors = createContext<Record<string, string[]>>({});
 export function useFieldError(name: string) {
@@ -72,23 +73,52 @@ export function useResource<T>(path: string) {
 }
 const FeedbackContext = createContext<((message: string) => void) | null>(null);
 
-export function Workspace({
+// Lets a settings section sit on one shared page, without its own page heading.
+export function SectionShell({
+  embedded,
   title,
   description,
   children,
 }: {
+  embedded: boolean;
   title: string;
   description: string;
   children: ReactNode;
+}) {
+  if (embedded) return children;
+  return (
+    <Workspace title={title} description={description}>
+      {children}
+    </Workspace>
+  );
+}
+export function Workspace({
+  title,
+  description,
+  children,
+  back,
+  actions,
+}: {
+  title: string;
+  description: string;
+  children: ReactNode;
+  back?: string;
+  actions?: ReactNode;
 }) {
   const [feedback, setFeedback] = useState('');
   return (
     <FeedbackContext.Provider value={setFeedback}>
       <div className="page-heading">
         <div>
+          {back && (
+            <Link className="page-back" href={back} aria-label="Back">
+              <ArrowLeft size={22} aria-hidden="true" />
+            </Link>
+          )}
           <h1>{title}</h1>
           <p className="lead">{description}</p>
         </div>
+        {actions}
       </div>
       {feedback && (
         <Alert className="notice success" role="status">
@@ -180,10 +210,14 @@ export function ActionForm({
   const [needsMfa, setNeedsMfa] = useState(false);
   const [error, setError] = useState('');
   const [fieldErrors, setFieldErrors] = useState<Record<string, string[]>>({});
+  const [awaitingConfirm, setAwaitingConfirm] = useState<FormData | null>(null);
   function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (confirm && !window.confirm(confirm)) return;
     const data = new FormData(event.currentTarget);
+    if (confirm) setAwaitingConfirm(data);
+    else run(data);
+  }
+  function run(data: FormData) {
     setError('');
     setFieldErrors({});
     setMessage('');
@@ -204,6 +238,28 @@ export function ActionForm({
   }
   return (
     <form method="post" onSubmit={submit} className={className}>
+      {confirm && (
+        <Modal
+          open={awaitingConfirm !== null}
+          onOpenChange={(open) => !open && setAwaitingConfirm(null)}
+          title={confirm}
+        >
+          <div className="modal-actions">
+            <Button type="button" variant="outline" onClick={() => setAwaitingConfirm(null)}>
+              Go back
+            </Button>
+            <Button
+              type="button"
+              onClick={() => {
+                if (awaitingConfirm) run(awaitingConfirm);
+                setAwaitingConfirm(null);
+              }}
+            >
+              {label}
+            </Button>
+          </div>
+        </Modal>
+      )}
       <FieldErrors.Provider value={fieldErrors}>
         <fieldset disabled={pending || !ready} aria-busy={pending}>
           {children}

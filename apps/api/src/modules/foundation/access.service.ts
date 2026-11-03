@@ -45,6 +45,23 @@ export class AccessService {
     if (
       approved.some(
         (m) =>
+          m.organization.type === 'INTERNAL' &&
+          m.roles.some((r) =>
+            ['INVENTORY_LOGISTICS_COORDINATOR', 'PRODUCTION_MANAGER'].includes(r.role),
+          ),
+      )
+    )
+      personas.push('NASJ_COORDINATOR');
+    if (
+      approved.some(
+        (m) =>
+          m.organization.type === 'INTERNAL' && m.roles.some((r) => r.role === 'FINANCE_MANAGER'),
+      )
+    )
+      personas.push('NASJ_FINANCE');
+    if (
+      approved.some(
+        (m) =>
           m.organization.type === 'BUYER_BUSINESS' &&
           m.roles.some((r) => ['BUYER_REPRESENTATIVE', 'BUYER'].includes(r.role)),
       )
@@ -64,14 +81,18 @@ export class AccessService {
       organizations,
       coordinatorOrganizationId: coordinator?.organizationId ?? null,
       landingPath: personas.includes('PLATFORM_ADMIN')
-        ? '/admin'
+        ? '/nasj/organizations'
         : personas.includes('NASJ_OPERATOR')
-          ? '/operator'
-          : personas.includes('BUYER_REPRESENTATIVE')
-            ? '/buyer'
-            : coordinator
-              ? '/association'
-              : '/dashboard',
+          ? '/nasj/organizations'
+          : personas.includes('NASJ_COORDINATOR')
+            ? '/nasj/requests'
+            : personas.includes('NASJ_FINANCE')
+              ? '/nasj/finance'
+              : personas.includes('BUYER_REPRESENTATIVE')
+                ? '/catalog'
+                : coordinator
+                  ? '/association/requests'
+                  : '/dashboard',
       realPayoutsEnabled: false,
       independentContactPath: '/participant-support',
     };

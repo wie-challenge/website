@@ -29,6 +29,8 @@
     "demo:web": "tsx scripts/dev-demo-web.ts",
     "db:recover-organization-manager": "tsx --tsconfig apps/api/tsconfig.json --env-file=.env scripts/recover-organization-manager.ts",
     "db:seed": "tsx --tsconfig apps/api/tsconfig.json --env-file=.env scripts/seed-local.ts",
+    "db:seed:market": "tsx --tsconfig apps/api/tsconfig.json --env-file=.env scripts/seed-market.ts",
+    "db:reset:market": "tsx --tsconfig apps/api/tsconfig.json --env-file=.env scripts/seed-market.ts --reset",
     "worker": "tsx --tsconfig apps/api/tsconfig.json --env-file-if-exists=.env apps/api/src/jobs/main.ts",
     "ops:check": "tsx --tsconfig apps/api/tsconfig.json --env-file-if-exists=.env scripts/check-operations.ts",
     "ops:backup": "tsx scripts/backup-database.ts",

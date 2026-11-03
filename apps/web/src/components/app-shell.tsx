@@ -2,14 +2,8 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useState, type ReactNode } from 'react';
-import { DropdownMenu } from 'radix-ui';
 import type { IdentityContext } from '@nasj/contracts';
-import {
-  initials,
-  profileMenuItems,
-  workspaceNavigation,
-  workspaceRoleLabel,
-} from '@/lib/app-navigation';
+import { initials, workspaceNavigation, workspaceRoleLabel } from '@/lib/app-navigation';
 import { Wordmark, SiteFooter } from './brand';
 import { Icon } from './icons';
 import { LogoutButton } from './logout-button';
@@ -22,26 +16,35 @@ import {
   SheetTitle,
   SheetTrigger,
 } from './ui/sheet';
-import { Badge } from './ui/badge';
+import { NasoujWidget } from './assistant/nasouj-widget';
+import { NotificationBell, useMarketCounts } from './market/notifications';
+import type { NasoujRole } from './assistant/nasouj-demo-replies';
 type Capabilities = { buyer: boolean; artisan: boolean; operator: boolean; admin: boolean };
+function nasoujRole(context?: IdentityContext | null): NasoujRole {
+  const personas = context?.personas ?? [];
+  if (personas.includes('BUYER_REPRESENTATIVE')) return 'buyer';
+  if (personas.includes('ASSOCIATION_COORDINATOR')) return 'association';
+  if (personas.includes('NASJ_COORDINATOR')) return 'coordinator';
+  if (personas.includes('NASJ_FINANCE')) return 'finance';
+  if (personas.includes('NASJ_OPERATOR') || personas.includes('PLATFORM_ADMIN')) return 'operator';
+  return 'welcome';
+}
 export function AppShell({
   name,
-  email,
   capabilities,
   children,
-  demo = false,
   context,
 }: {
   name: string;
-  email: string;
   capabilities: Capabilities;
   children: ReactNode;
-  demo?: boolean;
   context?: IdentityContext | null;
 }) {
   const pathname = usePathname(),
     [open, setOpen] = useState(false);
   const sections = workspaceNavigation(context, capabilities);
+  const bare = !context?.personas.length;
+  const counts = useMarketCounts(!bare);
   const roleLabel = workspaceRoleLabel(context);
   const activeHref = sections
     .flatMap((s) => s.items)
@@ -53,7 +56,6 @@ export function AppShell({
         <div className="sidebar-brand">
           <Wordmark href={context?.landingPath ?? '/dashboard'} />
         </div>
-        <p className="sidebar-role">{roleLabel}</p>
         <nav aria-label={mobile ? 'Mobile account navigation' : 'Account navigation'}>
           {sections.map((section) => (
             <div className="sidebar-section" key={section.label}>
@@ -68,7 +70,13 @@ export function AppShell({
                       onClick={() => setOpen(false)}
                     >
                       <Icon name={item.icon} />
-                      {item.label}
+                      <span className="sidebar-link-label">{item.label}</span>
+                      {item.count && counts?.[item.count] ? (
+                        <span className="sidebar-count">
+                          {counts[item.count]}
+                          <span className="sr-only"> waiting</span>
+                        </span>
+                      ) : null}
                     </Link>
                   </li>
                 ))}
@@ -92,8 +100,8 @@ export function AppShell({
     );
   }
   return (
-    <div className="app-shell">
-      <aside className="sidebar">{navigation()}</aside>
+    <div className="app-shell" data-bare={bare || undefined}>
+      {!bare && <aside className="sidebar">{navigation()}</aside>}
       <div className="app-main">
         <header className="topbar shell-header">
           <Sheet open={open} onOpenChange={setOpen}>
@@ -115,61 +123,33 @@ export function AppShell({
               {navigation(true)}
             </SheetContent>
           </Sheet>
-          <div className="workspace-identity">
-            <span className="workspace-identity-label">Workspace</span>
-            <strong>{roleLabel}</strong>
-          </div>
-          {demo && (
-            <Badge variant="outline" className="max-[600px]:hidden">
-              Demo workspace
-            </Badge>
+          {bare ? (
+            <Wordmark />
+          ) : (
+            <div className="workspace-identity">
+              <strong>{roleLabel}</strong>
+            </div>
           )}
-          <DropdownMenu.Root modal={false}>
-            <DropdownMenu.Trigger asChild>
-              <button type="button" className="profile-trigger" aria-label="Account menu">
-                <span className="avatar" aria-hidden="true">
-                  {initials(name)}
-                </span>
-                <Icon name="chevron" size={16} />
-              </button>
-            </DropdownMenu.Trigger>
-            <DropdownMenu.Portal>
-              <DropdownMenu.Content
-                className="profile-panel z-50"
-                align="end"
-                sideOffset={8}
-                aria-label="Account settings"
-              >
-                <div className="profile-identity">
-                  <strong>{name}</strong>
-                  <span className="profile-email">{email}</span>
-                </div>
-                <ul role="presentation">
-                  {profileMenuItems.map((item) => (
-                    <li role="presentation" key={item.href}>
-                      <DropdownMenu.Item asChild>
-                        <Link
-                          href={item.href}
-                          aria-current={pathname === item.href ? 'page' : undefined}
-                        >
-                          {item.label}
-                        </Link>
-                      </DropdownMenu.Item>
-                    </li>
-                  ))}
-                </ul>
-                <div className="profile-signout">
-                  <LogoutButton menuItem iconOnly />
-                </div>
-              </DropdownMenu.Content>
-            </DropdownMenu.Portal>
-          </DropdownMenu.Root>
+          <div className="shell-profile">
+            {bare ? <LogoutButton iconOnly /> : <NotificationBell />}
+            <Link
+              className="profile-trigger"
+              href="/settings/profile"
+              aria-label="Your profile"
+              aria-current={pathname === '/settings/profile' ? 'page' : undefined}
+            >
+              <span className="avatar" aria-hidden="true">
+                {initials(name)}
+              </span>
+            </Link>
+          </div>
         </header>
         <main className="workspace" id="main-content">
           {children}
         </main>
         <SiteFooter />
       </div>
+      <NasoujWidget role={nasoujRole(context)} />
     </div>
   );
 }

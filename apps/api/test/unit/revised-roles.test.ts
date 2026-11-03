@@ -9,10 +9,12 @@ import {
   assistedCapacitySchema,
   artisanDecisionEvidenceSchema,
 } from '@nasj/contracts';
-test('four personas separate platform governance, buyer authority and internal financial permissions', () => {
+test('personas separate platform governance, buyer authority and internal financial permissions', () => {
   assert.deepEqual(operationalPersonas, [
     'PLATFORM_ADMIN',
     'NASJ_OPERATOR',
+    'NASJ_COORDINATOR',
+    'NASJ_FINANCE',
     'BUYER_REPRESENTATIVE',
     'ASSOCIATION_COORDINATOR',
   ]);

@@ -1,3 +1,4 @@
+import { MarketModule } from './modules/market/market.module.js';
 import { SalesModule } from './modules/sales/sales.module.js';
 import { DemoModule } from './modules/demo/demo.module.js';
 import { InventoryModule } from './modules/inventory/inventory.module.js';
@@ -41,6 +42,7 @@ export class AppModule {
         SalesModule,
         IntelligenceModule,
         CollaborationModule,
+        MarketModule,
         DemoModule,
       ],
       controllers: [HealthController],

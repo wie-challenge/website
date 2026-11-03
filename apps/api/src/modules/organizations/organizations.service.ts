@@ -104,6 +104,7 @@ export class OrganizationsService {
   async create(actor: Actor, input: OrganizationCreateInput) {
     return iamTransaction(this.db, actor, async (tx) => {
       if (input.type === 'INTERNAL') await this.policy.requireAdmin(actor, tx);
+      else await this.assertNoOrganization(actor.id, tx);
       const initialRoles =
         input.type === 'BUYER_BUSINESS'
           ? ['BUYER_REPRESENTATIVE' as const]
@@ -358,6 +359,20 @@ export class OrganizationsService {
     };
   }
 
+  // A person belongs to one company or association. A rejected application does not count.
+  private async assertNoOrganization(userId: string, tx: Db) {
+    const existing = await tx.organizationMember.findFirst({
+      where: {
+        userId,
+        status: 'ACTIVE',
+        organization: { type: { not: 'INTERNAL' }, approvalStatus: { not: 'REJECTED' } },
+      },
+      select: { id: true },
+    });
+    if (existing)
+      fail(409, 'ONE_ORGANIZATION', 'You can only belong to one company or association.');
+  }
+
   private validateRoles(type: Organization['type'], roles: InvitationCreateInput['roles']) {
     const allowed = rolesForOrganization(type);
     if (roles.some((role) => !allowed.includes(role)))
@@ -371,11 +386,12 @@ export class OrganizationsService {
   private sendInvitation(invitation: Invitation, token: string, organizationName: string) {
     const url = new URL('/invitations/accept', this.config.PUBLIC_APP_URL);
     url.hash = `token=${token}`;
-    this.mail.send(
-      invitation.email,
-      'NASJ organization invitation',
-      `You have been invited to join ${organizationName} on NASJ. Sign in with this email address and accept the invitation:\n${url.toString()}\nThis invitation expires on ${invitation.expiresAt.toISOString()}.`,
-    );
+    this.mail.sendAction(invitation.email, `Join ${organizationName} on NASJ`, {
+      title: `You are invited to join ${organizationName}`,
+      intro: 'Sign in with this email address to accept your invitation and join the team on NASJ.',
+      label: 'Accept the invitation',
+      url: url.toString(),
+    });
     return { invitation: invitationView(invitation), delivery: 'QUEUED' as const };
   }
 
@@ -384,6 +400,12 @@ export class OrganizationsService {
     if (!organization) fail(404, 'NOT_FOUND', 'Organization not found.');
     if (organization.type === 'BUYER_BUSINESS')
       return this.policy.requireOrganization(actor, id, 'organization.members.invite', tx);
+    if (organization.type !== 'INTERNAL' && organization.approvalStatus === 'APPROVED') {
+      const manager = await tx.organizationMember.findFirst({
+        where: { organizationId: id, userId: actor.id, status: 'ACTIVE', isManager: true },
+      });
+      if (manager) return { organization, isManager: true };
+    }
     await this.policy.requireAdmin(actor, tx);
     if (organization.approvalStatus !== 'APPROVED')
       fail(
@@ -537,9 +559,10 @@ export class OrganizationsService {
         include: { roles: true, organization: true, permissionGrants: true },
       });
       const inviterAuthorized =
-        invitation.organization.type === 'BUYER_BUSINESS'
-          ? inviter?.status === 'ACTIVE' && inviter.isManager
-          : invitation.createdBy.role === 'ADMIN';
+        invitation.organization.type === 'INTERNAL'
+          ? invitation.createdBy.role === 'ADMIN'
+          : (inviter?.status === 'ACTIVE' && inviter.isManager) ||
+            invitation.createdBy.role === 'ADMIN';
       if (!inviterAuthorized || invitation.organization.approvalStatus !== 'APPROVED')
         fail(
           403,
@@ -547,6 +570,8 @@ export class OrganizationsService {
           'The inviter or organization no longer permits invitation acceptance.',
         );
       this.validateRoles(invitation.organization.type, invitation.roles);
+      if (invitation.organization.type !== 'INTERNAL')
+        await this.assertNoOrganization(actor.id, tx);
       if (
         await tx.organizationMember.findUnique({
           where: {
@@ -572,6 +597,7 @@ export class OrganizationsService {
           organizationId: invitation.organizationId,
           userId: actor.id,
           isManager: invitation.isManager,
+          isCoordinator: invitation.roles.includes('ASSOCIATION_COORDINATOR'),
           roles: {
             create: invitation.roles.map((role) => ({
               role,

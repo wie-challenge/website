@@ -1,4 +1,4 @@
-import { Organizations } from '@/components/organizations';
+import { redirect } from 'next/navigation';
 export default function Page() {
-  return <Organizations />;
+  redirect('/settings/profile');
 }

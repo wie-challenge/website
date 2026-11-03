@@ -8,9 +8,7 @@ export default function SimulatorPage() {
       <header className="site-header">
         <Wordmark />
         <nav aria-label="Simulator navigation">
-          <Link href="/presentation">Presentation</Link>
           <Link href="/demo">Live demo</Link>
-          <Link href="/evidence">Evidence</Link>
         </nav>
       </header>
       <main id="main-content" className="mx-auto w-full max-w-7xl px-4 py-12">

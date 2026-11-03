@@ -1,6 +1,5 @@
 'use client';
 import type * as C from '@nasj/contracts';
-import { EvidenceNotice } from './evidence-notice';
 import { apiFetch } from '@/lib/api';
 import { PublicTraceCode } from './trace-qr';
 import { announceLogisticsUpdate } from '@/lib/logistics-events';
@@ -42,13 +41,6 @@ export function LogisticsOrder({ orderId }: { orderId: string }) {
   return (
     <section className="section-gap" aria-labelledby="logistics-heading">
       <h2 id="logistics-heading">Logistics and settlement</h2>
-      <EvidenceNotice
-        compact
-        claimId={`logistics.${orderId}`}
-        claimType="Logistics and financial demonstration"
-        status="SYNTHETIC"
-        sourceReference="/evidence#scenario"
-      />
       <p>A prepared group is not a shipment. A simulated payment is not a bank transfer.</p>
       <ResourceState {...resource} retry={resource.reload} />
       <ResourceState {...preparations} retry={preparations.reload} />
@@ -410,16 +402,6 @@ function SettlementPanel({ orderId }: { orderId: string }) {
   return (
     <article>
       <h3>Simulated settlement</h3>
-      <EvidenceNotice
-        compact
-        claimId={`settlement.${orderId}`}
-        claimType="Payment simulation"
-        status="SYNTHETIC"
-        sourceReference="/evidence#payments"
-        limitations={[
-          'A simulated settlement does not transfer money, verify bank evidence or extinguish an artisan payable.',
-        ]}
-      />
       <p>A simulated settlement is not a bank transfer and does not verify a payment.</p>
       <ResourceState {...payables} retry={payables.reload} />
       <ResourceState {...simulations} retry={simulations.reload} />
@@ -582,16 +564,6 @@ export function ArtisanCompensation() {
       title="Your compensation"
       description="Agreed, earned and verified-paid amounts stay separate. A simulated payment is not a bank transfer."
     >
-      <EvidenceNotice
-        compact
-        claimId="artisan.compensation"
-        claimType="Compensation demonstration"
-        status="SYNTHETIC"
-        sourceReference="/evidence#producer-share"
-        limitations={[
-          'Agreed, earned and payable amounts are separate from verified paid income. No field income result is established.',
-        ]}
-      />
       <ResourceState {...resource} retry={resource.reload} />
       {!resource.loading && !resource.error && !statement?.lines.length && (
         <p>No accepted compensation is on file.</p>

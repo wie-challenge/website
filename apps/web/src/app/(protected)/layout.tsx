@@ -7,10 +7,8 @@ export default async function ProtectedLayout({ children }: { children: React.Re
   const context = await getIdentityContext();
   return (
     <AppShell
-      demo={process.env.NODE_ENV !== 'production' || process.env.DEMO_MODE === 'true'}
       context={context}
       name={me.user.name}
-      email={me.user.email}
       capabilities={{
         buyer: Boolean(context?.personas.includes('BUYER_REPRESENTATIVE')),
         artisan: Boolean(context?.linkedArtisanProfileId),

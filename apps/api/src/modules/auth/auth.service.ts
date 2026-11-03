@@ -64,11 +64,13 @@ export class AuthService {
           enabled: true,
           updateEmailWithoutVerification: false,
           sendChangeEmailConfirmation: async ({ user, token }) => {
-            await mail.send(
-              user.email,
-              'Confirm your NASJ email change',
-              `Confirm the email change, then verify the new address: ${config.PUBLIC_APP_URL}/auth/verify-email#token=${encodeURIComponent(token)}`,
-            );
+            mail.sendAction(user.email, 'Confirm your NASJ email change', {
+              title: 'Confirm your new email',
+              intro: 'Please confirm this change. We will then ask you to verify the new address.',
+              label: 'Confirm the change',
+              url: `${config.PUBLIC_APP_URL}/auth/verify-email#token=${encodeURIComponent(token)}`,
+              note: 'If you did not ask for this, you can ignore this email.',
+            });
           },
         },
         deleteUser: { enabled: false },
@@ -93,11 +95,13 @@ export class AuthService {
         },
         resetPasswordTokenExpiresIn: 3600,
         sendResetPassword: async ({ user, token }) => {
-          await mail.send(
-            user.email,
-            'Reset your NASJ password',
-            `Reset your password within one hour: ${config.PUBLIC_APP_URL}/auth/reset-password#token=${encodeURIComponent(token)}\nIf you did not request this, ignore this email.`,
-          );
+          mail.sendAction(user.email, 'Reset your NASJ password', {
+            title: 'Reset your password',
+            intro: 'Choose a new password for your NASJ account.',
+            label: 'Reset my password',
+            url: `${config.PUBLIC_APP_URL}/auth/reset-password#token=${encodeURIComponent(token)}\nIf you did not request this, ignore this email.`,
+            note: 'This link works for one hour. If you did not ask for this, you can ignore this email.',
+          });
         },
       },
       emailVerification: {
@@ -120,11 +124,13 @@ export class AuthService {
         autoSignInAfterVerification: false,
         expiresIn: 86400,
         sendVerificationEmail: async ({ user, token }) => {
-          await mail.send(
-            user.email,
-            'Verify your NASJ email',
-            `Verify your email within 24 hours: ${config.PUBLIC_APP_URL}/auth/verify-email#token=${encodeURIComponent(token)}`,
-          );
+          mail.sendAction(user.email, 'Verify your NASJ email', {
+            title: 'Welcome to NASJ',
+            intro: 'Please verify your email address to finish creating your account.',
+            label: 'Verify my email',
+            url: `${config.PUBLIC_APP_URL}/auth/verify-email#token=${encodeURIComponent(token)}`,
+            note: 'This link works for 24 hours. If you did not create this account, you can ignore this email.',
+          });
         },
       },
       // The Nest security boundary owns rate limiting for every external auth/API request.

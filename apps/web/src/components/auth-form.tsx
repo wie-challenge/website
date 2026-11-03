@@ -2,7 +2,7 @@
 import { useHydrated } from '@/lib/use-hydrated';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useEffect, useState, useTransition } from 'react';
+import { useEffect, useRef, useState, useTransition } from 'react';
 import {
   emailRequestSchema,
   loginSchema,
@@ -16,7 +16,7 @@ export type AuthMode = 'login' | 'register' | 'forgot-password' | 'reset-passwor
 const titles: Record<AuthMode, string> = {
   login: 'Welcome back.',
   register: 'Make yourself at home.',
-  'forgot-password': 'A fresh start.',
+  'forgot-password': 'Forgot your password?',
   'reset-password': 'Choose a new password.',
   'verify-email': 'Verify your email.',
 };
@@ -49,15 +49,22 @@ export function AuthForm({
   const [success, setSuccess] = useState(false);
   const [errors, setErrors] = useState<Record<string, string[]>>({});
   const [pending, start] = useTransition();
+  const autoVerified = useRef(false);
   useEffect(() => {
     if (mode !== 'reset-password' && mode !== 'verify-email') return;
     const url = new URL(window.location.href);
     const value = new URLSearchParams(url.hash.slice(1)).get('token') ?? '';
+    if (!value) return;
     setToken(value);
     url.hash = '';
     url.searchParams.delete('token');
     window.history.replaceState(null, '', url.pathname + url.search);
   }, [mode]);
+  useEffect(() => {
+    if (mode !== 'verify-email' || !token || autoVerified.current) return;
+    autoVerified.current = true;
+    verify();
+  });
   function handleError(error: unknown) {
     setMessage(
       error instanceof ApiError
@@ -137,9 +144,7 @@ export function AuthForm({
         await apiFetch(`/api/auth/verify-email?token=${encodeURIComponent(token)}`);
         setToken('');
         setSuccess(true);
-        setMessage(
-          'Verification confirmed. You can sign in once your email is verified. If you changed your email, open the message sent to the new address.',
-        );
+        setMessage('Your email is verified. You can sign in now.');
       } catch (error) {
         handleError(error);
       }
@@ -147,7 +152,6 @@ export function AuthForm({
   }
   return (
     <section className="auth-card">
-      <p className="eyebrow">YOUR NASJ ACCOUNT</p>
       {embedded ? <h2>{titles[mode]}</h2> : <h1>{titles[mode]}</h1>}
       <p className="lead">{descriptions[mode]}</p>
       {message && (
@@ -230,14 +234,21 @@ export function AuthForm({
               />
             )}
             {(mode === 'login' || mode === 'register') && (
-              <Field
-                name="password"
-                label="Password"
-                type="password"
-                autoComplete={mode === 'login' ? 'current-password' : 'new-password'}
-                error={errors.password}
-                hint={mode === 'register' ? 'At least 12 characters.' : undefined}
-              />
+              <div className="auth-password">
+                <Field
+                  name="password"
+                  label="Password"
+                  type="password"
+                  autoComplete={mode === 'login' ? 'current-password' : 'new-password'}
+                  error={errors.password}
+                  hint={mode === 'register' ? 'At least 12 characters.' : undefined}
+                />
+                {mode === 'login' && !embedded && (
+                  <Link className="auth-forgot" href="/auth/forgot-password">
+                    Forgot password?
+                  </Link>
+                )}
+              </div>
             )}
             {mode === 'reset-password' && (
               <Field
@@ -264,18 +275,23 @@ export function AuthForm({
           </fieldset>
         </form>
       )}
-      {!embedded && (
+      {!embedded && !success && (
         <nav className="auth-links" aria-label="Account options">
           {mode === 'login' ? (
-            <>
-              <Link href="/auth/forgot-password">Forgot your password?</Link>
-              <span>
-                New here? <Link href="/auth/register">Create an account</Link>
-              </span>
-              <Link href="/auth/verify-email">Resend verification email</Link>
-            </>
+            <span>
+              New here? <Link href="/auth/register">Create an account</Link>
+            </span>
+          ) : mode === 'register' ? (
+            <span>
+              Already have an account? <Link href="/auth/login">Sign in</Link>
+            </span>
           ) : (
             <Link href="/auth/login">Back to sign in</Link>
+          )}
+          {mode === 'login' && message && (
+            <span>
+              Email not verified? <Link href="/auth/verify-email">Resend the link</Link>
+            </span>
           )}
         </nav>
       )}
