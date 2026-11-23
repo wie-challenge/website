@@ -1,6 +1,11 @@
 'use client';
 import { useId, useState, type ComponentProps, type ReactNode } from 'react';
-import type { MarketDelivery, MarketOrderStatus, MarketOrderView } from '@nasj/contracts';
+import {
+  MARKET_MAX_FILE_BYTES,
+  type MarketDelivery,
+  type MarketOrderStatus,
+  type MarketOrderView,
+} from '@nasj/contracts';
 import { Button } from '../ui/button';
 import { Modal } from '../ui/modal';
 import { ActionForm, Input, text } from '../workspace-ui';
@@ -9,7 +14,6 @@ import styles from './market.module.css';
 export const money = (value: string | null | undefined) =>
   value ? `${value} TND` : 'Price to confirm';
 export const defaultImage = '/marketplace/default.jpg';
-const maxFileBytes = 4 * 1024 * 1024;
 
 export type OrderAudience = 'company' | 'association' | 'nasj';
 
@@ -320,8 +324,8 @@ function safeName(name: string) {
   return name.replace(/[^a-zA-Z0-9_. -]/g, '_').slice(-100) || 'file';
 }
 export async function pdfPayload(file: File) {
-  if (file.type !== 'application/pdf') throw new Error('Your proof must be a PDF file.');
-  if (file.size > maxFileBytes) throw new Error('Choose a PDF under 4 MB.');
+  if (file.size > MARKET_MAX_FILE_BYTES) throw new Error('Choose a PDF no larger than 4 MB.');
+  if ((await file.slice(0, 5).text()) !== '%PDF-') throw new Error('Choose a valid PDF file.');
   return { filename: safeName(file.name), mime: 'application/pdf', base64: await readBase64(file) };
 }
 export async function proofPayload(file: File) {
@@ -330,7 +334,7 @@ export async function proofPayload(file: File) {
 export async function imagePayload(file: File) {
   if (!file.type.startsWith('image/')) throw new Error('Choose an image file.');
   const image = await shrinkImage(file);
-  if (image.size > maxFileBytes) throw new Error('Choose an image under 4 MB.');
+  if (image.size > MARKET_MAX_FILE_BYTES) throw new Error('Choose an image under 4 MB.');
   return {
     filename: `${safeName(file.name).replace(/\.[^.]+$/, '')}.jpg`,
     mime: 'image/jpeg',

@@ -194,13 +194,16 @@ export function OrganizationSettings({ id }: { id: string }) {
                 Approval is required before restricted organization operations become available.
               </p>
               {permissions.includes('organization.approval.request') &&
-                ['DRAFT', 'REJECTED'].includes(org.approvalStatus) && (
+                ['DRAFT', 'REJECTED'].includes(org.approvalStatus) &&
+                (org.registrationNumber ? (
+                  <Link href="/welcome">Continue organization verification</Link>
+                ) : (
                   <ActionForm
                     label="Request approval"
                     onSuccess={resource.reload}
                     action={() => apiFetch(`${path}/submit-approval`, { method: 'POST' })}
                   />
-                )}
+                ))}
               {org.myMembership.status === 'ACTIVE' && (
                 <ActionForm
                   label="Leave organization"

@@ -2,6 +2,8 @@ import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
 import type {
   OrganizationMembershipView,
+  OrganizationApplicationView,
+  MarketOrganizationView,
   InvitationView,
   MembershipView,
   OrganizationView,
@@ -570,6 +572,128 @@ export async function runOrganizationScenarios({
         }),
         1,
       );
+    },
+  );
+}
+export async function runOrganizationVerificationScenario({
+  db,
+  register,
+  mutate,
+  check,
+}: ScenarioContext) {
+  await check(
+    'organization verification preserves PDF drafts, requires both checks and allows corrections',
+    async () => {
+      const applicant = await register('org-verification@example.com', 'Verification Applicant');
+      const outsider = await register('verification-outsider@example.com', 'Verification Outsider');
+      const reviewer = await register('verification-reviewer@example.com', 'Verification Reviewer');
+      await db.user.update({ where: { id: reviewer.me.user.id }, data: { role: 'ADMIN' } });
+      const created = await mutate(applicant.client, '/api/v1/organizations', 'POST', {
+        name: 'Synthetic Verification Company',
+        type: 'BUYER_BUSINESS',
+        region: 'Tunis',
+        description: 'Synthetic buyer for the verification flow.',
+        representativeName: 'Verification Applicant',
+        contactEmail: 'org-verification@example.com',
+        registrationNumber: 'TEST-0001',
+      });
+      assert.equal(created.status, 201);
+      const { id } = created.body as OrganizationMembershipView;
+      const market = '/api/v1/market';
+      const submit = () =>
+        mutate(applicant.client, `${market}/organizations/${id}/submit`, 'POST', {});
+      const review = (body: unknown) =>
+        mutate(reviewer.client, `${market}/organizations/${id}/review`, 'POST', body);
+      const readQueue = async () => {
+        const response = await reviewer.client.request(
+          `${market}/organizations?status=PENDING_REVIEW`,
+        );
+        assert.equal(response.status, 200);
+        const entry = (response.body as MarketOrganizationView[]).find((item) => item.id === id);
+        assert.ok(entry);
+        return entry;
+      };
+      const upload = (purpose: string, bytes: Buffer) =>
+        mutate(applicant.client, `${market}/files`, 'POST', {
+          organizationId: id,
+          purpose,
+          filename: 'synthetic.pdf',
+          mime: 'application/pdf',
+          base64: bytes.toString('base64'),
+        });
+      const pdf = Buffer.from('%PDF-1.7\n% synthetic test bytes');
+      const sampleAtLimit = Buffer.alloc(4 * 1024 * 1024, ' ');
+      pdf.copy(sampleAtLimit);
+      assert.equal((await submit()).status, 400);
+      assert.equal((await upload('ORG_REGISTRATION', Buffer.from('invalid'))).status, 400);
+      const registration = await upload('ORG_REGISTRATION', sampleAtLimit);
+      assert.equal(registration.status, 201);
+      const saved = registration.body as { id: string; url: string };
+      const detail = await applicant.client.request(`/api/v1/organizations/${id}`);
+      assert.equal(
+        (detail.body as OrganizationApplicationView).verificationDocuments?.registration?.id,
+        saved.id,
+      );
+      assert.equal((await outsider.client.request(saved.url)).status, 403);
+      assert.equal((await reviewer.client.request(saved.url)).status, 403);
+      assert.equal((await submit()).status, 400);
+      assert.equal((await upload('ORG_PROOF', pdf)).status, 201);
+      assert.equal((await submit()).status, 200);
+      assert.equal((await reviewer.client.request(saved.url)).status, 200);
+      assert.equal((await upload('ORG_PROOF', pdf)).status, 409);
+      const first = await readQueue();
+      assert.equal(
+        (
+          await review({
+            decision: 'APPROVE',
+            note: '',
+            applicationVersion: first.applicationVersion,
+          })
+        ).status,
+        400,
+      );
+      assert.equal(
+        (
+          await mutate(reviewer.client, `/api/v1/admin/organizations/${id}/approve`, 'POST', {
+            reason: 'Synthetic review',
+          })
+        ).status,
+        409,
+      );
+      assert.equal(
+        (
+          await review({
+            decision: 'REJECT',
+            note: 'Provide a current mandate.',
+            applicationVersion: first.applicationVersion,
+          })
+        ).status,
+        200,
+      );
+      assert.equal(
+        (await upload('ORG_PROOF', Buffer.from('%PDF-1.7\n% corrected mandate'))).status,
+        201,
+      );
+      assert.equal((await submit()).status, 200);
+      const latest = await readQueue();
+      assert.equal(latest.documents.registration?.id, saved.id);
+      assert.notEqual(latest.documents.authority?.id, first.documents.authority?.id);
+      const decision = {
+        decision: 'APPROVE',
+        note: '',
+        registrationChecked: true,
+        authorityChecked: true,
+      };
+      assert.equal(
+        (await review({ ...decision, applicationVersion: first.applicationVersion })).status,
+        409,
+      );
+      assert.equal(
+        (await review({ ...decision, applicationVersion: latest.applicationVersion })).status,
+        200,
+      );
+      const approved = await applicant.client.request(`/api/v1/organizations/${id}`);
+      assert.equal((approved.body as OrganizationView).approvalStatus, 'APPROVED');
     },
   );
 }

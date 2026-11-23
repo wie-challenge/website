@@ -17,7 +17,15 @@ export const organizationApprovalSchema = z.enum([
 export const businessRoleSchema = z.enum(businessRoles);
 export const membershipStatusSchema = z.enum(['ACTIVE', 'SUSPENDED', 'REVOKED', 'LEFT']);
 const contactEmail = z.string().trim().toLowerCase().email().max(254);
+export const organizationDocumentPurposes = ['ORG_REGISTRATION', 'ORG_PROOF'] as const;
+export type OrganizationDocumentPurpose = (typeof organizationDocumentPurposes)[number];
+export type OrganizationVerificationDocuments = {
+  registration: { id: string; filename: string; url: string } | null;
+  authority: { id: string; filename: string; url: string } | null;
+};
+const registrationNumber = z.string().trim().min(2).max(80);
 const organizationFields = {
+  registrationNumber: registrationNumber.optional(),
   name: z.string().trim().min(2).max(160),
   representativeName: z.string().trim().min(2).max(120),
   country: z.string().trim().min(2).max(80),
@@ -96,6 +104,7 @@ export type OrganizationView = {
   contactEmail: string;
   contactPhone: string | null;
   representativeName: string;
+  registrationNumber: string | null;
   createdByUserId: string;
   approvedByUserId: string | null;
   approvedAt: string | null;
@@ -114,6 +123,9 @@ export type MembershipView = {
   joinedAt: string | null;
 };
 export type OrganizationMembershipView = OrganizationView & { myMembership: MembershipView };
+export type OrganizationApplicationView = OrganizationMembershipView & {
+  verificationDocuments: OrganizationVerificationDocuments | null;
+};
 export type OrganizationMemberView = MembershipView & {
   user: { id: string; name: string; email: string; status: string };
 };

@@ -1,7 +1,9 @@
 import { createHash, randomBytes } from 'node:crypto';
 import { Inject, Injectable } from '@nestjs/common';
 import {
+  canEditOrganization,
   formatTnd,
+  MARKET_MAX_FILE_BYTES,
   marketTotals,
   parseTnd,
   type IdentityContext,
@@ -17,6 +19,7 @@ import {
   type MarketOrderStatus,
   type MarketOrderView,
   type MarketOrganizationView,
+  type MarketOrganizationReview,
   type MarketPaymentView,
   type MarketPriceStatus,
   type MarketProductCreate,
@@ -38,6 +41,9 @@ import { APP_CONFIG, type AppConfig } from '../../config/env.js';
 import { PrismaService } from '../../database/prisma.service.js';
 import { AccessService, partnerTypes } from '../foundation/access.service.js';
 import { audit } from '../foundation/audit.js';
+import { iamTransaction, type Db } from '../foundation/transaction.js';
+import { OrganizationsService } from '../organizations/organizations.service.js';
+import { organizationVerificationDocuments } from '../organizations/organization-verification.js';
 import { MailService } from '../mail/mail.service.js';
 import { renderInvoice } from './market-invoice.js';
 
@@ -57,6 +63,8 @@ type ProductRow = Prisma.MarketProductGetPayload<{
 }>;
 const productInclude = { association: { select: { name: true, region: true } } } as const;
 const fixtureFree = { NOT: { slug: { startsWith: 'demo-' } } };
+const isOrganizationDocument = (purpose: string) =>
+  purpose === 'ORG_PROOF' || purpose === 'ORG_REGISTRATION';
 const fileUrl = (id: string) => `/api/v1/market/files/${id}`;
 const defaultImage = '/marketplace/default.jpg';
 const imageOf = (row: {
@@ -178,6 +186,7 @@ export class MarketService {
     @Inject(PrismaService) private readonly db: PrismaService,
     @Inject(AccessService) private readonly access: AccessService,
     @Inject(MailService) private readonly mail: MailService,
+    @Inject(OrganizationsService) private readonly organizationService: OrganizationsService,
     @Inject(APP_CONFIG) private readonly config: AppConfig,
   ) {}
 
@@ -333,40 +342,90 @@ export class MarketService {
 
   // Files
   async uploadFile(actor: Actor, input: MarketFileInput) {
-    const context = await this.access.context(actor);
-    if (!context.organizations.some((org) => org.id === input.organizationId))
-      fail(403, 'FORBIDDEN', 'You can only upload files for your own organization.');
-    if (input.purpose === 'ORG_PROOF' && input.mime !== 'application/pdf')
+    const verification = isOrganizationDocument(input.purpose);
+    if (verification && input.mime !== 'application/pdf')
       fail(400, 'FILE_TYPE_REJECTED', 'Your proof must be a PDF file.');
-    if (!['ORG_PROOF', 'PAYMENT_PROOF'].includes(input.purpose) && input.mime === 'application/pdf')
+    if (!verification && input.purpose !== 'PAYMENT_PROOF' && input.mime === 'application/pdf')
       fail(400, 'FILE_TYPE_REJECTED', 'Upload a PNG, JPEG or WebP image.');
     const bytes = Buffer.from(input.base64, 'base64');
     if (!bytes.length) fail(400, 'FILE_EMPTY', 'This file is empty.');
+    if (bytes.length > MARKET_MAX_FILE_BYTES)
+      fail(413, 'FILE_TOO_LARGE', 'Choose a file no larger than 4 MB.');
     if (input.mime === 'application/pdf' && bytes.subarray(0, 5).toString() !== '%PDF-')
       fail(400, 'FILE_TYPE_REJECTED', 'This file is not a valid PDF.');
-    const file = await this.db.marketFile.create({
-      data: {
-        organizationId: input.organizationId,
-        purpose: input.purpose,
-        filename: input.filename,
-        mime: input.mime,
-        bytes,
-        sha256: createHash('sha256').update(bytes).digest('hex'),
-        uploadedById: actor.id,
-      },
-      select: { id: true, filename: true },
-    });
-    if (input.purpose === 'ORG_PROOF')
-      await this.notify('operator', null, 'A new application is waiting', '/nasj/organizations');
+    const sha256 = createHash('sha256').update(bytes).digest('hex');
+    const save = (db: Db) =>
+      db.marketFile.create({
+        data: {
+          organizationId: input.organizationId,
+          purpose: input.purpose,
+          filename: input.filename,
+          mime: input.mime,
+          bytes,
+          sha256,
+          uploadedById: actor.id,
+        },
+        select: { id: true, filename: true },
+      });
+    if (verification) {
+      const file = await iamTransaction(this.db, actor, async (tx) => {
+        const member = await this.access.authorize(
+          actor,
+          'organization.approval.request',
+          input.organizationId,
+          tx,
+        );
+        if (!member.isManager || member.organization.type === 'INTERNAL')
+          fail(
+            403,
+            'FORBIDDEN',
+            'Only the organization manager can upload verification documents.',
+          );
+        if (!canEditOrganization(member.organization.approvalStatus))
+          fail(
+            409,
+            'INVALID_TRANSITION',
+            'Documents can only be updated while the application is editable.',
+          );
+        const latest = await tx.marketFile.findFirst({
+          where: { organizationId: input.organizationId, purpose: input.purpose },
+          select: { id: true, filename: true, sha256: true },
+          orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
+        });
+        if (latest?.sha256 === sha256) return { id: latest.id, filename: latest.filename };
+        return save(tx);
+      });
+      return { ...file, url: fileUrl(file.id) };
+    }
+    const context = await this.access.context(actor);
+    if (!context.organizations.some((org) => org.id === input.organizationId))
+      fail(403, 'FORBIDDEN', 'You can only upload files for your own organization.');
+    const file = await save(this.db);
     return { ...file, url: fileUrl(file.id) };
   }
+
   async readFile(actor: Actor, id: string) {
     const context = await this.access.context(actor);
     const file = await this.db.marketFile.findUnique({ where: { id } });
     if (!file) fail(404, 'NOT_FOUND', 'File not found.');
     const own = context.organizations.some((org) => org.id === file.organizationId);
     let allowed = own || this.has(context, 'PLATFORM_ADMIN');
-    if (!allowed && file.purpose === 'ORG_PROOF') allowed = this.has(context, 'NASJ_OPERATOR');
+    if (isOrganizationDocument(file.purpose)) {
+      const member = await this.db.organizationMember.findUnique({
+        where: { organizationId_userId: { organizationId: file.organizationId, userId: actor.id } },
+        select: { isManager: true, status: true },
+      });
+      const reviewer = this.has(context, 'NASJ_OPERATOR', 'PLATFORM_ADMIN');
+      const org =
+        reviewer &&
+        (await this.db.organization.findUnique({
+          where: { id: file.organizationId },
+          select: { approvalStatus: true },
+        }));
+      allowed =
+        (member?.status === 'ACTIVE' && member.isManager) ||
+        Boolean(org && org.approvalStatus !== 'DRAFT');
+    }
     if (!allowed && file.purpose === 'PRODUCT_IMAGE') allowed = true;
     if (!allowed && file.purpose === 'PAYMENT_PROOF') allowed = this.has(context, 'NASJ_FINANCE');
     if (!allowed && file.purpose === 'ORDER_PHOTO') {
@@ -1583,6 +1642,17 @@ export class MarketService {
   }
 
   // Organizations: the operator's side of NASJ
+  async submitOrganization(actor: Actor, id: string) {
+    const result = await this.organizationService.submitApproval(actor, id, true);
+    await this.notify(
+      'operator',
+      null,
+      'An organization application is ready to review',
+      '/nasj/organizations',
+    );
+    return result;
+  }
+
   async organizations(actor: Actor, status: string): Promise<MarketOrganizationView[]> {
     await this.require(actor, 'NASJ_OPERATOR');
     const rows = await this.db.organization.findMany({
@@ -1596,13 +1666,11 @@ export class MarketService {
       orderBy: { createdAt: 'desc' },
       take: 100,
     });
-    const proofs = await this.db.marketFile.findMany({
-      where: { organizationId: { in: rows.map((row) => row.id) }, purpose: 'ORG_PROOF' },
-      select: { id: true, filename: true, organizationId: true },
-      orderBy: { createdAt: 'desc' },
-    });
+    const documents = await organizationVerificationDocuments(
+      this.db,
+      rows.map((row) => row.id),
+    );
     return rows.map((row) => {
-      const proof = proofs.find((file) => file.organizationId === row.id);
       return {
         id: row.id,
         name: row.name,
@@ -1615,7 +1683,9 @@ export class MarketService {
         approvalStatus: row.approvalStatus,
         approvalReason: row.approvalReason,
         createdAt: row.createdAt.toISOString(),
-        proof: proof ? { id: proof.id, filename: proof.filename, url: fileUrl(proof.id) } : null,
+        registrationNumber: row.registrationNumber,
+        applicationVersion: row.updatedAt.toISOString(),
+        documents: documents.get(row.id) ?? { registration: null, authority: null },
         people: row.members.map((member) => ({
           name: member.user.name,
           email: member.user.email,
@@ -1624,27 +1694,47 @@ export class MarketService {
       };
     });
   }
-  async reviewOrganization(actor: Actor, id: string, input: MarketReview) {
-    await this.require(actor, 'NASJ_OPERATOR');
-    const org = await this.db.organization.findUnique({ where: { id } });
-    if (!org || org.type === 'INTERNAL') fail(404, 'NOT_FOUND', 'Organization not found.');
-    if (org.approvalStatus !== 'PENDING_REVIEW')
-      fail(409, 'INVALID_TRANSITION', 'This organization is not waiting for review.');
+  async reviewOrganization(actor: Actor, id: string, input: MarketOrganizationReview) {
     const approved = input.decision === 'APPROVE';
-    if (approved) {
-      const proof = await this.db.marketFile.count({
-        where: { organizationId: id, purpose: 'ORG_PROOF' },
-      });
-      if (!proof) fail(409, 'PROOF_REQUIRED', 'This organization has not uploaded its proof yet.');
-    }
-    await this.db.$transaction(async (tx) => {
+    const org = await iamTransaction(this.db, actor, async (tx) => {
+      const context = await this.access.context(actor, tx);
+      if (!this.has(context, 'PLATFORM_ADMIN', 'NASJ_OPERATOR'))
+        fail(403, 'FORBIDDEN', 'Your role does not include this action.');
+      const org = await tx.organization.findUnique({ where: { id } });
+      if (!org || org.type === 'INTERNAL') fail(404, 'NOT_FOUND', 'Organization not found.');
+      if (org.approvalStatus !== 'PENDING_REVIEW')
+        fail(409, 'INVALID_TRANSITION', 'This organization is not waiting for review.');
+      if (
+        (org.registrationNumber || input.applicationVersion) &&
+        input.applicationVersion !== org.updatedAt.toISOString()
+      )
+        fail(
+          409,
+          'STATE_CONFLICT',
+          'The application changed. Reload the queue to review the latest submission.',
+        );
+      if (org.createdByUserId === actor.id)
+        fail(403, 'SELF_REVIEW', 'Another NASJ reviewer must review this application.');
+      const documents = (await organizationVerificationDocuments(tx, [id])).get(id);
+      if (approved && !documents?.authority)
+        fail(409, 'PROOF_REQUIRED', 'The applicant must upload proof of representative authority.');
+      if (
+        approved &&
+        org.registrationNumber &&
+        (!documents?.registration || !input.registrationChecked || !input.authorityChecked)
+      )
+        fail(
+          400,
+          'VERIFICATION_REQUIRED',
+          'Confirm the registration and representative authority checks before approving.',
+        );
       await tx.organization.update({
         where: { id },
         data: {
           approvalStatus: approved ? 'APPROVED' : 'REJECTED',
           approvedByUserId: actor.id,
           approvedAt: new Date(),
-          approvalReason: input.note || (approved ? 'Representative proof reviewed.' : null),
+          approvalReason: input.note || 'Verification documents reviewed.',
         },
       });
       // The person who registered an association represents it from the moment it is accepted.
@@ -1660,8 +1750,15 @@ export class MarketService {
         organizationId: id,
         reason: input.note || undefined,
         before: { approvalStatus: org.approvalStatus },
-        after: { approvalStatus: approved ? 'APPROVED' : 'REJECTED' },
+        after: {
+          approvalStatus: approved ? 'APPROVED' : 'REJECTED',
+          ...(approved && documents?.authority ? { authorityFileId: documents.authority.id } : {}),
+          ...(approved && documents?.registration
+            ? { registrationFileId: documents.registration.id }
+            : {}),
+        },
       });
+      return org;
     });
     await this.notify(
       'company',
@@ -1681,7 +1778,7 @@ export class MarketService {
     else
       this.mail.sendAction(org.contactEmail, `Your NASJ application for ${org.name}`, {
         title: 'We could not accept your application yet',
-        intro: `Hello ${org.representativeName}, we could not accept ${org.name} yet. Reason: ${input.note}`,
+        intro: `Hello ${org.representativeName}, sign in to see what to update for ${org.name} and resubmit your application.`,
         label: 'Update and apply again',
         url,
       });

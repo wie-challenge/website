@@ -392,7 +392,7 @@ const samplePdf = (organization: string) =>
 assertLocalDevelopment(process.env);
 logger.level = 'silent';
 const config = validateEnvironment(process.env);
-const app = await createApp(config);
+const app = await createApp({ config });
 try {
   const db = app.get(PrismaService);
   const auth = app.get(AuthService);
@@ -631,7 +631,7 @@ try {
         purpose: 'ORG_PROOF',
         filename: 'mandate-letter.pdf',
         mime: 'application/pdf',
-        bytes,
+        bytes: new Uint8Array(bytes),
         sha256: createHash('sha256').update(bytes).digest('hex'),
         uploadedById: uid(org === 'silver-loom' ? 'newassociation' : 'newcompany'),
       },
@@ -826,7 +826,7 @@ try {
         purpose: 'PAYMENT_PROOF',
         filename: 'payment-receipt.pdf',
         mime: 'application/pdf',
-        bytes,
+        bytes: new Uint8Array(bytes),
         sha256: createHash('sha256').update(bytes).digest('hex'),
         uploadedById: payment.recordedById,
       },

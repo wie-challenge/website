@@ -29,6 +29,7 @@ import { MailService } from '../mail/mail.service.js';
 import { PolicyService } from '../foundation/policy.service.js';
 import { iamTransaction, type Db } from '../foundation/transaction.js';
 import { audit } from '../foundation/audit.js';
+import { organizationVerificationDocuments } from './organization-verification.js';
 
 const hashToken = (token: string) => createHash('sha256').update(token).digest('hex');
 const tokenValue = () => randomBytes(32).toString('hex');
@@ -50,6 +51,7 @@ function organizationView(org: Organization): OrganizationView {
     contactEmail: org.contactEmail,
     contactPhone: org.contactPhone,
     representativeName: org.representativeName,
+    registrationNumber: org.registrationNumber,
     createdByUserId: org.createdByUserId,
     approvedByUserId: org.approvedByUserId,
     approvedAt: org.approvedAt?.toISOString() ?? null,
@@ -128,6 +130,7 @@ export class OrganizationsService {
           contactEmail: input.contactEmail,
           contactPhone: input.contactPhone || null,
           representativeName: input.representativeName,
+          registrationNumber: input.type === 'INTERNAL' ? null : input.registrationNumber,
           slug: `${baseSlug}-${randomBytes(6).toString('hex')}`,
           createdByUserId: actor.id,
         },
@@ -188,6 +191,13 @@ export class OrganizationsService {
     return {
       ...organizationView(member.organization),
       myMembership: membershipView(member),
+      verificationDocuments:
+        member.isManager && member.organization.type !== 'INTERNAL'
+          ? ((await organizationVerificationDocuments(this.db, [id])).get(id) ?? {
+              registration: null,
+              authority: null,
+            })
+          : null,
       permissions: permissionsForMembership(member),
       assignableRoles: member.isManager ? rolesForOrganization(member.organization.type) : [],
     };
@@ -205,6 +215,8 @@ export class OrganizationsService {
       const organization = await tx.organization.update({
         where: { id },
         data: {
+          registrationNumber:
+            member.organization.type === 'INTERNAL' ? undefined : input.registrationNumber,
           ...(input.name !== undefined ? { name: input.name } : {}),
           ...(input.country !== undefined ? { country: input.country } : {}),
           ...(input.region !== undefined ? { region: input.region } : {}),
@@ -227,7 +239,7 @@ export class OrganizationsService {
     });
   }
 
-  async submitApproval(actor: Actor, id: string) {
+  async submitApproval(actor: Actor, id: string, marketplace = false) {
     return iamTransaction(this.db, actor, async (tx) => {
       const member = await this.policy.requireOrganization(
         actor,
@@ -241,6 +253,13 @@ export class OrganizationsService {
           'INVALID_TRANSITION',
           'Only draft or rejected organizations can request approval.',
         );
+      if (marketplace || member.organization.registrationNumber) {
+        if (!member.organization.registrationNumber)
+          fail(400, 'REGISTRATION_REQUIRED', 'Save the organization registration number first.');
+        const documents = (await organizationVerificationDocuments(tx, [id])).get(id);
+        if (!documents?.registration || !documents.authority)
+          fail(400, 'PROOF_REQUIRED', 'Upload the registration and representative authority PDFs.');
+      }
       const org = await tx.organization.update({
         where: { id },
         data: {
@@ -309,6 +328,16 @@ export class OrganizationsService {
           409,
           'INVALID_TRANSITION',
           'This organization cannot receive that approval decision in its current state.',
+        );
+      if (
+        org.registrationNumber &&
+        org.approvalStatus === 'PENDING_REVIEW' &&
+        status === 'APPROVED'
+      )
+        fail(
+          409,
+          'MARKET_REVIEW_REQUIRED',
+          'Review verification documents in Companies and associations.',
         );
       const result = await tx.organization.update({
         where: { id },

@@ -296,6 +296,8 @@ export function Input({
   min,
   max,
   step,
+  minLength,
+  maxLength,
 }: {
   name: string;
   label: string;
@@ -305,6 +307,8 @@ export function Input({
   min?: string;
   max?: string;
   step?: string;
+  minLength?: number;
+  maxLength?: number;
 }) {
   const id = useId();
   const errors = useFieldError(name);
@@ -322,6 +326,8 @@ export function Input({
         min={min}
         max={max}
         step={step}
+        minLength={minLength}
+        maxLength={maxLength}
       />
       {errors.length > 0 && (
         <p id={`${id}-error`} className="field-error">

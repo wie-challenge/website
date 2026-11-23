@@ -38,6 +38,8 @@ const exact = new Set([
   '/api/v1/settings/preferences',
   '/api/v1/notifications/preferences',
   '/api/v1/organizations',
+  '/api/v1/market/files',
+  '/api/v1/market/organizations',
   '/api/v1/invitations/accept',
   '/api/v1/consents',
   '/api/v1/privacy/requests',
@@ -93,6 +95,9 @@ export function routeLabel(path: string) {
   if (/^\/api\/v1\/me\/sessions\/[^/]+$/.test(path)) return '/api/v1/me/sessions/:id';
   if (/^\/api\/v1\/admin\/users\/[^/]+$/.test(path)) return '/api/v1/admin/users/:id';
   if (/^\/api\/v1\/users\/[^/]+$/.test(path)) return '/api/v1/users/:id';
+  if (/^\/api\/v1\/market\/files\/[^/]+$/.test(path)) return '/api/v1/market/files/:id';
+  const marketAction = /^\/api\/v1\/market\/organizations\/[^/]+\/(review|submit)$/.exec(path);
+  if (marketAction) return `/api/v1/market/organizations/:id/${marketAction[1]}`;
   const templates = [
     /^\/api\/v1\/associations\/me\/artisans\/[^/]+(?:\/(?:skills|capacity|authorization|assignments)(?:\/[^/]+\/withdraw)?)?$/,
     /^\/api\/v1\/admin\/(?:coordinators|artisans|authorization-policies|participant-concerns)\/[^/]+(?:\/(?:status|transfer|assignment|link-account))?$/,

@@ -23,6 +23,13 @@ no test establishes the behaviour. **PARTIAL** — some of the described behavio
 | Append-only audit trail | VERIFIED | `modules/foundation/audit.ts` | DB trigger `audit_append_only`; `test/unit/foundation.test.ts` |
 | Rate limiting (Arcjet, development limiter) | VERIFIED | `modules/foundation/` | `test/unit/security.test.ts` |
 
+## Marketplace verification — 23 November 2026
+
+Company and association applicants can save and resume an application with a registration
+reference, a registration PDF, and a PDF showing the named representative's authority.
+NASJ staff review the submitted documents manually, then approve access or request corrections
+on the same application. The end-to-end API scenario is in `apps/api/test/organizations.scenarios.ts`.
+
 ## Current branch regression work — 1 November 2026
 
 The acceptance guard converts the offer's own reservation instead of counting it twice, and

@@ -20,6 +20,7 @@ import {
   marketFileSchema,
   marketNoteSchema,
   marketOrgQuerySchema,
+  marketOrganizationReviewSchema,
   marketPaymentSchema,
   marketPriceDecisionSchema,
   marketPriceSchema,
@@ -74,7 +75,12 @@ export class MarketController {
   ) {
     const file = await this.market.readFile(a, id);
     res.setHeader('Content-Type', file.mime);
-    res.setHeader('Cache-Control', 'private, max-age=3600');
+    res.setHeader(
+      'Cache-Control',
+      file.purpose === 'ORG_PROOF' || file.purpose === 'ORG_REGISTRATION'
+        ? 'private, no-store'
+        : 'private, max-age=3600',
+    );
     res.setHeader('X-Content-Type-Options', 'nosniff');
     res.setHeader(
       'Content-Disposition',
@@ -359,10 +365,18 @@ export class MarketController {
   ) {
     return this.market.organizations(a, q.status);
   }
+  @Post('organizations/:id/submit') @HttpCode(200) submitOrganization(
+    @CurrentUser() a: Actor,
+    @Param('id', rid) id: string,
+  ) {
+    return this.market.submitOrganization(a, id);
+  }
   @Post('organizations/:id/review') @HttpCode(200) reviewOrganization(
     @CurrentUser() a: Actor,
     @Param('id', rid) id: string,
-    @Body(new ZodValidationPipe(marketReviewSchema)) i: z.infer<typeof marketReviewSchema>,
+    @Body(new ZodValidationPipe(marketOrganizationReviewSchema)) i: z.infer<
+      typeof marketOrganizationReviewSchema
+    >,
   ) {
     return this.market.reviewOrganization(a, id, i);
   }

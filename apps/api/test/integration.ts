@@ -29,7 +29,10 @@ import { runLifecycleScenarios } from './lifecycle.scenarios.js';
 import { runMfaScenarios } from './mfa.scenarios.js';
 import { runGovernanceScenarios } from './governance.scenarios.js';
 import { readdir } from 'node:fs/promises';
-import { runOrganizationScenarios } from './organizations.scenarios.js';
+import {
+  runOrganizationScenarios,
+  runOrganizationVerificationScenario,
+} from './organizations.scenarios.js';
 import { runArtisanScenarios } from './artisans.integration.js';
 import 'reflect-metadata';
 import assert from 'node:assert/strict';
@@ -543,6 +546,7 @@ try {
     },
   );
   if (process.env.BATCH12_FOCUSED !== '1') {
+    await runOrganizationVerificationScenario({ db, register, mutate, check, mail });
     await runRoleUpgradeScenario(check);
     await runRoleScenarios({ db, register, mutate, check, mail });
     await runOrganizationScenarios({ db, register, mutate, check, mail });

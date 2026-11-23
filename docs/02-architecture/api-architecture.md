@@ -2,7 +2,7 @@
 
 NestJS is authoritative. Next rewrites `/api/*` to its configured internal origin. `PUBLIC_APP_URL` must match the browser Origin exactly. Better Auth cookies are HttpOnly; account status, session expiry and privileged MFA are checked server-side. Unsafe methods require approved Origin and JSON; application mutations additionally require `X-CSRF-Token` from `GET /api/v1/me`. Never log that response/token. Same-origin cookies remain browser-managed.
 
-Routes are defined in `apps/api/src/modules/{auth,users,organizations,artisans,governance,commerce,directory}/*.controller.ts` and the auth gateway allowlist. Shared strict schemas in `packages/contracts/src` are the executable request contracts; response projection types avoid exposing credentials. There is no upload or wearable endpoint; the isolated synthetic commerce routes are listed below. No generated OpenAPI is configured; do not describe these TypeScript contracts as OpenAPI.
+Routes are defined in `apps/api/src/modules/{auth,users,organizations,artisans,governance,commerce,directory}/*.controller.ts` and the auth gateway allowlist. Shared strict schemas in `packages/contracts/src` are the executable request contracts; response projection types avoid exposing credentials. Marketplace file uploads are scoped separately from the isolated synthetic commerce routes below. No generated OpenAPI is configured; do not describe these TypeScript contracts as OpenAPI.
 
 | Area | Representative routes | Scope |
 |---|---|---|
@@ -14,7 +14,7 @@ Routes are defined in `apps/api/src/modules/{auth,users,organizations,artisans,g
 | Assistance | `/api/v1/artisans/:id`, `/:id/skills`, `/:id/capacity` | Owner or current explicit consent/delegation scope |
 | Governance | Privacy requests, support cases, consents and audit controllers | Own subject or explicitly scoped staff policies |
 
-Consult controller decorators for exact methods and nested route suffixes. Each identifier passes `resourceIdSchema`; request/list schemas cap input sizes and reject unknown fields. Body limit is 32 KiB. Rate limits are enforced in Nest on direct and rewritten requests.
+Consult controller decorators for exact methods and nested route suffixes. Each identifier passes `resourceIdSchema`; request/list schemas cap input sizes and reject unknown fields. The default JSON body limit is 32 KiB. Market file uploads allow 6 MiB of JSON for a file up to 4 MiB after decoding. Rate limits are enforced in Nest on direct and rewritten requests.
 
 `POST /api/v1/artisans/me/capacity` and `POST /api/v1/artisans/:id/capacity` accept an optional `Idempotency-Key` of 16..128 ASCII letters/digits/underscore/hyphen. Existing clients without keys retain revision behavior. The browser uses UUID keys and retains one for the same payload during a failed request while the form stays mounted. Navigating/reloading loses that pending browser key; persist/reuse it in an API caller if recovery must survive reload.
 
@@ -23,6 +23,12 @@ A successful first call and authorized identical replay both return 201 and the 
 Capacity input: `craftSkillId`, `unitType` HOURS/PIECES, numeric `quantity` at most two decimal places 0..100000, ISO `effectiveFrom` and `effectiveTo`. Quantity responses are decimal strings. No quantity is inferred from wearable data.
 
 Errors contain `code`, safe `message`, optional field issues and `requestId`; the response header `X-Request-ID` matches. 401 means invalid session, 403 denied permission/origin/CSRF, 400 invalid input, 409 conflicting state/key, 429 rate limited (`Retry-After`), 503 dependency unavailable. Errors never return exception text or upstream credentials.
+
+## Marketplace organization verification
+
+Applicants save their legal organization details and registration number through `POST /api/v1/organizations` or `PATCH /api/v1/organizations/:id`. The manager uploads the registration PDF (`ORG_REGISTRATION`) and proof of representative authority (`ORG_PROOF`) separately through `POST /api/v1/market/files`. The manager can resume a draft from `GET /api/v1/organizations/:id` and download saved PDFs. NASJ reviewers can download verification PDFs after submission. Verification file responses use private, no-store caching.
+
+`POST /api/v1/market/organizations/:id/submit` requires the registration number and both PDFs and moves the application into the NASJ review queue. While pending, the details and documents are locked. Reviewers use `GET /api/v1/market/organizations` and `POST /api/v1/market/organizations/:id/review`. For applications with a registration number, review requires the application version and approval requires explicit checks of both documents. Reviewers can request changes with an applicant-visible reason. The applicant can edit and resubmit the same record. Approval is a manual review of the submitted evidence.
 
 ## Synthetic commerce contracts
 

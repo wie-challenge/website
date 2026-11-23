@@ -447,6 +447,14 @@ a.row:hover {
   width: 100%;
   text-align: start;
 }
+.verificationDocuments {
+  display: grid;
+  gap: 12px;
+}
+.verificationDocuments > div + div {
+  border-top: 1px solid var(--border);
+  padding-top: 12px;
+}
 @media (max-width: 900px) {
   .tableWrap {
     max-width: calc(100vw - 32px);

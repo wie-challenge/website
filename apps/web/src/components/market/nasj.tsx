@@ -20,7 +20,7 @@ const typeLabel: Record<string, string> = {
 };
 const decisions = [
   { value: 'APPROVE', label: 'Accept' },
-  { value: 'REJECT', label: 'Reject' },
+  { value: 'REJECT', label: 'Request changes' },
 ];
 
 export function OrganizationReview() {
@@ -33,14 +33,14 @@ export function OrganizationReview() {
   return (
     <Workspace
       title="Companies and associations"
-      description="Check who is applying and their proof. Accepted organizations get a welcome email automatically."
+      description="Review organization registration and representative authority before granting workspace access."
     >
       <div className={`${styles.chips} ${styles.tabs}`}>
         {(
           [
             ['PENDING_REVIEW', 'Waiting for review'],
             ['APPROVED', 'Accepted'],
-            ['REJECTED', 'Rejected'],
+            ['REJECTED', 'Changes requested'],
           ] as const
         ).map(([value, label]) => (
           <button
@@ -68,7 +68,7 @@ export function OrganizationReview() {
                 <th scope="col">Type</th>
                 <th scope="col">Representative</th>
                 <th scope="col">Team</th>
-                <th scope="col">Proof</th>
+                <th scope="col">Verification documents</th>
                 <th scope="col">
                   <span className="sr-only">Decision</span>
                 </th>
@@ -80,6 +80,7 @@ export function OrganizationReview() {
                   <td>
                     {org.name}
                     <p className={styles.muted}>{org.region}</p>
+                    {org.registrationNumber && <p>Registration: {org.registrationNumber}</p>}
                   </td>
                   <td>{typeLabel[org.type] ?? org.type}</td>
                   <td>
@@ -90,13 +91,24 @@ export function OrganizationReview() {
                     {org.people.length} {org.people.length === 1 ? 'person' : 'people'}
                   </td>
                   <td>
-                    {org.proof ? (
-                      <a href={org.proof.url} target="_blank" rel="noreferrer">
-                        Open PDF
-                      </a>
-                    ) : (
-                      <span className={`${styles.badge} ${styles.badgeRed}`}>Missing</span>
-                    )}
+                    <div>
+                      {org.documents.registration ? (
+                        <a href={org.documents.registration.url} target="_blank" rel="noreferrer">
+                          Registration PDF
+                        </a>
+                      ) : (
+                        <span className={styles.muted}>Registration PDF missing</span>
+                      )}
+                    </div>
+                    <div>
+                      {org.documents.authority ? (
+                        <a href={org.documents.authority.url} target="_blank" rel="noreferrer">
+                          Authority PDF
+                        </a>
+                      ) : (
+                        <span className={styles.muted}>Authority PDF missing</span>
+                      )}
+                    </div>
                   </td>
                   <td>
                     {org.approvalStatus === 'PENDING_REVIEW' ? (
@@ -105,17 +117,44 @@ export function OrganizationReview() {
                         title={`Review ${org.name}`}
                         description={org.description}
                         submitLabel="Save decision"
-                        successMessage="Decision saved and the email was sent."
+                        successMessage="Decision saved."
                         onSuccess={organizations.reload}
                         action={(data) =>
                           apiFetch(`/api/v1/market/organizations/${org.id}/review`, {
                             method: 'POST',
-                            body: { decision: text(data, 'decision'), note: text(data, 'note') },
+                            body: {
+                              decision: text(data, 'decision'),
+                              note: text(data, 'note'),
+                              applicationVersion: org.applicationVersion,
+                              registrationChecked: data.has('registrationChecked'),
+                              authorityChecked: data.has('authorityChecked'),
+                            },
                           })
                         }
                       >
                         <Select name="decision" label="Decision" options={decisions} />
-                        <Input name="note" label="Note (required to reject)" />
+                        {org.registrationNumber && (
+                          <>
+                            <label className="field">
+                              <span>
+                                <input type="checkbox" name="registrationChecked" /> I checked that
+                                the registration PDF matches the organization name and registration
+                                number.
+                              </span>
+                            </label>
+                            <label className="field">
+                              <span>
+                                <input type="checkbox" name="authorityChecked" /> I checked that the
+                                named representative is authorized to act for this organization.
+                              </span>
+                            </label>
+                          </>
+                        )}
+                        <Input
+                          name="note"
+                          label="What should the applicant correct? (required when requesting changes)"
+                          maxLength={1000}
+                        />
                       </ModalAction>
                     ) : (
                       <span className={styles.muted}>{org.approvalReason}</span>

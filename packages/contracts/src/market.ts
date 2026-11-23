@@ -1,4 +1,8 @@
 import { z } from 'zod';
+import {
+  organizationDocumentPurposes,
+  type OrganizationVerificationDocuments,
+} from './organizations.js';
 
 const resourceId = z.string().min(1).max(128);
 
@@ -47,17 +51,23 @@ const imageLink = z
   .max(1000)
   .startsWith('https://', 'Use a full image link starting with https://');
 
-// Files travel as base64 JSON, the same way procurement attachments do. 5.4M chars is about 4 MB.
+export const MARKET_MAX_FILE_BYTES = 4 * 1024 * 1024;
+const maxBase64Length = 4 * Math.ceil(MARKET_MAX_FILE_BYTES / 3);
 export const marketFileSchema = z
   .object({
-    purpose: z.enum(['PRODUCT_IMAGE', 'ORDER_PHOTO', 'ORG_PROOF', 'PAYMENT_PROOF']),
+    purpose: z.enum([
+      'PRODUCT_IMAGE',
+      'ORDER_PHOTO',
+      'PAYMENT_PROOF',
+      ...organizationDocumentPurposes,
+    ]),
     organizationId: resourceId,
     filename: z.string().trim().min(1).max(120),
     mime: z.enum(['image/png', 'image/jpeg', 'image/webp', 'application/pdf']),
     base64: z
       .string()
       .min(4)
-      .max(5_400_000)
+      .max(maxBase64Length)
       .regex(/^[A-Za-z0-9+/]+={0,2}$/),
   })
   .strict();
@@ -89,6 +99,20 @@ export const marketReviewSchema = z
     message: 'Explain what needs to change.',
   });
 export type MarketReview = z.infer<typeof marketReviewSchema>;
+
+export const marketOrganizationReviewSchema = z
+  .object({
+    ...marketReviewSchema.shape,
+    applicationVersion: z.iso.datetime().optional(),
+    registrationChecked: z.boolean().optional(),
+    authorityChecked: z.boolean().optional(),
+  })
+  .strict()
+  .refine((input) => input.decision === 'APPROVE' || input.note.length >= 3, {
+    path: ['note'],
+    message: 'Explain what the applicant should correct.',
+  });
+export type MarketOrganizationReview = z.infer<typeof marketOrganizationReviewSchema>;
 
 export const marketBillingSchema = z
   .object({
@@ -298,7 +322,9 @@ export type MarketOrganizationView = {
   approvalStatus: string;
   approvalReason: string | null;
   createdAt: string;
-  proof: { id: string; filename: string; url: string } | null;
+  registrationNumber: string | null;
+  documents: OrganizationVerificationDocuments;
+  applicationVersion: string;
   people: { name: string; email: string; manager: boolean }[];
 };
 export type MarketTrackView = {
