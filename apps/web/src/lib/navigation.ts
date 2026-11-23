@@ -29,6 +29,7 @@ function isWorkspacePath(path: string) {
   return (
     [
       '/dashboard',
+      '/welcome',
       '/admin',
       '/operator',
       '/operator/activity',

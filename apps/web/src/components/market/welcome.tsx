@@ -11,6 +11,7 @@ import { Button } from '../ui/button';
 import { useId, useState } from 'react';
 import { apiFetch, ApiError } from '@/lib/api';
 import { nasoujArt } from '../assistant/nasouj-assets';
+import { MfaSettings } from '../mfa-settings';
 import { Label } from '../ui/label';
 import { Modal } from '../ui/modal';
 import { Textarea } from '../ui/textarea';
@@ -180,6 +181,16 @@ function Application({
   const [editing, setEditing] = useState(false);
   const org = application.data;
   const documents = org?.verificationDocuments;
+  if (application.needsMfa) {
+    return (
+      <div className={styles.welcomeForm}>
+        <p className="notice">
+          Your draft is saved. Verify your account to continue with your organization documents.
+        </p>
+        <MfaSettings embedded returnTo="/welcome" onVerified={() => window.location.reload()} />
+      </div>
+    );
+  }
   return (
     <>
       <ResourceState {...application} retry={application.reload} />

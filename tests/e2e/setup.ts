@@ -154,6 +154,7 @@ export async function runBrowserSetup(options: { demo?: boolean; feedbackRateMax
     DEMO_MODE: options.demo ? 'true' : 'false',
     API_PORT: 3101,
     LOG_LEVEL: 'silent',
+    REQUIRE_PRIVILEGED_MFA: process.env.E2E_REQUIRE_PRIVILEGED_MFA === '1' ? 'true' : 'false',
     // The browser suite shares one loopback client address, so the dedicated showroom-feedback
     // bucket is raised for the harness only. Production defaults stay conservative (env.ts).
     RATE_FEEDBACK_MAX: options.feedbackRateMax ?? 500,

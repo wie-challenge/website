@@ -2,6 +2,8 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { apiFetch, ApiError } from '@/lib/api';
+import { traceModules } from '@/lib/trace-qr';
+import { Button } from './ui/button';
 import { SectionShell, ResourceState, ActionForm, Input, useResource, text } from './workspace-ui';
 type Security = {
   sessionVerified: boolean;
@@ -16,7 +18,36 @@ const mfaRequest = <T,>(
   body: Record<string, string>,
 ) => apiFetch<T>(`/api/auth/two-factor/${action}`, { method: 'POST', body, timeoutMs: 35000 });
 
-export function MfaSettings({ embedded = false }: { embedded?: boolean }) {
+function AuthenticatorQr({ uri }: { uri: string }) {
+  const { size, cells } = traceModules(uri);
+  const blocks = cells
+    .map((dark, i) => (dark ? `M${i % size} ${Math.floor(i / size)}h1v1h-1z` : ''))
+    .join('');
+  return (
+    <svg
+      role="img"
+      aria-label="Authenticator setup QR code"
+      width={208}
+      height={208}
+      viewBox={`-4 -4 ${size + 8} ${size + 8}`}
+      shapeRendering="crispEdges"
+      className="max-w-full"
+    >
+      <rect x={-4} y={-4} width={size + 8} height={size + 8} fill="white" />
+      <path d={blocks} fill="black" />
+    </svg>
+  );
+}
+
+export function MfaSettings({
+  embedded = false,
+  returnTo = '/settings/profile',
+  onVerified,
+}: {
+  embedded?: boolean;
+  returnTo?: '/settings/profile' | '/welcome';
+  onVerified?: () => void;
+}) {
   const resource = useResource<Security>(securityPath);
   const [enrollment, setEnrollment] = useState<Enrollment | null>(null);
   const [needsSignIn, setNeedsSignIn] = useState(false);
@@ -61,7 +92,8 @@ export function MfaSettings({ embedded = false }: { embedded?: boolean }) {
         );
     }
     setEnrollment(null);
-    await resource.reload();
+    if (onVerified) onVerified();
+    else await resource.reload();
   }
   return (
     <SectionShell
@@ -78,7 +110,7 @@ export function MfaSettings({ embedded = false }: { embedded?: boolean }) {
               ? 'Two-factor authentication is enabled.'
               : 'Two-factor authentication is not enabled.'}
           </p>
-          {resource.data.privilegedMfaRequired && (
+          {resource.data.privilegedMfaRequired && !onVerified && (
             <p className="notice">
               Two-factor authentication is required for privileged actions. Complete enrollment
               before managing organization access or administration.
@@ -98,7 +130,11 @@ export function MfaSettings({ embedded = false }: { embedded?: boolean }) {
           {enrollment && (
             <>
               <h3>Add to your authenticator</h3>
-              <p>Import this setup URI into your authenticator app. Keep it private.</p>
+              <p>
+                Scan this code with your authenticator app, or import the setup URI. Keep both
+                private.
+              </p>
+              <AuthenticatorQr uri={enrollment.totpURI} />
               <label className="field">
                 <span className="label">Authenticator setup URI</span>
                 <input readOnly value={enrollment.totpURI} autoComplete="off" />
@@ -119,12 +155,14 @@ export function MfaSettings({ embedded = false }: { embedded?: boolean }) {
               <Input name="code" label="Authenticator code for this session" required />
             </ActionForm>
           )}
-          {resource.data.twoFactorEnabled &&
+          {!onVerified &&
+            resource.data.twoFactorEnabled &&
             resource.data.hasPrivilegedAccess &&
             resource.data.privilegedMfaRequired && (
               <p>Your privileged access requires two-factor authentication to remain enabled.</p>
             )}
-          {resource.data.twoFactorEnabled &&
+          {!onVerified &&
+            resource.data.twoFactorEnabled &&
             !(resource.data.hasPrivilegedAccess && resource.data.privilegedMfaRequired) && (
               <ActionForm
                 label="Disable two-factor authentication"
@@ -142,10 +180,15 @@ export function MfaSettings({ embedded = false }: { embedded?: boolean }) {
                 />
               </ActionForm>
             )}
+          {onVerified && resource.data.twoFactorEnabled && resource.data.sessionVerified && (
+            <Button type="button" onClick={onVerified}>
+              Continue application
+            </Button>
+          )}
           {needsSignIn && (
             <p>
-              <Link href="/auth/login?next=%2Fsettings%2Fprofile">Sign in again</Link> to continue
-              setting up two-factor authentication.
+              <Link href={`/auth/login?next=${encodeURIComponent(returnTo)}`}>Sign in again</Link>{' '}
+              to continue setting up two-factor authentication.
             </p>
           )}
         </section>

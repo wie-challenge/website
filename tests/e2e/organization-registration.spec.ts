@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test';
+import { totp } from './totp';
 
 test('company registration survives a blocked session lookup and a dropped save response', async ({
   page,
@@ -60,5 +61,28 @@ test('company registration survives a blocked session lookup and a dropped save 
   await save.click();
   await expect(page.getByRole('heading', { name: 'Finish your application' })).toBeVisible();
   await page.reload();
+  if (process.env.E2E_REQUIRE_PRIVILEGED_MFA === '1') {
+    await expect(page.getByText('Your draft is saved.', { exact: false })).toBeVisible();
+    await expect(page.getByLabel('Organization registration', { exact: true })).toHaveCount(0);
+    await page.getByLabel('Password for authenticator setup').fill(password);
+    await page.getByRole('button', { name: 'Set up authenticator' }).click();
+    await expect(page.getByRole('img', { name: 'Authenticator setup QR code' })).toBeVisible();
+    const uri = await page.getByLabel('Authenticator setup URI').inputValue();
+    await page.getByLabel('Six-digit authenticator code').fill(totp(uri));
+    await page.getByRole('button', { name: 'Confirm authenticator code' }).click();
+    await expect(page.getByRole('img', { name: 'Authenticator setup QR code' })).toHaveCount(0);
+    const registration = page.getByLabel('Organization registration', { exact: true });
+    await registration.setInputFiles({
+      name: 'test-registration.pdf',
+      mimeType: 'application/pdf',
+      buffer: Buffer.from('%PDF-1.7\n% Synthetic test fixture'),
+    });
+    await page
+      .locator('form')
+      .filter({ has: registration })
+      .getByRole('button', { name: 'Save PDF' })
+      .click();
+    await expect(page.getByRole('link', { name: 'test-registration.pdf' })).toBeVisible();
+  }
   await expect(page.getByText('Synthetic Company · TEST-REG-2026')).toBeVisible();
 });
