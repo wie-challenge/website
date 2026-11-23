@@ -14,6 +14,7 @@ export async function apiFetch<T>(
     method?: 'GET' | 'POST' | 'PATCH' | 'PUT' | 'DELETE';
     body?: unknown;
     idempotencyKey?: string;
+    csrfToken?: string;
   } = {},
 ): Promise<T> {
   if (!safeApiPath(path)) throw new Error('Invalid API destination.');
@@ -23,7 +24,8 @@ export async function apiFetch<T>(
     headers['Content-Type'] = 'application/json';
     if (options.idempotencyKey) headers['Idempotency-Key'] = options.idempotencyKey;
     if (path.startsWith('/api/v1/'))
-      headers['X-CSRF-Token'] = (await apiFetch<MeView>('/api/v1/me')).csrfToken;
+      headers['X-CSRF-Token'] =
+        options.csrfToken ?? (await apiFetch<MeView>('/api/v1/me')).csrfToken;
   }
   let response: Response;
   try {
@@ -43,6 +45,9 @@ export async function apiFetch<T>(
     });
   }
   const body = await response.json().catch(() => null);
+  // The API rejects stale proofs before performing the mutation.
+  if (options.csrfToken && response.status === 403 && body?.code === 'CSRF_REJECTED')
+    return apiFetch<T>(path, { ...options, csrfToken: undefined });
   if (!response.ok)
     throw new ApiError(
       response.status,

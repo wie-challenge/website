@@ -9,7 +9,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { Button } from '../ui/button';
 import { useId, useState } from 'react';
-import { apiFetch } from '@/lib/api';
+import { apiFetch, ApiError } from '@/lib/api';
 import { nasoujArt } from '../assistant/nasouj-assets';
 import { Label } from '../ui/label';
 import { Modal } from '../ui/modal';
@@ -115,6 +115,7 @@ const applicationDetails = (data: FormData) => ({
 
 function ApplicationDocument({
   organizationId,
+  csrfToken,
   purpose,
   title,
   description,
@@ -122,6 +123,7 @@ function ApplicationDocument({
   reload,
 }: {
   organizationId: string;
+  csrfToken: string;
   purpose: OrganizationDocumentPurpose;
   title: string;
   description: string;
@@ -148,6 +150,7 @@ function ApplicationDocument({
           if (!pdf) throw new Error('Choose a PDF to upload.');
           await apiFetch('/api/v1/market/files', {
             method: 'POST',
+            csrfToken,
             body: { purpose, organizationId, ...(await pdfPayload(pdf)) },
           });
         }}
@@ -164,7 +167,15 @@ function ApplicationDocument({
   );
 }
 
-function Application({ id, refresh }: { id: string; refresh: () => Promise<void> }) {
+function Application({
+  id,
+  csrfToken,
+  refresh,
+}: {
+  id: string;
+  csrfToken: string;
+  refresh: () => Promise<void>;
+}) {
   const application = useResource<OrganizationApplicationView>(`/api/v1/organizations/${id}`);
   const [editing, setEditing] = useState(false);
   const org = application.data;
@@ -202,6 +213,7 @@ function Application({ id, refresh }: { id: string; refresh: () => Promise<void>
                 action={(data) =>
                   apiFetch(`/api/v1/organizations/${id}`, {
                     method: 'PATCH',
+                    csrfToken,
                     body: applicationDetails(data),
                   })
                 }
@@ -218,6 +230,7 @@ function Application({ id, refresh }: { id: string; refresh: () => Promise<void>
             </p>
             <ApplicationDocument
               organizationId={id}
+              csrfToken={csrfToken}
               purpose="ORG_REGISTRATION"
               title="Organization registration"
               description="Provide a registration certificate or registry extract showing the legal name and registration reference."
@@ -226,6 +239,7 @@ function Application({ id, refresh }: { id: string; refresh: () => Promise<void>
             />
             <ApplicationDocument
               organizationId={id}
+              csrfToken={csrfToken}
               purpose="ORG_PROOF"
               title="Representative authority"
               description="Provide a signed mandate, appointment letter, or registry extract showing that you may act for the organization."
@@ -242,7 +256,10 @@ function Application({ id, refresh }: { id: string; refresh: () => Promise<void>
                 }
                 onSuccess={refresh}
                 action={() =>
-                  apiFetch(`/api/v1/market/organizations/${id}/submit`, { method: 'POST' })
+                  apiFetch(`/api/v1/market/organizations/${id}/submit`, {
+                    method: 'POST',
+                    csrfToken,
+                  })
                 }
               />
             ) : (
@@ -255,7 +272,7 @@ function Application({ id, refresh }: { id: string; refresh: () => Promise<void>
   );
 }
 
-export function Welcome() {
+export function Welcome({ csrfToken }: { csrfToken: string }) {
   const context = useResource<IdentityContext>('/api/v1/me/context');
   const [choice, setChoice] = useState<ApplicantType | null>(null);
   const others = context.data?.organizations.filter((org) => org.type !== 'INTERNAL') ?? [];
@@ -295,7 +312,7 @@ export function Welcome() {
           <h1>
             {own.approvalStatus === 'DRAFT' ? 'Finish your application' : 'Update your application'}
           </h1>
-          <Application key={own.id} id={own.id} refresh={context.reload} />
+          <Application key={own.id} id={own.id} csrfToken={csrfToken} refresh={context.reload} />
         </>
       )}
       {own?.approvalStatus === 'PENDING_REVIEW' && (
@@ -331,12 +348,34 @@ export function Welcome() {
             setChoice(null);
             await context.reload();
           }}
-          action={(data) =>
-            apiFetch('/api/v1/organizations', {
-              method: 'POST',
-              body: { ...applicationDetails(data), type: choice, country: 'TN' },
-            })
-          }
+          action={async (data) => {
+            const details = applicationDetails(data);
+            try {
+              await apiFetch('/api/v1/organizations', {
+                method: 'POST',
+                csrfToken,
+                body: { ...details, type: choice, country: 'TN' },
+              });
+            } catch (error) {
+              // A connection can drop after the server has saved the draft. Check before offering a retry.
+              if (!(error instanceof ApiError) || error.status < 500) throw error;
+              const current = await apiFetch<IdentityContext>('/api/v1/me/context').catch(
+                () => null,
+              );
+              if (
+                current?.organizations.some(
+                  (org) =>
+                    org.type === choice &&
+                    org.name === details.name &&
+                    org.approvalStatus !== 'REJECTED',
+                )
+              )
+                return;
+              throw new Error(
+                'We couldn’t confirm that your draft was saved. Your details are still here. Choose Save and continue to retry.',
+              );
+            }
+          }}
         >
           <ApplicationFields company={choice === 'BUYER_BUSINESS'} />
         </ActionForm>

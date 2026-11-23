@@ -35,6 +35,33 @@ test('browser mutations obtain a session-bound CSRF proof and never store sessio
     globalThis.fetch = original;
   }
 });
+test('a hydrated session proof skips the lookup and refreshes only after CSRF rejection', async () => {
+  const original = globalThis.fetch;
+  const calls: { method?: string; token?: string }[] = [];
+  globalThis.fetch = async (_path, options) => {
+    calls.push({
+      method: options?.method,
+      token: new Headers(options?.headers).get('X-CSRF-Token') ?? undefined,
+    });
+    if (calls.length === 1)
+      return Response.json({ code: 'CSRF_REJECTED', message: 'Refresh.' }, { status: 403 });
+    if (calls.length === 2) return Response.json({ csrfToken: 'refreshed-proof' });
+    return Response.json({ id: 'draft' }, { status: 201 });
+  };
+  try {
+    assert.deepEqual(
+      await apiFetch('/api/v1/organizations', { method: 'POST', csrfToken: 'stale-proof' }),
+      { id: 'draft' },
+    );
+    assert.deepEqual(calls, [
+      { method: 'POST', token: 'stale-proof' },
+      { method: 'GET', token: undefined },
+      { method: 'POST', token: 'refreshed-proof' },
+    ]);
+  } finally {
+    globalThis.fetch = original;
+  }
+});
 test('API failures and network errors become safe user-facing errors', async () => {
   const original = globalThis.fetch;
   try {
