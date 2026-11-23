@@ -24,6 +24,10 @@ Capacity input: `craftSkillId`, `unitType` HOURS/PIECES, numeric `quantity` at m
 
 Errors contain `code`, safe `message`, optional field issues and `requestId`; the response header `X-Request-ID` matches. 401 means invalid session, 403 denied permission/origin/CSRF, 400 invalid input, 409 conflicting state/key, 429 rate limited (`Retry-After`), 503 dependency unavailable. Errors never return exception text or upstream credentials.
 
+## Authenticator setup
+
+`POST /api/auth/two-factor/enable` requires the current password and a recent verified sign-in. The enrollment responds with the setup key and recovery codes. `POST /api/auth/two-factor/verify-totp` verifies a six-digit code and marks the resulting session as verified. If the browser loses a verification response, Account Security checks the current session status before treating it as complete. Disconnected requests are logged with their route template, method, duration and request ID without logging credentials or codes.
+
 ## Marketplace organization verification
 
 Applicants save their legal organization details and registration number through `POST /api/v1/organizations` or `PATCH /api/v1/organizations/:id`. The manager uploads the registration PDF (`ORG_REGISTRATION`) and proof of representative authority (`ORG_PROOF`) separately through `POST /api/v1/market/files`. The manager can resume a draft from `GET /api/v1/organizations/:id` and download saved PDFs. The signed-in welcome page supplies the current session CSRF token to onboarding forms. If draft creation loses its response, the page checks for the saved application before offering a retry. NASJ reviewers can download verification PDFs after submission. Verification file responses use private, no-store caching.

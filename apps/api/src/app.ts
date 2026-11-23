@@ -62,6 +62,18 @@ export async function createApp(options: { config?: AppConfig; arcjet?: ArcjetNe
         'Request completed',
       ),
     );
+    res.once('close', () => {
+      if (!res.writableFinished)
+        logger.warn(
+          {
+            requestId: req.requestId,
+            method: req.method,
+            endpoint: routeLabel(req.path),
+            durationMs: Math.round(performance.now() - startedAt),
+          },
+          'Client disconnected before response',
+        );
+    });
     next();
   });
   const ordinaryJson = express.json({ limit: '32kb' });

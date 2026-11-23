@@ -370,19 +370,34 @@ test('authenticator enrollment and recovery-code sign-in work without persisting
   await register(request, email, 'Identity MFA');
   await login(page, email);
   await page.goto('/settings/security');
-  await page.getByLabel('Current password', { exact: true }).fill(password);
-  await page.getByRole('button', { name: 'Set up authenticator', exact: true }).click();
+  const passwordField = page.getByLabel('Password for authenticator setup', { exact: true });
+  const setup = page.getByRole('button', { name: 'Set up authenticator', exact: true });
+  await passwordField.fill('incorrect test password');
+  await setup.click();
+  await expect(page.getByText('The password is incorrect.', { exact: false })).toBeVisible();
+  await passwordField.fill(password);
+  await page.route('**/api/auth/two-factor/enable', (route) => route.abort(), { times: 1 });
+  await setup.click();
+  await expect(page.getByText('We couldn’t load your setup key.', { exact: false })).toBeVisible();
+  await expect(passwordField).toHaveValue(password);
+  await setup.click();
   const uri = await page.getByLabel('Authenticator setup URI', { exact: true }).inputValue();
   const backup = (await page.locator('.recovery-codes').textContent())!.split('\n')[0];
-  await page.getByLabel('Six-digit authenticator code', { exact: true }).fill(totp(uri));
-  await page.getByRole('button', { name: 'Confirm authenticator code', exact: true }).click();
+  const otp = page.getByLabel('Six-digit authenticator code', { exact: true });
+  const confirm = page.getByRole('button', { name: 'Confirm authenticator code', exact: true });
+  await otp.fill(totp(uri));
+  await page.route('**/api/auth/two-factor/verify-totp', (route) => route.abort(), { times: 1 });
+  await confirm.click();
+  await expect(page.getByText('We couldn’t confirm verification.', { exact: false })).toBeVisible();
+  await expect(page.getByLabel('Authenticator setup URI', { exact: true })).toHaveValue(uri);
+  await otp.fill(totp(uri));
+  await confirm.click();
   await expect(
     page.getByText('Two-factor authentication is enabled.', { exact: true }),
   ).toBeVisible();
   await expect(page.locator('.recovery-codes')).toHaveCount(0);
   expect(await page.evaluate(() => localStorage.length)).toBe(0);
-  await page.getByRole('button', { name: 'Account menu' }).click();
-  await page.getByRole('menuitem', { name: 'Sign out', exact: true }).click();
+  await page.getByRole('button', { name: 'Sign out', exact: true }).click();
   await page.getByLabel('Email address', { exact: true }).fill(email);
   await page.getByLabel('Password', { exact: true }).fill(password);
   await page.getByRole('button', { name: 'Sign in', exact: true }).click();
@@ -390,5 +405,5 @@ test('authenticator enrollment and recovery-code sign-in work without persisting
   await page.getByRole('button', { name: 'Use recovery code', exact: true }).click();
   await page.getByLabel('Recovery code', { exact: true }).fill(backup);
   await page.getByRole('button', { name: 'Verify sign-in', exact: true }).click();
-  await expect(page).toHaveURL(/\/dashboard/);
+  await expect(page).toHaveURL(/\/welcome$/);
 });

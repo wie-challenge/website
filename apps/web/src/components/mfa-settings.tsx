@@ -1,6 +1,7 @@
 'use client';
 import { useState } from 'react';
-import { apiFetch } from '@/lib/api';
+import Link from 'next/link';
+import { apiFetch, ApiError } from '@/lib/api';
 import { SectionShell, ResourceState, ActionForm, Input, useResource, text } from './workspace-ui';
 type Security = {
   sessionVerified: boolean;
@@ -9,9 +10,59 @@ type Security = {
   hasPrivilegedAccess: boolean;
 };
 type Enrollment = { totpURI: string; backupCodes: string[] };
+const securityPath = '/api/v1/settings/security';
+const mfaRequest = <T,>(
+  action: 'enable' | 'verify-totp' | 'disable',
+  body: Record<string, string>,
+) => apiFetch<T>(`/api/auth/two-factor/${action}`, { method: 'POST', body, timeoutMs: 35000 });
+
 export function MfaSettings({ embedded = false }: { embedded?: boolean }) {
-  const resource = useResource<Security>('/api/v1/settings/security');
+  const resource = useResource<Security>(securityPath);
   const [enrollment, setEnrollment] = useState<Enrollment | null>(null);
+  const [needsSignIn, setNeedsSignIn] = useState(false);
+  async function startEnrollment(data: FormData) {
+    setNeedsSignIn(false);
+    try {
+      const setup = await mfaRequest<Enrollment | null>('enable', {
+        password: String(data.get('password') ?? ''),
+      });
+      if (!setup?.totpURI || !Array.isArray(setup.backupCodes))
+        throw new ApiError(503, {
+          code: 'MFA_SETUP_INCOMPLETE',
+          message: 'Setup details were incomplete.',
+        });
+      setEnrollment(setup);
+    } catch (error) {
+      if (error instanceof ApiError) {
+        setNeedsSignIn(
+          ['ACCOUNT_UNAVAILABLE', 'REAUTHENTICATION_REQUIRED'].includes(error.detail.code),
+        );
+        if (error.status >= 500)
+          throw new Error(
+            'We couldn’t load your setup key. Select Set up authenticator to try again.',
+          );
+      }
+      throw error;
+    }
+  }
+  async function verifyCode(data: FormData) {
+    setNeedsSignIn(false);
+    try {
+      await mfaRequest('verify-totp', { code: text(data, 'code') });
+    } catch (error) {
+      if (!(error instanceof ApiError) || error.status < 500) throw error;
+      const security = await apiFetch<Security>(securityPath).catch((failure: unknown) => {
+        if (failure instanceof ApiError && failure.status === 401) setNeedsSignIn(true);
+        return null;
+      });
+      if (!security?.sessionVerified || !security.twoFactorEnabled)
+        throw new Error(
+          'We couldn’t confirm verification. Keep your authenticator entry and recovery codes. If prompted to sign in again, use that authenticator.',
+        );
+    }
+    setEnrollment(null);
+    await resource.reload();
+  }
   return (
     <SectionShell
       embedded={embedded}
@@ -34,18 +85,14 @@ export function MfaSettings({ embedded = false }: { embedded?: boolean }) {
             </p>
           )}
           {!resource.data.twoFactorEnabled && !enrollment && (
-            <ActionForm
-              label="Set up authenticator"
-              action={async (data) =>
-                setEnrollment(
-                  await apiFetch<Enrollment>('/api/auth/two-factor/enable', {
-                    method: 'POST',
-                    body: { password: text(data, 'password') },
-                  }),
-                )
-              }
-            >
-              <Input name="password" label="Current password" type="password" required />
+            <ActionForm label="Set up authenticator" action={startEnrollment}>
+              <Input
+                name="password"
+                label="Password for authenticator setup"
+                type="password"
+                autoComplete="current-password"
+                required
+              />
             </ActionForm>
           )}
           {enrollment && (
@@ -62,32 +109,13 @@ export function MfaSettings({ embedded = false }: { embedded?: boolean }) {
                 to the authenticator.
               </p>
               <pre className="recovery-codes">{enrollment.backupCodes.join('\n')}</pre>
-              <ActionForm
-                label="Confirm authenticator code"
-                action={async (data) => {
-                  await apiFetch('/api/auth/two-factor/verify-totp', {
-                    method: 'POST',
-                    body: { code: text(data, 'code') },
-                  });
-                  setEnrollment(null);
-                  await resource.reload();
-                }}
-              >
+              <ActionForm label="Confirm authenticator code" action={verifyCode}>
                 <Input name="code" label="Six-digit authenticator code" required />
               </ActionForm>
             </>
           )}
           {resource.data.twoFactorEnabled && !resource.data.sessionVerified && (
-            <ActionForm
-              label="Verify this session"
-              onSuccess={resource.reload}
-              action={(data) =>
-                apiFetch('/api/auth/two-factor/verify-totp', {
-                  method: 'POST',
-                  body: { code: text(data, 'code') },
-                })
-              }
-            >
+            <ActionForm label="Verify this session" action={verifyCode}>
               <Input name="code" label="Authenticator code for this session" required />
             </ActionForm>
           )}
@@ -103,10 +131,7 @@ export function MfaSettings({ embedded = false }: { embedded?: boolean }) {
                 confirm="Disable two-factor authentication? Privileged operations will require re-enrollment."
                 onSuccess={resource.reload}
                 action={(data) =>
-                  apiFetch('/api/auth/two-factor/disable', {
-                    method: 'POST',
-                    body: { password: text(data, 'password') },
-                  })
+                  mfaRequest('disable', { password: String(data.get('password') ?? '') })
                 }
               >
                 <Input
@@ -117,6 +142,12 @@ export function MfaSettings({ embedded = false }: { embedded?: boolean }) {
                 />
               </ActionForm>
             )}
+          {needsSignIn && (
+            <p>
+              <Link href="/auth/login?next=%2Fsettings%2Fprofile">Sign in again</Link> to continue
+              setting up two-factor authentication.
+            </p>
+          )}
         </section>
       )}
     </SectionShell>

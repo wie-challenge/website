@@ -15,6 +15,7 @@ export async function apiFetch<T>(
     body?: unknown;
     idempotencyKey?: string;
     csrfToken?: string;
+    timeoutMs?: number;
   } = {},
 ): Promise<T> {
   if (!safeApiPath(path)) throw new Error('Invalid API destination.');
@@ -36,9 +37,14 @@ export async function apiFetch<T>(
       credentials: 'same-origin',
       cache: 'no-store',
       redirect: 'error',
-      signal: AbortSignal.timeout(15000),
+      signal: AbortSignal.timeout(options.timeoutMs ?? 15000),
     });
-  } catch {
+  } catch (error) {
+    if (error instanceof DOMException && error.name === 'TimeoutError')
+      throw new ApiError(504, {
+        code: 'API_TIMEOUT',
+        message: 'The request took too long. Please try again.',
+      });
     throw new ApiError(503, {
       code: 'API_UNAVAILABLE',
       message: 'The service is temporarily unavailable. Please try again.',

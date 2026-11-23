@@ -145,6 +145,14 @@ export function authGateway(auth: AuthService, config: AppConfig): RequestHandle
         res.status(202).json({ ok: true, message: 'If an account matches, check your inbox.' });
         return;
       }
+      if (!response.ok && path === '/two-factor/enable' && data.code === 'INVALID_PASSWORD')
+        fail(
+          400,
+          'MFA_PASSWORD_INVALID',
+          'The password is incorrect. Enter your current password.',
+        );
+      if (!response.ok && path === '/two-factor/verify-totp' && data.code === 'INVALID_CODE')
+        fail(400, 'MFA_CODE_INVALID', 'Enter the current six-digit code from your authenticator.');
       if (!response.ok)
         fail(
           response.status >= 500 ? 503 : 400,
