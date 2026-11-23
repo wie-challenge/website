@@ -20,6 +20,8 @@ minimumReleaseAgeExclude:
 
 # Prisma CLI-only transitives pinned past published advisories; runtime remains PostgreSQL.
 overrides:
+  # GHSA-7589-6fvf-x4pw
+  '@prisma/config>effect': 3.22.1
   deepmerge-ts: 8.0.0
   mysql2: 3.23.1
   'smtp-server>nodemailer': 10.0.12

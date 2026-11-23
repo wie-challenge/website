@@ -324,7 +324,10 @@ export class MarketController {
   @Get('payments') payments(@CurrentUser() a: Actor) {
     return this.market.payments(a);
   }
-  @Public() @Get('track/:token') track(@Param('token', qrToken) token: string) {
+  // nosemgrep: nasj-public-route -- Package QR scans are anonymous by design. A random token grants read access to a limited tracking view.
+  @Public()
+  @Get('track/:token')
+  track(@Param('token', qrToken) token: string) {
     return this.market.track(token);
   }
 
