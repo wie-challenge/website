@@ -77,7 +77,9 @@ export class SecurityService {
       this.clients.set(clientKey, client);
     }
     // No credentials, cookies, query tokens or request bodies are sent to Arcjet.
-    const headers: Record<string, string> = {};
+    const origin = new URL(this.config.PUBLIC_APP_URL);
+    const endpoint = routeLabel(req.path);
+    const headers: Record<string, string> = { host: origin.host };
     for (const key of [
       'user-agent',
       'accept',
@@ -95,18 +97,15 @@ export class SecurityService {
       decision = await client.protect(
         {
           method: req.method,
-          url: `${this.config.PUBLIC_APP_URL}${routeLabel(req.path)}`,
+          url: endpoint === '/api/[unknown]' ? '/api/other' : endpoint,
           headers,
           ip,
-          protocol: req.protocol,
+          protocol: origin.protocol.slice(0, -1),
         },
         { ipSrc: ip, ...(email?.success ? { email: email.data } : {}) },
       );
     } catch {
-      logger.warn(
-        { policy: name, endpoint: routeLabel(req.path), category: 'ERROR' },
-        'Arcjet request failed',
-      );
+      logger.warn({ policy: name, endpoint, category: 'ERROR' }, 'Arcjet request failed');
       if (this.config.ARCJET_FAILURE_MODE === 'closed')
         fail(503, 'SECURITY_UNAVAILABLE', 'Request protection is temporarily unavailable.');
       await this.localLimit(name, ip, res);
@@ -127,8 +126,9 @@ export class SecurityService {
       logger.info(
         {
           decisionId: decision.id,
+          requestId: (req as { requestId?: string }).requestId,
           policy: name,
-          endpoint: routeLabel(req.path),
+          endpoint,
           category,
           protections: decision.results.map((result) => result.reason.type),
           wouldDeny: decision.results.some((result) => result.isDenied()),
@@ -149,7 +149,11 @@ export class SecurityService {
         res.setHeader('Retry-After', Math.max(1, decision.reason.reset));
         fail(429, 'RATE_LIMITED', 'Too many requests. Please try again later.');
       }
-      fail(403, 'SECURITY_DENIED', 'This request could not be accepted.');
+      fail(
+        403,
+        'SECURITY_DENIED',
+        'Request protection blocked this request. If it keeps happening, contact NASJ with the request reference.',
+      );
     }
   }
 }

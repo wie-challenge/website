@@ -5,7 +5,11 @@ export class ApiError extends Error {
     readonly status: number,
     readonly detail: ApiFailure,
   ) {
-    super(detail.message);
+    super(
+      ['SECURITY_DENIED', 'SECURITY_UNAVAILABLE'].includes(detail.code) && detail.requestId
+        ? `${detail.message} Request reference: ${detail.requestId}`
+        : detail.message,
+    );
   }
 }
 export async function apiFetch<T>(

@@ -40,7 +40,7 @@ test('production requires enforcing Arcjet mode while nonproduction permits obse
 });
 function fixture(
   mode: 'LIVE' | 'DRY_RUN',
-  kind: 'allow' | 'rate' | 'bot' | 'error',
+  kind: 'allow' | 'rate' | 'bot' | 'shield' | 'error',
   failure: 'closed' | 'open' = 'closed',
 ) {
   const calls: unknown[][] = [],
@@ -50,7 +50,7 @@ function fixture(
     reset: 20,
     isRateLimit: () => kind === 'rate',
     isBot: () => kind === 'bot',
-    isShield: () => false,
+    isShield: () => kind === 'shield',
     isEmail: () => false,
   };
   const client = {
@@ -64,7 +64,7 @@ function fixture(
         id: 'test-decision',
         reason,
         results: [],
-        isDenied: () => ['rate', 'bot'].includes(kind),
+        isDenied: () => ['rate', 'bot', 'shield'].includes(kind),
         isErrored: () => kind === 'error',
       };
     },
@@ -115,20 +115,43 @@ test('legitimate Arcjet decisions pass without a second rate counter or credenti
   assert.equal(f.calls.length, 1);
   assert.equal(f.localCalls(), 0);
   const [request, props] = f.calls[0] as [
-    { headers: Record<string, string>; body?: unknown },
+    { headers: Record<string, string>; url: string; protocol: string; body?: unknown },
     { ipSrc: string; email: string },
   ];
   assert.equal(request.headers.cookie, undefined);
   assert.equal(request.headers.authorization, undefined);
   assert.equal(request.body, undefined);
+  assert.equal(request.headers.host, 'localhost:3000');
+  assert.equal(request.url, '/api/auth/sign-up/email');
+  assert.equal(request.protocol, 'http');
   assert.equal(props.ipSrc, '127.0.0.1');
   assert.equal(props.email, 'maker+tag@example.com');
   assert.equal(f.rules.length, 3);
 });
-test('live rate decisions return 429 and bot decisions return 403', async () => {
+test('Shield receives only market route templates, without resource IDs or tracking tokens', async () => {
+  const f = fixture('LIVE', 'allow');
+  Object.defineProperty(f.req, 'path', {
+    value: '/api/v1/market/track/private-token',
+    configurable: true,
+  });
+  await f.service.protect(f.req, f.res);
+  Object.defineProperty(f.req, 'path', {
+    value: '/api/v1/market/orders/private-id/pack',
+    configurable: true,
+  });
+  await f.service.protect(f.req, f.res);
+  Object.defineProperty(f.req, 'path', { value: '/api/v1/private-unmatched-value' });
+  await f.service.protect(f.req, f.res);
+  assert.deepEqual(
+    f.calls.map(([request]) => (request as { url: string }).url),
+    ['/api/v1/market/track/:token', '/api/v1/market/orders/:id/pack', '/api/other'],
+  );
+});
+test('live rate decisions return 429 and bot or Shield decisions return 403', async () => {
   for (const [kind, status] of [
     ['rate', 429],
     ['bot', 403],
+    ['shield', 403],
   ] as const) {
     const f = fixture('LIVE', kind);
     await assert.rejects(

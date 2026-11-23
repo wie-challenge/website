@@ -40,6 +40,23 @@ const exact = new Set([
   '/api/v1/organizations',
   '/api/v1/market/files',
   '/api/v1/market/organizations',
+  '/api/v1/market/products',
+  '/api/v1/market/products/mine',
+  '/api/v1/market/products/review',
+  '/api/v1/market/products/import',
+  '/api/v1/market/cart',
+  '/api/v1/market/billing',
+  '/api/v1/market/cart/invoice.pdf',
+  '/api/v1/market/cart/checkout',
+  '/api/v1/market/orders',
+  '/api/v1/market/orders/custom',
+  '/api/v1/market/payments',
+  '/api/v1/market/counts',
+  '/api/v1/market/notifications',
+  '/api/v1/market/notifications/read',
+  '/api/v1/market/associations',
+  '/api/v1/market/women',
+  '/api/v1/market/crafts',
   '/api/v1/invitations/accept',
   '/api/v1/consents',
   '/api/v1/privacy/requests',
@@ -96,6 +113,21 @@ export function routeLabel(path: string) {
   if (/^\/api\/v1\/admin\/users\/[^/]+$/.test(path)) return '/api/v1/admin/users/:id';
   if (/^\/api\/v1\/users\/[^/]+$/.test(path)) return '/api/v1/users/:id';
   if (/^\/api\/v1\/market\/files\/[^/]+$/.test(path)) return '/api/v1/market/files/:id';
+  if (/^\/api\/v1\/market\/track\/[^/]+$/.test(path)) return '/api/v1/market/track/:token';
+  const marketItem =
+    /^\/api\/v1\/market\/(products|cart|women)\/[^/]+(?:\/(archive|review))?$/.exec(path);
+  if (marketItem)
+    return `/api/v1/market/${marketItem[1]}/:id${marketItem[2] ? `/${marketItem[2]}` : ''}`;
+  if (/^\/api\/v1\/market\/orders\/[^/]+\/artisanes\/[^/]+\/(paid|payment-check)$/.test(path))
+    return `/api/v1/market/orders/:id/artisanes/:id/${path.split('/').at(-1)}`;
+  if (
+    /^\/api\/v1\/market\/orders\/[^/]+(?:\/(invoice\.pdf|qr\.png|cancel|route|accept|decline|price|finance-price|company-price|assign|almost-ready|send-to-nasj|arrived|quality|pack|confirm|rate|invoice-check))?$/.test(
+      path,
+    )
+  ) {
+    const action = path.split('/')[6];
+    return action ? `/api/v1/market/orders/:id/${action}` : '/api/v1/market/orders/:id';
+  }
   const marketAction = /^\/api\/v1\/market\/organizations\/[^/]+\/(review|submit)$/.exec(path);
   if (marketAction) return `/api/v1/market/organizations/:id/${marketAction[1]}`;
   const templates = [

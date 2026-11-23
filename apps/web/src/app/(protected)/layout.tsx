@@ -1,10 +1,24 @@
 import { redirect } from 'next/navigation';
-import { getMe, getIdentityContext } from '@/lib/server-api';
+import { getMe, getIdentityContext, ServerRequestBlocked } from '@/lib/server-api';
 import { AppShell } from '@/components/app-shell';
 export default async function ProtectedLayout({ children }: { children: React.ReactNode }) {
-  const me = await getMe();
-  if (!me) redirect('/auth/login');
-  const context = await getIdentityContext();
+  const identity = await (async () => {
+    const me = await getMe();
+    if (!me) redirect('/auth/login');
+    return { me, context: await getIdentityContext() };
+  })().catch((error: unknown) => {
+    if (error instanceof ServerRequestBlocked) return error;
+    throw error;
+  });
+  if (identity instanceof ServerRequestBlocked)
+    return (
+      <main className="panel">
+        <h1>Request blocked</h1>
+        <p>Reload this page in a moment. If the block continues, contact NASJ.</p>
+        {identity.requestId && <p>Request reference: {identity.requestId}</p>}
+      </main>
+    );
+  const { me, context } = identity;
   return (
     <AppShell
       context={context}

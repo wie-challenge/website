@@ -73,6 +73,7 @@ All secrets are server-only; no `NEXT_PUBLIC_*` secret variables are used.
 |---|---|
 | `PUBLIC_APP_URL` | Exact browser origin, no trailing slash; local default `http://localhost:3000` |
 | `API_HOST`, `API_PORT` | API listener; defaults `127.0.0.1:3001` |
+| `NASJ_TRUST_LOCAL_INGRESS` | Set to `1` only when Next is private behind a proxy that replaces `X-Forwarded-For` with a single trusted client IP and Nest trusts that loopback proxy. |
 | `API_INTERNAL_URL` | Server-only Next-to-Nest origin; included in the rewrite at build time |
 | `DATABASE_URL` | Runtime PostgreSQL connection |
 | `REQUIRE_PRIVILEGED_MFA` | Must be true in production; enforces provider MFA and verified session for privileged accounts |
