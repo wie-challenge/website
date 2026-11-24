@@ -173,7 +173,8 @@ restore-to-time drills. Neon restore history only covers the copy uploaded to Ne
 - [x] P0 implementation: same-host archive, retention and independent migration gate.
 - [x] P0: Qualify the bounded archive filesystem and mount idempotency in the Ubuntu VM.
 - [ ] P0: Exercise a real remote refresh against a separate synthetic Neon database or project.
-- [ ] P0: Validate full backup pipeline and Ansible idempotency on disposable Ubuntu 24.04.
+- [x] P0: Validate full local archive pipeline and Ansible idempotency on disposable Ubuntu 24.04.
+- [x] P0: Exercise synthetic adoption, restricted SSH deploy, rollback, alert, and recovery in the VM.
 - [ ] P0: Qualify dedicated infrastructure and deploy SSH, backup credentials and alerts.
 - [ ] P0: Authorize and qualify live backup, restricted access, adoption, first deploy and rollback.
 - [ ] P1: Measure full recovery time and archive known-good releases and host config off-site.
@@ -193,7 +194,13 @@ restore-to-time drills. Neon restore history only covers the copy uploaded to Ne
 | VM boot and dedicated storage isolation | Ubuntu 24.04.5 minimal cloud guest on KVM | Verified image digest, successful cloud-init, pinned host key, separate ext4 archive device and restrictive mount options. | Passed |
 | S3 upload and download | Not selected | Local filesystem opens no listener and requires no S3 account. | Not applicable |
 | Dedicated volume provisioning and repeat apply | Disposable Ubuntu 24.04.5 guest | The storage role changed 2 tasks then 0 on the second run. UUID-based mount persistence changed 1 task then 0 on the second run. Neither run failed. | Passed |
-| Full Ansible configuration idempotency and invalid service configuration handling | Disposable Ubuntu 24.04.5 guest | Storage provisioning exercised separately. The full scenario requires completion of guest package installation. | Pending |
+| Full Ansible configuration idempotency | Disposable Ubuntu 24.04.5 guest | Second configure returned 28 OK, zero changed, and zero failed. | Passed |
+| Local encrypted archive, retention and timer | Ubuntu guest, real Age, PostgreSQL 16 and systemd | The service wrote a valid encrypted backup receipt after a real isolated restore, retention kept its pinned pair and removed an expired pair, and the nightly timer scheduled successfully. | Passed |
+| Restricted SSH and authorized release lifecycle | Ubuntu guest, synthetic release and real systemd/Nginx/TLS | Arbitrary command rejected, adoption succeeded and repeated cleanly, authorized candidate deployed, and worker failure restored the prior healthy release. | Passed |
+| Recovery guard and invalid configurations | Ubuntu guest | A pending marker blocked the next release and was reconciled. Invalid Nginx, systemd and SSH files were rejected without affecting running services. Missing backup mount blocked backup while PostgreSQL still returned the fixture row. | Passed |
+| Alert and database recovery | Ubuntu guest, test HTTPS receiver and synthetic database | Alert POST reached the receiver and returned 204. The archive restored into an isolated database and returned the expected fixture row. | Passed |
+| Pre-migration off-host failure gate | Ubuntu guest and disposable mock tests | A real local archive with no Neon config failed the migration command and wrote no off-host receipt. Wrong remote receipts and failed refreshes also failed in the mock suite. | Passed |
+| Fresh Neon recovery point from the new hook | No synthetic Neon destination connected to the VM | The earlier production Neon copy and independent restore remain valid historical evidence. The new candidate automation has not written to production Neon during this qualification. | Pending |
 | Live rollback, artifact deployment, full disaster recovery timing | Production changes not authorized | Perform only after staging qualification and a verified remote recovery point. | Pending |
 
 The application workflow still publishes and verifies the same artifact ID and checksum. Treat
@@ -228,6 +235,6 @@ Wait for `cloud-init status --wait` using the generated admin and pinned host ke
 Run `bash infrastructure/staging/qualify-vm.sh /path/to/new-private-nasj-vm` from the
 repository root. The harness provisions Ubuntu, configures twice, checks restricted SSH,
 and exercises TLS health, Age archive recovery, retention, alerts, adoption, a synthetic
-artifact switch and rollback, and the recovery marker. It uses a synthetic receipt only
+artifact switch and rollback, the recovery marker, and missing-mount handling. It uses a synthetic receipt only
 after proving that a local archive does not pass the migration gate. A synthetic Neon branch/project and credential are required
 for real remote integration. Never use the production recovery copy for fault injection.

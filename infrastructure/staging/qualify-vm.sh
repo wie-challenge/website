@@ -26,6 +26,7 @@ all:
 YAML
 cd "$root/ansible"
 common=(-i "$vm/inventory.yml" --private-key "$vm/admin")
+if [[ ${NASJ_VM_RESUME:-false} != true ]]; then
 ansible-playbook "${common[@]}" -e nasj_confirm_bootstrap=true playbooks/bootstrap.yml
 "${ssh_cmd[@]}" 'sudo -n bash -s' < "$root/staging/seed-fixture.sh"
 "${ssh_cmd[@]}" 'sudo -n cat /root/nasj-fixture/identity' > "$vm/age.identity"
@@ -63,6 +64,7 @@ ansible-playbook "${common[@]}" -e "@$vm/vars.json" playbooks/configure.yml
 ANSIBLE_NOCOLOR=1 ansible-playbook "${common[@]}" -e "@$vm/vars.json" playbooks/configure.yml |
   tee "$vm/idempotency.log"
 grep -Eq 'changed=0 .*unreachable=0 .*failed=0' "$vm/idempotency.log"
+fi
 ansible-playbook "${common[@]}" playbooks/verify.yml
 deploy_ssh=(ssh -o BatchMode=yes -o StrictHostKeyChecking=yes -o "UserKnownHostsFile=$vm/known_hosts" -o IdentitiesOnly=yes -i "$vm/deploy" -p "$port" nasj-deploy@127.0.0.1)
 if "${deploy_ssh[@]}" id >"$vm/ssh-rejection.log" 2>&1; then
@@ -191,3 +193,4 @@ ansible-playbook "${common[@]}" playbooks/disaster-recovery.yml \
 # shellcheck disable=SC2016 # The database query runs inside the guest.
 "${ssh_cmd[@]}" 'test "$(sudo -n -u postgres psql -XAt -d nasj_recovery_fixture -c "select id from fixture")" = 42'
 printf '%s\n' 'VM adoption, signed TLS readiness, authorized deployment, rollback, recovery gate, alert delivery and restore passed'
+"${ssh_cmd[@]}" 'sudo -n bash -s' < "$root/staging/check-failures.sh"
