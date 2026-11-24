@@ -302,7 +302,7 @@ continues independently. Total VPS loss removes all same-host history.
 
 ### Production activation approval steps
 
-1. Review and merge the infrastructure PR after its hosted checks pass.
+1. Review and merge the infrastructure PR after the required aggregate check passes. It includes the reusable infrastructure workflow as well as application and security checks.
 2. Authorize the dedicated filesystem. Prepare the approved capacity-bounded ext4 device,
    collect its UUID, and run `mount-backup.yml -e nasj_confirm_backup_mount=true` with the
    UUID in private vars. Verify the mount options and distinct device with `findmnt`.

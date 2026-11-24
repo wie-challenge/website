@@ -1,10 +1,6 @@
 name: Infrastructure CI
 on:
-  pull_request:
-    paths: ['infrastructure/**', 'scripts/ops/**', '.github/workflows/infrastructure-*.yml']
-  push:
-    branches: [main]
-    paths: ['infrastructure/**', 'scripts/ops/**', '.github/workflows/infrastructure-*.yml']
+  workflow_call:
 permissions:
   contents: read
 jobs:
@@ -15,6 +11,7 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
           persist-credentials: false
+          fetch-depth: 0
       - name: Install pinned validation tools
         run: python3 -m venv "$RUNNER_TEMP/ansible" && "$RUNNER_TEMP/ansible/bin/pip" install -r infrastructure/ansible/requirements.txt
       - name: Validate infrastructure and inventories
@@ -37,6 +34,5 @@ jobs:
           python3 scripts/ops/test-backup-retention.py
       - name: Scan tracked history for secrets
         run: |
-          git fetch --unshallow
           bash scripts/ci/install-gitleaks.sh
           "$RUNNER_TEMP/gitleaks" git . --redact=100 --no-banner
