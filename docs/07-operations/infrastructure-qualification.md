@@ -172,7 +172,7 @@ restore-to-time drills. Neon restore history only covers the copy uploaded to Ne
 - [x] Ansible syntax and inventory validation on local tooling.
 - [x] P0 implementation: same-host archive, retention and independent migration gate.
 - [x] P0: Qualify the bounded archive filesystem and mount idempotency in the Ubuntu VM.
-- [ ] P0: Exercise a real remote refresh against a separate synthetic Neon database or project.
+- [x] P0: Exercise a real remote refresh against a separate synthetic Neon database or project.
 - [x] P0: Validate full local archive pipeline and Ansible idempotency on disposable Ubuntu 24.04.
 - [x] P0: Exercise synthetic adoption, restricted SSH deploy, rollback, alert, and recovery in the VM.
 - [ ] P0: Qualify dedicated infrastructure and deploy SSH, backup credentials and alerts.
@@ -268,19 +268,92 @@ main with the strict required workflow check and admin enforcement. The producti
 Environment restricts deployment to main and has the SSH credential entries. The
 separate protected infrastructure Environment is absent. Both deployment flags are unset.
 
+### Production storage activation
+
+The separately authorized 20 GiB FelCloud data disk was formatted as ext4 and mounted
+persistently by Ansible at `/srv/nasj-backups`. The mounted filesystem had 19 GiB
+available with `nodev,nosuid,noexec`; PostgreSQL remained on the original root
+filesystem with 65 GiB available. API, web, worker and PostgreSQL were active after
+the mount. A subsequent read-only Ansible audit passed. This step did not configure
+backup credentials, enable timers or activate deployment.
+
+### Activation preflight follow-up
+
+Base deployment helpers and the scoped sudo rule are installed. PostgreSQL 16.15,
+the API, web, worker and Nginx were active. The backup mount remains isolated on
+`/dev/vdb`; PostgreSQL is on `/dev/vda1`. The reviewed candidate `d63a7aa` matched
+all 44 production migration names and checksums; the fresh audit also found zero
+unfinished, non-rolled-back migrations. The migration table still has no explicit
+runtime SELECT grant. The dedicated SSH user has no forced command or forwarding
+restriction in the effective configuration. Console recovery access is unverified.
+
+The release config and separate runtime and migration env files are absent. The
+backup config, Age identity and recipients, direct Neon config and password file,
+and alert config are absent. The existing production Neon recovery config is held
+privately on the operator workstation. Synthetic Neon config is held separately.
+The canonical off-host receipt is absent. Both automation flags remain unset.
+
 ### Neon remote qualification and retention
 
-The old production recovery database remains a verified historical copy. There is no
-separate synthetic Neon credential in the workspace. The real refresh, release-bound
-receipt and recovery export remain pending. Keep the existing production copy out of this
-test. Provision a separate project and a direct endpoint with a role allowed to connect
-and create databases. On the Ubuntu guest, install the updated canonical scripts and
-provide root-only `backup-neon.conf` and `backup-neon.pgpass` through private Vault vars.
-Then run, as guest root:
+The private synthetic connection is available. Its direct hostname was derived
+from the saved pooled URL and checked against the existing recovery hostname before
+use. The real Ubuntu guest hook exposed inherited Neon channel binding at the local
+peer-authenticated dump. The canonical backup script now clears the inherited
+connection settings before the local dump. The retry passed encryption and local
+PostgreSQL 16 restore (2,501 bytes, 4 seconds to local publication). A separate
+verified-TLS connection probe from the guest timed out; workstation TCP port 5432
+was reachable. The subsequent direct TLS guest test qualified the baseline receipt and reverse recovery. No production
+database or existing recovery point was modified.
+
+The old production recovery database remains a verified historical copy and was
+excluded from testing. To reproduce the test, use a separate direct endpoint with
+a role allowed to connect and create databases. On the Ubuntu guest, install the
+updated scripts and provide root-only `backup-neon.conf` and
+`backup-neon.pgpass` through private Vault vars. Run as guest root:
 
 ```bash
 bash qualify-neon.sh SYNTHETIC_DIRECT_HOST PRODUCTION_DIRECT_HOST
 ```
+
+Connectivity follow-up: both the workstation and Ubuntu guest resolved IPv4 and IPv6
+addresses and had default routes. Bounded socket probes connected to TCP 5432 on
+both address families, but the PostgreSQL SSLRequest (8-byte packet, code 80877103)
+received no response within 3 seconds on either machine. Bounded
+`openssl s_client -starttls postgres -verify_hostname HOST -verify_return_error`
+probes also timed out. The current helper timed out during Neon refresh after
+roughly 63 seconds. TLS certificate validation, authentication and SQL were never
+reached. The guest NAT alone cannot explain the failure; the upstream cause is
+unconfirmed. Do not relax TLS or channel binding.
+
+Independent probes on 2026-11-24 around 20:02 UTC against the direct synthetic
+endpoint in AWS `us-east-2`:
+
+| Source | DNS / TCP 5432 | Traditional SSLRequest | Direct TLS with PostgreSQL ALPN | Certificate / hostname | Authentication / SQL |
+| --- | --- | --- | --- | --- | --- |
+| Workstation | Resolved / connected | Timed out in 6 seconds | TLS 1.3 | Verified | PostgreSQL 18.7 authenticated with channel binding required, executed SQL and confirmed CREATEDB |
+| Ubuntu KVM guest | Resolved / connected | Timed out in 6 seconds | TLS 1.3 | Verified | Guest PostgreSQL 18.7 completed a verified remote restore and executed evidence queries |
+| FelCloud | Resolved / connected | Negotiated TLS 1.3 | TLS 1.3 | Verified in both modes | Not attempted; credential-free network probe only |
+
+The difference is specific to traditional negotiation over the development network.
+Direct TLS and FelCloud's traditional negotiation both work at the transport layer.
+The device dropping or withholding the traditional response is still unidentified.
+Neon's public status page listed AWS us-east-2 database connectivity as operational
+when checked. Account-level compute and access policy were not inspected. No
+GitHub runner was configured or supplied with credentials. An independent hotspot
+would help isolate the workstation network; current evidence does not justify a
+permanent transport change.
+
+GitHub confirmed artifact ID `14918288458`, name `production-release-1`, size
+263,566,244 bytes, and the exact reviewed commit. The private workstation copy passed both digest checks and canonical safe
+extraction. The extracted manifest confirmed the exact commit, Linux x64 and
+Node v24.20.0. ZIP SHA-256: `1a206cbe2fd8a3ef884b60431132fcb04fbd14879185fc58eb8cb401cffc9b18`.
+Bundle SHA-256: `1baa090ab7430db0665e0fc5a45c7c5c480ae4a79aa3b246ba871b51329ed5e5`.
+
+The local connection-isolation regression
+(`bash infrastructure/staging/check-backup-connection-isolation.sh` as guest root)
+passed the real backup and isolated restore with invalid host, port, user, database,
+password, service, SSL and PostgreSQL options inherited from the caller.
+That local-only test does not generate a fresh off-host verification receipt.
 
 The script requires the separate endpoint, runs the real pre-migration hook against a
 synthetic database, checks evidence and the remote receipt, and verifies that a deliberately
@@ -299,6 +372,60 @@ the policy. Account for full logical copies, Neon history retention, and failed 
 separately. An operator must independently verify a newer restorable copy and obtain
 approval before any deletion. No pruning of Neon databases is automated. Local retention
 continues independently. Total VPS loss removes all same-host history.
+
+### Guest remote qualification and transport
+
+The disposable Ubuntu guest now has PostgreSQL 16 for local dump, verification and
+restore, plus PostgreSQL 18.7 client tools for remote direct TLS. Installing the
+second client exposed an unqualified `pg_restore` invocation: the newer wrapper
+sent `SET transaction_timeout` to PostgreSQL 16. The local verifier now uses explicit
+PostgreSQL 16 executables. The remote helper defaults to traditional negotiation
+using PostgreSQL 16; the test-only `NEON_SSL_NEGOTIATION=direct` configuration
+selects PostgreSQL 18. Both paths require hostname and CA verification and channel
+binding. There is no automatic fallback.
+
+The canonical guest hook created and verified a 2,501-byte encrypted archive and
+published a release-bound Neon receipt in 21 seconds (3 seconds to local
+publication). The full test, including a failed candidate with intentionally
+mismatched evidence, took 49.7 seconds. The earlier verified receipt remained
+unchanged and the failed remote candidate had no receipt. PostgreSQL 18 exported
+the verified candidate and disposable PostgreSQL 16 restored and matched its
+table and migration evidence in 22 seconds. A repeat with 25,000 additional
+synthetic rows produced a 7,415,401-byte encrypted archive; local publication took
+3 seconds and the off-host receipt took 103 seconds total (100 seconds after
+local publication, including remote creation, transfer, restore and verification).
+The full test including failure preservation took 174.1 seconds. CPU time for
+the driving shell and children was 1.68 seconds user and 0.34 seconds system;
+a sample during the reverse restore showed 343 MiB used in the 3 GiB guest.
+The larger reverse restore matched evidence in 198 seconds. Peak memory and
+separate upload/verification timings were not measured.
+Only synthetic data was used. The read-only production Ansible audit passed
+with no changes; the full check-mode plan awaits the production Vault inputs.
+The original restricted SSH and activation gates remain unchanged.
+
+For production approval, run the playbooks from `infrastructure/ansible` with the
+production inventory and a private Vault file. The approval packages are:
+
+- **A — Infrastructure:** Review `configure.yml --check --extra-vars @VAULT` with
+  backup enabled and timer activation off. Apply with
+  `-e nasj_production_apply=true` only after consent. Keep SSH configuration and
+  reload off until independent console access is verified and the SSH change is
+  authorized. Review `database-grant.yml -e nasj_confirm_database_grant=true`
+  separately. Only the runtime migration-history SELECT grant is intended.
+  Validate services, mount and permissions; preserve prior configuration for
+  rollback. The existing 20 GiB disk must not be reformatted.
+- **B — Backup qualification:** After approval run
+  `backup.yml -e nasj_run_backup=true`, recover the fresh candidate independently,
+  compare archive and remote evidence, and verify the canonical receipt is less
+  than 24 hours old. Preserve all previous Neon candidates. A failed run or
+  mismatched evidence stops activation; it must not be repaired by editing receipts.
+- **C — Cutover:** After separate maintenance approval, run
+  `adopt-release.yml -e nasj_confirm_adoption=true`; then authorize and deploy the
+  digest-bound artifact per the deployment runbook. Verify API, web, worker and
+  public HTTPS, and exercise rollback to the retained compatible prior release
+  under the deployment lock. Reconcile the release state before enabling CD.
+  Schedule and confirm backup and monitoring runs, with separately approved
+  activation and flags. No production mutation was executed for this phase.
 
 ### Production activation approval steps
 
@@ -336,3 +463,39 @@ continues independently. Total VPS loss removes all same-host history.
 
 No production mutation, off-host write, deployment activation or provider change was made
 during this readiness audit.
+
+### Package A preparation
+
+See [Package A](production-package-a.md) for the A1–A4 commands, credentials,
+verification and rollback. The workstation has an encrypted Vault starter with
+host, UUID, role names, deploy and backup defaults. A dedicated production Age identity and recipient are now in Vault; independent
+operator recovery custody remains to be confirmed. The existing production Neon
+credential was staged separately from qualification. A read-only verified-TLS
+probe confirmed CONNECT and CREATEDB without creating or changing a database.
+The approved alert destination, console access and provider firewall review
+remain operator inputs. Strict administrator SSH and public HTTPS readiness passed;
+the application services and PostgreSQL remained active. No production apply,
+database grant, SSH reload, notification or timer activation was performed.
+
+Backup flow (nine scenarios), retention, real PostgreSQL evidence, deployment
+faults, forced command rejection, schema gates, and tracked-history secret
+scanning passed. The preserved artifact still matches the head of main at this
+review; merge the infrastructure-only PR after required CI passes and retain the
+reviewed artifact for the separately authorized first cutover.
+
+The Vault-backed production plan with backups enabled completed with 21 OK,
+10 predicted changes, 10 skipped, and zero failures. It previewed deploy.conf,
+the archive mount-root permission change to 0711, private archive and restore
+directories, Age installation with package service autostarts suppressed,
+the unprivileged restore account, protected backup settings, canonical scripts,
+and inactive systemd units. It did not include the SSH role or alert config.
+The separate database-grant dry run passed its assertions and skipped SQL
+execution; the live read-only query returned false for both migration-history
+SELECT and public-schema CREATE for nasj_app. No grant was executed.
+
+The operator selected Discord for A4. The notifier supports Discord content with
+mentions disabled and retains generic HTTPS. Isolated HTTPS mock tests cover both
+formats, certificate rejection and retry limits. Discord mode and production
+environment are staged in the encrypted Vault; the private webhook URL,
+independent Age custody and recovery-console/firewall confirmation are still
+required before the combined dry run. No live alerts were sent.

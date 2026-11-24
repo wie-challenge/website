@@ -6,6 +6,7 @@ umask 077
 [[ $2 =~ ^NASJ_EVIDENCE:[0-9]+:[0-9]+:[0-9a-f]{32}:[0-9a-f]{32}$ ]]
 conf=/etc/nasj/backup-neon.conf
 [[ -f $conf && ! -L $conf && $(stat -c '%u:%a' "$conf") == 0:600 ]]
+NEON_SSL_NEGOTIATION=postgres
 # shellcheck source=/dev/null
 source "$conf"
 [[ $PGHOST == *.neon.tech && $PGHOST != *-pooler.* && $PGDATABASE == neondb ]]
@@ -15,7 +16,18 @@ export PGSSLROOTCERT=/etc/ssl/certs/ca-certificates.crt
 db="nasj_${1//-/}"
 db=${db,,}
 [[ $db =~ ^nasj_[a-z0-9]{40,58}$ ]]
-pg=/usr/lib/postgresql/16/bin
+case ${NEON_SSL_NEGOTIATION:-postgres} in
+  postgres)
+    pg=/usr/lib/postgresql/16/bin
+    unset PGSSLNEGOTIATION
+    ;;
+  direct)
+    pg=/usr/lib/postgresql/18/bin
+    export PGSSLNEGOTIATION=direct
+    ;;
+  *) echo "Invalid Neon TLS negotiation mode" >&2; exit 1 ;;
+esac
+for tool in createdb pg_restore psql; do [[ -x $pg/$tool ]]; done
 timeout 60 "$pg/createdb" --no-password --maintenance-db=neondb "$db"
 # Preserve every existing database, including the previous verified copy.
 timeout 900 "$pg/pg_restore" --no-password --single-transaction --exit-on-error --no-owner --no-acl --dbname="$db"

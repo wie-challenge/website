@@ -17,7 +17,11 @@ export PGPASSFILE=/etc/nasj/backup-neon.pgpass PGCONNECT_TIMEOUT=15
 export PGSSLROOTCERT=/etc/ssl/certs/ca-certificates.crt
 sha=$(printf 'qualification-%s' "$(cat /proc/sys/kernel/random/uuid)" | sha1sum)
 sha=${sha%% *}
-/etc/nasj/backup-before-migrate "$sha"
+# A real local restore and remote refresh must survive a caller's unrelated
+# libpq settings. The helper must still load only the protected Neon config.
+env PGHOSTADDR=192.0.2.1 PGPORT=1 PGOPTIONS='-c nasj_invalid_option=1' \
+  PGSERVICE=nasj-invalid PGSERVICEFILE=/nonexistent PGPASSWORD=invalid \
+  /etc/nasj/backup-before-migrate "$sha"
 state=/var/lib/nasj-backup
 mapfile -t receipt < <(python3 - "$state/latest-offsite" "$sha" <<'PY'
 import json, re, sys
@@ -32,7 +36,12 @@ print(data["id"])
 PY
 )
 [[ ${#receipt[@]} == 4 ]]
-pg=/usr/lib/postgresql/16/bin
+local_pg=/usr/lib/postgresql/16/bin
+case ${NEON_SSL_NEGOTIATION:-postgres} in
+  postgres) pg=$local_pg; unset PGSSLNEGOTIATION ;;
+  direct) pg=/usr/lib/postgresql/18/bin; export PGSSLNEGOTIATION=direct ;;
+  *) exit 1 ;;
+esac
 actual=$("$pg/psql" -XqAt --no-password --set ON_ERROR_STOP=1 -d "${receipt[0]}" -f /usr/local/share/nasj/backup-evidence.sql)
 [[ $actual == "${receipt[1]}" ]]
 remote=$("$pg/psql" -XqAt --no-password --set ON_ERROR_STOP=1 -d "${receipt[0]}" \
@@ -41,8 +50,8 @@ remote=$("$pg/psql" -XqAt --no-password --set ON_ERROR_STOP=1 -d "${receipt[0]}"
 before=$(sha256sum "$state/latest-offsite")
 bad_id=$(date -u +%Y%m%dT%H%M%SZ)-$(cat /proc/sys/kernel/random/uuid)
 # Supply the valid synthetic dump with intentionally different evidence. No remote deletion occurs.
-if runuser -u postgres -- env -u PGHOST -u PGPASSFILE -u PGUSER -u PGDATABASE -u PGSSLMODE -u PGCHANNELBINDING -u PGSSLROOTCERT \
-    "$pg/pg_dump" --no-password -Fc nasj_fixture |
+if runuser -u postgres -- env -u PGHOST -u PGPASSFILE -u PGUSER -u PGDATABASE -u PGSSLMODE -u PGCHANNELBINDING -u PGSSLROOTCERT -u PGSSLNEGOTIATION \
+    "$local_pg/pg_dump" --no-password -Fc nasj_fixture |
     /usr/local/libexec/nasj-refresh-neon "$bad_id" \
       NASJ_EVIDENCE:0:0:00000000000000000000000000000000:00000000000000000000000000000000 \
       "$sha" "${receipt[2]}"; then

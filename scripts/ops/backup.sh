@@ -3,7 +3,11 @@ set -Eeuo pipefail
 umask 077
 started=$SECONDS
 export PATH=/usr/sbin:/usr/bin:/sbin:/bin
-unset PGHOST PGHOSTADDR PGPORT PGUSER PGDATABASE PGSERVICE PGSERVICEFILE PGPASSWORD
+# Local peers use the default socket and explicit database name. The remote
+# helper loads its own connection settings from the protected Neon config.
+unset PGHOST PGHOSTADDR PGPORT PGUSER PGDATABASE PGPASSWORD PGPASSFILE \
+  PGSSLMODE PGSSLROOTCERT PGCHANNELBINDING PGOPTIONS PGSERVICE PGSERVICEFILE \
+  PGCONNECT_TIMEOUT PGSSLNEGOTIATION
 [[ $EUID == 0 && $# -le 1 ]]
 release=${1:-nightly}
 [[ $release == nightly || $release =~ ^[0-9a-f]{40}$ ]]

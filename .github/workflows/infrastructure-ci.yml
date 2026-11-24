@@ -32,6 +32,7 @@ jobs:
           bash scripts/ops/test-backup-evidence.sh
           python3 scripts/ops/test-backup-flow.py
           python3 scripts/ops/test-backup-retention.py
+          python3 scripts/ops/test-notify.py
       - name: Scan tracked history for secrets
         run: |
           bash scripts/ci/install-gitleaks.sh
