@@ -2,12 +2,11 @@ import assert from 'node:assert/strict';
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
 import { createHash, randomUUID } from 'node:crypto';
-import { fileURLToPath } from 'node:url';
 import { mkdtemp, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { Client } from 'pg';
-import { disposableDatabase } from './support.js';
+import { disposableDatabase, deployTestMigrations } from './support.js';
 
 const exec = promisify(execFile);
 const migration = '20261028160000_buyer_order_feedback';
@@ -144,10 +143,7 @@ export async function runFeedbackMigrationScenarios(
       },
     );
 
-    await exec('pnpm', ['exec', 'prisma', 'migrate', 'deploy'], {
-      cwd: fileURLToPath(new URL('../', import.meta.url)),
-      env: { ...process.env, DATABASE_URL: database.url, MIGRATION_DATABASE_URL: database.url },
-    });
+    await deployTestMigrations(database.url, migration);
 
     await check(
       'B13-M02 populated upgrade preserves every pre-existing row byte for byte',
@@ -375,9 +371,13 @@ export async function runFeedbackMigrationScenarios(
         const { readdir, readFile } = await import('node:fs/promises');
         const root = new URL('../prisma/migrations/', import.meta.url);
         const names = (await readdir(root, { withFileTypes: true }))
-          .filter((entry) => entry.isDirectory())
+          .filter((entry) => entry.isDirectory() && entry.name <= migration)
           .map((entry) => entry.name);
-        assert.equal(history.length, names.length, 'every migration file is recorded exactly once');
+        assert.equal(
+          history.length,
+          names.length,
+          'every migration in the tested prefix is recorded exactly once',
+        );
         assert.ok(names.includes(migration));
         assert.ok(names.includes(previous), 'historical migrations are preserved');
         assert.equal(
@@ -414,7 +414,7 @@ export async function runFeedbackMigrationScenarios(
         const reference = await sourceRows(database.url);
         assert.equal(reference.headers.length, 1);
         assert.equal(reference.revisions.length, 3);
-        const target = await disposableDatabase();
+        const target = await disposableDatabase({ throughMigration: migration });
         const directory = await mkdtemp(join(tmpdir(), 'nasj-feedback-restore-'));
         try {
           // The dump is produced inside the source container so binary bytes never pass through Node.

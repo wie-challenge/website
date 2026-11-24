@@ -1,0 +1,65 @@
+name: Deploy production
+on:
+  workflow_call:
+    inputs:
+      artifact_id:
+        required: true
+        type: string
+      sha256:
+        required: true
+        type: string
+permissions: {}
+concurrency:
+  group: nasj-production
+  cancel-in-progress: false
+jobs:
+  deploy:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    environment: production
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    permissions:
+      actions: read
+    steps:
+      - uses: actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0 # v5
+        with:
+          artifact-ids: ${{ inputs.artifact_id }}
+          path: ${{ runner.temp }}/release
+      - name: Deploy immutable release over pinned SSH
+        env:
+          DEPLOY_HOST: ${{ vars.DEPLOY_HOST }}
+          DEPLOY_PORT: ${{ vars.DEPLOY_PORT }}
+          DEPLOY_USER: ${{ vars.DEPLOY_USER }}
+          SSH_PRIVATE_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+          SSH_KNOWN_HOSTS: ${{ secrets.DEPLOY_KNOWN_HOSTS }}
+          RELEASE_SHA: ${{ github.sha }}
+          ARTIFACT_SHA256: ${{ inputs.sha256 }}
+        run: |
+          set -euo pipefail
+          [[ "$RELEASE_SHA" =~ ^[0-9a-f]{40}$ ]]
+          [[ "$ARTIFACT_SHA256" =~ ^[0-9a-f]{64}$ ]]
+          echo "$ARTIFACT_SHA256  $RUNNER_TEMP/release/release.tar.gz" | sha256sum --check --strict
+          [[ "$DEPLOY_HOST" =~ ^[a-zA-Z0-9.-]+$ ]]
+          [[ "$DEPLOY_USER" =~ ^[a-z_][a-z0-9_-]*$ ]]
+          [[ "$DEPLOY_PORT" =~ ^[0-9]+$ ]]
+          install -d -m 700 "$RUNNER_TEMP/ssh"
+          key="$RUNNER_TEMP/ssh/key"
+          known="$RUNNER_TEMP/ssh/known_hosts"
+          trap 'rm -f "$key" "$known"' EXIT
+          umask 077
+          printf '%s\n' "$SSH_PRIVATE_KEY" > "$key"
+          printf '%s\n' "$SSH_KNOWN_HOSTS" > "$known"
+          ssh -i "$key" -p "$DEPLOY_PORT" -o BatchMode=yes -o IdentitiesOnly=yes \
+            -o StrictHostKeyChecking=yes -o "UserKnownHostsFile=$known" \
+            -o ConnectTimeout=15 -o ServerAliveInterval=15 -o ServerAliveCountMax=4 \
+            "$DEPLOY_USER@$DEPLOY_HOST" "deploy $RELEASE_SHA sha256:$ARTIFACT_SHA256" < "$RUNNER_TEMP/release/release.tar.gz"
+      - name: Record deployment result
+        if: always()
+        env:
+          RESULT: ${{ job.status }}
+          RELEASE_SHA: ${{ github.sha }}
+        run: |
+          echo "Production deployment $RELEASE_SHA: $RESULT" >> "$GITHUB_STEP_SUMMARY"
+          if [ "$RESULT" != success ]; then
+            echo '::error::Production deployment failed. Inspect the protected server deployment log and recovery runbook.'
+          fi

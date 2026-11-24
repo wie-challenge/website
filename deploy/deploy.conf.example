@@ -1,0 +1,11 @@
+# Verified FelCloud layout. Install root:root 0600 at /etc/nasj/deploy.conf.
+RELEASE_ROOT=/srv/nasj-releases
+CURRENT_LINK=/srv/nasj
+RUNTIME_ENV=/etc/nasj/runtime.env
+MIGRATION_ENV=/etc/nasj/migration.env
+RUNTIME_USER=nasj
+MIGRATION_USER=nasj-migrate
+NODE_BIN=/usr/local/bin/node
+PUBLIC_HEALTH_URL=https://nasj.example.com/api/health/ready
+# Existing legacy deployment metadata; informational until the first artifact release.
+LEGACY_SHA=SET_EXISTING_RELEASE_SHA

@@ -38,6 +38,7 @@ export async function runOrganizationScenarios({
 }: ScenarioContext) {
   const owner = await register('org-owner@example.com', 'Organization Owner');
   const invitee = await register('org-invitee@example.com', 'Organization Invitee');
+  const otherOwner = await register('org-other-owner@example.com', 'Other Organization Owner');
   const outsider = await register('org-outsider@example.com', 'Organization Outsider');
   const reviewer = await register('org-reviewer@example.com', 'Organization Reviewer');
   await db.user.update({ where: { id: reviewer.me.user.id }, data: { role: 'ADMIN' } });
@@ -121,7 +122,7 @@ export async function runOrganizationScenarios({
         ).status,
         403,
       );
-      const other = await mutate(invitee.client, '/api/v1/organizations', 'POST', {
+      const other = await mutate(otherOwner.client, '/api/v1/organizations', 'POST', {
         ...base,
         name: 'Other Synthetic Buyer',
         contactEmail: 'org-invitee@example.com',
@@ -462,6 +463,10 @@ export async function runOrganizationScenarios({
       );
       assert.equal(
         (await invitee.client.request(`/api/v1/organizations/${otherOrganization.id}`)).status,
+        403,
+      );
+      assert.equal(
+        (await otherOwner.client.request(`/api/v1/organizations/${otherOrganization.id}`)).status,
         200,
       );
       assert.equal((await invitee.client.request('/api/v1/me')).status, 200);

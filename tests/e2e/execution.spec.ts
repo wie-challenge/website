@@ -1,3 +1,4 @@
+import { confirmAction } from './actions';
 import { expect, test, type Page } from '@playwright/test';
 const origin = 'http://127.0.0.1:3100';
 const password = 'Synthetic-production-browser-password-2026!';
@@ -71,7 +72,10 @@ test('an accepted batch is prepared, collected, confirmed and published as synth
   ] as const)
     await linked.getByLabel(label, { exact: true }).fill(value);
   await linked.getByRole('button', { name: `Save offer for ${fixture.linkedName}` }).click();
-  await page.getByRole('button', { name: `Issue offer to ${fixture.linkedName}` }).click();
+  await confirmAction(
+    page,
+    page.getByRole('button', { name: `Issue offer to ${fixture.linkedName}` }),
+  );
   const materials = page
     .locator('form')
     .filter({ has: page.getByRole('button', { name: 'Save material requirements', exact: true }) });
@@ -108,7 +112,10 @@ test('an accepted batch is prepared, collected, confirmed and published as synth
   await page.getByRole('tab', { name: 'Production', exact: true }).click();
   const batch = page.getByRole('article', { name: `Batch ${fixture.linkedName} ACCEPTED` });
   await batch.getByRole('checkbox', { name: /synthetic demonstration/i }).check();
-  await batch.getByRole('button', { name: `Release ${fixture.linkedName}`, exact: true }).click();
+  await confirmAction(
+    page,
+    batch.getByRole('button', { name: `Release ${fixture.linkedName}`, exact: true }),
+  );
   await expect(
     page.getByRole('article', { name: `Batch ${fixture.linkedName} MATERIAL_READY` }),
   ).toBeVisible();
@@ -121,9 +128,10 @@ test('an accepted batch is prepared, collected, confirmed and published as synth
   await work.getByLabel('Total pieces produced so far', { exact: true }).fill('10');
   await work.getByRole('button', { name: 'Save cumulative progress', exact: true }).click();
   await expect(page.getByText('Saved successfully.')).toBeVisible();
-  await work
-    .getByRole('button', { name: 'Submit reported pieces for inspection', exact: true })
-    .click();
+  await confirmAction(
+    page,
+    work.getByRole('button', { name: 'Submit reported pieces for inspection', exact: true }),
+  );
   await expect(
     page.getByRole('article', { name: /Work Synthetic production .* SUBMITTED/ }),
   ).toBeVisible();
@@ -142,14 +150,22 @@ test('an accepted batch is prepared, collected, confirmed and published as synth
   await submitted.getByLabel('Rejected pieces', { exact: true }).fill('0');
   await submitted.getByLabel('Pending pieces', { exact: true }).fill('0');
   await submitted.getByLabel('Stitch alignment result', { exact: true }).selectOption('PASS');
-  await submitted
-    .getByRole('button', { name: `Record inspection for ${fixture.linkedName}`, exact: true })
-    .click();
+  await confirmAction(
+    page,
+    submitted.getByRole('button', {
+      name: `Record inspection for ${fixture.linkedName}`,
+      exact: true,
+    }),
+  );
   const approved = page.getByRole('article', { name: `Batch ${fixture.linkedName} APPROVED` });
   await approved.getByLabel('Approved pieces to prepare', { exact: true }).fill('10');
-  await approved
-    .getByRole('button', { name: `Prepare approved pieces for ${fixture.linkedName}`, exact: true })
-    .click();
+  await confirmAction(
+    page,
+    approved.getByRole('button', {
+      name: `Prepare approved pieces for ${fixture.linkedName}`,
+      exact: true,
+    }),
+  );
   await expect(
     page.getByText('Reported production is not quality-approved production.'),
   ).toBeVisible();
@@ -166,12 +182,12 @@ test('an accepted batch is prepared, collected, confirmed and published as synth
   await pickup.getByLabel('Pickup window end', { exact: true }).fill('2026-11-02T12:00');
   await pickup.getByLabel('Coordinator reference', { exact: true }).fill(fixture.coordinatorId);
   await pickup.getByLabel('Prepared pieces to collect', { exact: true }).fill('10');
-  await pickup.getByRole('button', { name: 'Schedule pickup', exact: true }).click();
+  await confirmAction(page, pickup.getByRole('button', { name: 'Schedule pickup', exact: true }));
   await expect(page.getByRole('article', { name: 'Shipment PICKUP_SCHEDULED' })).toBeVisible();
   await page.context().clearCookies();
   await login(page, emails.coordinator, '/association');
   await page.goto('/association/pickups');
-  await page.getByRole('button', { name: 'Record collection', exact: true }).click();
+  await confirmAction(page, page.getByRole('button', { name: 'Record collection', exact: true }));
   await expect(page.getByText('Saved successfully.')).toBeVisible();
   await page.context().clearCookies();
   await login(page, emails.operator, '/procurement');
@@ -185,20 +201,28 @@ test('an accepted batch is prepared, collected, confirmed and published as synth
   const hubResponse = page.waitForResponse(
     (response) => response.url().endsWith('/handovers') && response.request().method() === 'POST',
   );
-  await shipment.getByRole('button', { name: 'Confirm hub receipt', exact: true }).click();
+  await confirmAction(
+    page,
+    shipment.getByRole('button', { name: 'Confirm hub receipt', exact: true }),
+  );
   expect((await hubResponse).status()).toBe(201);
-  await page
-    .getByRole('article', { name: 'Shipment COLLECTED' })
-    .getByRole('button', { name: 'Record synthetic dispatch', exact: true })
-    .click();
+  await confirmAction(
+    page,
+    page
+      .getByRole('article', { name: 'Shipment COLLECTED' })
+      .getByRole('button', { name: 'Record synthetic dispatch', exact: true }),
+  );
   const reported = page.getByRole('article', { name: 'Shipment IN_TRANSIT' });
   await reported.getByLabel('Pieces reported delivered', { exact: true }).fill('10');
-  await reported.getByRole('button', { name: 'Report delivery', exact: true }).click();
+  await confirmAction(page, reported.getByRole('button', { name: 'Report delivery', exact: true }));
   const receipt = page.getByRole('article', { name: 'Shipment DELIVERY_REPORTED' });
   await receipt.getByLabel('Pieces received', { exact: true }).fill('9');
   await receipt.getByLabel('Pieces accepted', { exact: true }).fill('9');
   await receipt.getByLabel('Pieces missing', { exact: true }).fill('1');
-  await receipt.getByRole('button', { name: 'Confirm buyer receipt', exact: true }).click();
+  await confirmAction(
+    page,
+    receipt.getByRole('button', { name: 'Confirm buyer receipt', exact: true }),
+  );
   const discrepancy = page.getByRole('article', { name: 'Shipment DISCREPANCY' });
   await expect(discrepancy).toContainText('Buyer accepted 9');
   await expect(discrepancy).toContainText('1 declared missing by the buyer');
@@ -212,7 +236,10 @@ test('an accepted batch is prepared, collected, confirmed and published as synth
     .fill('Handmade weaving following the approved sample and coarse regional origin.');
   await story.getByRole('button', { name: 'Draft public traceability', exact: true }).click();
   await page.getByRole('button', { name: 'Submit traceability for review', exact: true }).click();
-  await page.getByRole('button', { name: 'Publish traceability', exact: true }).click();
+  await confirmAction(
+    page,
+    page.getByRole('button', { name: 'Publish traceability', exact: true }),
+  );
   const link = page.getByText(/Public traceability link: \/trace\//);
   await expect(link).toBeVisible();
   const token = ((await link.textContent()) ?? '').match(/\/trace\/([0-9a-f-]{36})/i)?.[1];
@@ -235,7 +262,10 @@ test('an accepted batch is prepared, collected, confirmed and published as synth
   await page.setViewportSize({ width: 1280, height: 800 });
   await page.goto(`/procurement/${fixture.rfqId}`);
   await page.getByRole('tab', { name: 'Delivery', exact: true }).click();
-  await page.getByRole('button', { name: 'Revoke public traceability', exact: true }).click();
+  await confirmAction(
+    page,
+    page.getByRole('button', { name: 'Revoke public traceability', exact: true }),
+  );
   await page.goto(`/trace/${token}`);
   await expect(page.getByText('This public record was revoked.')).toBeVisible();
   await expect(page.getByText('Handmade weaving')).toHaveCount(0);

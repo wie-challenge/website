@@ -56,7 +56,7 @@ test('signup, email verification, profile, sessions and password changes work in
   await expect(page.getByRole('status')).toContainText('check your inbox');
   const verification = await token(request, email);
   await page.goto(`/auth/verify-email#token=${encodeURIComponent(verification)}`);
-  await page.getByRole('button', { name: 'Verify email address' }).click();
+  await expect(page.getByRole('status')).toContainText('email is verified');
   await expect(page.getByRole('status')).toContainText('email is verified');
   expect(await page.evaluate(() => location.hash)).toBe('');
   await login(page, email);
@@ -74,10 +74,9 @@ test('signup, email verification, profile, sessions and password changes work in
   const otherPage = await other.newPage();
   await login(otherPage, email);
   await page.reload();
-  await page.getByRole('tab', { name: 'Password & sessions', exact: true }).click();
-  await expect(page.getByText('Another session', { exact: true })).toBeVisible();
-  await page.getByRole('button', { name: 'Sign out session', exact: true }).click();
-  await expect(page.getByText('Another session', { exact: true })).toHaveCount(0);
+  await expect(page.getByText('You are signed in on 2 devices.', { exact: true })).toBeVisible();
+  await page.getByRole('button', { name: 'Sign out other devices', exact: true }).click();
+  await expect(page.getByText('You are signed in on 1 device.', { exact: true })).toBeVisible();
   await otherPage.reload();
   await expect(otherPage).toHaveURL(/\/auth\/login/);
   await other.close();
@@ -86,13 +85,11 @@ test('signup, email verification, profile, sessions and password changes work in
   await expect(page.getByRole('heading', { name: 'Access denied', exact: true })).toBeVisible();
   await expect(page).toHaveURL(/\/admin\/users/);
   await page.goto('/settings/profile');
-  await page.getByRole('tab', { name: 'Password & sessions', exact: true }).click();
   await page.getByLabel('Current password', { exact: true }).fill(password);
   await page.getByLabel('New password', { exact: true }).fill(resetPassword);
   await page.getByRole('button', { name: 'Update password', exact: true }).click();
   await expect(page.getByRole('status')).toContainText('Password updated');
-  await page.getByRole('button', { name: 'Account menu' }).click();
-  await page.getByRole('menuitem', { name: 'Sign out', exact: true }).click();
+  await page.getByRole('button', { name: 'Sign out', exact: true }).click();
   await expect(page).toHaveURL(/\/auth\/login/);
   await login(page, email, resetPassword);
   await expect(page.getByLabel('Your name', { exact: true })).toHaveValue('UI Maker Updated');
@@ -254,6 +251,8 @@ test('small-screen login supports keyboard focus, associated labels and direct A
   await expect(passwordInput).toHaveAttribute('type', 'text');
   await page.keyboard.press('Enter');
   await expect(passwordInput).toHaveAttribute('type', 'password');
+  await page.keyboard.press('Tab');
+  await expect(page.getByRole('link', { name: 'Forgot password?' })).toBeFocused();
   await page.keyboard.press('Tab');
   await expect(page.getByRole('button', { name: 'Sign in', exact: true })).toBeFocused();
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);

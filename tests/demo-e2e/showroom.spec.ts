@@ -1,3 +1,4 @@
+import { confirmAction } from '../e2e/actions';
 import { expect, test, type APIRequestContext } from '@playwright/test';
 import type { DemoSessionView } from '@nasj/contracts';
 import AxeBuilder from '@axe-core/playwright';
@@ -118,7 +119,7 @@ test('visitor showroom completes real synthetic commercial workflow and resets w
   await page.goto(`/procurement/${scenario.rfqId}`);
   await page.getByRole('tab', { name: 'Quotes', exact: true }).click();
   await page.getByRole('checkbox', { name: /I approve this exact/ }).check();
-  await page.getByRole('button', { name: 'Accept quotation v1', exact: true }).click();
+  await confirmAction(page, page.getByRole('button', { name: 'Accept quotation v1', exact: true }));
   await expect(page.getByText(/ACCEPTED\./)).toBeVisible();
   state = await get<DemoSessionView>(page.request, '/api/v1/demo/session');
   const orderId = state.scenario!.orderId!;

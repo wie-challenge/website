@@ -1,3 +1,4 @@
+import { confirmAction } from './actions';
 import { expect, test, type APIRequestContext, type Page } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
 
@@ -60,7 +61,10 @@ async function startFeedback(page: Page, request: APIRequestContext, width: numb
     'Pieces damaged': '2',
   }))
     await receipt.getByLabel(label, { exact: true }).fill(value);
-  await receipt.getByRole('button', { name: 'Confirm buyer receipt', exact: true }).click();
+  await confirmAction(
+    page,
+    receipt.getByRole('button', { name: 'Confirm buyer receipt', exact: true }),
+  );
   await expect(page.getByRole('article', { name: 'Shipment DISCREPANCY' })).toBeVisible();
   return {
     ...fixture,

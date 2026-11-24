@@ -429,12 +429,6 @@ export class OrganizationsService {
     if (!organization) fail(404, 'NOT_FOUND', 'Organization not found.');
     if (organization.type === 'BUYER_BUSINESS')
       return this.policy.requireOrganization(actor, id, 'organization.members.invite', tx);
-    if (organization.type !== 'INTERNAL' && organization.approvalStatus === 'APPROVED') {
-      const manager = await tx.organizationMember.findFirst({
-        where: { organizationId: id, userId: actor.id, status: 'ACTIVE', isManager: true },
-      });
-      if (manager) return { organization, isManager: true };
-    }
     await this.policy.requireAdmin(actor, tx);
     if (organization.approvalStatus !== 'APPROVED')
       fail(
@@ -588,7 +582,7 @@ export class OrganizationsService {
         include: { roles: true, organization: true, permissionGrants: true },
       });
       const inviterAuthorized =
-        invitation.organization.type === 'INTERNAL'
+        invitation.organization.type !== 'BUYER_BUSINESS'
           ? invitation.createdBy.role === 'ADMIN'
           : (inviter?.status === 'ACTIVE' && inviter.isManager) ||
             invitation.createdBy.role === 'ADMIN';

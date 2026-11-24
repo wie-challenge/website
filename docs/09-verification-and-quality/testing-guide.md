@@ -43,3 +43,47 @@ Run `pnpm db:seed` from `website` with the local development database and SMTP s
 The operator is assigned to the demo buyer and partner association organizations, and the buyer has an explicit quotation-approval grant. The fictional artisan is an association-managed participant record assigned to the coordinator; a fresh seed creates no artisan, production or finance login. Existing historical users and linked artisan records are preserved. The credential file lists only the four current login personas; historical credentials are omitted. Existing persona passwords remain stable on repeat runs; the new operator receives a generated password on its first seed. A missing credential manifest for an existing fixture login causes refusal rather than a password reset.
 
 `pnpm demo:seed` uses the same four personas in the separate demo database and writes `.local/demo-credentials.json`. Seeding stays restricted to the configured local databases. The seed does not restore intentionally revoked assignments, affiliations or permission grants.
+
+## Maintaining CI scenarios
+
+Use `tests/e2e/actions.ts` for actions that open the application's explicit confirmation dialog.
+The helper asserts that the dialog opens, confirms the same action and waits for it to close;
+it does not bypass confirmation or make it optional. Actions without confirmation keep ordinary
+clicks. Email verification links now verify during hydration; assert the resulting verified status
+and removal of the URL token rather than waiting for the former verification button.
+
+Keep assertions aligned with current identity landing paths and navigation. The profile now shows
+its sections together and offers bulk revocation of other devices. Test keyboard access to the
+current fields and navigation drawer, and verify that the other device actually loses its session.
+Use a different owner for cross-company fixtures: an account cannot simultaneously belong to two
+buyer companies. The identity browser scenario creates organizations through `/welcome`, uploads
+both synthetic verification PDFs and records both administrator review checks.
+
+Historical migration drills must select only columns present at their baseline. Use the bounded
+`deployTestMigrations` test helper when a drill is meant to examine one migration prefix; it accepts
+only loopback test database names. The closure drill applies its intended migration without
+accidentally including later schema changes in its row comparison. Full-chain upgrade and restore
+drills still exercise the current migration chain and preserve business-row hashes. Never modify
+applied SQL to make a test fixture work.
+
+Landing text stays opaque during entrance motion so its contrast remains readable. Browser
+accessibility checks cover normal motion and reduced motion without excluding contrast rules.
+
+Production verification runs the complete integration suite against both PostgreSQL 16.11
+(the inspected VPS major) and 17.7 (development). Set `POSTGRES_TEST_IMAGE` to choose the
+isolated test container image; no production database URL is used. Historical upgrade tests
+replay only their intended migration prefix, use matching restore targets, and preserve strict
+row hashes, migration checksums and constraints. Current Prisma clients select only columns
+that existed when constructing pre-migration fixtures.
+
+Deployment control-flow tests run with `bash scripts/deploy/test-deploy.sh`. They use temporary
+paths and fake service commands to test preparation refusal, checksum/path/identity rejection,
+migration approval and backup gates, and automatic rollback. `test-schema.py` checks the real
+migration-history gate against a disposable PostgreSQL. `smoke-release.py RELEASE.tar.gz`
+starts only the extracted candidate with a fresh database and requires free ports 3000/3001;
+it never contacts the VPS. Keep these tests separate from live recovery evidence.
+
+The demo feedback form retries an immutable command after an uncertain result, rechecks
+visitor-scoped acceptance before showing it, preserves independently edited drafts and clears
+accepted information when authority expires. Browser recovery cases exercise both supported
+viewport widths; the optional storyboard recording test remains skipped without `NASJ_CLIP_DIR`.

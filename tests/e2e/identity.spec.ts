@@ -1,3 +1,4 @@
+import { confirmAction } from './actions';
 import { test, expect, type APIRequestContext, type Page, type Browser } from '@playwright/test';
 import { totp } from './totp';
 const password = 'Identity-browser-password-2026!';
@@ -50,39 +51,65 @@ async function administrator(browser: Browser, request: APIRequestContext, suffi
   return { context, page };
 }
 async function createOrganization(page: Page, name: string, type = 'BUYER_BUSINESS') {
-  await page.goto('/settings/organizations');
-  await page.getByLabel('Organization type', { exact: true }).selectOption(type);
-  await page.getByLabel('Organization name', { exact: true }).fill(name);
+  await page.goto('/welcome');
   await page
-    .getByLabel('Authorized representative', { exact: true })
-    .fill('Synthetic Representative');
-  await page.getByLabel('Region', { exact: true }).fill('Tunis');
-  await page
-    .getByLabel('Organization description', { exact: true })
+    .getByRole('button', {
+      name: type === 'BUYER_BUSINESS' ? /Create a company/ : /Create an association/,
+    })
+    .click();
+  const dialog = page.getByRole('dialog');
+  await dialog.getByLabel('Legal organization name').fill(name);
+  await dialog
+    .getByLabel(
+      type === 'BUYER_BUSINESS'
+        ? 'Company registration number'
+        : 'Association registration reference',
+    )
+    .fill('SYNTHETIC-REGISTRATION');
+  await dialog.getByLabel('Representative’s full name').fill('Synthetic Representative');
+  await dialog.getByLabel('Region', { exact: true }).fill('Tunis');
+  await dialog
+    .getByLabel(/What does the organization do/)
     .fill('Synthetic identity foundation browser test organization.');
-  await page
+  await dialog
     .getByLabel('Contact email', { exact: true })
     .fill('synthetic-organization@example.com');
-  await page.getByRole('button', { name: 'Create organization', exact: true }).click();
-  await expect(page).toHaveURL(/\/organizations\/[^/]+\/settings/);
+  await dialog.getByRole('button', { name: 'Save and continue' }).click();
+  await expect(page.getByRole('heading', { name: 'Finish your application' })).toBeVisible();
+  for (const label of ['Organization registration', 'Representative authority']) {
+    const input = page.getByLabel(label, { exact: true });
+    const filename = label === 'Organization registration' ? 'registration.pdf' : 'authority.pdf';
+    await input.setInputFiles({
+      name: filename,
+      mimeType: 'application/pdf',
+      buffer: Buffer.from('%PDF-1.7\n% Synthetic identity fixture'),
+    });
+    await page
+      .locator('form')
+      .filter({ has: input })
+      .getByRole('button', { name: 'Save PDF' })
+      .click();
+    await expect(page.getByRole('link', { name: filename })).toBeVisible();
+  }
+  await page.getByRole('button', { name: 'Send application', exact: true }).click();
+  await expect(page.getByRole('heading', { name: 'Your application is in review' })).toBeVisible();
+  const context = await (await page.request.get('/api/v1/me/context')).json();
+  const id = context.organizations.find((org: { name: string }) => org.name === name).id as string;
+  await page.goto(`/organizations/${id}/settings`);
   await expect(page.getByRole('heading', { level: 1 })).toHaveText(name);
-  const id = new URL(page.url()).pathname.split('/')[2];
-  await page.getByRole('button', { name: 'Request approval', exact: true }).click();
-  await expect(page.getByText('Approval: Pending review', { exact: false })).toBeVisible();
   return id;
 }
-// Approval dialogs must be accepted before the triggering click resolves.
 async function approveOrganization(page: Page, name: string) {
-  await page.goto('/admin/approvals');
-  const card = page
-    .locator('li.panel')
-    .filter({ has: page.getByRole('heading', { name, exact: true }) });
-  await card
-    .getByLabel('Review reason', { exact: true })
-    .fill('Synthetic organization reviewed and approved.');
-  page.once('dialog', (dialog) => dialog.accept());
-  await card.getByRole('button', { name: 'Record approval decision', exact: true }).click();
-  await expect(card).toHaveCount(0);
+  await page.goto('/nasj/organizations');
+  const row = page.getByRole('row').filter({ hasText: name });
+  await row.getByRole('button', { name: 'Review', exact: true }).click();
+  const review = page.getByRole('dialog', { name: `Review ${name}` });
+  await review.getByLabel('Decision', { exact: true }).selectOption('APPROVE');
+  await review.getByRole('checkbox', { name: /registration PDF matches/ }).check();
+  await review.getByRole('checkbox', { name: /representative is authorized/ }).check();
+  await review.getByRole('button', { name: 'Save decision', exact: true }).click();
+  await expect(review).toBeHidden();
+  await expect(row).toHaveCount(0);
 }
 
 test('buyer onboarding, approval, invitation and scoped membership revocation work across organizations', async ({
@@ -101,7 +128,6 @@ test('buyer onboarding, approval, invitation and scoped membership revocation wo
   await page.goto(
     `/auth/verify-email#token=${encodeURIComponent(await mailToken(request, buyerEmail))}`,
   );
-  await page.getByRole('button', { name: 'Verify email address' }).click();
   await expect(page.getByRole('status')).toContainText('email is verified');
   await login(page, buyerEmail);
   const orgId = await createOrganization(page, 'Identity Buyer Organization');
@@ -133,8 +159,7 @@ test('buyer onboarding, approval, invitation and scoped membership revocation wo
       })
     ).ok(),
   ).toBeTruthy();
-  await staff.getByRole('button', { name: 'Account menu' }).click();
-  await staff.getByRole('menuitem', { name: 'Sign out', exact: true }).click();
+  await staff.getByRole('button', { name: 'Sign out', exact: true }).click();
   await staff.goto(`/invitations/accept#token=${invitation}`);
   await staff.getByLabel('Email address', { exact: true }).fill(staffEmail);
   expect(await staff.evaluate(() => location.hash)).toBe('');
@@ -166,7 +191,6 @@ test('buyer onboarding, approval, invitation and scoped membership revocation wo
   await verifyTab.goto(
     `/auth/verify-email#token=${encodeURIComponent(await mailToken(request, newStaffEmail))}`,
   );
-  await verifyTab.getByRole('button', { name: 'Verify email address', exact: true }).click();
   await expect(verifyTab.getByRole('status')).toContainText('email is verified');
   await verifyTab.close();
   await newStaff.getByLabel('Email address', { exact: true }).fill(newStaffEmail);
@@ -183,7 +207,8 @@ test('buyer onboarding, approval, invitation and scoped membership revocation wo
   await expect(staff.getByRole('button', { name: 'Save organization', exact: true })).toHaveCount(
     0,
   );
-  const separateId = await createOrganization(staff, 'Identity Staff Separate Organization');
+  const other = await administrator(browser, request, 'separate-organization');
+  const separateId = await createOrganization(other.page, 'Identity Separate Organization');
   await expect((await page.request.get(`/api/v1/organizations/${separateId}`)).status()).toBe(403);
   await page.reload();
   const member = page
@@ -197,12 +222,14 @@ test('buyer onboarding, approval, invitation and scoped membership revocation wo
     .getByLabel('Reason for access change', { exact: true })
     .fill('Synthetic scoped suspension verification.');
   page.once('dialog', (dialog) => dialog.accept());
-  await member.getByRole('button', { name: 'Update membership', exact: true }).click();
+  await confirmAction(page, member.getByRole('button', { name: 'Update membership', exact: true }));
   await expect(
     member.getByText('identity-staff@example.com · Suspended', { exact: true }),
   ).toBeVisible();
   expect((await staff.request.get(`/api/v1/organizations/${orgId}`)).status()).toBe(403);
-  expect((await staff.request.get(`/api/v1/organizations/${separateId}`)).status()).toBe(200);
+  expect((await staff.request.get(`/api/v1/organizations/${separateId}`)).status()).toBe(403);
+  expect((await other.page.request.get(`/api/v1/organizations/${separateId}`)).status()).toBe(200);
+  await other.context.close();
   expect((await staff.request.get('/api/v1/me')).status()).toBe(200);
   await staffContext.close();
   await admin.context.close();
@@ -333,7 +360,7 @@ test('independent artisan manages skills, capacity, association consent and limi
   ).toHaveCount(0);
   const artisanId = new URL(coordinator.url()).pathname.split('/').at(-1);
   page.once('dialog', (dialog) => dialog.accept());
-  await page.getByRole('button', { name: 'Revoke delegation', exact: true }).click();
+  await confirmAction(page, page.getByRole('button', { name: 'Revoke delegation', exact: true }));
   await expect(page.locator('#delegations').getByText('· Revoked', { exact: false })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Revoke delegation', exact: true })).toHaveCount(0);
   expect((await coordinator.request.get(`/api/v1/artisans/${artisanId}`)).status()).toBe(403);

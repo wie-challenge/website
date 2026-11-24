@@ -1,16 +1,77 @@
-# Deployment and migration procedure
+# Production deployment and recovery
 
-No deployment was performed by this change. Local Compose is not a production deployment. Supply reviewed secrets via your host's secret manager; runtime must satisfy `apps/api/src/config/env.ts`: production HTTPS origin, privileged MFA, enabled keyed Arcjet, SMTP authentication/TLS, private PostgreSQL and explicit proxy trust. External provider behavior remains unverified without credentials.
+GitHub Actions runs quality, security, integration, browser and build checks. A successful
+main build packages the application with its locked dependencies and smoke-tests the extracted
+release with disposable PostgreSQL 16. The deployment job uses the same artifact ID and
+SHA-256. The server runs the existing systemd services and does not build from source.
 
-1. Take a protected PostgreSQL backup and verify a restore using the operations runbook.
-2. Install locked dependencies, generate the client, build with the intended `API_INTERNAL_URL`: `pnpm install --frozen-lockfile`, `pnpm db:generate`, `pnpm build`.
-3. Run reviewed migrations once with a schema-owner `MIGRATION_DATABASE_URL`: `pnpm db:migrate`. Use least-privilege application and worker roles on the private DB. No automatic deploy/publish workflow is added.
-4. Start supervised web and API processes: `pnpm --filter @nasj/web start`, `pnpm --filter @nasj/api start`. Start the built local consumer separately: `pnpm --filter @nasj/api worker --watch`.
-5. Probe liveness and readiness and validate synthetic sign-in, scoped denial and worker status. Terminate gracefully; worker stops after its current bounded batch.
+GitHub requires one approving pull request review on public main, including for administrators.
+Stale approvals are dismissed, the latest push requires approval, and force pushes and deletion
+are disabled. Once the new aggregate check appears on a hosted PR, add it to branch protection
+before merging. Keep `PRODUCTION_DEPLOY_ENABLED` unset through qualification. The production
+Environment restricts deployment to main and holds the dedicated SSH credentials and endpoint
+variables. Verify the digest from the reviewed build before authorizing deployment.
 
-Migrations `202610200001_e16_reliability` and `202610200002_synthetic_commerce` add tables/type/indexes/constraints without rewriting existing data or backfilling events. The commerce migration preserves the synthetic-only boundary with database CHECK constraints and stores exact integer millimes. New API code requires it. Deploy schema before API/worker. Existing API versions ignore these new tables, permitting application rollback while preserving queue/outcome records. Stop worker before rollback. Do not drop tables or reset migrations as routine rollback: deleting command outcomes weakens retry guarantees. Review any destructive reverse migration separately with a verified backup. Database failure should fail readiness; liveness remains independent.
+## Server preparation
 
-Hosting packaging, TLS/ingress, runtime credential provisioning, off-site backups, alert routing and signed release approval remain operator responsibilities. No real contracts or money movement are supported.
+Verify an encrypted off-host PostgreSQL backup by restoring it to an isolated PostgreSQL 16
+instance. Schedule the cutover after that drill. Preserve the existing database, Nginx, TLS,
+systemd units and runtime configuration. Use the verified template in
+[deploy.conf.example](../../deploy/deploy.conf.example). Never overwrite existing secrets with
+template values.
 
+Install the following files from the reviewed revision as root-owned, mode 0755:
 
-After additive migration `202610200003_commerce_projections`, run the separate worker for in-app notices and synthetic reporting. Backfill existing orders with `pnpm worker --rebuild-analytics` under trusted server configuration. Prior API/web builds can coexist with the additive tables; preserve them and receipts during rollback. Do not drop identity/commercial data. Configure owner-approved local backup targets and 7-day retention using the operations guide. Hosted storage/scheduling/alert destinations and physical-device verification are not supplied by this change.
+- `scripts/deploy/deploy.sh` at `/usr/local/sbin/nasj-deploy`.
+- `scripts/deploy/extract-release.py` at `/usr/local/libexec/nasj-extract-release.py`.
+- `scripts/deploy/ssh-command.sh` at `/usr/local/libexec/nasj-ssh-command`.
+
+Create root-owned `/etc/nasj` mode 0711 and put the root-owned deploy config there at mode
+0600. Create root-owned `/etc/nasj/releases`, `/etc/nasj/approvals`, `/var/lib/nasj-deploy`
+and `/var/log/nasj-deploy` at mode 0700. Create `/srv/nasj-releases` at mode 0755 on the
+same filesystem as `/srv`. Copy existing runtime and migration credentials privately
+to the configured paths with mode 0640 and separate runtime and migration groups. The runtime
+database role needs read access to migration history and must lack schema ownership.
+
+Use a dedicated SSH user and the public half of the Actions key. Keep its authorized keys
+in a root-owned path. Prefix the key with
+`restrict,command="/usr/local/libexec/nasj-ssh-command"`. Disable password login, TTY and
+forwarding for that user in sshd. The only sudo permission is
+`nasj-deploy ALL=(root) NOPASSWD: NOSETENV: /usr/local/sbin/nasj-deploy *`, with
+`env_reset`. Validate with `visudo -c` and `sshd -t`. Test restricted key behavior and
+administrator access before the cutover.
+
+## Adoption and release
+
+Hold the lock at `/var/lib/nasj-deploy/deploy.lock`. Confirm the previous release path,
+then stop the worker, API and web. Move the existing real `/srv/nasj` directory to an
+unused path under `/srv/nasj-releases` and link `/srv/nasj` to it. Start API and web,
+verify local API and web readiness plus public HTTPS readiness, then start and verify
+the worker. If adoption fails, restore the original directory path and restart the
+original services before proceeding.
+
+Authorize the exact reviewed artifact by writing `sha256:ARTIFACT_SHA256` into
+`/etc/nasj/releases/FULL_SHA`. Once the host and governance checks are complete, set
+`PRODUCTION_DEPLOY_ENABLED=true` for eligible main runs. A job that failed awaiting
+authorization can be retried against its original artifact while it remains available.
+
+For pending migrations, additionally record
+`expand-contract PREVIOUS_FULL_SHA sha256:ARTIFACT_SHA256` in
+`/etc/nasj/approvals/FULL_SHA`. Review compatibility with both app versions. Install
+a root-owned executable `/etc/nasj/backup-before-migrate` that accepts the candidate SHA
+and succeeds only after it has verified the required encrypted off-host backup. A missing
+or failed hook blocks migration. Deployment never reverses database migrations.
+
+## Recovery
+
+The deploy helper attempts application rollback on restart, readiness or worker failure.
+Inspect protected deployment logs and the three service journals, and verify HTTPS
+readiness and worker status. A failed rollback or interrupted switch requires an operator.
+Under the deployment lock, inspect `/var/lib/nasj-deploy/pending` for previous and candidate
+paths. If there is no pending marker, use the recorded `previous` path and check it
+against the live symlink. Confirm the rollback target is under `/srv/nasj-releases`
+and compatible with the current schema. Stop the worker, atomically replace the live link
+using a temporary symlink beside it, restart API and web, and verify local and public
+readiness before starting the worker. Reconcile the current and previous state files and
+archive the pending marker only after verification. Investigate migration state separately
+when failure occurred during migration.

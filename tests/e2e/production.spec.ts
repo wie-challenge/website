@@ -1,3 +1,4 @@
+import { confirmAction } from './actions';
 import { expect, test, type Page } from '@playwright/test';
 const origin = 'http://127.0.0.1:3100';
 const password = 'Synthetic-production-browser-password-2026!';
@@ -78,7 +79,10 @@ test('an artisan accepts issued work and an accountless report stays unverified'
   await expect(accountless).toContainText('without a digital account');
   await fillOffer(linked);
   await linked.getByRole('button', { name: `Save offer for ${fixture.linkedName}` }).click();
-  await page.getByRole('button', { name: `Issue offer to ${fixture.linkedName}` }).click();
+  await confirmAction(
+    page,
+    page.getByRole('button', { name: `Issue offer to ${fixture.linkedName}` }),
+  );
   await expect(
     page.getByRole('article', { name: `Offer ${fixture.linkedName} OFFERED` }),
   ).toBeVisible();
@@ -86,7 +90,10 @@ test('an artisan accepts issued work and an accountless report stays unverified'
   await accountless
     .getByRole('button', { name: `Save offer for ${fixture.accountlessName}` })
     .click();
-  await page.getByRole('button', { name: `Issue offer to ${fixture.accountlessName}` }).click();
+  await confirmAction(
+    page,
+    page.getByRole('button', { name: `Issue offer to ${fixture.accountlessName}` }),
+  );
   await expect(
     page.getByRole('article', { name: `Offer ${fixture.accountlessName} OFFERED` }),
   ).toBeVisible();
