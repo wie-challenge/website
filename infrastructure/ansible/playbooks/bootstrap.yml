@@ -1,0 +1,25 @@
+---
+- name: Bootstrap a replacement or staging host only
+  hosts: nasj
+  become: true
+  tasks:
+    - name: Require explicitly authorized Ubuntu 24.04 recovery inventory
+      ansible.builtin.assert:
+        that:
+          - nasj_environment == 'staging'
+          - nasj_confirm_bootstrap | default(false) | bool
+          - ansible_facts.distribution == 'Ubuntu'
+          - ansible_facts.distribution_version == '24.04'
+
+    - name: Install base packages for recovery
+      ansible.builtin.apt:
+        name: [postgresql-16, postgresql-client-16, nginx, certbot, python3-certbot-nginx, curl, age, awscli]
+        state: present
+        policy_rc_d: 101
+
+    - name: Create application service user
+      ansible.builtin.user:
+        name: nasj
+        system: true
+        create_home: false
+        shell: /usr/sbin/nologin

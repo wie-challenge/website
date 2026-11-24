@@ -1,0 +1,5 @@
+---
+- name: Validate adopted Nginx configuration without replacing certificates or routes
+  ansible.builtin.command: nginx -t
+  changed_when: false
+  check_mode: false

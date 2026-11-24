@@ -1,0 +1,41 @@
+name: Infrastructure CI
+on:
+  pull_request:
+    paths: ['infrastructure/**', 'scripts/ops/**', '.github/workflows/infrastructure-*.yml']
+  push:
+    branches: [main]
+    paths: ['infrastructure/**', 'scripts/ops/**', '.github/workflows/infrastructure-*.yml']
+permissions:
+  contents: read
+jobs:
+  validate:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+      - name: Install pinned validation tools
+        run: python3 -m venv "$RUNNER_TEMP/ansible" && "$RUNNER_TEMP/ansible/bin/pip" install -r infrastructure/ansible/requirements.txt
+      - name: Validate infrastructure and inventories
+        working-directory: infrastructure/ansible
+        run: |
+          export PATH="$RUNNER_TEMP/ansible/bin:$PATH"
+          yamllint .
+          for target in production staging; do
+            ansible-inventory -i "inventories/$target/hosts.yml" --list >/dev/null
+            for playbook in playbooks/*.yml; do
+              ansible-playbook -i "inventories/$target/hosts.yml" --syntax-check "$playbook"
+            done
+          done
+          ansible-lint playbooks/
+      - name: Validate backup commands and restore evidence
+        run: |
+          shellcheck scripts/ops/*.sh
+          bash scripts/ops/test-backup-evidence.sh
+          python3 scripts/ops/test-backup-flow.py
+      - name: Scan tracked history for secrets
+        run: |
+          git fetch --unshallow
+          bash scripts/ci/install-gitleaks.sh
+          "$RUNNER_TEMP/gitleaks" git . --redact=100 --no-banner

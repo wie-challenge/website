@@ -1,0 +1,25 @@
+---
+- name: Grant migration history read access to the existing runtime identity
+  hosts: nasj
+  become: true
+  tasks:
+    - name: Validate authorization and PostgreSQL identifiers
+      ansible.builtin.assert:
+        that:
+          - nasj_confirm_database_grant | default(false) | bool
+          - nasj_db_name is match('^[a-zA-Z_][a-zA-Z0-9_]*$')
+          - nasj_db_runtime_role is match('^[a-zA-Z_][a-zA-Z0-9_]*$')
+          - nasj_db_runtime_role != nasj_db_migration_role
+
+    - name: Grant only migration history read access under deployment lock
+      ansible.builtin.shell: |
+        set -eu
+        flock -w 60 /var/lib/nasj-deploy/deploy.lock runuser -u postgres --           psql -XqAt -v ON_ERROR_STOP=1 --dbname={{ nasj_db_name | quote }} <<'SQL'
+        SELECT 'unchanged' WHERE has_table_privilege('{{ nasj_db_runtime_role }}', 'public._prisma_migrations', 'SELECT');
+        SELECT 'GRANT SELECT ON TABLE public._prisma_migrations TO "{{ nasj_db_runtime_role }}"'
+          WHERE NOT has_table_privilege('{{ nasj_db_runtime_role }}', 'public._prisma_migrations', 'SELECT')
+        \gexec
+        SQL
+      register: nasj_grant
+      changed_when: "'unchanged' not in nasj_grant.stdout"
+      when: not ansible_check_mode

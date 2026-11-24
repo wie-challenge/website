@@ -1,0 +1,8 @@
+[Unit]
+Description=NASJ service and backup health checks
+OnFailure=nasj-notify@%n.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/libexec/nasj-monitor
+TimeoutStartSec=90

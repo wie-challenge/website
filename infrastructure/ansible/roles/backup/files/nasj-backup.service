@@ -1,0 +1,12 @@
+[Unit]
+Description=NASJ encrypted PostgreSQL backup and recovery verification
+After=network-online.target postgresql.service
+Wants=network-online.target
+OnFailure=nasj-notify@%n.service
+
+[Service]
+Type=oneshot
+ExecStart=/etc/nasj/backup-before-migrate
+TimeoutStartSec=45min
+UMask=0077
+PrivateTmp=true

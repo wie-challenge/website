@@ -1,0 +1,67 @@
+name: Infrastructure plan or apply
+run-name: Infrastructure ${{ inputs.operation }}
+on:
+  workflow_dispatch:
+    inputs:
+      operation:
+        description: Run audit and check mode, or apply after reviewing a plan for this commit
+        type: choice
+        required: true
+        options: [plan, apply]
+      plan_run_id:
+        description: Successful infrastructure plan run ID for this exact main commit
+        type: string
+        required: false
+permissions: {}
+concurrency:
+  group: nasj-production-infrastructure
+  cancel-in-progress: false
+jobs:
+  configure:
+    if: github.ref == 'refs/heads/main' && vars.INFRA_WORKFLOW_ENABLED == 'true'
+    environment: production-infrastructure
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    permissions:
+      contents: read
+      actions: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+      - name: Require a successful matching reviewed plan before apply
+        if: inputs.operation == 'apply'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PLAN: ${{ inputs.plan_run_id }}
+        run: |
+          [[ "$PLAN" =~ ^[0-9]+$ ]]
+          gh api "repos/$GITHUB_REPOSITORY/actions/runs/$PLAN" |
+            jq -e --arg sha "$GITHUB_SHA" '.head_sha == $sha and .head_branch == "main" and .conclusion == "success" and .path == ".github/workflows/infrastructure-apply.yml" and .display_title == "Infrastructure plan"'
+      - name: Install pinned Ansible
+        run: python3 -m venv "$RUNNER_TEMP/ansible" && "$RUNNER_TEMP/ansible/bin/pip" install -r infrastructure/ansible/requirements.txt
+      - name: Audit and run selected configuration
+        working-directory: infrastructure/ansible
+        env:
+          INFRA_KEY: ${{ secrets.INFRA_SSH_KEY }}
+          INFRA_KNOWN_HOSTS: ${{ secrets.INFRA_KNOWN_HOSTS }}
+          INFRA_EXTRA_VARS: ${{ secrets.INFRA_EXTRA_VARS }}
+          OPERATION: ${{ inputs.operation }}
+        run: |
+          set -euo pipefail
+          umask 077
+          dir=$(mktemp -d)
+          trap 'rm -f "$dir/key" "$dir/known_hosts" "$dir/vars.yml"; rmdir "$dir"' EXIT
+          printf '%s\n' "$INFRA_KEY" > "$dir/key"
+          printf '%s\n' "$INFRA_KNOWN_HOSTS" > "$dir/known_hosts"
+          printf '%s\n' "$INFRA_EXTRA_VARS" > "$dir/vars.yml"
+          unset INFRA_KEY INFRA_KNOWN_HOSTS INFRA_EXTRA_VARS
+          export ANSIBLE_SSH_COMMON_ARGS="-o UserKnownHostsFile=$dir/known_hosts -o StrictHostKeyChecking=yes -o IdentitiesOnly=yes"
+          export PATH="$RUNNER_TEMP/ansible/bin:$PATH"
+          args=(-i inventories/production/hosts.yml --private-key "$dir/key" -e "@$dir/vars.yml")
+          ansible-playbook "${args[@]}" playbooks/audit.yml -e nasj_show_audit=false
+          ansible-playbook "${args[@]}" playbooks/configure.yml --check
+          if [[ "$OPERATION" == apply ]]; then
+            ansible-playbook "${args[@]}" -e nasj_production_apply=true playbooks/configure.yml
+          fi
+          ansible-playbook "${args[@]}" playbooks/verify.yml

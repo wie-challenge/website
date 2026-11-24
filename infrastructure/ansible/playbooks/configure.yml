@@ -1,0 +1,21 @@
+---
+- name: Prepare the existing NASJ host for releases and backups
+  hosts: nasj
+  become: true
+  pre_tasks:
+    - name: Require explicit production apply consent and verified platform
+      ansible.builtin.assert:
+        that:
+          - nasj_environment != 'production' or ansible_check_mode or (nasj_production_apply | default(false) | bool)
+          - ansible_facts.distribution == 'Ubuntu'
+          - ansible_facts.distribution_version == '24.04'
+          - ansible_facts.architecture == 'x86_64'
+
+  roles:
+    - role: nginx
+    - role: systemd
+    - role: deployment
+    - role: security
+      when: nasj_install_deploy_ssh | default(false) | bool
+    - role: backup
+      when: nasj_configure_backup | default(false) | bool

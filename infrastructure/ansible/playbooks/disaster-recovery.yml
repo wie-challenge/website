@@ -1,0 +1,26 @@
+---
+- name: Restore a verified dump into a dedicated recovery host
+  hosts: nasj
+  become: true
+  tasks:
+    - name: Require non-production inventory and explicit restore consent
+      ansible.builtin.assert:
+        that:
+          - nasj_environment == 'staging'
+          - nasj_confirm_restore | default(false) | bool
+          - nasj_recovery_database is match('^nasj_recovery_[a-z0-9_]+$')
+          - nasj_verified_dump is match('^/var/lib/nasj-recovery/[a-zA-Z0-9._-]+$')
+
+    - name: Create a new and empty recovery database
+      ansible.builtin.command:
+        argv: [runuser, -u, postgres, --, createdb, "{{ nasj_recovery_database }}"]
+      changed_when: true
+      when: not ansible_check_mode
+
+    - name: Restore and check the isolated database
+      ansible.builtin.shell: |
+        set -eu
+        runuser -u postgres -- pg_restore --single-transaction --exit-on-error --no-owner --no-acl           --dbname={{ nasj_recovery_database | quote }} < {{ nasj_verified_dump | quote }}
+        runuser -u postgres -- psql -XqAt --set ON_ERROR_STOP=1           --dbname={{ nasj_recovery_database | quote }} -f /usr/local/share/nasj/backup-evidence.sql
+      changed_when: true
+      when: not ansible_check_mode

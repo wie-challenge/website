@@ -1,0 +1,15 @@
+---
+- name: Validate existing NASJ unit files before preparing releases
+  ansible.builtin.command:
+    argv: [systemd-analyze, verify, nasj-api.service, nasj-web.service, nasj-worker.service]
+  changed_when: false
+  check_mode: false
+
+- name: Verify each existing application unit still runs unprivileged
+  ansible.builtin.command:
+    argv: [systemctl, show, --property=User, --value, "{{ item }}"]
+  loop: [nasj-api.service, nasj-web.service, nasj-worker.service]
+  register: systemd_nasj_units
+  changed_when: false
+  failed_when: systemd_nasj_units.stdout != 'nasj'
+  check_mode: false

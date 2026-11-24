@@ -1,0 +1,14 @@
+---
+- name: Adopt the existing release with separate maintenance approval
+  hosts: nasj
+  become: true
+  tasks:
+    - name: Require explicit cutover authorization
+      ansible.builtin.assert:
+        that: nasj_confirm_adoption | default(false) | bool
+
+    - name: Run the locked adoption procedure
+      ansible.builtin.script: ../../../scripts/ops/adopt-release.sh --confirm-adoption
+      register: nasj_adoption
+      changed_when: "'NASJ_ADOPTION_READY' in nasj_adoption.stdout"
+      when: not ansible_check_mode

@@ -5,10 +5,9 @@ main build packages the application with its locked dependencies and smoke-tests
 release with disposable PostgreSQL 16. The deployment job uses the same artifact ID and
 SHA-256. The server runs the existing systemd services and does not build from source.
 
-GitHub requires one approving pull request review on public main, including for administrators.
-Stale approvals are dismissed, the latest push requires approval, and force pushes and deletion
-are disabled. Once the new aggregate check appears on a hosted PR, add it to branch protection
-before merging. Keep `PRODUCTION_DEPLOY_ENABLED` unset through qualification. The production
+GitHub requires the aggregate `required` check on main, including for administrators.
+Maintainers can review and merge their own pull requests after CI passes. Force pushes and
+deletion are disabled. Keep `PRODUCTION_DEPLOY_ENABLED` unset through qualification. The production
 Environment restricts deployment to main and holds the dedicated SSH credentials and endpoint
 variables. Verify the digest from the reviewed build before authorizing deployment.
 
@@ -75,3 +74,5 @@ using a temporary symlink beside it, restart API and web, and verify local and p
 readiness before starting the worker. Reconcile the current and previous state files and
 archive the pending marker only after verification. Investigate migration state separately
 when failure occurred during migration.
+
+See [infrastructure qualification](infrastructure-qualification.md) for the audit, Ansible, backup, and cutover procedures.
