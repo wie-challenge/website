@@ -327,6 +327,28 @@ roughly 63 seconds. TLS certificate validation, authentication and SQL were neve
 reached. The guest NAT alone cannot explain the failure; the upstream cause is
 unconfirmed. Do not relax TLS or channel binding.
 
+Independent probes on 2026-11-24 around 20:02 UTC against the direct synthetic
+endpoint in AWS `us-east-2`:
+
+| Source | DNS / TCP 5432 | Traditional SSLRequest | Direct TLS with PostgreSQL ALPN | Certificate / hostname | Authentication / SQL |
+| --- | --- | --- | --- | --- | --- |
+| Workstation | Resolved / connected | Timed out in 6 seconds | TLS 1.3 | Verified | PostgreSQL 18.7 authenticated with channel binding required, executed SQL and confirmed CREATEDB |
+| Ubuntu KVM guest | Resolved / connected | Timed out in 6 seconds | TLS 1.3 | Verified | Guest PostgreSQL 18 client installation started; no guest SQL result yet |
+| FelCloud | Resolved / connected | Negotiated TLS 1.3 | TLS 1.3 | Verified in both modes | Not attempted; credential-free network probe only |
+
+The difference is specific to traditional negotiation over the development network.
+Direct TLS and FelCloud's traditional negotiation both work at the transport layer.
+The device dropping or withholding the traditional response is still unidentified.
+Neon's public status page listed AWS us-east-2 database connectivity as operational
+when checked. Account-level compute and access policy were not inspected. No
+GitHub runner was configured or supplied with credentials. An independent hotspot
+would help isolate the workstation network; current evidence does not justify a
+permanent transport change.
+
+GitHub confirmed artifact ID `14918288458`, name `production-release-1`, size
+263,566,244 bytes, and the exact reviewed commit. Both cryptographic checks and
+safe extraction require the complete download.
+
 The local connection-isolation regression
 (`bash infrastructure/staging/check-backup-connection-isolation.sh` as guest root)
 passed the real backup and isolated restore with invalid host, port, user, database,
