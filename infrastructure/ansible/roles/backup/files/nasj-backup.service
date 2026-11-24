@@ -1,6 +1,7 @@
 [Unit]
 Description=NASJ encrypted PostgreSQL backup and recovery verification
 After=network-online.target postgresql.service
+RequiresMountsFor=/srv/nasj-backups
 Wants=network-online.target
 OnFailure=nasj-notify@%n.service
 

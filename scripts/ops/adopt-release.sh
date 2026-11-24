@@ -13,8 +13,20 @@ if [[ -L /srv/nasj ]]; then
   echo NASJ_ALREADY_ADOPTED
   exit 0
 fi
-verified=/var/lib/nasj-backup/latest
+verified=/var/lib/nasj-backup/latest-offsite
 [[ -s $verified && $(($(date +%s) - $(stat -c %Y "$verified"))) -le 86400 ]]
+python3 - "$verified" <<'PYTHON'
+import json
+import re
+import sys
+
+with open(sys.argv[1], encoding="utf-8") as receipt:
+    backup = json.load(receipt)
+if not re.fullmatch(r"nasj_[a-z0-9]{40,58}", backup.get("neon_database", "")):
+    raise SystemExit("No verified Neon recovery receipt")
+if not re.fullmatch(r"[0-9a-f]{64}", backup.get("sha256", "")):
+    raise SystemExit("Invalid recovery checksum")
+PYTHON
 [[ -d /srv/nasj && -d /srv/nasj-releases && ! -L /srv/nasj-releases ]]
 [[ $(stat -c %d /srv/nasj) == "$(stat -c %d /srv/nasj-releases)" ]]
 (( $(df -PB1 /srv/nasj-releases | awk 'END {print $4}') >= 5368709120 ))

@@ -31,9 +31,10 @@ jobs:
           ansible-lint playbooks/
       - name: Validate backup commands and restore evidence
         run: |
-          shellcheck scripts/ops/*.sh
+          shellcheck scripts/ops/*.sh infrastructure/staging/*.sh
           bash scripts/ops/test-backup-evidence.sh
           python3 scripts/ops/test-backup-flow.py
+          python3 scripts/ops/test-backup-retention.py
       - name: Scan tracked history for secrets
         run: |
           git fetch --unshallow

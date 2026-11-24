@@ -6,7 +6,7 @@
 - **Verified.** FelCloud is x86-64 Ubuntu with Node 24.20.0 and PostgreSQL 16. API, web, worker, and Certbot timer were active. Nginx syntax validation passed. The server reported 65 GiB free on the release filesystem. UFW was inactive and provider rules remain unverified.
 - **Verified recovery evidence.** An initial Neon snapshot was restored back into an isolated PostgreSQL 16 cluster. Neon runs PostgreSQL 18. A matching PostgreSQL 18 export client was required. Live application database settings have remained on FelCloud.
 - **Partial.** Runtime and migration role separation exists. Runtime lacks read access to Prisma migration history. The deployment scripts are merged, but the VPS still has its original real application directory and needs production qualification.
-- **External.** S3 endpoint, bucket permissions and lifecycle, encryption custody, alert routing, and protected infrastructure credentials must be supplied. No production apply, cutover, scheduled backup, or migration was performed during implementation.
+- **External.** A dedicated local backup volume, Age key custody, alert routing, and protected infrastructure credentials still need production configuration. No production apply, cutover, scheduled backup, or migration was performed during implementation.
 
 ## Architecture and decisions
 
@@ -21,10 +21,10 @@ flowchart LR
   Helper --> Systemd[API, web, worker]
   Systemd --> PG[FelCloud PostgreSQL primary]
   PG --> Dump[Consistent compressed dump]
-  Dump --> Encrypted[Age encryption and S3 object]
-  Encrypted --> Verify[Download, checksum, PG16 restore]
-  Verify --> Neon[New Neon recovery database, optional]
-  Verify --> Gate[Migration backup gate]
+  Dump --> Encrypted[Age encryption and bounded local archive]
+  Encrypted --> Verify[Read back, checksum, PG16 restore]
+  Verify --> Neon[Fresh Neon database and evidence check]
+  Neon --> Gate[Migration backup gate]
   Gate --> Helper
   Helper --> Rollback[Restore previous app symlink on failure]
   Encrypted --> DR[Recovery host and known-good app release]
@@ -56,21 +56,47 @@ source. Neon-native exports require a client at least as new as Neon.
 | `ansible_host`, `ansible_user`, `nasj_public_health_url` | Private Ansible extra vars | Supply actual endpoint, account and address. The tracked inventories contain placeholders. |
 | `nasj_deploy_config` | Vault vars | Reviewed deploy config from the template. Existing file is preserved. |
 | Runtime and migration env files | `/etc/nasj/runtime.env`, `/etc/nasj/migration.env` | Provision privately from the existing config, with separate owner groups. |
-| `BACKUP_DATABASE`, `S3_ENDPOINT`, `S3_BUCKET`, `S3_REGION`, `S3_PREFIX`, `NEON_REFRESH_ENABLED` | Vault map entry `nasj_backup_files['backup.conf']` | Configure S3 and choose whether to refresh Neon. Bucket credentials are separate. |
-| AWS shared credentials | Vault map entry `backup.aws` | Missing. Give the backup identity PutObject/GetObject on its prefix and no delete permissions. |
+| `BACKUP_DATABASE`, `BACKUP_MAX_MIB`, `NEON_REFRESH_ENABLED` | Vault map entry `nasj_backup_files['backup.conf']` | Set the existing database name, archive limit (default 256 MiB), and enable nightly Neon refresh in production. A migration always requires Neon. |
+| `nasj_backup_volume_uuid` | Private Ansible extra vars | UUID of a preformatted, capacity-bounded ext4 filesystem. Required for the opt-in mount playbook. No formatting is performed. |
 | Age public recipients and restore identity | Vault map entries `backup.recipients`, `backup.identity` | Missing. Keep an independent recovery key copy outside the VPS. The production verifier requires a private identity to check its round trip. |
 | `PGHOST`, `PGUSER`, `PGDATABASE=neondb` | Vault map entry `backup-neon.conf` | Existing recovery destination. Direct endpoint and verified TLS required. |
 | Dedicated Neon password entry | Vault map entry `backup-neon.pgpass` | Supply securely. Use a database wildcard for newly named candidate databases, restricted to the exact Neon host and role. |
 | HTTPS alert target and authentication | Vault map entry `notify.curl` | Missing. Supply a protected curl config with `url` and any auth headers. |
 
-Set private bucket access and versioning. Configure lifecycle expiry for `daily/` (30 days),
-`weekly/` (84 days), and `monthly/` (approximately six months). Choose a separate
-pre-migration retention policy. Exclude `protected/` from expiry and apply retention lock to
-historical versions where supported. Readers should validate a manifest's hash before using any
-archive. The historical manifest points to an immutable object even if a protected-pointer
-update is interrupted. Configure external backup heartbeat alerts so loss of the host is visible.
-The on-host health timer detects expired TLS, service and DB failures, memory and load pressure,
-low disk, stale backup receipts, and interrupted deployments.
+The selected storage is a private encrypted local filesystem at `/srv/nasj-backups`.
+A loopback S3 service could reuse the old client abstraction but would add a server,
+authentication and lifecycle configuration, a network listener, and resource overhead.
+It would share the VPS failure domain either way. The filesystem creates no storage endpoint,
+API or administrative interface, and removes the need for AWS credentials. Root owns archive
+directories and files. The disposable restore account can write only its private workspace.
+Do not configure the proposed port 9000 or buckets.
+
+Use a dedicated, capacity-bounded filesystem with `nodev,nosuid,noexec,nofail`. Prefer a
+separate block volume; an existing, fully preallocated image is an alternative only if its
+capacity can be reserved without compromising the database filesystem. Never use an
+unbounded sparse production file on the database disk. The backup refuses the PostgreSQL
+filesystem and refuses to proceed if the mount is absent. Temporary dumps and restore
+clusters use the same bounded mount. The operation requires free space equal to at least six
+times the configured per-file limit plus 512 MiB. Start by reserving 8 GiB for the current
+small workload, measure growth and increase only after checking host capacity.
+
+Retention treats daily, weekly, monthly and pre-migration archives independently with 30,
+84, 183 and 30 days respectively. It considers only complete backup pairs and leaves the
+newest verified pair per class. Review incomplete artifacts and obsolete Neon candidates
+separately. The Neon refresh never drops a previous recovery database.
+
+**Full VPS loss also loses the local archive history.** Neon is the only off-host database
+recovery destination in this design. Its latest verified database is the recovery point.
+If both FelCloud and Neon are inaccessible, this setup cannot recover the database. A same-host
+receipt never qualifies a migration. The hook creates a new Neon database from the exact
+current snapshot, compares restored table and migration evidence, and publishes a release-bound
+off-host receipt only on success. Keep the current Neon project and recovery access recorded
+outside the VPS. The production PostgreSQL data and Nginx/systemd service lifecycle are
+independent of backup mount or Neon failure.
+
+Configure an external heartbeat to detect loss of the host. The local monitor checks TLS,
+applications, database, CPU load, memory, disk, local and off-host backup freshness, and
+unfinished deployment state. Alerts need an operator-approved destination.
 
 ## Ordered operator qualification
 
@@ -86,8 +112,10 @@ ansible-playbook -i inventories/production/hosts.yml --ask-vault-pass \
   -e @/secure/nasj-production.yml playbooks/configure.yml --check
 ```
 
-1. Review the S3 permissions, retention, Age key custody and notification route. Verify that
-   backup and infrastructure credentials are restricted and separate from application release SSH.
+1. Reserve and format a dedicated ext4 volume outside the PostgreSQL filesystem. Record its
+   UUID. After separate mount approval, run `playbooks/mount-backup.yml` with
+   `nasj_confirm_backup_mount=true` and the reviewed UUID. Verify `findmnt /srv/nasj-backups`.
+   Review retention, Age key custody, Neon access and the notification route.
 2. After explicit production apply authorization, rerun configure with
    `-e nasj_production_apply=true`. Qualify the restricted key and preserved SSH access
    separately before setting `nasj_reload_ssh=true`. Inventory-specific Nginx, TLS and systemd
@@ -95,8 +123,8 @@ ansible-playbook -i inventories/production/hosts.yml --ask-vault-pass \
 3. After approving the read grant, run `playbooks/database-grant.yml` with
    `nasj_confirm_database_grant=true` and the verified database/runtime/migration identifiers.
 4. Run `playbooks/backup.yml` with `nasj_run_backup=true`. Require
-   `NASJ_BACKUP_READY`, an uploaded manifest and successful verification. Confirm the Neon
-   pointer if refresh was enabled. Run the backup twice and validate alarm delivery using a
+   `NASJ_BACKUP_READY`, a matching local manifest and successful isolated restore. Require a fresh Neon
+   receipt and test recovery from that database before enabling deployment. Run the backup twice and validate alarm delivery using a
    separate staging destination before enabling `nasj_enable_backup_timer` and
    `nasj_enable_monitoring`.
 5. Review the artifact and approve a maintenance window. Run `playbooks/adopt-release.yml`
@@ -123,8 +151,9 @@ records, credentials, PostgreSQL extension inventory, and DNS/TLS details. Prese
 encrypted copy of role grants/settings and archive a known-good application artifact beyond
 GitHub Actions artifact expiry. The data backup excludes ownership and ACLs by design.
 
-Retrieve an authenticated manifest and ciphertext. Check SHA-256, decrypt with the recovery
-identity in a protected location, then run `playbooks/disaster-recovery.yml` against an isolated
+For complete VPS loss, use the latest verified Neon database. Export with a client matching
+Neon and test on disposable PostgreSQL 16 before starting recovery. Create a PostgreSQL 16 custom-format dump from that validated restore for the recovery playbook. If the local archive
+volume survived, check the Age archive SHA-256 and decrypt in a protected location. Then run `playbooks/disaster-recovery.yml` against an isolated
 recovery inventory, with `nasj_confirm_restore=true`, `nasj_recovery_database=nasj_recovery_drill`, and the protected dump path. Confirm extensions, runtime grants,
 application login/read/write smoke behavior and outbox handling before routing traffic. Start
 the known-good app and worker only after verifying backup compatibility. Restore DNS, test public
@@ -141,7 +170,8 @@ restore-to-time drills. Neon restore history only covers the copy uploaded to Ne
 - [x] Read-only server audit and historical Neon recovery proof.
 - [x] Deployment fault suite and disposable PostgreSQL evidence test.
 - [x] Ansible syntax and inventory validation on local tooling.
-- [ ] P0: Verify S3 upload/download, protection and retention on the approved bucket.
+- [x] P0 implementation: same-host archive, retention and independent migration gate.
+- [ ] P0: Qualify a real bounded backup mount and a new synthetic Neon destination.
 - [ ] P0: Validate full backup pipeline and Ansible idempotency on disposable Ubuntu 24.04.
 - [ ] P0: Qualify dedicated infrastructure and deploy SSH, backup credentials and alerts.
 - [ ] P0: Authorize and qualify live backup, restricted access, adoption, first deploy and rollback.
@@ -154,12 +184,12 @@ restore-to-time drills. Neon restore history only covers the copy uploaded to Ne
 | Check | Environment | Expected and observed result | Status |
 |---|---|---|---|
 | Existing deployment fault suite | Local temporary shell fixtures | Unauthorized artifacts, bad digests, lock contention, signal interruption, backup failures and restart/readiness/worker rollback were handled as expected. | Passed |
-| Backup orchestration | Temporary filesystem and fake storage/restore adapters | Valid backup writes receipt. Upload failure, tampered ciphertext, or invalid restore writes no receipt. Failed Neon refresh leaves the verified object-store receipt available. | Passed |
+| Backup orchestration | Temporary filesystem and fake storage/restore adapters | Nightly and migration success, missing mount, failed write, invalid restore, failed Neon refresh and wrong Neon receipt passed. A same-host receipt alone cannot authorize migration. | Passed |
 | Backup evidence | Local isolated PostgreSQL 16 Docker container | Matching restore returned identical evidence. Removing a row changed evidence. An unfinished migration failed the check. | Passed |
 | Ansible inventory and syntax | Both checked-in sample inventories | Inventory parsing and playbook syntax completed. | Passed |
 | ShellCheck, actionlint, YAML and Ansible lint | Local static checking | Scripts and workflows passed the checks run. | Passed |
 | Systemd schedule | Local systemd calendar parser | The daily UTC trigger parsed. | Passed |
-| Real S3 provider and scheduled backup | Provider and staging host not configured | Requires versioned bucket, authorized credentials and alarm route. | Blocked |
+| S3 upload and download | Not selected | Local filesystem opens no listener and requires no S3 account. | Not applicable |
 | Production-like Ansible idempotency and service configuration failure paths | Disposable Ubuntu 24.04 with systemd not provisioned | Run two applies, check for no drift, then rehearse invalid Nginx, unit, and SSH configurations. | Pending |
 | Live rollback, artifact deployment, full disaster recovery timing | Production changes not authorized | Perform only after staging qualification and a verified remote recovery point. | Pending |
 
@@ -167,3 +197,32 @@ The application workflow still publishes and verifies the same artifact ID and c
 a run that became superseded as a deliberate operator decision. Approve only the intended
 reviewed digest, and revoke any unused release authorizations. Reuse the original artifact for
 a retry. A rebuilt bundle requires fresh authorization even if its source commit matches.
+
+
+## Local VM qualification
+
+The development workstation has KVM, 12 logical CPUs, 15 GiB RAM and over 300 GiB
+available on its workspace filesystem. Use a QEMU/KVM Ubuntu 24.04 guest with 2 vCPUs,
+3 GiB RAM, a 24 GiB sparse OS image and a separate 8 GiB sparse test backup image.
+The sparse devices are appropriate for the disposable workstation guest only.
+SSH forwards on workstation loopback to guest port 22. The seed injects a unique
+host key and the launcher writes a matching known_hosts file.
+
+Download the official Ubuntu 24.04 minimal amd64 cloud image and its SHA256SUMS
+over HTTPS and verify the image before launching. Use a private work directory
+outside the Git tree:
+
+```bash
+python3 -m venv /path/to/private-vm-tools
+/path/to/private-vm-tools/bin/pip install -r infrastructure/staging/requirements.txt
+/path/to/private-vm-tools/bin/python infrastructure/staging/prepare-vm.py \
+  /path/to/verified-ubuntu.qcow2 /path/to/new-private-nasj-vm
+```
+
+Wait for `cloud-init status --wait` using the generated admin and pinned host key.
+Run `bash infrastructure/staging/qualify-vm.sh /path/to/new-private-nasj-vm` from the
+repository root. The harness provisions Ubuntu, configures twice, checks restricted SSH,
+and exercises TLS health, Age archive recovery, retention, alerts, adoption, a synthetic
+artifact switch and rollback, and the recovery marker. It uses a synthetic receipt only
+after proving that a local archive does not pass the migration gate. A synthetic Neon branch/project and credential are required
+for real remote integration. Never use the production recovery copy for fault injection.

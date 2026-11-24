@@ -1,0 +1,31 @@
+---
+- name: Verify a dedicated, mounted backup filesystem before provisioning paths
+  ansible.builtin.shell: |
+    set -eu
+    mountpoint -q /srv/nasj-backups
+    test ! -L /srv/nasj-backups
+    test "$(stat -c %d /srv/nasj-backups)" != "$(stat -c %d /var/lib/postgresql)"
+    findmnt -n -o OPTIONS --mountpoint /srv/nasj-backups
+  register: backup_storage_mount
+  changed_when: false
+  check_mode: false
+  failed_when: >-
+    backup_storage_mount.rc != 0 or
+    not (['nodev', 'nosuid', 'noexec'] | difference(backup_storage_mount.stdout.split(',')) | length == 0)
+
+- name: Protect the archive mount
+  ansible.builtin.file:
+    path: /srv/nasj-backups
+    state: directory
+    owner: root
+    group: root
+    mode: '0711'
+
+- name: Create private archive directories
+  ansible.builtin.file:
+    path: "/srv/nasj-backups/archives/{{ item }}"
+    state: directory
+    owner: root
+    group: root
+    mode: '0700'
+  loop: ['', daily, weekly, monthly, pre-migration]

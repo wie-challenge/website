@@ -4,7 +4,6 @@
     that:
       - nasj_backup_files is defined
       - "'backup.conf' in nasj_backup_files"
-      - "'backup.aws' in nasj_backup_files"
       - "'backup.recipients' in nasj_backup_files"
       - "'backup.identity' in nasj_backup_files"
       - not (nasj_enable_monitoring | default(false) | bool) or 'notify.curl' in nasj_backup_files
@@ -12,7 +11,7 @@
 
 - name: Install backup clients and disposable restore tooling
   ansible.builtin.apt:
-    name: [age, awscli, postgresql-16, postgresql-client-16, postgresql-common]
+    name: [age, postgresql-16, postgresql-client-16, postgresql-common]
     state: present
     policy_rc_d: 101
 
@@ -33,6 +32,12 @@
   loop:
     - {path: /var/lib/nasj-backup, mode: '0700'}
     - {path: /usr/local/share/nasj, mode: '0755'}
+- name: Create private disposable cluster workspace on the backup filesystem
+  ansible.builtin.file:
+    path: /srv/nasj-backups/restore-tmp
+    state: directory
+    owner: nasj-backup
+    mode: '0700'
 
 - name: Install backup configuration without exposing secret contents
   ansible.builtin.copy:
@@ -43,7 +48,7 @@
     group: root
     mode: '0600'
   loop: "{{ nasj_backup_files.keys() | list }}"
-  when: item in ['backup.conf', 'backup.aws', 'backup.recipients', 'backup.identity', 'backup-neon.conf', 'backup-neon.pgpass', 'notify.curl']
+  when: item in ['backup.conf', 'backup.recipients', 'backup.identity', 'backup-neon.conf', 'backup-neon.pgpass', 'notify.curl']
   no_log: true
   diff: false
 
@@ -60,6 +65,7 @@
     - {src: refresh-neon.sh, dest: /usr/local/libexec/nasj-refresh-neon, mode: '0755'}
     - {src: monitor.sh, dest: /usr/local/libexec/nasj-monitor, mode: '0755'}
     - {src: notify.sh, dest: /usr/local/libexec/nasj-notify, mode: '0755'}
+    - {src: backup-retention.py, dest: /usr/local/libexec/nasj-backup-retention, mode: '0755'}
     - {src: backup-evidence.sql, dest: /usr/local/share/nasj/backup-evidence.sql, mode: '0644'}
 
 - name: Install nightly backup units

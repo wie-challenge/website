@@ -17,5 +17,7 @@
     - role: deployment
     - role: security
       when: nasj_install_deploy_ssh | default(false) | bool
+    - role: backup_storage
+      when: nasj_configure_backup | default(false) | bool
     - role: backup
       when: nasj_configure_backup | default(false) | bool

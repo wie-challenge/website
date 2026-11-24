@@ -25,4 +25,11 @@ awk -v cpu="$(nproc)" '{exit ($2 > cpu * 2)}' /proc/loadavg || fault load
 [[ ! -e /var/lib/nasj-deploy/pending ]] || fault interrupted-deployment
 latest=/var/lib/nasj-backup/latest
 [[ -s $latest && $(($(date +%s) - $(stat -c %Y "$latest"))) -le 93600 ]] || fault backup-freshness
+latest_offsite=/var/lib/nasj-backup/latest-offsite
+[[ -s $latest_offsite && $(($(date +%s) - $(stat -c %Y "$latest_offsite"))) -le 93600 ]] || fault neon-freshness
+if mountpoint -q /srv/nasj-backups; then
+  (( $(df -PB1 /srv/nasj-backups | awk 'END {print $4}') >= 1073741824 )) || fault backup-disk
+else
+  fault backup-mount
+fi
 [[ $failed == false ]]

@@ -21,3 +21,4 @@ actual=$(timeout 180 "$pg/psql" -XqAt --no-password --set ON_ERROR_STOP=1 --dbna
 [[ $actual == "$2" ]]
 printf '%s\n' "$db" > /var/lib/nasj-backup/neon-latest.tmp
 mv -T /var/lib/nasj-backup/neon-latest.tmp /var/lib/nasj-backup/neon-latest
+printf '%s\n' "$db"

@@ -13,9 +13,11 @@
 
     - name: Install base packages for recovery
       ansible.builtin.apt:
-        name: [postgresql-16, postgresql-client-16, nginx, certbot, python3-certbot-nginx, curl, age, awscli]
+        name: [postgresql-16, postgresql-client-16, nginx, certbot, python3-certbot-nginx, curl, age]
         state: present
         policy_rc_d: 101
+        update_cache: true
+        cache_valid_time: 3600
 
     - name: Create application service user
       ansible.builtin.user:
