@@ -24,8 +24,8 @@ exec 9>"$state_dir/deploy.lock"
 flock -w 900 9 || { echo 'DEPLOY_LOCK_TIMEOUT'; exit 1; }
 pending="$state_dir/pending"
 [[ ! -e "$pending" ]] || { echo 'RECOVERY_REQUIRED: inspect the pending deployment'; exit 1; }
-# shellcheck source=/dev/null
 unset BASH_ENV ENV CDPATH
+# shellcheck source=/dev/null
 source "$config_dir/deploy.conf"
 for required in RELEASE_ROOT CURRENT_LINK RUNTIME_ENV MIGRATION_ENV RUNTIME_USER MIGRATION_USER NODE_BIN PUBLIC_HEALTH_URL; do
   [[ -n "${!required:-}" ]] || { echo "Missing deploy setting: $required" >&2; exit 2; }
