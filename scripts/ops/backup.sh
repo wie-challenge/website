@@ -24,7 +24,9 @@ mount_options=,$(findmnt -n -o OPTIONS --mountpoint "$store"),
 for flag in nodev nosuid noexec; do [[ $mount_options == *",$flag,"* ]]; done
 limit=${BACKUP_MAX_MIB:-256}
 [[ $limit =~ ^[1-9][0-9]{0,3}$ ]]
-(( $(df -PB1 "$store" | awk 'END {print $4}') >= (limit * 6 + 512) * 1048576 ))
+available_bytes=$(df -PB1 "$store" | awk 'END {print $4}')
+required_bytes=$(((limit * 6 + 512) * 1048576))
+[[ $available_bytes -ge $required_bytes ]]
 # Bash reports file size blocks in KiB outside POSIX mode.
 ulimit -f "$((limit * 1024))"
 id=$(date -u +%Y%m%dT%H%M%SZ)-$(cat /proc/sys/kernel/random/uuid)
