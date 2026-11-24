@@ -268,7 +268,42 @@ main with the strict required workflow check and admin enforcement. The producti
 Environment restricts deployment to main and has the SSH credential entries. The
 separate protected infrastructure Environment is absent. Both deployment flags are unset.
 
+### Production storage activation
+
+The separately authorized 20 GiB FelCloud data disk was formatted as ext4 and mounted
+persistently by Ansible at `/srv/nasj-backups`. The mounted filesystem had 19 GiB
+available with `nodev,nosuid,noexec`; PostgreSQL remained on the original root
+filesystem with 65 GiB available. API, web, worker and PostgreSQL were active after
+the mount. A subsequent read-only Ansible audit passed. This step did not configure
+backup credentials, enable timers or activate deployment.
+
+### Activation preflight follow-up
+
+Base deployment helpers and the scoped sudo rule are installed. PostgreSQL 16.15,
+the API, web, worker and Nginx were active. The backup mount remains isolated on
+`/dev/vdb`; PostgreSQL is on `/dev/vda1`. The reviewed candidate `d63a7aa` matched
+all 44 production migration names and checksums; the fresh audit also found zero
+unfinished, non-rolled-back migrations. The migration table still has no explicit
+runtime SELECT grant. The dedicated SSH user has no forced command or forwarding
+restriction in the effective configuration. Console recovery access is unverified.
+
+The release config and separate runtime and migration env files are absent. The
+backup config, Age identity and recipients, direct Neon config and password file,
+and alert config are absent. The existing production Neon recovery config is held
+privately on the operator workstation. The synthetic Neon config is absent.
+The canonical off-host receipt is absent. Both automation flags remain unset.
+
 ### Neon remote qualification and retention
+
+The private synthetic connection is available. Its direct hostname was derived
+from the saved pooled URL and checked against the existing recovery hostname before
+use. The real Ubuntu guest hook exposed inherited Neon channel binding at the local
+peer-authenticated dump. The canonical backup script now clears the inherited
+connection settings before the local dump. The retry passed encryption and local
+PostgreSQL 16 restore (2,501 bytes, 4 seconds to local publication). A separate
+verified-TLS connection probe from the guest timed out; workstation TCP port 5432
+was reachable. Remote receipt and recovery are not qualified. No production
+database or existing recovery point was modified.
 
 The old production recovery database remains a verified historical copy. There is no
 separate synthetic Neon credential in the workspace. The real refresh, release-bound
@@ -281,6 +316,24 @@ Then run, as guest root:
 ```bash
 bash qualify-neon.sh SYNTHETIC_DIRECT_HOST PRODUCTION_DIRECT_HOST
 ```
+
+Connectivity follow-up: both the workstation and Ubuntu guest resolved IPv4 and IPv6
+addresses and had default routes. Bounded socket probes connected to TCP 5432 on
+both address families, but the PostgreSQL SSLRequest (8-byte packet, code 80877103)
+received no response within 3 seconds on either machine. Bounded
+`openssl s_client -starttls postgres -verify_hostname HOST -verify_return_error`
+probes also timed out. The current helper timed out during Neon refresh after
+roughly 63 seconds. TLS certificate validation, authentication and SQL were never
+reached. The guest NAT alone cannot explain the failure; the upstream cause is
+unconfirmed. Do not relax TLS or channel binding.
+
+The local connection-isolation regression
+(`bash infrastructure/staging/check-backup-connection-isolation.sh` as guest root)
+passed the real backup and isolated restore with invalid host, port, user, database,
+password, service, SSL and PostgreSQL options inherited from the caller.
+No fresh remote verification receipt was generated. GitHub artifact 14918288458
+download was started into a private workstation directory; the complete archive and
+internal bundle checksums remain pending.
 
 The script requires the separate endpoint, runs the real pre-migration hook against a
 synthetic database, checks evidence and the remote receipt, and verifies that a deliberately

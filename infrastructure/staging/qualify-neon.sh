@@ -17,7 +17,11 @@ export PGPASSFILE=/etc/nasj/backup-neon.pgpass PGCONNECT_TIMEOUT=15
 export PGSSLROOTCERT=/etc/ssl/certs/ca-certificates.crt
 sha=$(printf 'qualification-%s' "$(cat /proc/sys/kernel/random/uuid)" | sha1sum)
 sha=${sha%% *}
-/etc/nasj/backup-before-migrate "$sha"
+# A real local restore and remote refresh must survive a caller's unrelated
+# libpq settings. The helper must still load only the protected Neon config.
+env PGHOSTADDR=192.0.2.1 PGPORT=1 PGOPTIONS='-c nasj_invalid_option=1' \
+  PGSERVICE=nasj-invalid PGSERVICEFILE=/nonexistent PGPASSWORD=invalid \
+  /etc/nasj/backup-before-migrate "$sha"
 state=/var/lib/nasj-backup
 mapfile -t receipt < <(python3 - "$state/latest-offsite" "$sha" <<'PY'
 import json, re, sys
