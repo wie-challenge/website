@@ -75,7 +75,7 @@ Use a dedicated, capacity-bounded filesystem with `nodev,nosuid,noexec,nofail`. 
 separate block volume; an existing, fully preallocated image is an alternative only if its
 capacity can be reserved without compromising the database filesystem. Never use an
 unbounded sparse production file on the database disk. The backup refuses the PostgreSQL
-filesystem and refuses to proceed if the mount is absent. Temporary dumps and restore
+filesystem and refuses to proceed if the mount is absent. The dump streams directly into Age encryption. Encrypted scratch files and temporary restore
 clusters use the same bounded mount. The operation requires free space equal to at least six
 times the configured per-file limit plus 512 MiB. Start by reserving 8 GiB for the current
 small workload, measure growth and increase only after checking host capacity.
@@ -171,7 +171,8 @@ restore-to-time drills. Neon restore history only covers the copy uploaded to Ne
 - [x] Deployment fault suite and disposable PostgreSQL evidence test.
 - [x] Ansible syntax and inventory validation on local tooling.
 - [x] P0 implementation: same-host archive, retention and independent migration gate.
-- [ ] P0: Qualify a real bounded backup mount and a new synthetic Neon destination.
+- [x] P0: Qualify the bounded archive filesystem and mount idempotency in the Ubuntu VM.
+- [ ] P0: Exercise a real remote refresh against a separate synthetic Neon database or project.
 - [ ] P0: Validate full backup pipeline and Ansible idempotency on disposable Ubuntu 24.04.
 - [ ] P0: Qualify dedicated infrastructure and deploy SSH, backup credentials and alerts.
 - [ ] P0: Authorize and qualify live backup, restricted access, adoption, first deploy and rollback.
@@ -189,8 +190,10 @@ restore-to-time drills. Neon restore history only covers the copy uploaded to Ne
 | Ansible inventory and syntax | Both checked-in sample inventories | Inventory parsing and playbook syntax completed. | Passed |
 | ShellCheck, actionlint, YAML and Ansible lint | Local static checking | Scripts and workflows passed the checks run. | Passed |
 | Systemd schedule | Local systemd calendar parser | The daily UTC trigger parsed. | Passed |
+| VM boot and dedicated storage isolation | Ubuntu 24.04.5 minimal cloud guest on KVM | Verified image digest, successful cloud-init, pinned host key, separate ext4 archive device and restrictive mount options. | Passed |
 | S3 upload and download | Not selected | Local filesystem opens no listener and requires no S3 account. | Not applicable |
-| Production-like Ansible idempotency and service configuration failure paths | Disposable Ubuntu 24.04 with systemd not provisioned | Run two applies, check for no drift, then rehearse invalid Nginx, unit, and SSH configurations. | Pending |
+| Dedicated volume provisioning and repeat apply | Disposable Ubuntu 24.04.5 guest | The storage role changed 2 tasks then 0 on the second run. UUID-based mount persistence changed 1 task then 0 on the second run. Neither run failed. | Passed |
+| Full Ansible configuration idempotency and invalid service configuration handling | Disposable Ubuntu 24.04.5 guest | Storage provisioning exercised separately. The full scenario requires completion of guest package installation. | Pending |
 | Live rollback, artifact deployment, full disaster recovery timing | Production changes not authorized | Perform only after staging qualification and a verified remote recovery point. | Pending |
 
 The application workflow still publishes and verifies the same artifact ID and checksum. Treat
@@ -202,11 +205,13 @@ a retry. A rebuilt bundle requires fresh authorization even if its source commit
 ## Local VM qualification
 
 The development workstation has KVM, 12 logical CPUs, 15 GiB RAM and over 300 GiB
-available on its workspace filesystem. Use a QEMU/KVM Ubuntu 24.04 guest with 2 vCPUs,
+available on its workspace filesystem. Qualification booted a QEMU/KVM Ubuntu 24.04.5
+guest with 2 vCPUs,
 3 GiB RAM, a 24 GiB sparse OS image and a separate 8 GiB sparse test backup image.
 The sparse devices are appropriate for the disposable workstation guest only.
 SSH forwards on workstation loopback to guest port 22. The seed injects a unique
-host key and the launcher writes a matching known_hosts file.
+host key and the launcher writes a matching known_hosts file. The guest verified a
+separate 7.8 GiB-formatted ext4 archive device with all three restricted mount flags.
 
 Download the official Ubuntu 24.04 minimal amd64 cloud image and its SHA256SUMS
 over HTTPS and verify the image before launching. Use a private work directory

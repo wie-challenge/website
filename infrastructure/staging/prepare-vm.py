@@ -42,7 +42,7 @@ user = {
     "ssh_pwauth": False,
     "ssh_deletekeys": False,
     "ssh_keys": {"ed25519_private": host_priv, "ed25519_public": " ".join(host_pub)},
-    "disk_setup": {"/dev/vdb": {"table_type": "gpt", "layout": "auto", "overwrite": False}},
+    "disk_setup": {"/dev/vdb": {"table_type": "gpt", "layout": True, "overwrite": False}},
     "fs_setup": [
         {"label": "nasj_backup_vm", "filesystem": "ext4", "device": "/dev/vdb1", "overwrite": False}
     ],
