@@ -72,6 +72,7 @@ if "${deploy_ssh[@]}" id >"$vm/ssh-rejection.log" 2>&1; then
   exit 1
 fi
 grep -q 'Only an immutable NASJ deployment command is allowed' "$vm/ssh-rejection.log"
+if [[ ${NASJ_VM_DEPLOY_ONLY:-false} != true ]]; then
 ansible-playbook "${common[@]}" -e nasj_run_backup=true playbooks/backup.yml
 "${ssh_cmd[@]}" 'sudo -n test -s /var/lib/nasj-backup/latest'
 if "${ssh_cmd[@]}" 'sudo -n /etc/nasj/backup-before-migrate aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'; then
@@ -124,10 +125,12 @@ GUEST
 ansible-playbook "${common[@]}" -e nasj_confirm_adoption=true playbooks/adopt-release.yml
 ansible-playbook "${common[@]}" -e nasj_confirm_adoption=true playbooks/adopt-release.yml
 ansible-playbook "${common[@]}" playbooks/verify.yml
+fi
 # Reproduce the production parent mode only inside the isolated guest.
 "${ssh_cmd[@]}" 'sudo -n bash -s' <<'GUEST'
 set -Eeuo pipefail
 [[ $(hostname -s) == nasj-staging ]]
+getent group syslog >/dev/null || groupadd --system syslog
 chown root:syslog /var/log
 chmod 0775 /var/log
 install -d -o root -g root -m 0700 /var/log/nasj-deploy

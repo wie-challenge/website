@@ -740,3 +740,26 @@ before retry. Obtain separate backup authorization if it has expired.
 If the release unexpectedly needs a migration, stop. After successful
 deployment, rehearse rollback to the retained legacy release and leave
 it active. No timers or automation flags are part of this proposal.
+
+#### Disposable log-path qualification
+
+A fresh Ubuntu 24.04 KVM guest used a separate synthetic backup disk and
+pinned SSH host key. Initial provisioning and configuration succeeded;
+the second Ansible apply returned 28 OK, zero changed and zero failures.
+The minimal image lacked a `syslog` group, so the guest-only regression
+runner created that group before configuring the reproduction. The test
+helper pointed deliberately at the old path and rejected the 0775
+root:syslog ancestor. Without changing those permissions, the canonical
+corrected helper accepted a verified synthetic artifact over restricted
+SSH. Separate public HTTPS and worker faults each returned
+`ROLLBACK_READY` and restored the verified active release. A pending marker
+blocked a further attempt until reconciled. Both synthetic unprivileged
+accounts were denied write access to the log directory; new logs were
+root:root 0600 and the old tree remained untouched. The real VM lifecycle
+and isolated database restore passed.
+
+The local fault suite additionally passed authorization, archive checksum,
+concurrency, signal interruption, unsafe state/log modes, log symlink and
+budget exhaustion cases. Both Ansible inventories passed syntax checks,
+and a full-history Gitleaks scan reported no findings. The correction is in
+draft PR #259; no production mutation or deploy retry was executed.
