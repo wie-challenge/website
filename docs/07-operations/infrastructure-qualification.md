@@ -172,7 +172,7 @@ restore-to-time drills. Neon restore history only covers the copy uploaded to Ne
 - [x] Ansible syntax and inventory validation on local tooling.
 - [x] P0 implementation: same-host archive, retention and independent migration gate.
 - [x] P0: Qualify the bounded archive filesystem and mount idempotency in the Ubuntu VM.
-- [ ] P0: Exercise a real remote refresh against a separate synthetic Neon database or project.
+- [x] P0: Exercise a real remote refresh against a separate synthetic Neon database or project.
 - [x] P0: Validate full local archive pipeline and Ansible idempotency on disposable Ubuntu 24.04.
 - [x] P0: Exercise synthetic adoption, restricted SSH deploy, rollback, alert, and recovery in the VM.
 - [ ] P0: Qualify dedicated infrastructure and deploy SSH, backup credentials and alerts.
@@ -290,7 +290,7 @@ restriction in the effective configuration. Console recovery access is unverifie
 The release config and separate runtime and migration env files are absent. The
 backup config, Age identity and recipients, direct Neon config and password file,
 and alert config are absent. The existing production Neon recovery config is held
-privately on the operator workstation. The synthetic Neon config is absent.
+privately on the operator workstation. Synthetic Neon config is held separately.
 The canonical off-host receipt is absent. Both automation flags remain unset.
 
 ### Neon remote qualification and retention
@@ -305,13 +305,11 @@ verified-TLS connection probe from the guest timed out; workstation TCP port 543
 was reachable. The subsequent direct TLS guest test qualified the baseline receipt and reverse recovery. No production
 database or existing recovery point was modified.
 
-The old production recovery database remains a verified historical copy. There is no
-separate synthetic Neon credential in the workspace. The real refresh, release-bound
-receipt and recovery export remain pending. Keep the existing production copy out of this
-test. Provision a separate project and a direct endpoint with a role allowed to connect
-and create databases. On the Ubuntu guest, install the updated canonical scripts and
-provide root-only `backup-neon.conf` and `backup-neon.pgpass` through private Vault vars.
-Then run, as guest root:
+The old production recovery database remains a verified historical copy and was
+excluded from testing. To reproduce the test, use a separate direct endpoint with
+a role allowed to connect and create databases. On the Ubuntu guest, install the
+updated scripts and provide root-only `backup-neon.conf` and
+`backup-neon.pgpass` through private Vault vars. Run as guest root:
 
 ```bash
 bash qualify-neon.sh SYNTHETIC_DIRECT_HOST PRODUCTION_DIRECT_HOST
@@ -398,7 +396,9 @@ synthetic rows produced a 7,415,401-byte encrypted archive; local publication to
 local publication, including remote creation, transfer, restore and verification).
 The full test including failure preservation took 174.1 seconds. CPU time for
 the driving shell and children was 1.68 seconds user and 0.34 seconds system;
-peak memory and separate upload/verification timings were not measured.
+a sample during the reverse restore showed 343 MiB used in the 3 GiB guest.
+The larger reverse restore matched evidence in 198 seconds. Peak memory and
+separate upload/verification timings were not measured.
 Only synthetic data was used. The read-only production Ansible audit passed
 with no changes; the full check-mode plan awaits the production Vault inputs.
 The original restricted SSH and activation gates remain unchanged.
