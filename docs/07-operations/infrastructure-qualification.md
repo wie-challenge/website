@@ -468,10 +468,12 @@ during this readiness audit.
 
 See [Package A](production-package-a.md) for the A1–A4 commands, credentials,
 verification and rollback. The workstation has an encrypted Vault starter with
-host, UUID, role names, deploy and backup defaults. The Age identity and recipient,
-dedicated production Neon credentials and approved alert destination are still
-required for the full dry run. Recovery console and provider firewall checks
-remain operator tasks. Strict administrator SSH and public HTTPS readiness passed;
+host, UUID, role names, deploy and backup defaults. A dedicated production Age identity and recipient are now in Vault; independent
+operator recovery custody remains to be confirmed. The existing production Neon
+credential was staged separately from qualification. A read-only verified-TLS
+probe confirmed CONNECT and CREATEDB without creating or changing a database.
+The approved alert destination, console access and provider firewall review
+remain operator inputs. Strict administrator SSH and public HTTPS readiness passed;
 the application services and PostgreSQL remained active. No production apply,
 database grant, SSH reload, notification or timer activation was performed.
 
@@ -480,3 +482,13 @@ faults, forced command rejection, schema gates, and tracked-history secret
 scanning passed. The preserved artifact still matches the head of main at this
 review; merge the infrastructure-only PR after required CI passes and retain the
 reviewed artifact for the separately authorized first cutover.
+
+The Vault-backed production plan with backups enabled completed with 21 OK,
+10 predicted changes, 10 skipped, and zero failures. It previewed deploy.conf,
+the archive mount-root permission change to 0711, private archive and restore
+directories, Age installation with package service autostarts suppressed,
+the unprivileged restore account, protected backup settings, canonical scripts,
+and inactive systemd units. It did not include the SSH role or alert config.
+The separate database-grant dry run passed its assertions and skipped SQL
+execution; the live read-only query returned false for both migration-history
+SELECT and public-schema CREATE for nasj_app. No grant was executed.

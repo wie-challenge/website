@@ -12,13 +12,14 @@ d="$HOME/.config/nasj"
 ansible-vault edit --vault-password-file "$d/production-a.vault-password" "$d/production-a.vault.yml"
 ```
 
-Populate `nasj_backup_files` with the following multiline entries. Do not use the
+The Age and Neon entries below are populated in the encrypted production Vault.
+The approved notification destination is still required. Do not use the
 qualification Neon endpoint or expose the values in chat, command arguments, or diffs.
 
 | Key | Required input |
 | --- | --- |
-| `backup.recipients` and `backup.identity` | Production Age recipient and its verification identity. Agree custody first and keep an independently recoverable copy in the operator's password vault or encrypted storage. Keep the Vault unlock material recoverable separately from the encrypted file. |
-| `backup-neon.conf` | Existing production recovery project's direct `PGHOST`, dedicated `PGUSER`, and `PGDATABASE=neondb`. The role must connect and create candidates. Leave traditional negotiation at its default. |
+| `backup.recipients` and `backup.identity` | Generated on the workstation for production and loaded in Vault. Copy `~/.config/nasj/production-age.identity` into an operator-controlled password vault as a file or onto encrypted removable storage. Restore a temporary copy and compare it byte-for-byte with `cmp -s`; keep it accessible if both the VPS and workstation fail. Store Vault unlock material separately. |
+| `backup-neon.conf` | Existing production recovery project's direct `PGHOST`, dedicated `PGUSER`, and `PGDATABASE=neondb`. The existing role authenticated with verified TLS and channel binding; a read-only SQL probe confirmed CONNECT and CREATEDB. No candidate was created. Leave traditional negotiation at its default for FelCloud. |
 | `backup-neon.pgpass` | Exact host, port 5432, database wildcard, exact recovery role and its password, using libpq pgpass escaping. |
 | `notify.curl` | Approved HTTPS destination and authentication in curl config syntax; use a target that accepts the documented JSON. |
 
@@ -60,17 +61,21 @@ permissions or alert delivery. Keep monitoring, backup timers, and SSH toggles f
   captured configuration and mount-root permissions, or removing only files
   created by A1 after confirming no unit uses them. Preserve all backup data.
 - **A2:** Review `"${a[@]}" playbooks/database-grant.yml --check -e nasj_confirm_database_grant=true`.
-  After separate consent, remove `--check`. Verify with
+  After separate consent, remove `--check`. The exact change is
+  `GRANT SELECT ON TABLE public._prisma_migrations TO nasj_app;`. Verify with
   `SELECT has_table_privilege('nasj_app','public._prisma_migrations','SELECT'), has_schema_privilege('nasj_app','public','CREATE');`
   in `nasj`; expect true and false. Rollback, if separately approved and before
   deploying software that needs the grant, is
   `REVOKE SELECT ON TABLE public._prisma_migrations FROM nasj_app;`.
 - **A3:** Administrator SSH works with strict host-key checking. Provider firewall
   and independent console login are unverified. In FelCloud, open the existing VPS
-  remote console, confirm login without relying on SSH, compare the host's
+  remote console, confirm login without relying on SSH, verify `sudo -v`, and compare the host's
   `ssh-keygen -lf /etc/ssh/ssh_host_ed25519_key.pub` with the pinned host key, and
-  review provider firewall rules. Keep the console and an independent admin SSH
-  session open. Supply the dedicated public key as `nasj_deploy_public_key` and set
+  review the firewall attached to this exact VPS: confirm inbound SSH from the
+  administrator and the approved deployment path, public web ports 80/443, no
+  public PostgreSQL 5432, and outbound HTTPS and Neon 5432. Record observations
+  without changing rules. Keep the console and an independent admin SSH
+  session open. The dedicated public key is already staged as `nasj_deploy_public_key`. Set
   `nasj_recovery_access_verified: true` only after that check. Review
   `configure.yml --check -e nasj_install_deploy_ssh=true`; apply only with explicit
   approval and keep reload false until separately authorized. This adds
@@ -94,3 +99,22 @@ permissions or alert delivery. Keep monitoring, backup timers, and SSH toggles f
 Package B still requires a canonical live backup, independent Neon restore, and a
 fresh verified off-host receipt. Package C still requires that receipt and separately
 authorized maintenance, exact artifact deployment and rollback verification.
+
+### Notification compatibility
+
+The notifier POSTs HTTPS with `Content-Type: application/json`, a 15-second timeout
+and the payload `{"unit":"nasj-backup.service","state":"failed"}`. The unit value
+varies by caller. Generic HTTPS receivers that accept these fields are compatible.
+Native [Discord webhooks](https://docs.discord.com/developers/resources/webhook#execute-webhook)
+need a message field such as `content` or `embeds`.
+[Telegram sendMessage](https://core.telegram.org/bots/api#sendmessage) expects
+message text and a destination. Neither accepts this payload directly. SMTP or an
+email address is not a supported transport; an existing HTTPS receiver that
+accepts this payload and forwards email can be used. Do not add a relay or
+delivery-specific code to Package A without a separate scope decision.
+
+For a compatible destination, set `nasj_backup_files["notify.curl"]` in the
+encrypted Vault to the approved `url = "https://..."` and, if required,
+`header = "Authorization: Bearer ..."`. Use HTTPS with normal certificate
+validation. Do not place any real URL token or header in this runbook. No
+destination has been selected and no notification was sent.
