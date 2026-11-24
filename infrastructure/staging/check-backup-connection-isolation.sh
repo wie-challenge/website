@@ -7,5 +7,6 @@ source /etc/nasj/backup.conf
 env PGHOST=invalid PGHOSTADDR=192.0.2.1 PGPORT=1 PGUSER=invalid \
   PGDATABASE=invalid PGPASSWORD=invalid PGPASSFILE=/nonexistent \
   PGSSLMODE=verify-full PGSSLROOTCERT=/nonexistent PGCHANNELBINDING=require \
+  PGSSLNEGOTIATION=direct \
   PGOPTIONS='-c search_path=nonexistent' PGSERVICE=invalid PGSERVICEFILE=/nonexistent \
   /etc/nasj/backup-before-migrate

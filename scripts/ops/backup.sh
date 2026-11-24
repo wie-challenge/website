@@ -7,7 +7,7 @@ export PATH=/usr/sbin:/usr/bin:/sbin:/bin
 # helper loads its own connection settings from the protected Neon config.
 unset PGHOST PGHOSTADDR PGPORT PGUSER PGDATABASE PGPASSWORD PGPASSFILE \
   PGSSLMODE PGSSLROOTCERT PGCHANNELBINDING PGOPTIONS PGSERVICE PGSERVICEFILE \
-  PGCONNECT_TIMEOUT
+  PGCONNECT_TIMEOUT PGSSLNEGOTIATION
 [[ $EUID == 0 && $# -le 1 ]]
 release=${1:-nightly}
 [[ $release == nightly || $release =~ ^[0-9a-f]{40}$ ]]

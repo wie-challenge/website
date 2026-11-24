@@ -302,7 +302,7 @@ peer-authenticated dump. The canonical backup script now clears the inherited
 connection settings before the local dump. The retry passed encryption and local
 PostgreSQL 16 restore (2,501 bytes, 4 seconds to local publication). A separate
 verified-TLS connection probe from the guest timed out; workstation TCP port 5432
-was reachable. Remote receipt and recovery are not qualified. No production
+was reachable. The subsequent direct TLS guest test qualified the baseline receipt and reverse recovery. No production
 database or existing recovery point was modified.
 
 The old production recovery database remains a verified historical copy. There is no
@@ -333,7 +333,7 @@ endpoint in AWS `us-east-2`:
 | Source | DNS / TCP 5432 | Traditional SSLRequest | Direct TLS with PostgreSQL ALPN | Certificate / hostname | Authentication / SQL |
 | --- | --- | --- | --- | --- | --- |
 | Workstation | Resolved / connected | Timed out in 6 seconds | TLS 1.3 | Verified | PostgreSQL 18.7 authenticated with channel binding required, executed SQL and confirmed CREATEDB |
-| Ubuntu KVM guest | Resolved / connected | Timed out in 6 seconds | TLS 1.3 | Verified | Guest PostgreSQL 18 client installation started; no guest SQL result yet |
+| Ubuntu KVM guest | Resolved / connected | Timed out in 6 seconds | TLS 1.3 | Verified | Guest PostgreSQL 18.7 completed a verified remote restore and executed evidence queries |
 | FelCloud | Resolved / connected | Negotiated TLS 1.3 | TLS 1.3 | Verified in both modes | Not attempted; credential-free network probe only |
 
 The difference is specific to traditional negotiation over the development network.
@@ -346,16 +346,16 @@ would help isolate the workstation network; current evidence does not justify a
 permanent transport change.
 
 GitHub confirmed artifact ID `14918288458`, name `production-release-1`, size
-263,566,244 bytes, and the exact reviewed commit. Both cryptographic checks and
-safe extraction require the complete download.
+263,566,244 bytes, and the exact reviewed commit. The private workstation copy passed both digest checks and canonical safe
+extraction. The extracted manifest confirmed the exact commit, Linux x64 and
+Node v24.20.0. ZIP SHA-256: `1a206cbe2fd8a3ef884b60431132fcb04fbd14879185fc58eb8cb401cffc9b18`.
+Bundle SHA-256: `1baa090ab7430db0665e0fc5a45c7c5c480ae4a79aa3b246ba871b51329ed5e5`.
 
 The local connection-isolation regression
 (`bash infrastructure/staging/check-backup-connection-isolation.sh` as guest root)
 passed the real backup and isolated restore with invalid host, port, user, database,
 password, service, SSL and PostgreSQL options inherited from the caller.
-No fresh remote verification receipt was generated. GitHub artifact 14918288458
-download was started into a private workstation directory; the complete archive and
-internal bundle checksums remain pending.
+That local-only test does not generate a fresh off-host verification receipt.
 
 The script requires the separate endpoint, runs the real pre-migration hook against a
 synthetic database, checks evidence and the remote receipt, and verifies that a deliberately
@@ -374,6 +374,58 @@ the policy. Account for full logical copies, Neon history retention, and failed 
 separately. An operator must independently verify a newer restorable copy and obtain
 approval before any deletion. No pruning of Neon databases is automated. Local retention
 continues independently. Total VPS loss removes all same-host history.
+
+### Guest remote qualification and transport
+
+The disposable Ubuntu guest now has PostgreSQL 16 for local dump, verification and
+restore, plus PostgreSQL 18.7 client tools for remote direct TLS. Installing the
+second client exposed an unqualified `pg_restore` invocation: the newer wrapper
+sent `SET transaction_timeout` to PostgreSQL 16. The local verifier now uses explicit
+PostgreSQL 16 executables. The remote helper defaults to traditional negotiation
+using PostgreSQL 16; the test-only `NEON_SSL_NEGOTIATION=direct` configuration
+selects PostgreSQL 18. Both paths require hostname and CA verification and channel
+binding. There is no automatic fallback.
+
+The canonical guest hook created and verified a 2,501-byte encrypted archive and
+published a release-bound Neon receipt in 21 seconds (3 seconds to local
+publication). The full test, including a failed candidate with intentionally
+mismatched evidence, took 49.7 seconds. The earlier verified receipt remained
+unchanged and the failed remote candidate had no receipt. PostgreSQL 18 exported
+the verified candidate and disposable PostgreSQL 16 restored and matched its
+table and migration evidence in 22 seconds. A repeat with 25,000 additional
+synthetic rows produced a 7,415,401-byte encrypted archive; local publication took
+3 seconds and the off-host receipt took 103 seconds total (100 seconds after
+local publication, including remote creation, transfer, restore and verification).
+The full test including failure preservation took 174.1 seconds. CPU time for
+the driving shell and children was 1.68 seconds user and 0.34 seconds system;
+peak memory and separate upload/verification timings were not measured.
+Only synthetic data was used. The read-only production Ansible audit passed
+with no changes; the full check-mode plan awaits the production Vault inputs.
+The original restricted SSH and activation gates remain unchanged.
+
+For production approval, run the playbooks from `infrastructure/ansible` with the
+production inventory and a private Vault file. The approval packages are:
+
+- **A — Infrastructure:** Review `configure.yml --check --extra-vars @VAULT` with
+  backup enabled and timer activation off. Apply with
+  `-e nasj_production_apply=true` only after consent. Keep SSH configuration and
+  reload off until independent console access is verified and the SSH change is
+  authorized. Review `database-grant.yml -e nasj_confirm_database_grant=true`
+  separately. Only the runtime migration-history SELECT grant is intended.
+  Validate services, mount and permissions; preserve prior configuration for
+  rollback. The existing 20 GiB disk must not be reformatted.
+- **B — Backup qualification:** After approval run
+  `backup.yml -e nasj_run_backup=true`, recover the fresh candidate independently,
+  compare archive and remote evidence, and verify the canonical receipt is less
+  than 24 hours old. Preserve all previous Neon candidates. A failed run or
+  mismatched evidence stops activation; it must not be repaired by editing receipts.
+- **C — Cutover:** After separate maintenance approval, run
+  `adopt-release.yml -e nasj_confirm_adoption=true`; then authorize and deploy the
+  digest-bound artifact per the deployment runbook. Verify API, web, worker and
+  public HTTPS, and exercise rollback to the retained compatible prior release
+  under the deployment lock. Reconcile the release state before enabling CD.
+  Schedule and confirm backup and monitoring runs, with separately approved
+  activation and flags. No production mutation was executed for this phase.
 
 ### Production activation approval steps
 
