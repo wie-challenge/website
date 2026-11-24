@@ -463,3 +463,20 @@ production inventory and a private Vault file. The approval packages are:
 
 No production mutation, off-host write, deployment activation or provider change was made
 during this readiness audit.
+
+### Package A preparation
+
+See [Package A](production-package-a.md) for the A1–A4 commands, credentials,
+verification and rollback. The workstation has an encrypted Vault starter with
+host, UUID, role names, deploy and backup defaults. The Age identity and recipient,
+dedicated production Neon credentials and approved alert destination are still
+required for the full dry run. Recovery console and provider firewall checks
+remain operator tasks. Strict administrator SSH and public HTTPS readiness passed;
+the application services and PostgreSQL remained active. No production apply,
+database grant, SSH reload, notification or timer activation was performed.
+
+Backup flow (nine scenarios), retention, real PostgreSQL evidence, deployment
+faults, forced command rejection, schema gates, and tracked-history secret
+scanning passed. The preserved artifact still matches the head of main at this
+review; merge the infrastructure-only PR after required CI passes and retain the
+reviewed artifact for the separately authorized first cutover.

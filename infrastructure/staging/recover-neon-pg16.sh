@@ -3,8 +3,10 @@
 set -Eeuo pipefail
 [[ $EUID == 0 && $(hostname -s) == nasj-staging && $# == 2 && $1 != "$2" ]]
 umask 077
+# shellcheck source=/dev/null
 source /etc/nasj/backup.conf
 [[ $BACKUP_DATABASE == nasj_fixture ]]
+# shellcheck source=/dev/null
 source /etc/nasj/backup-neon.conf
 [[ $PGHOST == "$1" && $PGHOST == *.neon.tech && $PGHOST != *-pooler.* ]]
 export PGHOST PGUSER PGSSLMODE=verify-full PGCHANNELBINDING=require

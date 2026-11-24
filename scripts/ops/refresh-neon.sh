@@ -6,8 +6,8 @@ umask 077
 [[ $2 =~ ^NASJ_EVIDENCE:[0-9]+:[0-9]+:[0-9a-f]{32}:[0-9a-f]{32}$ ]]
 conf=/etc/nasj/backup-neon.conf
 [[ -f $conf && ! -L $conf && $(stat -c '%u:%a' "$conf") == 0:600 ]]
-# shellcheck source=/dev/null
 NEON_SSL_NEGOTIATION=postgres
+# shellcheck source=/dev/null
 source "$conf"
 [[ $PGHOST == *.neon.tech && $PGHOST != *-pooler.* && $PGDATABASE == neondb ]]
 export PGHOST PGUSER PGDATABASE PGSSLMODE=verify-full PGCHANNELBINDING=require
