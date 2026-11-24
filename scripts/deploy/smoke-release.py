@@ -88,6 +88,8 @@ with tempfile.TemporaryDirectory(prefix="nasj-release-smoke-") as scratch:
                         "exec",
                         name,
                         "pg_isready",
+                        "-h",
+                        "127.0.0.1",
                         "-U",
                         "postgres",
                         "-d",
@@ -100,6 +102,8 @@ with tempfile.TemporaryDirectory(prefix="nasj-release-smoke-") as scratch:
             ):
                 break
             time.sleep(0.5)
+        else:
+            raise RuntimeError("Disposable PostgreSQL did not accept TCP connections")
         env = {
             **os.environ,
             "NODE_ENV": "production",

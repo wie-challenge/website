@@ -43,7 +43,18 @@ try:
     for _ in range(60):
         if (
             subprocess.run(
-                ["docker", "exec", name, "pg_isready", "-U", "postgres", "-d", "nasj"],
+                [
+                    "docker",
+                    "exec",
+                    name,
+                    "pg_isready",
+                    "-h",
+                    "127.0.0.1",
+                    "-U",
+                    "postgres",
+                    "-d",
+                    "nasj",
+                ],
                 capture_output=True,
                 check=False,
             ).returncode
@@ -51,6 +62,8 @@ try:
         ):
             break
         time.sleep(0.5)
+    else:
+        raise RuntimeError("Disposable PostgreSQL did not accept TCP connections")
     url = f"postgresql://postgres:{password}@127.0.0.1:{port}/nasj"
     env = {**os.environ, "MIGRATION_DATABASE_URL": url, "DATABASE_URL": url}
     checker = ["node", "apps/api/scripts/deploy-check-schema.mjs"]
@@ -106,4 +119,4 @@ try:
     )
 finally:
     if created:
-        run(["docker", "rm", "-f", name])
+        run(["docker", "rm", "-f", "-v", name])
