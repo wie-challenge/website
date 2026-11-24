@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 set -Eeuo pipefail
 umask 077
+started=$SECONDS
 export PATH=/usr/sbin:/usr/bin:/sbin:/bin
 unset PGHOST PGHOSTADDR PGPORT PGUSER PGDATABASE PGSERVICE PGSERVICEFILE PGPASSWORD
 [[ $EUID == 0 && $# -le 1 ]]
@@ -47,6 +48,7 @@ stage=encrypt
 timeout 300 runuser -u postgres -- "$pg/pg_dump" --no-password -Fc --no-owner --no-acl --dbname="$BACKUP_DATABASE" 2>&8 |
   age -R /etc/nasj/backup.recipients -o "$scratch/backup.age" 2>&8
 digest=$(sha256sum "$scratch/backup.age"); digest=${digest%% *}
+archive_bytes=$(stat -c %s "$scratch/backup.age")
 stage=restore
 age -d -i /etc/nasj/backup.identity "$scratch/backup.age" 2>&8 |
   timeout 300 runuser -u nasj-backup -- env TMPDIR="$store/restore-tmp" pg_virtualenv -v 16 /usr/local/libexec/nasj-verify-backup >"$scratch/evidence" 2>&8
@@ -58,8 +60,8 @@ class=daily
 [[ $(date -u +%d) != 01 ]] || class=monthly
 [[ $release == nightly ]] || class=pre-migration
 key="$class/$id"
-printf '{"id":"%s","release":"%s","sha256":"%s","key":"%s.dump.age","evidence":"%s","location":"same-vps"}\n' \
-  "$id" "$release" "$digest" "$key" "$evidence" >"$scratch/manifest.json"
+printf '{"id":"%s","release":"%s","sha256":"%s","key":"%s.dump.age","evidence":"%s","location":"same-vps","bytes":%s,"elapsed_seconds":%s}\n' \
+  "$id" "$release" "$digest" "$key" "$evidence" "$archive_bytes" "$((SECONDS - started))" >"$scratch/manifest.json"
 mv -T -- "$scratch/backup.age" "$store/archives/$key.dump.age"
 printf '%s  %s\n' "$digest" "$store/archives/$key.dump.age" | sha256sum --check --status
 mv -T -- "$scratch/manifest.json" "$store/archives/$key.json"
@@ -72,11 +74,11 @@ if [[ $release != nightly || ${NEON_REFRESH_ENABLED:-false} == true ]]; then
   stage=neon
   # The helper creates a new remote database, validates it and prints its identity only after success.
   neon_db=$(age -d -i /etc/nasj/backup.identity "$store/archives/$key.dump.age" 2>&8 |
-    /usr/local/libexec/nasj-refresh-neon "$id" "$evidence" 2>&8)
+    /usr/local/libexec/nasj-refresh-neon "$id" "$evidence" "$release" "$digest" 2>&8)
   expected_db="nasj_${id//-/}"
   [[ $neon_db == "${expected_db,,}" ]]
-  printf '{"id":"%s","release":"%s","neon_database":"%s","sha256":"%s","evidence":"%s"}\n' \
-    "$id" "$release" "$neon_db" "$digest" "$evidence" > "$state/latest-offsite.tmp"
+  printf '{"id":"%s","release":"%s","neon_database":"%s","sha256":"%s","evidence":"%s","bytes":%s,"elapsed_seconds":%s}\n' \
+    "$id" "$release" "$neon_db" "$digest" "$evidence" "$archive_bytes" "$((SECONDS - started))" > "$state/latest-offsite.tmp"
   mv -T "$state/latest-offsite.tmp" "$state/latest-offsite"
   sync -f "$state"
 fi

@@ -22,6 +22,13 @@ docker exec "$name" pg_dump -Fc -U postgres postgres |
 original=$(sql postgres -f /evidence.sql)
 restored=$(sql restore -f /evidence.sql)
 [[ $original =~ ^NASJ_EVIDENCE:2:1: && $original == "$restored" ]]
+# Execute the same receipt transaction used by the remote candidate verifier.
+receipt=$(awk '/<<.SQL./ {printing=1; next} /^SQL$/ {printing=0} printing' "$root/refresh-neon.sh" |
+  docker exec -i "$name" psql -XqAt -U postgres -d restore -v ON_ERROR_STOP=1 \
+    -v backup_id=synthetic -v release=nightly -v archive_sha=fixture-hash -v "evidence=$original")
+[[ $receipt == synthetic:fixture-hash ]]
+[[ $(sql restore -c 'SELECT release FROM nasj_recovery_metadata.receipt') == nightly ]]
+[[ $(sql restore -f /evidence.sql) == "$original" ]]
 sql restore -c 'DELETE FROM sample'
 [[ $(sql restore -f /evidence.sql) != "$original" ]]
 sql restore -c 'UPDATE "_prisma_migrations" SET finished_at=NULL'

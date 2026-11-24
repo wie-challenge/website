@@ -238,3 +238,101 @@ and exercises TLS health, Age archive recovery, retention, alerts, adoption, a s
 artifact switch and rollback, the recovery marker, and missing-mount handling. It uses a synthetic receipt only
 after proving that a local archive does not pass the migration gate. A synthetic Neon branch/project and credential are required
 for real remote integration. Never use the production recovery copy for fault injection.
+
+## Production readiness audit, 2026-11-24
+
+FelCloud still runs the original real release directory. API, web, worker, PostgreSQL,
+Nginx and the Certbot timer were active. Nginx configuration validated and public
+readiness returned `ready`. Only the 80 GiB VPS disk was visible. `/srv` and
+`/var/lib/postgresql` share its root ext4 filesystem with 65 GiB free. No dedicated
+backup block device is visible. Prefer requesting a separate volume. An explicitly
+reserved, fully preallocated image is an alternative if the provider cannot attach
+one and an operator reviews the capacity impact. Never mount an unbounded sparse
+image on the production database filesystem.
+
+The runtime and migration DB roles point to the same database and are distinct.
+Neither has superuser, database-creation or role-creation rights. Only the migration
+role can create in the public schema. The runtime role still needs SELECT on
+`public._prisma_migrations`. PostgreSQL reported 19,364,887 bytes in the production
+database. The new instrumentation measured a 2,501-byte encrypted synthetic archive in
+3 seconds on the guest. The historical production Neon drill did not record archive size or
+RTO. The live database size is not an archive measurement. No production dump
+was taken for this audit. Existing runtime and migration secret files are 0640 and
+0600 respectively and remain in place.
+
+SSH listens on 22, permits public keys, disables password login, and permits public-key
+root login and forwarding globally. The dedicated restrictions must be installed and
+validated separately. UFW is inactive and the host reported no nftables tables. Provider
+firewall controls and out-of-band recovery access still need confirmation. GitHub protects
+main with the strict required workflow check and admin enforcement. The production
+Environment restricts deployment to main and has the SSH credential entries. The
+separate protected infrastructure Environment is absent. Both deployment flags are unset.
+
+### Neon remote qualification and retention
+
+The old production recovery database remains a verified historical copy. There is no
+separate synthetic Neon credential in the workspace. The real refresh, release-bound
+receipt and recovery export remain pending. Keep the existing production copy out of this
+test. Provision a separate project and a direct endpoint with a role allowed to connect
+and create databases. On the Ubuntu guest, install the updated canonical scripts and
+provide root-only `backup-neon.conf` and `backup-neon.pgpass` through private Vault vars.
+Then run, as guest root:
+
+```bash
+bash qualify-neon.sh SYNTHETIC_DIRECT_HOST PRODUCTION_DIRECT_HOST
+```
+
+The script requires the separate endpoint, runs the real pre-migration hook against a
+synthetic database, checks evidence and the remote receipt, and verifies that a deliberately
+invalid candidate has no receipt and cannot replace the local recovery pointer. It retains
+both candidates. Export the verified candidate using a PostgreSQL client at least as new
+as the remote server. Restore into a disposable PostgreSQL 16 database using the documented
+compatibility procedure and compare the evidence and its synthetic fixture row. Record the
+actual archive bytes and duration from `latest-offsite` and independently measure the
+recovery time. The remote `nasj_recovery_metadata.receipt` table makes the successful
+candidate and release association discoverable even if the VPS is lost.
+
+Start with the newest seven verified daily candidates, four weekly candidates, three
+monthly candidates, and a pinned known-good point and any release-bound candidates still
+needed for an incident. Review database size and Neon plan usage weekly before changing
+the policy. Account for full logical copies, Neon history retention, and failed candidates
+separately. An operator must independently verify a newer restorable copy and obtain
+approval before any deletion. No pruning of Neon databases is automated. Local retention
+continues independently. Total VPS loss removes all same-host history.
+
+### Production activation approval steps
+
+1. Review and merge the infrastructure PR after its hosted checks pass.
+2. Authorize the dedicated filesystem. Prepare the approved capacity-bounded ext4 device,
+   collect its UUID, and run `mount-backup.yml -e nasj_confirm_backup_mount=true` with the
+   UUID in private vars. Verify the mount options and distinct device with `findmnt`.
+3. Approve Age key custody, the existing Neon recovery project and its dedicated access role,
+   and a production HTTPS alert destination. Enter the encrypted Vault vars privately using
+   the configuration matrix. Keep independent access to the recovery key and Neon account.
+4. Run `audit.yml` then `configure.yml --check` using those vars. Review the resulting plan.
+   After explicit authorization, run configure with `nasj_production_apply=true`. Keep the
+   timer and SSH reload booleans off during this first apply.
+5. Separately authorize `database-grant.yml -e nasj_confirm_database_grant=true` with the
+   verified runtime and migration identifiers. Confirm runtime SELECT and no schema CREATE.
+6. Run `backup.yml -e nasj_run_backup=true`, then independently recover the new Neon copy into
+   PostgreSQL 16. With explicit backup-write authorization, invoke the installed
+   `/etc/nasj/backup-before-migrate FULL_CANDIDATE_SHA` and require the matching local and
+   remote receipts. This hook invocation creates a backup only. It does not run migrations.
+7. Verify monitor and alert delivery. Approve turning on `nasj_enable_backup_timer` and
+   `nasj_enable_monitoring` in a reviewed configure apply. Check `systemctl list-timers`
+   and require a successful real scheduled run.
+8. Preserve console access. Separately authorize the deploy SSH drop-in, reload and key test.
+   Qualify denied arbitrary commands and confirm the independent admin session still works.
+9. Authorize the maintenance window and `adopt-release.yml -e nasj_confirm_adoption=true`.
+   Run `verify.yml` and retain the original application release.
+10. Download the exact reviewed Actions artifact with `gh run download RUN_ID -n ARTIFACT_NAME`.
+    Compare its SHA-256 with the reviewed build summary. Write the authorization file as in the
+    deployment runbook. With separate deployment approval, send that exact archive through the
+    forced SSH command, check API/web/worker and public health, and rehearse app rollback with
+    approved compatible releases. Set the CD flag only after these checks pass.
+11. Create the separate protected infrastructure Environment with main-only branch restrictions,
+    protected approval and its own credentials. Qualify plan mode before any apply dispatch.
+    Enable the infrastructure flag only after explicit authorization and that qualification.
+
+No production mutation, off-host write, deployment activation or provider change was made
+during this readiness audit.
