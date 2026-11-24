@@ -1,0 +1,27 @@
+---
+- name: Audit the existing NASJ host
+  hosts: nasj
+  become: true
+  tasks:
+    - name: Inspect services, listeners and release filesystem
+      ansible.builtin.shell: |
+        set -eu
+        systemctl is-active nasj-api nasj-web nasj-worker postgresql nginx certbot.timer
+        /usr/local/bin/node --version
+        pg_lsclusters
+        df -h /srv
+        ss -lnt
+        stat -c '%F %U:%G %a %n' /srv/nasj
+        nginx -t
+        sshd -t
+        if test -x /usr/sbin/ufw; then ufw status; fi
+        systemctl list-timers --all --no-pager
+      register: nasj_audit
+      no_log: "{{ not (nasj_show_audit | default(true) | bool) }}"
+      changed_when: false
+      check_mode: false
+
+    - name: Show non-secret audit results
+      ansible.builtin.debug:
+        var: nasj_audit.stdout_lines
+      when: nasj_show_audit | default(true) | bool

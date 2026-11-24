@@ -1,0 +1,52 @@
+---
+- name: Require recovery access and a dedicated deploy public key
+  ansible.builtin.assert:
+    that:
+      - nasj_recovery_access_verified | default(false) | bool
+      - nasj_deploy_public_key is match('^ssh-ed25519 [A-Za-z0-9+/=]+$')
+
+- name: Create root-owned SSH key directory
+  ansible.builtin.file:
+    path: /etc/ssh/authorized_keys
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+
+- name: Install a forced command deployment key
+  ansible.builtin.copy:
+    content: |
+      restrict,command="/usr/local/libexec/nasj-ssh-command" {{ nasj_deploy_public_key }}
+    dest: /etc/ssh/authorized_keys/nasj-deploy
+    owner: root
+    group: root
+    mode: '0644'
+
+- name: Install only the deployment identity SSH restrictions
+  ansible.builtin.copy:
+    content: |
+      Match User nasj-deploy
+          AuthorizedKeysFile /etc/ssh/authorized_keys/nasj-deploy
+          AuthenticationMethods publickey
+          PasswordAuthentication no
+          DisableForwarding yes
+          PermitTTY no
+          ForceCommand /usr/local/libexec/nasj-ssh-command
+      Match all
+    dest: /etc/ssh/sshd_config.d/60-nasj-deploy.conf
+    owner: root
+    group: root
+    mode: '0644'
+    validate: /usr/sbin/sshd -tf %s
+  register: security_ssh_change
+
+- name: Validate the effective SSH server configuration before reload
+  ansible.builtin.command: /usr/sbin/sshd -t
+  changed_when: false
+  when: not ansible_check_mode
+
+- name: Reload SSH after separate operator consent
+  ansible.builtin.systemd_service:
+    name: ssh.service
+    state: reloaded
+  when: security_ssh_change.changed and (nasj_reload_ssh | default(false) | bool)

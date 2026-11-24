@@ -1,0 +1,15 @@
+---
+- name: Execute and verify a NASJ backup
+  hosts: nasj
+  become: true
+  tasks:
+    - name: Require explicit backup execution consent
+      ansible.builtin.assert:
+        that: nasj_run_backup | default(false) | bool
+
+    - name: Run the canonical backup service
+      ansible.builtin.systemd_service:
+        name: nasj-backup.service
+        daemon_reload: true
+        state: started
+      when: not ansible_check_mode

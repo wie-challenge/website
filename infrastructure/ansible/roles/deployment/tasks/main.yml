@@ -1,0 +1,77 @@
+---
+- name: Create deployment service identities
+  ansible.builtin.user:
+    name: "{{ item.name }}"
+    system: true
+    shell: "{{ item.shell }}"
+    create_home: false
+  loop:
+    - {name: nasj-deploy, shell: /bin/bash}
+    - {name: nasj-migrate, shell: /usr/sbin/nologin}
+
+- name: Prepare protected installation directories
+  ansible.builtin.file:
+    path: "{{ item.path }}"
+    state: directory
+    mode: "{{ item.mode }}"
+    owner: root
+    group: root
+  loop:
+    - {path: /etc/nasj, mode: '0711'}
+    - {path: /etc/nasj/releases, mode: '0700'}
+    - {path: /etc/nasj/approvals, mode: '0700'}
+    - {path: /var/lib/nasj-deploy, mode: '0700'}
+    - {path: /var/log/nasj-deploy, mode: '0700'}
+    - {path: /srv/nasj-releases, mode: '0755'}
+    - {path: /usr/local/libexec, mode: '0755'}
+    - {path: /var/lib/nasj-deploy/staged, mode: '0700'}
+
+- name: Stage canonical deployment helpers in a protected directory
+  ansible.builtin.copy:
+    src: "{{ playbook_dir }}/../../../scripts/deploy/{{ item.src }}"
+    dest: "/var/lib/nasj-deploy/staged/{{ item.dst | basename }}"
+    owner: root
+    group: root
+    mode: '0755'
+  loop: &deployment_helpers
+    - {src: deploy.sh, dst: /usr/local/sbin/nasj-deploy}
+    - {src: extract-release.py, dst: /usr/local/libexec/nasj-extract-release.py}
+    - {src: ssh-command.sh, dst: /usr/local/libexec/nasj-ssh-command}
+
+- name: Install changed helpers under the application deployment lock
+  ansible.builtin.shell: |
+    set -eu
+    flock -w 60 /var/lib/nasj-deploy/deploy.lock /bin/sh -ec '
+      if ! cmp -s "$1" "$2"; then
+        install -o root -g root -m 0755 "$1" "$2.nasj-tmp"
+        mv -T "$2.nasj-tmp" "$2"
+        echo installed
+      fi
+    ' sh {{ ('/var/lib/nasj-deploy/staged/' ~ (item.dst | basename)) | quote }} {{ item.dst | quote }}
+  loop: *deployment_helpers
+  register: deployment_install_helper
+  changed_when: "'installed' in deployment_install_helper.stdout"
+
+- name: Install narrowly scoped deploy sudo policy
+  ansible.builtin.copy:
+    content: |
+      Defaults:nasj-deploy env_reset
+      nasj-deploy ALL=(root) NOPASSWD: NOSETENV: /usr/local/sbin/nasj-deploy *
+    dest: /etc/sudoers.d/nasj-deploy
+    owner: root
+    group: root
+    mode: '0440'
+    validate: /usr/sbin/visudo -cf %s
+
+- name: Install reviewed release configuration
+  ansible.builtin.copy:
+    content: "{{ nasj_deploy_config }}"
+    dest: /etc/nasj/deploy.conf
+    owner: root
+    group: root
+    mode: '0600'
+    force: false
+    validate: /bin/bash -n %s
+  when: nasj_deploy_config is defined
+  no_log: true
+  diff: false

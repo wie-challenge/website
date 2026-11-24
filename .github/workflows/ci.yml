@@ -18,9 +18,13 @@ jobs:
     permissions:
       contents: read
     uses: ./.github/workflows/pr.yml
+  infrastructure:
+    permissions:
+      contents: read
+    uses: ./.github/workflows/infrastructure-ci.yml
   required:
     if: always()
-    needs: [checks, application]
+    needs: [checks, application, infrastructure]
     runs-on: ubuntu-24.04
     timeout-minutes: 2
     steps:
@@ -28,7 +32,8 @@ jobs:
         env:
           CHECKS: ${{ needs.checks.result }}
           APPLICATION: ${{ needs.application.result }}
-        run: test "$CHECKS" = success && test "$APPLICATION" = success
+          INFRASTRUCTURE: ${{ needs.infrastructure.result }}
+        run: test "$CHECKS" = success && test "$APPLICATION" = success && test "$INFRASTRUCTURE" = success
   release:
     needs: required
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'

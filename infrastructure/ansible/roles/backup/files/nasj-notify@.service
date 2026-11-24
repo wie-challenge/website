@@ -1,0 +1,7 @@
+[Unit]
+Description=Send an alert for a failed NASJ unit
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/libexec/nasj-notify %i
+TimeoutStartSec=30

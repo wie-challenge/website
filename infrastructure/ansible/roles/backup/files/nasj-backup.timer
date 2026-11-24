@@ -1,0 +1,10 @@
+[Unit]
+Description=Nightly NASJ recovery point
+
+[Timer]
+OnCalendar=*-*-* 02:00:00 UTC
+Persistent=true
+RandomizedDelaySec=15min
+
+[Install]
+WantedBy=timers.target

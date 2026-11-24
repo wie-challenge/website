@@ -1,0 +1,52 @@
+---
+- name: Mount an existing dedicated backup volume without formatting it
+  hosts: nasj
+  become: true
+  tasks:
+    - name: Require explicit storage authorization and formatted volume UUID
+      ansible.builtin.assert:
+        that:
+          - nasj_confirm_backup_mount | default(false) | bool
+          - nasj_backup_volume_uuid is match('^[0-9a-fA-F-]{36}$')
+
+    - name: Create the dedicated backup mount point
+      ansible.builtin.file:
+        path: /srv/nasj-backups
+        state: directory
+        owner: root
+        group: root
+        mode: '0711'
+
+    - name: Verify volume identity and avoid hiding an existing directory or mount
+      ansible.builtin.shell: |
+        set -eu
+        test ! -L /srv/nasj-backups
+        uuid={{ nasj_backup_volume_uuid | quote }}
+        test "$(blkid -s TYPE -o value "/dev/disk/by-uuid/$uuid")" = ext4
+        if mountpoint -q /srv/nasj-backups; then
+          current=$(findmnt -n -o SOURCE --mountpoint /srv/nasj-backups)
+          test "$(readlink -f "$current")" = "$(readlink -f "/dev/disk/by-uuid/$uuid")"
+        else
+          test -z "$(find /srv/nasj-backups -mindepth 1 -maxdepth 1 -print -quit)"
+          test -z "$(findmnt -n -S "UUID=$uuid" || true)"
+        fi
+      changed_when: false
+      when: not ansible_check_mode
+
+    - name: Persist the approved bounded volume through reboot
+      ansible.builtin.lineinfile:
+        path: /etc/fstab
+        regexp: '^\S+\s+/srv/nasj-backups\s+'
+        line: "UUID={{ nasj_backup_volume_uuid }} /srv/nasj-backups ext4 defaults,nodev,nosuid,noexec,nofail 0 2"
+        validate: /usr/bin/findmnt --verify --tab-file %s
+
+    - name: Mount the new volume with restricted options
+      ansible.builtin.shell: |
+        set -eu
+        if ! mountpoint -q /srv/nasj-backups; then
+          mount /srv/nasj-backups
+          echo mounted
+        fi
+      register: nasj_backup_mount
+      changed_when: "'mounted' in nasj_backup_mount.stdout"
+      when: not ansible_check_mode

@@ -1,0 +1,5 @@
+---
+skip_list:
+  # Exact commands deliberately use flock or PostgreSQL's native CLI to coordinate with CD.
+  - command-instead-of-module
+  - command-instead-of-shell
