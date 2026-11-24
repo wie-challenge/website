@@ -1,0 +1,77 @@
+name: NASJ D4 exact artifact
+on:
+  workflow_dispatch:
+permissions: {}
+concurrency:
+  group: nasj-production
+  cancel-in-progress: false
+env:
+  D4_SHA: 65ef68340f26f9c90af5f90cefdfe28a92f75751
+  D4_BUNDLE: 33e160c4049e8b6b988c7c0061387cd4832678c96fe83f1aea35feecf9073fa2
+jobs:
+  deploy:
+    if: github.repository == 'wie-challenge/website' && github.ref == 'refs/heads/main'
+    environment: production
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    permissions:
+      actions: read
+    steps:
+      - name: Verify and retrieve the one approved artifact
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          umask 077
+          repo=wie-challenge/website
+          run=45511080088
+          artifact=14975897077
+          zip=c33ecc07b438480ffabae78699a83a337d28418f51c458ace5b24bb513ba403c
+          gh api "repos/$repo/actions/runs/$run" |
+            jq -e --arg sha "$D4_SHA" --arg repo "$repo" '
+              .id == 45511080088 and .path == ".github/workflows/ci.yml" and
+              .event == "push" and .status == "completed" and .conclusion == "success" and
+              .head_branch == "main" and .head_sha == $sha and
+              .repository.full_name == $repo and .head_repository.full_name == $repo' >/dev/null
+          gh api "repos/$repo/actions/runs/$run/jobs" |
+            jq -e 'any(.jobs[]; .name=="required" and .conclusion=="success") and
+                   any(.jobs[]; .name=="release" and .conclusion=="success")' >/dev/null
+          gh api "repos/$repo/actions/runs/$run/artifacts" |
+            jq -e --arg zip "sha256:$zip" '
+              any(.artifacts[]; .id == 14975897077 and .name == "production-release-1"
+                  and .expired == false and .digest == $zip)' >/dev/null
+          dir="$RUNNER_TEMP/d4"
+          mkdir "$dir"
+          gh api "repos/$repo/actions/artifacts/$artifact/zip" >"$dir/artifact.zip"
+          printf '%s  %s\n' "$zip" "$dir/artifact.zip" | sha256sum -c -
+          unzip -p "$dir/artifact.zip" release.tar.gz >"$dir/release.tar.gz"
+          test "$(unzip -p "$dir/artifact.zip" release.sha256)" = "$D4_BUNDLE"
+          printf '%s  %s\n' "$D4_BUNDLE" "$dir/release.tar.gz" | sha256sum -c -
+      - name: Deploy immutable release over pinned SSH
+        env:
+          DEPLOY_HOST: ${{ vars.DEPLOY_HOST }}
+          DEPLOY_PORT: ${{ vars.DEPLOY_PORT }}
+          DEPLOY_USER: ${{ vars.DEPLOY_USER }}
+          SSH_PRIVATE_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+          SSH_KNOWN_HOSTS: ${{ secrets.DEPLOY_KNOWN_HOSTS }}
+          RELEASE_SHA: ${{ env.D4_SHA }}
+          ARTIFACT_SHA256: ${{ env.D4_BUNDLE }}
+        run: |
+          set -euo pipefail
+          [[ "$RELEASE_SHA" =~ ^[0-9a-f]{40}$ ]]
+          [[ "$ARTIFACT_SHA256" =~ ^[0-9a-f]{64}$ ]]
+          echo "$ARTIFACT_SHA256  $RUNNER_TEMP/d4/release.tar.gz" | sha256sum --check --strict
+          [[ "$DEPLOY_HOST" =~ ^[a-zA-Z0-9.-]+$ ]]
+          [[ "$DEPLOY_USER" =~ ^[a-z_][a-z0-9_-]*$ ]]
+          [[ "$DEPLOY_PORT" =~ ^[0-9]+$ ]]
+          install -d -m 700 "$RUNNER_TEMP/ssh"
+          key="$RUNNER_TEMP/ssh/key"
+          known="$RUNNER_TEMP/ssh/known_hosts"
+          trap 'rm -f "$key" "$known"' EXIT
+          umask 077
+          printf '%s\n' "$SSH_PRIVATE_KEY" > "$key"
+          printf '%s\n' "$SSH_KNOWN_HOSTS" > "$known"
+          ssh -i "$key" -p "$DEPLOY_PORT" -o BatchMode=yes -o IdentitiesOnly=yes \
+            -o StrictHostKeyChecking=yes -o "UserKnownHostsFile=$known" \
+            -o ConnectTimeout=15 -o ServerAliveInterval=15 -o ServerAliveCountMax=4 \
+            "$DEPLOY_USER@$DEPLOY_HOST" "deploy $RELEASE_SHA sha256:$ARTIFACT_SHA256" < "$RUNNER_TEMP/d4/release.tar.gz"
