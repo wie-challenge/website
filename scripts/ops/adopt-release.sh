@@ -36,6 +36,9 @@ source /etc/nasj/deploy.conf
 target="$RELEASE_ROOT/legacy-$(date -u +%Y%m%dT%H%M%SZ)"
 [[ ! -e $target && ! -L $target ]]
 for unit in nasj-api nasj-web nasj-worker; do systemctl is-active --quiet "$unit"; done
+log_dir=$state/logs
+[[ -d $log_dir && ! -L $log_dir && $(stat -c '%u:%g:%a' "$log_dir") == 0:0:700 ]]
+worker_log=$(mktemp "$log_dir/adoption-worker.XXXXXXXX.log")
 printf '%s\n%s\n' /srv/nasj "$target" > "$state/pending.tmp"
 mv -T "$state/pending.tmp" "$state/pending"
 sync -f "$state"
@@ -51,11 +54,12 @@ health() {
   done
   return 1
 }
-worker() {
+worker() (
+  ulimit -f 1024
   systemctl start nasj-worker &&
   systemctl is-active --quiet nasj-worker &&
-  runuser -u nasj -- "$NODE_BIN" --env-file=/srv/nasj/.env /srv/nasj/apps/api/dist/jobs/main.js --status     >/var/log/nasj-deploy/adoption-worker.log 2>&1
-}
+  runuser -u nasj -- "$NODE_BIN" --env-file=/srv/nasj/.env /srv/nasj/apps/api/dist/jobs/main.js --status     >"$worker_log" 2>&1
+)
 restore() {
   local code=$?
   trap - EXIT

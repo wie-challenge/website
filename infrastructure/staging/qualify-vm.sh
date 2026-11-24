@@ -72,6 +72,7 @@ if "${deploy_ssh[@]}" id >"$vm/ssh-rejection.log" 2>&1; then
   exit 1
 fi
 grep -q 'Only an immutable NASJ deployment command is allowed' "$vm/ssh-rejection.log"
+if [[ ${NASJ_VM_DEPLOY_ONLY:-false} != true ]]; then
 ansible-playbook "${common[@]}" -e nasj_run_backup=true playbooks/backup.yml
 "${ssh_cmd[@]}" 'sudo -n test -s /var/lib/nasj-backup/latest'
 if "${ssh_cmd[@]}" 'sudo -n /etc/nasj/backup-before-migrate aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'; then
@@ -124,6 +125,24 @@ GUEST
 ansible-playbook "${common[@]}" -e nasj_confirm_adoption=true playbooks/adopt-release.yml
 ansible-playbook "${common[@]}" -e nasj_confirm_adoption=true playbooks/adopt-release.yml
 ansible-playbook "${common[@]}" playbooks/verify.yml
+fi
+# Reproduce the production parent mode only inside the isolated guest.
+"${ssh_cmd[@]}" 'sudo -n bash -s' <<'GUEST'
+set -Eeuo pipefail
+[[ $(hostname -s) == nasj-staging ]]
+getent group syslog >/dev/null || groupadd --system syslog
+chown root:syslog /var/log
+chmod 0775 /var/log
+install -d -o root -g root -m 0700 /var/log/nasj-deploy
+test "$(stat -c '%a %U:%G' /var/log)" = '775 root:syslog'
+sed 's|^log_dir=.*|log_dir=/var/log/nasj-deploy|' /usr/local/sbin/nasj-deploy >/root/nasj-test-unsafe-log.sh
+if bash /root/nasj-test-unsafe-log.sh bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb \
+    sha256:dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd </dev/null >/root/nasj-test-unsafe-log.out 2>&1; then
+  exit 1
+fi
+grep -Fxq 'Unsafe trusted path parent: /var/log' /root/nasj-test-unsafe-log.out
+printf '%s\n' 'Unsafe legacy parent rejected; exercising corrected path on the same host'
+GUEST
 make_candidate() {
   local sha=$1 fault=$2
   python3 - "$vm/$sha.tar.gz" "$sha" "$fault" <<'PY'
@@ -139,8 +158,8 @@ files = {
     "apps/web/node_modules/next/dist/bin/next": "",
     "apps/web/.next/BUILD_ID": "synthetic",
 }
-if failure == "true":
-    files["apps/api/dist/fail-worker"] = ""
+if failure in {"worker", "public"}:
+    files["apps/api/dist/fail-" + failure] = ""
 with tarfile.open(out, "w:gz") as tar:
     for name, value in files.items():
         payload = value.encode()
@@ -153,15 +172,21 @@ PY
   printf 'sha256:%s\n' "$digest" | "${ssh_cmd[@]}" "sudo -n tee /etc/nasj/releases/$sha >/dev/null"
   if [[ $fault == false ]]; then
     "${deploy_ssh[@]}" "deploy $sha sha256:$digest" < "$vm/$sha.tar.gz"
-  elif "${deploy_ssh[@]}" "deploy $sha sha256:$digest" < "$vm/$sha.tar.gz"; then
-    echo 'FAIL: worker status fault did not block deployment' >&2
-    exit 1
+  else
+    local out="$vm/$sha.rollback.log"
+    if "${deploy_ssh[@]}" "deploy $sha sha256:$digest" < "$vm/$sha.tar.gz" >"$out" 2>&1; then
+      echo 'FAIL: readiness or worker fault did not roll back deployment' >&2
+      exit 1
+    fi
+    grep -q '^ROLLBACK_READY sha=' "$out"
+    printf '%s\n' "Synthetic $fault failure triggered verified rollback"
   fi
 }
 good=bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
 bad=cccccccccccccccccccccccccccccccccccccccc
 make_candidate "$good" false
-make_candidate "$bad" true
+make_candidate "$bad" worker
+make_candidate dddddddddddddddddddddddddddddddddddddddd public
 "${ssh_cmd[@]}" "test \"\$(readlink -f /srv/nasj)\" = /srv/nasj-releases/$good"
 ansible-playbook "${common[@]}" playbooks/verify.yml
 "${ssh_cmd[@]}" 'sudo -n bash -s' <<'GUEST'
@@ -173,6 +198,12 @@ systemctl daemon-reload
 systemctl start nasj-notify@nasj-monitor.service.service
 grep -q 'POST /test-alert .* 204 ' /var/log/nginx/access.log
 source /etc/nasj/deploy.conf
+test "$(stat -c '%a %U:%G' /var/lib/nasj-deploy/logs)" = '700 root:root'
+test -z "$(find /var/lib/nasj-deploy/logs -type f \( ! -perm 0600 -o ! -user root -o ! -group root \) -print -quit)"
+test -n "$(find /var/lib/nasj-deploy/logs -type f -name '*.log' -print -quit)"
+! runuser -u nasj-deploy -- test -w /var/lib/nasj-deploy/logs
+! runuser -u nasj -- test -w /var/lib/nasj-deploy/logs
+test -z "$(find /var/log/nasj-deploy -type f -print -quit)"
 printf '%s\n%s\n' "$RELEASE_ROOT/bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb" \
   "$RELEASE_ROOT/cccccccccccccccccccccccccccccccccccccccc" > /var/lib/nasj-deploy/pending
 if /usr/local/sbin/nasj-deploy bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb \

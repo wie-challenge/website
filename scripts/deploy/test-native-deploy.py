@@ -55,7 +55,7 @@ def case(
             "config/releases",
             "releases/legacy",
             "state",
-            "log",
+            "state/logs",
         ]:
             (root / name).mkdir(parents=True)
         (root / "current").symlink_to(root / "releases/legacy")
@@ -71,6 +71,8 @@ NODE_BIN={NODE}
 PUBLIC_HEALTH_URL=https://nasj.example.com/api/health/ready
 LEGACY_SHA={OLD}
 """)
+        (root / "state").chmod(0o700)
+        (root / "state/logs").chmod(0o700)
         (root / "config").chmod(0o711)
         (root / "config/deploy.conf").chmod(0o600)
         (root / "releases").chmod(0o755)
@@ -132,7 +134,6 @@ exit 0
         source = (
             source.replace("/etc/nasj", str(root / "config"))
             .replace("/var/lib/nasj-deploy", str(root / "state"))
-            .replace("/var/log/nasj-deploy", str(root / "log"))
             .replace(
                 "/usr/local/libexec/nasj-extract-release.py",
                 str(HERE / "extract-release.py"),
@@ -140,7 +141,7 @@ exit 0
             .replace("/usr/local/sbin/nasj-deploy", str(helper))
         )
         source = source.replace(
-            "for trusted_path in / /etc /var /var/lib /var/log /usr /usr/local /usr/local/libexec /usr/local/sbin;",
+            "for trusted_path in / /etc /var /var/lib /usr /usr/local /usr/local/libexec /usr/local/sbin;",
             "for trusted_path in;",
         )
         # The sandbox has its own owner and mock executables.
@@ -148,7 +149,19 @@ exit 0
         source = source.replace("== 0:755", f"== {os.getuid()}:755")
         source = source.replace("== 0:700", f"== {os.getuid()}:700")
         source = source.replace("== 0 &&", f"== {os.getuid()} &&")
+        source = source.replace("== 0:0:700", f"== {os.getuid()}:{os.getgid()}:700")
+        source = source.replace('[[ $trusted_path != / ]]', f'[[ $trusted_path != "{root}" ]]')
         (root).chmod(0o755)
+        if failure == "insecure-log":
+            (root / "state/logs").chmod(0o775)
+        if failure == "insecure-state":
+            (root / "state").chmod(0o775)
+        if failure == "log-symlink":
+            (root / "state/logs").rmdir()
+            (root / "state/logs").symlink_to(root / "releases")
+        if failure == "log-budget":
+            with (root / "state/logs/retained.log").open("wb") as log:
+                log.truncate(62914560)
         source = source.replace("flock -w 900", "flock -w 0")
         helper.write_text(source)
         if failure == "pending":
@@ -211,6 +224,10 @@ for fault in [
     "interrupted",
     "pending",
     "concurrent",
+    "insecure-log",
+    "insecure-state",
+    "log-symlink",
+    "log-budget",
 ]:
     case(failure=fault)
 case(schema="1")
