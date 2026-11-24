@@ -91,7 +91,7 @@ permissions or alert delivery. Keep monitoring, backup timers, and SSH toggles f
 - **A4:** Install the protected alert config through A1 or an independently
   reviewed repeat of that play. Before sending a separately approved test,
   verify the notification recipient and 0600 ownership. The actual test is
-  `sudo /usr/local/libexec/nasj-notify nasj-qualification.service`; confirm delivery
+  the systemd command below; confirm delivery
   with the recipient. Do not enable timers. Roll back only the new
   `notify.curl` or restore its previous protected copy; if schedules are ever
   activated, stop and disable them under the applicable authorization.
@@ -100,21 +100,39 @@ Package B still requires a canonical live backup, independent Neon restore, and 
 fresh verified off-host receipt. Package C still requires that receipt and separately
 authorized maintenance, exact artifact deployment and rollback verification.
 
-### Notification compatibility
+### Discord and generic HTTPS notifications
 
-The notifier POSTs HTTPS with `Content-Type: application/json`, a 15-second timeout
-and the payload `{"unit":"nasj-backup.service","state":"failed"}`. The unit value
-varies by caller. Generic HTTPS receivers that accept these fields are compatible.
-Native [Discord webhooks](https://docs.discord.com/developers/resources/webhook#execute-webhook)
-need a message field such as `content` or `embeds`.
-[Telegram sendMessage](https://core.telegram.org/bots/api#sendmessage) expects
-message text and a destination. Neither accepts this payload directly. SMTP or an
-email address is not a supported transport; an existing HTTPS receiver that
-accepts this payload and forwards email can be used. Do not add a relay or
-delivery-specific code to Package A without a separate scope decision.
+Production uses the private NASJ operations channel. Its encrypted Vault already
+contains `nasj_backup_files["notify.env"]` with
+`NASJ_NOTIFY_FORMAT=discord` and `NASJ_NOTIFY_ENVIRONMENT=production`.
+The notifier sends a Discord `content` message containing only service, environment,
+UTC timestamp and failure status, with mentions disabled. Generic HTTPS remains
+the default and sends the existing `unit` and `state` fields plus `environment`
+and `timestamp`. Requests verify HTTPS certificates, reject redirects, and allow
+at most three attempts within curl's connect, request and retry limits.
 
-For a compatible destination, set `nasj_backup_files["notify.curl"]` in the
-encrypted Vault to the approved `url = "https://..."` and, if required,
-`header = "Authorization: Bearer ..."`. Use HTTPS with normal certificate
-validation. Do not place any real URL token or header in this runbook. No
-destination has been selected and no notification was sent.
+In Discord, open the private NASJ operations channel and create an incoming
+webhook under **Edit Channel → Integrations → Webhooks**. Copy the webhook URL
+into the encrypted Vault only, as the multiline value for
+`nasj_backup_files["notify.curl"]`:
+
+```yaml
+    notify.curl: |
+      url = "https://discord.com/api/webhooks/REPLACE_WITH_PRIVATE_URL"
+```
+
+Replace the entire example URL with the copied URL. Do not paste the real URL
+in chat, Git, logs or a shell command. The URL is the credential. The Ansible
+role installs `notify.curl` and `notify.env` at mode 0600. The dry run includes
+these files with `no_log` and no diff, and skips notification execution.
+
+After separate approval for one live delivery test, use the configured systemd
+unit so it reads `notify.env`:
+`sudo systemctl daemon-reload` then
+`sudo systemctl start nasj-notify@nasj-qualification.service.service`.
+Confirm successful completion and the single test message in the private
+channel. A retry after an ambiguous delivery failure can produce a duplicate.
+Keep backup and monitor timers disabled. To roll back A4, restore the previous
+two settings files and notification unit (or remove only the newly installed
+files), reload systemd metadata under approval, and rotate the webhook in
+Discord if it was exposed.

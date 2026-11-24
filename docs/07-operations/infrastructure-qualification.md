@@ -492,3 +492,10 @@ and inactive systemd units. It did not include the SSH role or alert config.
 The separate database-grant dry run passed its assertions and skipped SQL
 execution; the live read-only query returned false for both migration-history
 SELECT and public-schema CREATE for nasj_app. No grant was executed.
+
+The operator selected Discord for A4. The notifier supports Discord content with
+mentions disabled and retains generic HTTPS. Isolated HTTPS mock tests cover both
+formats, certificate rejection and retry limits. Discord mode and production
+environment are staged in the encrypted Vault; the private webhook URL,
+independent Age custody and recovery-console/firewall confirmation are still
+required before the combined dry run. No live alerts were sent.

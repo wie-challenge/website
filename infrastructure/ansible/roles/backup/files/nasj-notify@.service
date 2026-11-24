@@ -3,5 +3,6 @@ Description=Send an alert for a failed NASJ unit
 
 [Service]
 Type=oneshot
+EnvironmentFile=-/etc/nasj/notify.env
 ExecStart=/usr/local/libexec/nasj-notify %i
 TimeoutStartSec=30

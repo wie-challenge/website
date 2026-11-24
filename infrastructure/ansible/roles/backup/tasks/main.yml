@@ -48,7 +48,7 @@
     group: root
     mode: '0600'
   loop: "{{ nasj_backup_files.keys() | list }}"
-  when: item in ['backup.conf', 'backup.recipients', 'backup.identity', 'backup-neon.conf', 'backup-neon.pgpass', 'notify.curl']
+  when: item in ['backup.conf', 'backup.recipients', 'backup.identity', 'backup-neon.conf', 'backup-neon.pgpass', 'notify.curl', 'notify.env']
   no_log: true
   diff: false
 
