@@ -100,7 +100,25 @@ async function createOrganization(page: Page, name: string, type = 'BUYER_BUSINE
   return id;
 }
 async function approveOrganization(page: Page, name: string) {
-  await page.goto('/nasj/organizations');
+  const queueResponse = () =>
+    page.waitForResponse((response) => {
+      const url = new URL(response.url());
+      return (
+        response.request().method() === 'GET' &&
+        url.pathname === '/api/v1/market/organizations' &&
+        url.searchParams.get('status') === 'PENDING_REVIEW'
+      );
+    });
+  const [first] = await Promise.all([queueResponse(), page.goto('/nasj/organizations')]);
+  let queue = first;
+  // The Next rewrite can return an unstructured 500. Exercise the page's read retry once.
+  if (first.status() === 500 && (await first.text()).trim() === 'Internal Server Error') {
+    [queue] = await Promise.all([
+      queueResponse(),
+      page.getByRole('button', { name: 'Try again', exact: true }).click(),
+    ]);
+  }
+  expect(queue.ok(), `The organization review queue returned HTTP ${queue.status()}`).toBeTruthy();
   const row = page.getByRole('row').filter({ hasText: name });
   await row.getByRole('button', { name: 'Review', exact: true }).click();
   const review = page.getByRole('dialog', { name: `Review ${name}` });
