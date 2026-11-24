@@ -25,7 +25,7 @@ for flag in nodev nosuid noexec; do [[ $mount_options == *",$flag,"* ]]; done
 limit=${BACKUP_MAX_MIB:-256}
 [[ $limit =~ ^[1-9][0-9]{0,3}$ ]]
 available_bytes=$(df -PB1 "$store" | awk 'END {print $4}')
-required_bytes=$(((limit * 6 + 512) * 1048576))
+required_bytes=$(awk -v limit="$limit" 'BEGIN {printf "%.0f", (limit * 6 + 512) * 1048576}')
 [[ $available_bytes -ge $required_bytes ]]
 # Bash reports file size blocks in KiB outside POSIX mode.
 ulimit -f "$((limit * 1024))"
