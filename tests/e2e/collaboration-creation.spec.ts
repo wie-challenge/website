@@ -1,3 +1,4 @@
+import { confirmAction } from './actions';
 import { expect, test, type APIRequestContext, type Page } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
 const origin = 'http://127.0.0.1:3100';
@@ -75,7 +76,7 @@ async function issueUpstream(page: Page, rfqId: string, name: string) {
   ] as const)
     await candidate.getByLabel(label, { exact: true }).fill(value);
   await candidate.getByRole('button', { name: `Save offer for ${name}` }).click();
-  await page.getByRole('button', { name: `Issue offer to ${name}` }).click();
+  await confirmAction(page, page.getByRole('button', { name: `Issue offer to ${name}` }));
   await expect(page.getByRole('article', { name: `Offer ${name} OFFERED` })).toBeVisible();
 }
 for (const width of [360, 1280]) {

@@ -34,6 +34,8 @@ export async function seedCommerceFixture(
     )[],
   ) =>
     db.organization.create({
+      // Historical upgrade drills need only the ID, not columns added by later migrations.
+      select: { id: true },
       data: {
         name,
         slug: `commerce-${suffix}-${type.toLowerCase()}-${userId}`,

@@ -19,6 +19,7 @@ import {
   type DemoSession,
 } from '@/lib/demo-api';
 import { humanize } from './workspace-ui';
+import { DemoFeedback } from './demo-feedback';
 import { Button } from './ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Alert, AlertDescription } from './ui/alert';
@@ -133,6 +134,9 @@ export function DemoShowroom() {
   const [busy, setBusy] = useState('');
   const [feedback, setFeedback] = useState('');
   const [actionError, setActionError] = useState('');
+  const [feedbackScope, setFeedbackScope] = useState<{ id: string; csrfToken: string } | null>(
+    null,
+  );
   const keys = useRef(new Map<string, string>());
   async function mutate(
     operation: 'start' | 'switch' | 'reset',
@@ -193,6 +197,14 @@ export function DemoShowroom() {
     scenario = data?.scenario;
   const active = data?.personas.find((p) => p.id === data.activePersona);
   const stageKey = scenario?.stage.toUpperCase().replaceAll(' ', '_');
+  useEffect(() => {
+    if (scenario?.id && data?.csrfToken) {
+      const scope = { id: scenario.id, csrfToken: data.csrfToken };
+      setFeedbackScope((current) =>
+        current?.id === scope.id && current.csrfToken === scope.csrfToken ? current : scope,
+      );
+    }
+  }, [scenario?.id, data?.csrfToken]);
   return (
     <div className="demo-showroom mx-auto grid max-w-6xl gap-7 p-5 sm:p-9">
       <header className="max-w-3xl">
@@ -435,6 +447,16 @@ export function DemoShowroom() {
                 </dl>
               </CardContent>
             </Card>
+          )}
+          {feedbackScope && (
+            <DemoFeedback
+              key={feedbackScope.id}
+              scenarioId={feedbackScope.id}
+              csrfToken={feedbackScope.csrfToken}
+              authorized={
+                scenario?.id === feedbackScope.id && data.csrfToken === feedbackScope.csrfToken
+              }
+            />
           )}
           <section aria-labelledby="demo-limitations">
             <h2 id="demo-limitations">Evidence and operating boundaries</h2>

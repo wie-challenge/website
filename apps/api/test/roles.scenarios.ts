@@ -330,10 +330,50 @@ export async function runRoleScenarios({ db, register, mutate, check, mail }: Ha
       });
       const token = await mail.token('revised-unassigned@example.com', '/invitations/accept');
       await db.user.update({ where: { id: inviter.me.user.id }, data: { role: 'USER' } });
+      const invitation = await db.invitation.findFirstOrThrow({
+        where: { email: 'revised-unassigned@example.com', status: 'PENDING' },
+      });
+      assert.equal(
+        (
+          await call(inviter, `organizations/${orgB.id}/invitations`, {
+            email: 'revised-another-coordinator@example.com',
+            roles: ['ASSOCIATION_COORDINATOR'],
+          })
+        ).status,
+        403,
+      );
+      assert.equal(
+        (await call(inviter, `organizations/${orgB.id}/invitations/${invitation.id}/resend`, {}))
+          .status,
+        403,
+      );
       assert.equal((await call(unassigned, 'invitations/accept', { token })).status, 403);
       assert.equal(
         await db.organizationMember.count({ where: { userId: unassigned.me.user.id } }),
         0,
+      );
+      assert.equal(
+        (await db.invitation.findUniqueOrThrow({ where: { id: invitation.id } })).status,
+        'PENDING',
+      );
+      const recipient = await register(
+        'revised-legitimate-coordinator@example.com',
+        'Legitimate Coordinator',
+      );
+      await db.user.update({ where: { id: inviter.me.user.id }, data: { role: 'ADMIN' } });
+      await ok(inviter, 'admin/personnel/invite', {
+        organizationId: orgB.id,
+        email: 'revised-legitimate-coordinator@example.com',
+        persona: 'ASSOCIATION_COORDINATOR',
+        reason,
+      });
+      const legitimateToken = await mail.token(
+        'revised-legitimate-coordinator@example.com',
+        '/invitations/accept',
+      );
+      assert.equal(
+        (await call(recipient, 'invitations/accept', { token: legitimateToken })).status,
+        200,
       );
     },
   );

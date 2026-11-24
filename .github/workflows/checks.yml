@@ -1,14 +1,10 @@
-# Fast checks on every push (~3-5 min): lint, types, unit tests, dependency audit.
-# The slow tests (integration, e2e, build) run in pr.yml, once a PR is ready for review.
+# Reusable mandatory quality and security checks; called by ci.yml.
 name: Checks
 on:
+  workflow_call:
   push:
-# No token permissions by default; each job asks only for what it needs.
+    branches-ignore: [main]
 permissions: {}
-# A newer push to the same branch cancels the older, now outdated run.
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
 jobs:
   quality:
     runs-on: ubuntu-24.04
@@ -32,6 +28,7 @@ jobs:
       - run: pnpm setup:local
       - run: pnpm db:generate
       - run: pnpm lint
+      - run: bash scripts/deploy/test-deploy.sh
       - run: pnpm typecheck
       - name: Unit, domain, backup and logging tests
         shell: bash
@@ -80,13 +77,10 @@ jobs:
       - run: bash scripts/ci/install-gitleaks.sh
       - name: Scan the pushed commits
         id: scan
-        env:
-          BEFORE: ${{ github.event.before }}
         run: |
           set +e
-          # New branch (or force-push): "before" is unknown, so scan everything not yet on main.
-          if git cat-file -e "${BEFORE}^{commit}" 2>/dev/null; then range="${BEFORE}..HEAD"; else range="origin/main..HEAD"; fi
-          echo "Scanning commits: $range"
+          # Full history also works for PR merge commits and the first main push.
+          range="--full-history HEAD"
           mkdir -p reports
           gitleaks git . --log-opts="$range" --redact --no-banner --verbose --exit-code 99 \
             --report-format json --report-path reports/gitleaks.json
@@ -143,19 +137,20 @@ jobs:
 
   # Security of the workflow files themselves: syntax + ShellCheck on run: scripts (actionlint),
   # and GitHub Actions risks such as template injection or excessive permissions (zizmor).
-  # Report-only for the first CI run (ShellCheck results are only visible in CI); then blocking.
+  # Both workflow scanners are mandatory.
   workflow-lint:
     runs-on: ubuntu-24.04
     timeout-minutes: 5
     permissions:
       contents: read
     env:
-      ENFORCE: 'false'
+      ENFORCE: 'true'
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
       - run: bash scripts/ci/install-workflow-linters.sh
+      - run: shellcheck scripts/deploy/*.sh
       - name: actionlint
         id: actionlint
         run: |

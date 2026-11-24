@@ -203,6 +203,7 @@ export async function runMfaScenarios({
     'verified email change keeps old identity until confirmations and blocks ordinary email profile editing',
     async () => {
       const user = await register('email-change-old@example.com', 'Email Change');
+      const confirmation = await mail.token('email-change-old@example.com', '/auth/verify-email');
       assert.equal(
         (
           await mutate(user.client, '/api/v1/me', 'PATCH', {
@@ -224,13 +225,12 @@ export async function runMfaScenarios({
         (await db.user.findUniqueOrThrow({ where: { id: user.me.user.id } })).email,
         'email-change-old@example.com',
       );
-      const confirmation = await mail.token('email-change-old@example.com', '/auth/verify-email');
-      // Signup and old-address confirmation share a path; wait for the newer confirmation message.
-      let current = confirmation;
+      // Signup and email-change links share a path; wait for the specific new confirmation message.
+      let current: string | undefined;
       for (let i = 0; i < 100; i++) {
         const matches = mail.messages.filter(
           (m) =>
-            m.to === 'email-change-old@example.com' && m.text.includes('Confirm the email change'),
+            m.to === 'email-change-old@example.com' && m.text.includes('Confirm your new email'),
         );
         const match = matches.at(-1)?.text.match(/#token=([^\s]+)/);
         if (match) {
@@ -239,6 +239,8 @@ export async function runMfaScenarios({
         }
         await new Promise((r) => setTimeout(r, 20));
       }
+      assert.ok(current, 'The old address must receive the email-change confirmation');
+      assert.notEqual(current, confirmation, 'Do not replay the signup verification token');
       assert.equal(
         (await client().request(`/api/auth/verify-email?token=${encodeURIComponent(current)}`))
           .status,

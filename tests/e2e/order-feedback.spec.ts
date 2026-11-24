@@ -1,3 +1,4 @@
+import { confirmAction } from './actions';
 import { expect, test, type APIRequestContext, type Page } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
 
@@ -69,7 +70,10 @@ for (const viewport of [
     await receipt.getByLabel('Pieces accepted', { exact: true }).fill('5');
     await receipt.getByLabel('Pieces missing', { exact: true }).fill('3');
     await receipt.getByLabel('Pieces damaged', { exact: true }).fill('2');
-    await receipt.getByRole('button', { name: 'Confirm buyer receipt', exact: true }).click();
+    await confirmAction(
+      page,
+      receipt.getByRole('button', { name: 'Confirm buyer receipt', exact: true }),
+    );
     await expect(page.getByRole('article', { name: 'Shipment DISCREPANCY' })).toBeVisible();
 
     const panel = page.getByRole('region', { name: 'Your delivery feedback' });
