@@ -13,8 +13,8 @@ variables. Verify the digest from the reviewed build before authorizing deployme
 
 ## Server preparation
 
-Verify an encrypted off-host PostgreSQL backup by restoring it to an isolated PostgreSQL 16
-instance. Schedule the cutover after that drill. Preserve the existing database, Nginx, TLS,
+Verify an off-host Neon PostgreSQL recovery point by restoring it to an isolated PostgreSQL 16
+instance. Keep encrypted archive history on the dedicated local backup filesystem. Schedule the cutover after that drill. Preserve the existing database, Nginx, TLS,
 systemd units and runtime configuration. Use the verified template in
 [deploy.conf.example](../../deploy/deploy.conf.example). Never overwrite existing secrets with
 template values.
@@ -58,8 +58,9 @@ For pending migrations, additionally record
 `expand-contract PREVIOUS_FULL_SHA sha256:ARTIFACT_SHA256` in
 `/etc/nasj/approvals/FULL_SHA`. Review compatibility with both app versions. Install
 a root-owned executable `/etc/nasj/backup-before-migrate` that accepts the candidate SHA
-and succeeds only after it has verified the required encrypted off-host backup. A missing
-or failed hook blocks migration. Deployment never reverses database migrations.
+and succeeds only after creating a fresh verified off-host Neon recovery point for that release.
+It also verifies the encrypted archive on the dedicated local filesystem. A missing or failed
+hook blocks migration even if the local archive succeeded. Deployment never reverses database migrations.
 
 ## Recovery
 
