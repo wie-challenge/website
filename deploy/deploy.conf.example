@@ -1,3 +1,4 @@
+# Deployment logs use /var/lib/nasj-deploy/logs (fixed, not configurable).
 # Verified FelCloud layout. Install root:root 0600 at /etc/nasj/deploy.conf.
 RELEASE_ROOT=/srv/nasj-releases
 CURRENT_LINK=/srv/nasj

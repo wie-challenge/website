@@ -499,3 +499,244 @@ formats, certificate rejection and retry limits. Discord mode and production
 environment are staged in the encrypted Vault; the private webhook URL,
 independent Age custody and recovery-console/firewall confirmation are still
 required before the combined dry run. No live alerts were sent.
+
+After the operator confirmed independent Age recovery custody, console login
+with sudo, and provider firewall review, the combined Package A structural dry
+run completed with 25 OK, 13 proposed changed tasks, six skipped, and zero
+failures. It included backup, restricted SSH files, and Discord configuration,
+with SSH reload and timers explicitly disabled. The private local URL check
+still rejected the saved webhook value; check mode does not validate delivery
+or the credential. Package A4 remains blocked on a valid replacement URL.
+PR #258 at 3546a4c passed the required hosted check and remains draft.
+No production changes were applied.
+
+After the replacement Discord webhook was saved, its URL and Discord mode passed
+local validation without contacting Discord. The combined production check mode
+was repeated with the corrected Vault: 25 OK, 13 proposed changes, six skipped,
+zero failures. Operator confirmations for Age custody, recovery console with
+sudo, and provider firewall review remain recorded. The alert delivery itself
+is not yet qualified; it needs separate approval after configuration is applied.
+Both production automation flags remained unset. Package A is at the approval
+boundary; no production apply, grant, reload or alert was executed.
+
+### Authorized A1/A4 installation
+
+The approved `3546a4c` implementation was applied with only backup and notification
+configuration enabled. Ansible returned 23 OK, 10 changed, eight skipped and
+zero failures. The only installed package was Age; PostgreSQL was not upgraded.
+The existing env files were copied without overwriting either destination.
+Original env, fstab and sudo-policy checksums and the monitored service start
+times remained unchanged. Public readiness returned ready. The backup mount
+retains 19 GiB free on its independent ext4 filesystem; PostgreSQL retains
+65 GiB free on root. Systemd unit verification succeeded with an IPv6 availability
+warning, and the installed backup, monitoring and notifier units remained inactive.
+Discord config passed local structural and permission checks; no request was sent.
+
+The same-scope check-mode rerun returned 21 OK, zero changed, 10 skipped and zero
+failures. The protected rollback snapshot and restore instructions are in the
+[Package A runbook](production-package-a.md). A2, A3 and live notifier delivery
+remain separate approvals. Neither automation flag was set and Packages B
+and C were not started.
+
+### Package A operational qualification
+
+A2 added exactly non-grantable SELECT on the Prisma migration history table to
+`nasj_app`, leaving public-schema CREATE false. The history checksum was
+unchanged. A3 installed the two restricted SSH files and their root-owned key
+directory; key matching, sudo and SSH syntax checks, and the on-disk effective
+policy passed. SSH was not reloaded and its daemon state was unchanged. The
+[Package A runbook](production-package-a.md) records the rollback snapshot,
+exact reload command and post-reload verification. Live restricted SSH
+qualification remains pending separate reload authorization.
+
+The canonical notifier sent one labeled qualification test. Discord returned
+HTTP 200 over verified TLS, with mentions disabled by the reviewed formatter.
+Operator receipt confirmation is pending. Backup and monitoring timers remained
+disabled. The systemd IPv6 warning was reproduced without a unit validation
+failure: the current kernel has no IPv6 interface addresses or IPv6 web
+listeners. IPv4 public HTTPS readiness and actual outbound Discord delivery
+passed. This is not a blocker for the operations tested, but no IPv6 path is
+qualified. All production services remained active, service start times
+matched the prior snapshot, and the backup filesystem remained distinct from
+PostgreSQL. Neither automation flag was set. Packages B and C were not started.
+
+A3 live SSH qualification passed after the authorized reload. The operator
+confirmed an open recovery console with sudo; a separate admin session was
+held. Fresh strict-host-key administrator login and sudo passed. The dedicated
+key authenticated, arbitrary command execution was denied by the forced
+command, PTY and forwarding probes were denied, and the server offered
+public-key authentication only. No read-only deployment verb exists, so no
+artifact or deploy command was sent. No rollback was required. Production
+services and IPv4 public HTTPS remained ready; timers and both automation
+flags stayed disabled. The read-only kernel audit found historical soft
+lockups/RCU stalls but none in the preceding 12 hours and no failed units.
+The latest event was at 00:56:46 UTC on 2026-11-24, with a virtio GPU/framebuffer
+stack. Root cause remains unconfirmed. The Package B authorization plan is
+in the runbook; no production backup or Neon refresh was started.
+
+### Package B production backup and independent recovery
+
+The one-time authorized backup ran through `playbooks/backup.yml -e
+nasj_run_backup=true`: three OK, one changed, zero failures. The preflight
+database size was 19,389,463 bytes and the backup mount had about 19 GiB free.
+There were no pre-existing local archives to prune. The canonical operation
+produced a 3,606,110-byte Age archive. SHA-256 verification passed. Local
+publication took 5 seconds including the canonical isolated restore. A
+separately timed repeat restore of the encrypted archive into disposable
+PostgreSQL 16 took 4 seconds. Off-host receipt publication took 160 seconds
+total, roughly 155 seconds after local publication (create, transfer, restore
+and verify combined; transfer-only timing was not collected).
+
+A new candidate in the existing production Neon project matched both the remote
+receipt and the canonical local snapshot evidence:
+`NASJ_EVIDENCE:146:44:cb7d1f4de78d04e0c28e2fa6623372c0:8491d197a86b3513ae76a62a039d8b43`
+(146 public tables, 44 applied migrations, migration digest and row-count
+digest). An independent PostgreSQL 18 export and disposable PostgreSQL 16
+restore on FelCloud matched that evidence in 30 seconds. The disposable
+cluster and temporary client tooling were removed. Production data was not
+sent to the workstation. The canonical adoption receipt was root-only, and
+its archive digest, size, release marker and evidence matched the manifest and
+remote receipt. It was published 2026-11-24 22:56:25 UTC (23:56 in Tunisia),
+and is eligible through 2026-11-25 22:56:25 UTC (23:56 in Tunisia), subject to
+the adoption gate. No previous recovery database was deleted or overwritten.
+
+Across 72 monitoring samples, minimum available memory was 2,696 MiB; maximum
+sampled CPU use was 50%, steal 1%, I/O wait 6%, and disk read/write rates were
+208/4,620 KiB/s. There were no matching kernel warnings or failed health
+samples. API, web, worker, PostgreSQL and Nginx were active before and after;
+public HTTPS was ready and service start times were unchanged. The backup
+oneshot finished successfully and returned inactive. Both timers and
+automation flags remain off. The historical CPU stall risk remains under
+observation. No migrations, adoption or deployment occurred.
+
+### Package C authorization proposal
+
+The proposed artifact is the already verified release `d63a7aa`,
+artifact 14918288458, bundle SHA-256
+`1baa090ab7430db0665e0fc5a45c7c5c480ae4a79aa3b246ba871b51329ed5e5`.
+The bundle digest was rechecked and 44 migration checksums still match live.
+Main advanced to `6f9454f` when PR #258 merged; its CI and release passed and
+deployment was skipped. The delta is infrastructure/docs only, so the
+preserved application artifact is still the concrete proposed target.
+Choosing the newer artifact instead requires independent archive and bundle
+verification and specific authorization.
+
+In the approved maintenance window, recheck readiness, kernel health,
+receipt freshness and exact artifact identity. With the existing Vault
+command prefix, run `playbooks/adopt-release.yml -e
+nasj_confirm_adoption=true`. It retains the current release for rollback
+and restarts API, web and worker during adoption. Then write the exact
+digest authorization in `/etc/nasj/releases/FULL_SHA` following the
+deployment runbook and send the preserved bundle via the qualified
+forced-command SSH identity:
+
+```bash
+ssh -o BatchMode=yes -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes \
+  -i PATH_TO_DEPLOY_KEY -l nasj-deploy nasj \
+  'deploy d63a7aad49c3c8befded53cba334ab5c81477ab5 sha256:1baa090ab7430db0665e0fc5a45c7c5c480ae4a79aa3b246ba871b51329ed5e5' \
+  < ~/.local/share/nasj-release.qVHh1s/release.tar.gz
+```
+
+Verify the release link, local API/web, worker status and public readiness.
+Under the deployment lock, exercise the documented compatible application
+rollback to the retained legacy release and verify it before reapplying the
+same reviewed artifact if authorized. If health or a safety gate fails,
+stop and preserve the last healthy release; consult the pending marker and
+runbook before recovery. No migration approval, timer activation or CD flag
+change is part of this proposal. If the receipt expires before adoption,
+obtain separate approval for a fresh verified recovery run.
+
+### Package C result: adopted, first artifact blocked
+
+The final preflight verified administrator access (console had been operator
+verified), healthy local and public services, a fresh root-only off-host receipt
+and its archive, volume isolation, both exact artifact digests and manifest,
+and all 44 live migration checksums. Current main `6f9454f` had only
+infrastructure and documentation changes beyond the authorized `d63a7aa`.
+The pre-cutover service config and deployment state are preserved on FelCloud
+at `/root/nasj-package-c-preflight.tuTlbF`.
+
+Canonical adoption passed. The original application is now active through
+`/srv/nasj -> /srv/nasj-releases/legacy-20261124T230059Z`. The systemd journal
+measured 3.03 seconds from the worker stop to worker start. Public probes
+bracketed the adoption readiness interruption at roughly 2.5–5.0 seconds;
+one isolated probe also missed before adoption while the application was
+still untouched. Local API/database readiness, web, worker status and public
+HTTPS passed after adoption and again after the failed deployment attempt.
+
+The restricted identity reached the canonical helper with the authorization
+for GitHub artifact 14918288458, commit `d63a7aa`. The helper stopped before
+reading the bundle: `Unsafe trusted path parent: /var/log`. The live parent is
+`root:syslog` mode 0775; the dedicated log directory is `root:root` mode 0700.
+The deployment login also warned that its home directory did not exist;
+authentication and forced-command execution worked. No candidate directory,
+schema change, pending switch, current or previous artifact state was created.
+No rollback switch or rehearsal was appropriate because the candidate never
+became active. Under the deployment lock, the single-use authorization was
+archived inside the protected preflight directory. The adopted legacy release
+was left active and known good.
+
+The sampled resource peaks were CPU 83%, steal 0%, I/O wait 0%, with minimum
+available memory 2,753 MiB. There were no matching new kernel warnings, failed
+host probes or error-priority app-unit journal entries. Application, PostgreSQL
+and Nginx remain active. Neither timer nor automation flag was enabled.
+
+To unblock the first artifact, review a repository change that puts deployment
+logs under the existing verified root-owned state tree or another reviewed
+root-owned tree. Preserve symlink/permission checks and avoid changing the
+shared `/var/log` permissions. Test the Debian/Ubuntu group-writable parent
+case in disposable qualification, then obtain separate production approval
+to install the reviewed fix and retry the exact digest. Recheck the off-host
+receipt at retry time; renew it only under separate backup authorization if
+expired. Run the rollback rehearsal only after a successful artifact deployment.
+
+After artifact and rollback qualification, obtain separate authorization to
+enable the backup and monitor timers and verify a real scheduled archive, a
+fresh Neon receipt and monitoring delivery. Production CD requires a protected
+Environment, verified transport and explicit per-release digest approval;
+activate only after a successful controlled deployment and recovery rehearsal.
+For infrastructure automation, configure its separate protected Environment and
+dedicated credentials, qualify plan mode, and separately authorize apply
+activation. These capabilities were not activated during Package C.
+
+### Deployment log correction and retry plan
+
+FelCloud's shared `/var/log` is `root:syslog` 0775. The original helper
+correctly rejected that group-writable ancestor even though
+`/var/log/nasj-deploy` itself was 0700. The corrected helper logs only under
+`/var/lib/nasj-deploy/logs`, does not depend on the shared directory, and checks
+every log ancestor, directory ownership and mode, and symlinks. It uses unique
+0600 logs, bounded captures and a fail-closed space/entry budget. Operational
+evidence is retained; the helper does not prune logs.
+
+The repository change updates the helper, the adoption worker log,
+the Ansible deployment role, deploy configuration template, controlled
+deployment tests and operational documentation. Existing `deploy.conf`
+does not require a change because the log path is fixed. On separately
+authorized production installation, verify the adopted legacy symlink,
+service health and absence of a pending marker. Under the current deployment
+lock, keep a root-only copy and checksum of `/usr/local/sbin/nasj-deploy`,
+create `/var/lib/nasj-deploy/logs` using
+`install -d -o root -g root -m 0700 /var/lib/nasj-deploy/logs`, and install the
+reviewed helper beside the live file, validate syntax and digest, then rename
+atomically over the live helper. Verify the installed digest, 0755 root:root
+helper and 0700 root:root log directory, then recheck readiness and the
+unchanged active symlink. No service restart or adoption is needed. Retain
+the old log tree. To roll back, under the same lock stage the saved helper
+as root:root 0755 beside the live file, check its original digest, and rename
+it atomically into place. Preserve any new logs as evidence; no configuration
+or service restart is required for this rollback.
+
+For a separately authorized retry, reverify both preserved artifact digests,
+manifest and live migration checksums. Recheck readiness, resources, kernel
+warnings, strict SSH, adopted legacy symlink, and no pending state or
+migration approval. Create a new mode-0600 authorization containing the
+exact digest and use the existing forced-command upload. Do not reuse the
+archived authorization or re-adopt. The normal helper checks an off-host
+backup only in the migration branch; adoption has already passed its own
+24-hour gate. For a migration-free retry, a fresh receipt is an operational
+safety prerequisite, not a technical helper gate. Recheck it immediately
+before retry. Obtain separate backup authorization if it has expired.
+If the release unexpectedly needs a migration, stop. After successful
+deployment, rehearse rollback to the retained legacy release and leave
+it active. No timers or automation flags are part of this proposal.

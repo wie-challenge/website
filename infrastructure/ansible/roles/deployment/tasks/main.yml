@@ -21,7 +21,7 @@
     - {path: /etc/nasj/releases, mode: '0700'}
     - {path: /etc/nasj/approvals, mode: '0700'}
     - {path: /var/lib/nasj-deploy, mode: '0700'}
-    - {path: /var/log/nasj-deploy, mode: '0700'}
+    - {path: /var/lib/nasj-deploy/logs, mode: '0700'}
     - {path: /srv/nasj-releases, mode: '0755'}
     - {path: /usr/local/libexec, mode: '0755'}
     - {path: /var/lib/nasj-deploy/staged, mode: '0700'}

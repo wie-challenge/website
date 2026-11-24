@@ -39,6 +39,10 @@ if pathlib.Path("/srv/nasj/apps/api/dist/fail-start").exists():
 
 class Handler(http.server.BaseHTTPRequestHandler):
     def do_GET(self):
+        if (self.headers.get("X-NASJ-Fixture-Public") == "1"
+                and pathlib.Path("/srv/nasj/apps/api/dist/fail-public").exists()):
+            self.send_error(503)
+            return
         self.send_response(200)
         self.send_header("Content-Type", "application/json")
         self.end_headers()
@@ -73,7 +77,7 @@ server {
     ssl_certificate /usr/local/share/ca-certificates/nasj-fixture.crt;
     ssl_certificate_key /etc/ssl/private/nasj-fixture.key;
     location = /test-alert { return 204; }
-    location / { proxy_pass http://127.0.0.1:3001; }
+    location / { proxy_set_header X-NASJ-Fixture-Public 1; proxy_pass http://127.0.0.1:3001; }
 }
 NGINX
 nginx -t

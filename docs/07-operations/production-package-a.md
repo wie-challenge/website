@@ -136,3 +136,159 @@ Keep backup and monitor timers disabled. To roll back A4, restore the previous
 two settings files and notification unit (or remove only the newly installed
 files), reload systemd metadata under approval, and rotate the webhook in
 Discord if it was exposed.
+
+### Combined check-mode invocation
+
+After operator confirmation of Age custody, console login with sudo, and firewall
+review, preview all configuration without reloading SSH or starting timers:
+
+```bash
+"${a[@]}" playbooks/configure.yml --check \
+  -e '{"nasj_configure_backup":true,"nasj_install_deploy_ssh":true,"nasj_recovery_access_verified":true,"nasj_reload_ssh":false,"nasj_enable_backup_timer":false,"nasj_enable_monitoring":false,"nasj_production_apply":false}'
+```
+
+Ansible previews copying notification settings without validating the URL or
+sending a request. Confirm the replacement URL separately before approval.
+A1 and A4 require separate consent: the backup role installs both sets of files
+if both are present in Vault. Obtain both approvals before using the combined
+Vault for an apply, or use a separately reviewed encrypted input that omits
+`notify.curl` and `notify.env` for A1. Leave the SSH role off for either operation.
+
+### A1 and A4 installation record
+
+A1 and A4 configuration installation was authorized and applied from the
+CI-passing implementation at `3546a4c`. The apply ran with restricted SSH, reload
+and both timers off. It changed 10 tasks and had zero failures. Apt installed
+Age 1.1.1 only; PostgreSQL client 16.15 remained in place. The runtime and
+migration env files were copied inside FelCloud using no-overwrite links. Both
+copies match their protected originals and have mode 0640 with the respective
+service groups. The backup and notifier inputs are root-only 0600. The mount
+remains on `/dev/vdb` and PostgreSQL on `/dev/vda1`; the archive mount root is now
+0711. The original env files, fstab and scoped sudo rule passed checksum checks.
+The API, web, worker, PostgreSQL and Nginx were active, public HTTPS reported
+ready, and recorded service start times were unchanged. Installed backup,
+monitor and notifier units were inactive. The Discord settings passed local
+validation without sending a request.
+
+The protected server rollback snapshot is
+`/root/nasj-package-a-rollback.AlLB1Y`. It contains `previous.tar`, an inventory
+of prior and absent paths, original modes and checksums, and the service start
+time snapshot. For an approved rollback, list the archive with
+`sudo tar -tf /root/nasj-package-a-rollback.AlLB1Y/previous.tar` and restore only
+a reviewed prior path with `sudo tar -xpf SNAPSHOT -C / PATH_IN_ARCHIVE`.
+Remove only files confirmed to have been created by A1/A4. Restore the
+mount-root mode from `original.stat` (0755 before apply). Do not unmount the
+volume, remove archives, restore the entire archive over unrelated files, or
+remove packages without reviewing their dependents. Recheck application health
+and the protected original checksums after rollback.
+
+The database grant, restricted SSH installation/reload, and a single live
+Discord delivery test remain separate operations requiring authorization.
+No production backup, adoption, deployment or timer start was run.
+
+Post-apply Ansible check mode returned 21 OK, zero changes, 10 skipped and zero
+failures for the approved scope. Systemd unit validation succeeded with a
+host IPv6 availability warning; the units were neither loaded for activation
+nor started. Seven installed helpers matched the reviewed source checksums.
+
+### A2, staged A3, and live Discord qualification
+
+A2 ran the database grant playbook: three OK, one changed, zero failures. The
+only ACL delta on `nasj.public._prisma_migrations` was non-grantable SELECT for
+`nasj_app`. Effective SELECT is true, public-schema CREATE is false, and the
+migration history checksum is unchanged. No migration ran. If separately
+approved and safe for the active release, roll back as PostgreSQL administrator
+in the `nasj` database with:
+
+```sql
+REVOKE SELECT ON TABLE public._prisma_migrations FROM nasj_app;
+```
+
+A3 staged three changes with zero failures: the root-owned key directory and
+the two reviewed SSH files. Strict host-key administrator access and the
+operator's console-with-sudo and firewall confirmations were recorded.
+`sshd -t`, `visudo -c`, the key fingerprint and the on-disk effective
+`sshd -T -C user=nasj-deploy,host=localhost,addr=127.0.0.1` values passed.
+They show public-key authentication, password authentication disabled, no TTY,
+no forwarding, and the forced command. SSH daemon PID and start time are
+unchanged. The new rules have not been qualified through a live SSH session.
+
+The root-only pre-A3 snapshot is
+`/root/nasj-package-a3-rollback.GuZIma`. It contains the prior SSH configuration,
+checksums for the main file, host public key and sudo policy, and daemon state.
+Both deploy-specific files were absent before A3.
+
+For a separately approved reload, keep the FelCloud recovery console and a
+working admin SSH session open. From that admin session run:
+
+```bash
+sudo /usr/sbin/sshd -t && sudo systemctl reload ssh.service
+```
+
+From a second terminal verify a fresh admin login with
+`ssh -o BatchMode=yes -o StrictHostKeyChecking=yes nasj true`. With the
+separate deployment identity, run `ssh -o BatchMode=yes -o IdentitiesOnly=yes
+-o StrictHostKeyChecking=yes -i PATH_TO_DEPLOY_KEY -l nasj-deploy nasj id`
+and require exit 1 with the forced-command rejection text rather than an
+authentication failure. Confirm effective TTY/forwarding denial and public
+readiness. Do not send an artifact. If the new SSH configuration must be
+rolled back, from the console remove only the new
+`/etc/ssh/sshd_config.d/60-nasj-deploy.conf` and
+`/etc/ssh/authorized_keys/nasj-deploy` (both absent originally), then run
+`sudo /usr/sbin/sshd -t && sudo systemctl reload ssh.service` under rollback
+authorization and verify a fresh admin login.
+
+One authorized production-format Discord qualification was sent through the
+installed notifier with the synthetic identifier
+`nasj-qualification-test-not-a-real-failure.service`. Discord returned HTTP 200
+with wait enabled and certificate verification result 0. The notifier provided
+the production environment, UTC timestamp and disabled mentions, without
+including application data. Recipient confirmation remains pending. No
+persistent notification configuration changed and timers stayed disabled.
+
+### A3 reload and live access qualification
+
+The operator confirmed the FelCloud recovery console was open, logged in with
+sudo, and would remain open. A separate strict-host-key admin SSH session was
+held through validation. Read-only preflight found low load, no failed units or
+matching kernel events in the prior 12 hours, and ready public HTTPS. The latest
+historical soft lockup was a 45-second event at 00:56:46 UTC on 2026-11-24, with
+a virtio GPU/framebuffer stack. Previous RCU stalls and other lockups remain a
+stability watch item; the root cause is unconfirmed.
+
+The authorized `sudo /usr/sbin/sshd -t && sudo systemctl reload ssh.service`
+succeeded. A fresh strict-host-key admin connection and sudo passed. The
+dedicated key authenticated and the forced command denied `id`; active probes
+also confirmed PTY and forwarding denial, and the server offered public-key
+authentication only. The forced-command wrapper has no read-only status verb,
+so no deployment command or artifact was sent. No rollback was needed. The
+API, web, worker, PostgreSQL and Nginx remained active and public HTTPS ready.
+
+### Package B authorization proposal
+
+After separate approval, from `infrastructure/ansible` using the protected
+Vault command prefix above, run:
+
+```bash
+"${a[@]}" playbooks/backup.yml -e nasj_run_backup=true
+```
+
+This starts only the canonical backup oneshot, not either timer. It reads a
+consistent snapshot from local PostgreSQL, encrypts it on the dedicated
+volume, restores into disposable PostgreSQL 16, and writes one fresh candidate
+database in the existing production Neon recovery project. It may apply the
+documented retention to eligible local archive pairs; it does not delete
+existing Neon recovery points. No application restart, migration, adoption
+or CD activation is involved. Expect temporary CPU, I/O and network load,
+plus Neon storage usage. Recheck host health and space first and stop if
+kernel stalls recur.
+
+Validate the archive SHA-256 and protected local receipt, reconcile the remote
+receipt and table/migration evidence, then independently export the new Neon
+candidate using a compatible client and restore into a controlled disposable
+PostgreSQL 16 environment approved for production data. Do not copy unencrypted
+data to the workstation or put it in logs. Recheck matching evidence, readiness
+and receipt age under 24 hours against the adoption prerequisites without
+invoking adoption. Stop on any mismatch; preserve previous recovery points
+and do not edit receipts. If the qualified receipt is stale by the time a
+maintenance window opens, require a freshly authorized recovery verification.

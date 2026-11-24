@@ -27,7 +27,7 @@ Install the following files from the reviewed revision as root-owned, mode 0755:
 
 Create root-owned `/etc/nasj` mode 0711 and put the root-owned deploy config there at mode
 0600. Create root-owned `/etc/nasj/releases`, `/etc/nasj/approvals`, `/var/lib/nasj-deploy`
-and `/var/log/nasj-deploy` at mode 0700. Create `/srv/nasj-releases` at mode 0755 on the
+and `/var/lib/nasj-deploy/logs` at mode 0700. Create `/srv/nasj-releases` at mode 0755 on the
 same filesystem as `/srv`. Copy existing runtime and migration credentials privately
 to the configured paths with mode 0640 and separate runtime and migration groups. The runtime
 database role needs read access to migration history and must lack schema ownership.
@@ -62,10 +62,26 @@ and succeeds only after creating a fresh verified off-host Neon recovery point f
 It also verifies the encrypted archive on the dedicated local filesystem. A missing or failed
 hook blocks migration even if the local archive succeeded. Deployment never reverses database migrations.
 
+## Deployment log retention
+
+The helper opens a unique root-only log (0600) in
+`/var/lib/nasj-deploy/logs` while holding the deployment lock. The state and
+log directories must both be root:root 0700; symlinks and writable parents
+are rejected. The log path is fixed, so it needs no `deploy.conf` change.
+Keep any historical `/var/log/nasj-deploy` logs in place.
+
+Each capture is limited to 1 MiB. The helper blocks new deployments once
+the log directory reaches 59 MiB or 1,019 entries, reserving room for the
+next attempt within a 64 MiB and 1,024-entry budget. There is no automatic
+deletion. If the budget is reached, archive selected historical logs to
+protected storage under the deployment lock, verify the archive before
+moving any originals, and retry only after review. Never move the lock,
+pending marker, or other deployment state into the log directory.
+
 ## Recovery
 
 The deploy helper attempts application rollback on restart, readiness or worker failure.
-Inspect protected deployment logs and the three service journals, and verify HTTPS
+Inspect protected deployment logs in `/var/lib/nasj-deploy/logs` and the three service journals, and verify HTTPS
 readiness and worker status. A failed rollback or interrupted switch requires an operator.
 Under the deployment lock, inspect `/var/lib/nasj-deploy/pending` for previous and candidate
 paths. If there is no pending marker, use the recorded `previous` path and check it

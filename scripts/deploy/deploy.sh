@@ -7,7 +7,7 @@ umask 077
 sha=$1 digest=${2#sha256:}
 config_dir=/etc/nasj
 state_dir=/var/lib/nasj-deploy
-log_dir=/var/log/nasj-deploy
+log_dir=$state_dir/logs
 extractor=/usr/local/libexec/nasj-extract-release.py
 for trusted_path in "$config_dir" "$state_dir" "$log_dir" /usr/local/sbin/nasj-deploy "$extractor"; do
   [[ ! -L "$trusted_path" ]] || { echo "Unsafe symlink: $trusted_path" >&2; exit 1; }
@@ -15,11 +15,25 @@ done
 [[ $(stat -c '%u' "$config_dir") == 0 && $(stat -c '%a' "$config_dir") == 711 ]]
 [[ -f "$config_dir/deploy.conf" && ! -L "$config_dir/deploy.conf" ]]
 [[ $(stat -c '%u' "$config_dir/deploy.conf") == 0 && $(stat -c '%a' "$config_dir/deploy.conf") == 600 ]]
-for trusted_path in / /etc /var /var/lib /var/log /usr /usr/local /usr/local/libexec /usr/local/sbin; do
+for trusted_path in / /etc /var /var/lib /usr /usr/local /usr/local/libexec /usr/local/sbin; do
   [[ $(stat -c '%u' "$trusted_path") == 0 && ! -L "$trusted_path" && $((8#$(stat -c '%a' "$trusted_path") & 022)) == 0 ]] || { echo "Unsafe trusted path parent: $trusted_path" >&2; exit 1; }
 done
-install -d -m 700 "$state_dir" "$log_dir"
-[[ $(stat -c '%u:%a' "$state_dir") == 0:700 && $(stat -c '%u:%a' "$log_dir") == 0:700 ]]
+# Validate every ancestor of the log directory, including ancestors that are
+# not on the other trusted paths.
+trusted_path=$log_dir
+while [[ $trusted_path != / ]]; do
+  trusted_path=$(dirname -- "$trusted_path")
+  [[ -d "$trusted_path" && $(stat -c '%u' "$trusted_path") == 0 && ! -L "$trusted_path" && $((8#$(stat -c '%a' "$trusted_path") & 022)) == 0 ]] || {
+    echo "Unsafe trusted path parent: $trusted_path" >&2
+    exit 1
+  }
+done
+for trusted_path in "$state_dir" "$log_dir"; do
+  [[ -d "$trusted_path" && $(stat -c '%u:%g:%a' "$trusted_path") == 0:0:700 ]] || {
+    echo "Unsafe deployment directory: $trusted_path" >&2
+    exit 1
+  }
+done
 exec 9>"$state_dir/deploy.lock"
 flock -w 900 9 || { echo 'DEPLOY_LOCK_TIMEOUT'; exit 1; }
 pending="$state_dir/pending"
@@ -46,8 +60,16 @@ old_sha=${LEGACY_SHA:-bootstrap}
 if [[ -f "$old_target/.release.json" ]]; then
   old_sha=$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))["sha"])' "$old_target/.release.json")
 fi
-log="$log_dir/$(date -u +%Y%m%dT%H%M%S)-$sha.log"
-exec > >(tee -a "$log") 2>&1
+# Keep historical evidence. Refuse new attempts before the budget fills; an
+# operator can archive old logs outside this tree under the deployment lock.
+read -r log_bytes _ < <(du -sb -- "$log_dir")
+if [[ $log_bytes -ge 61865984 || $(find "$log_dir" -mindepth 1 -printf . | wc -c) -ge 1019 ]]; then
+  echo 'DEPLOY_LOG_BUDGET_EXHAUSTED: archive reviewed logs before retrying' >&2
+  exit 1
+fi
+log=$(mktemp "$log_dir/$(date -u +%Y%m%dT%H%M%S)-$sha.XXXXXXXX.log")
+# Bound captured output without cutting off the authenticated SSH response.
+exec > >(tee -p >(head -c 1048576 >"$log")) 2>&1
 incoming=$(mktemp "$state_dir/incoming.XXXXXX")
 staging="$RELEASE_ROOT/.incoming-$sha-$$"
 release="$RELEASE_ROOT/$sha"
@@ -78,11 +100,12 @@ ready() {
   done
   return 1
 }
-worker_ready() {
+worker_ready() (
+  ulimit -f 1024
   systemctl is-active --quiet nasj-worker.service || return 1
   runuser -u "$RUNTIME_USER" -- "$NODE_BIN" --env-file="$RUNTIME_ENV" \
     "$CURRENT_LINK/apps/api/dist/jobs/main.js" --status >"$log.worker" 2>&1
-}
+)
 finish() {
   local status=$?
   trap - EXIT
@@ -137,10 +160,11 @@ fi
 expected_node=$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))["node"])' "$release/.release.json")
 [[ $("$NODE_BIN" --version) == "$expected_node" ]]
 echo "RELEASE_VERIFIED sha=$sha sha256=$digest"
-schema() {
+schema() (
+  ulimit -f 1024
   runuser -u "$RUNTIME_USER" -- "$NODE_BIN" --env-file="$RUNTIME_ENV" \
     "$release/apps/api/scripts/deploy-check-schema.mjs"
-}
+)
 schema_status=0
 schema >"$log.schema" 2>&1 || schema_status=$?
 case "$schema_status" in
@@ -148,8 +172,10 @@ case "$schema_status" in
   10)
     [[ -f "$config_dir/approvals/$sha" && "$(cat "$config_dir/approvals/$sha")" == "expand-contract $old_sha sha256:$digest" ]]
     [[ -x "$config_dir/backup-before-migrate" ]]
-    "$config_dir/backup-before-migrate" "$sha" >"$log.backup" 2>&1
+    # Drain excess diagnostics without limiting the backup program's archive writes.
+    "$config_dir/backup-before-migrate" "$sha" > >(head -c 1048576 >"$log.backup"; cat >/dev/null) 2>&1
     (
+      ulimit -f 1024
       cd "$release/apps/api"
       runuser -u "$MIGRATION_USER" -- "$NODE_BIN" --env-file="$MIGRATION_ENV" \
         node_modules/prisma/build/index.js migrate deploy
