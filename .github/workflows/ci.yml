@@ -90,12 +90,3 @@ jobs:
           if-no-files-found: error
           retention-days: 7
           compression-level: 0
-  deploy:
-    needs: release
-    if: vars.PRODUCTION_DEPLOY_ENABLED == 'true' && github.event_name == 'push' && github.ref == 'refs/heads/main'
-    permissions:
-      actions: read
-    uses: ./.github/workflows/deploy-production.yml
-    with:
-      artifact_id: ${{ needs.release.outputs.artifact_id }}
-      sha256: ${{ needs.release.outputs.sha256 }}

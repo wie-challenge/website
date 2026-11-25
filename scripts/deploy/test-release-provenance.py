@@ -9,7 +9,12 @@ with tempfile.TemporaryDirectory() as tmp:
     d = Path(tmp)
     verified = d / "verify.sh"
     source = Path(__file__).with_name("verify-release-provenance.sh").read_text()
-    verified.write_text(source.replace("export PATH=/usr/sbin:/usr/bin:/sbin:/bin", ""))
+    token = d / "token"
+    token.write_text("test_token\n")
+    token.chmod(0o600)
+    verified.write_text(source.replace("export PATH=/usr/sbin:/usr/bin:/sbin:/bin", "")
+                        .replace("/etc/nasj/github-provenance.token", str(token))
+                        .replace("== 0:0:600", f"== {os.getuid()}:{os.getgid()}:600"))
     gh = d / "gh"
     gh.write_text("""#!/bin/bash
 set -eu

@@ -151,7 +151,16 @@ if [[ $mode == --attested ]]; then
   "$verifier" "$incoming" "$sha" "$digest"
   # Consume the source SHA while holding the canonical lock. A crash, failed
   # release or rollback never makes that automated authorization reusable.
-  if ! mkdir -m 0700 -- "$claims/$sha"; then
+  if ! mkdir -m 0700 -- "$claims/$sha" 2>/dev/null; then
+    # Identical delivery is a no-op only while that exact release is healthy
+    # and active, never after interruption or a rollback to an older release.
+    if [[ $old_target == "$release" && -f $claims/$sha/digest &&
+          $(cat "$claims/$sha/digest") == "sha256:$digest" &&
+          -f $state_dir/current && $(cat "$state_dir/current") == "$sha $digest" ]] &&
+       ready && worker_ready; then
+      echo "DEPLOY_ALREADY_CURRENT sha=$sha"
+      exit 0
+    fi
     echo 'PROVENANCE_REPLAY_REJECTED' >&2
     exit 1
   fi
@@ -205,6 +214,9 @@ if [[ "$old_target" == "$release" ]]; then
   ready && worker_ready
   echo "DEPLOY_ALREADY_CURRENT sha=$sha"
   exit 0
+fi
+if [[ $mode == --attested ]]; then
+  "$verifier" --main-head "$sha"
 fi
 printf '%s\n%s\n' "$old_target" "$release" > "$pending.tmp"
 mv -T "$pending.tmp" "$pending"

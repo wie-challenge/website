@@ -221,7 +221,10 @@ exit 0
             else:
                 assert (claim / "digest").read_text() == f"sha256:{digest}\n"
                 replay = subprocess.run(command, input=data, capture_output=True, env=env)
-                assert replay.returncode and b"PROVENANCE_REPLAY_REJECTED" in replay.stdout
+                if success:
+                    assert replay.returncode == 0 and b"DEPLOY_ALREADY_CURRENT" in replay.stdout
+                else:
+                    assert replay.returncode and b"PROVENANCE_REPLAY_REJECTED" in replay.stdout
                 if failure == "interrupted":
                     # A human's separately authorized exact-digest recovery can
                     # retry; it cannot remove the automatic claim.
@@ -245,6 +248,10 @@ case(success=True)
 case(success=True, attested=True)
 case(failure="concurrent", attested=True)
 case(failure="interrupted", attested=True)
+case(failure="worker", attested=True)
+case(failure="public", attested=True)
+case(schema="10", attested=True)
+case(schema="10", approval=True, backup=True, failure="backup", attested=True)
 for fault in [
     "checksum",
     "unauthorized",

@@ -1,30 +1,76 @@
-name: Deploy production
+name: Deliver attested production release
 on:
-  workflow_call:
-    inputs:
-      artifact_id:
-        required: true
-        type: string
-      sha256:
-        required: true
-        type: string
+  workflow_run:
+    workflows: [CI and production]
+    types: [completed]
+    branches: [main]
 permissions: {}
 concurrency:
   group: nasj-production
   cancel-in-progress: false
 jobs:
   deploy:
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    if: >-
+      github.repository == 'wie-challenge/website' &&
+      vars.PRODUCTION_DEPLOY_ENABLED == 'true' &&
+      github.event.workflow_run.conclusion == 'success' &&
+      github.event.workflow_run.event == 'push' &&
+      github.event.workflow_run.head_branch == 'main' &&
+      github.event.workflow_run.head_repository.full_name == github.repository
     environment: production
     runs-on: ubuntu-24.04
     timeout-minutes: 30
     permissions:
       actions: read
     steps:
-      - uses: actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0 # v5
-        with:
-          artifact-ids: ${{ inputs.artifact_id }}
-          path: ${{ runner.temp }}/release
+      - name: Verify completed producer and download its immutable archive
+        id: bundle
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RUN_ID: ${{ github.event.workflow_run.id }}
+          ATTEMPT: ${{ github.event.workflow_run.run_attempt }}
+          SHA: ${{ github.event.workflow_run.head_sha }}
+        run: |
+          set -euo pipefail
+          umask 077
+          repo=wie-challenge/website
+          [[ "$RUN_ID" =~ ^[0-9]+$ && "$ATTEMPT" =~ ^[0-9]+$ && "$SHA" =~ ^[a-f0-9]{40}$ ]]
+          gh api "repos/$repo/actions/runs/$RUN_ID/attempts/$ATTEMPT" |
+            jq -e --arg sha "$SHA" --arg repo "$repo" '
+              .path==".github/workflows/ci.yml" and .head_sha==$sha and .head_branch=="main" and
+              .event=="push" and .conclusion=="success" and .head_repository.full_name==$repo' >/dev/null
+          gh api "repos/$repo/actions/runs/$RUN_ID/attempts/$ATTEMPT/jobs" |
+            jq -e 'any(.jobs[]; .name=="required" and .conclusion=="success") and
+                   any(.jobs[]; .name=="release" and .conclusion=="success")' >/dev/null
+          archive=$(gh api "repos/$repo/actions/runs/$RUN_ID/artifacts" |
+            jq -er --arg name "production-release-$ATTEMPT" '
+              [.artifacts[] | select(.name==$name and .expired==false)] |
+              select(length==1) | .[0] | [.id,.digest] | @tsv')
+          read -r artifact outer <<<"$archive"
+          [[ "$artifact" =~ ^[0-9]+$ && "$outer" =~ ^sha256:[a-f0-9]{64}$ ]]
+          mkdir "$RUNNER_TEMP/release"
+          cd "$RUNNER_TEMP/release"
+          gh api "repos/$repo/actions/artifacts/$artifact/zip" | head -c 1073741825 >artifact.zip
+          test "$(stat -c %s artifact.zip)" -le 1073741824
+          printf '%s  artifact.zip\n' "${outer#sha256:}" | sha256sum -c -
+          python3 - <<'PY'
+          from pathlib import Path
+          import shutil, zipfile
+          limits = {"release.sha256": 65, "release.tar.gz": 1073741824}
+          with zipfile.ZipFile("artifact.zip") as archive:
+              entries = archive.infolist()
+              if sorted(x.filename for x in entries) != sorted(limits):
+                  raise SystemExit("Unexpected archive members")
+              for entry in entries:
+                  if not 0 < entry.file_size <= limits[entry.filename]:
+                      raise SystemExit("Unexpected archive member size")
+                  with archive.open(entry) as source, Path(entry.filename).open("xb") as output:
+                      shutil.copyfileobj(source, output)
+          PY
+          digest=$(cat release.sha256)
+          [[ "$digest" =~ ^[a-f0-9]{64}$ ]]
+          printf '%s  release.tar.gz\n' "$digest" | sha256sum -c -
+          printf 'sha=%s\ndigest=%s\n' "$SHA" "$digest" >>"$GITHUB_OUTPUT"
       - name: Deploy immutable release over pinned SSH
         env:
           DEPLOY_HOST: ${{ vars.DEPLOY_HOST }}
@@ -32,8 +78,8 @@ jobs:
           DEPLOY_USER: ${{ vars.DEPLOY_USER }}
           SSH_PRIVATE_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
           SSH_KNOWN_HOSTS: ${{ secrets.DEPLOY_KNOWN_HOSTS }}
-          RELEASE_SHA: ${{ github.sha }}
-          ARTIFACT_SHA256: ${{ inputs.sha256 }}
+          RELEASE_SHA: ${{ steps.bundle.outputs.sha }}
+          ARTIFACT_SHA256: ${{ steps.bundle.outputs.digest }}
         run: |
           set -euo pipefail
           [[ "$RELEASE_SHA" =~ ^[0-9a-f]{40}$ ]]
@@ -52,14 +98,4 @@ jobs:
           ssh -i "$key" -p "$DEPLOY_PORT" -o BatchMode=yes -o IdentitiesOnly=yes \
             -o StrictHostKeyChecking=yes -o "UserKnownHostsFile=$known" \
             -o ConnectTimeout=15 -o ServerAliveInterval=15 -o ServerAliveCountMax=4 \
-            "$DEPLOY_USER@$DEPLOY_HOST" "deploy $RELEASE_SHA sha256:$ARTIFACT_SHA256" < "$RUNNER_TEMP/release/release.tar.gz"
-      - name: Record deployment result
-        if: always()
-        env:
-          RESULT: ${{ job.status }}
-          RELEASE_SHA: ${{ github.sha }}
-        run: |
-          echo "Production deployment $RELEASE_SHA: $RESULT" >> "$GITHUB_STEP_SUMMARY"
-          if [ "$RESULT" != success ]; then
-            echo '::error::Production deployment failed. Inspect the protected server deployment log and recovery runbook.'
-          fi
+            "$DEPLOY_USER@$DEPLOY_HOST" "deploy-attested $RELEASE_SHA sha256:$ARTIFACT_SHA256" < "$RUNNER_TEMP/release/release.tar.gz"
