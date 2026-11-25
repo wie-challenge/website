@@ -99,3 +99,6 @@ See [infrastructure qualification](infrastructure-qualification.md) for the audi
 For an attested production release, record the protected-main commit, CI run
 and attempt, immutable artifact ID and bundle SHA-256. Check the active release
 and public readiness before closing the deployment record.
+
+Record the SSH credential preflight result and the previous release target
+when qualifying a change to automatic delivery.
