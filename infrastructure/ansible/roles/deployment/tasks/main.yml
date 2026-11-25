@@ -22,6 +22,7 @@
     - {path: /etc/nasj/approvals, mode: '0700'}
     - {path: /var/lib/nasj-deploy, mode: '0700'}
     - {path: /var/lib/nasj-deploy/logs, mode: '0700'}
+    - {path: /var/lib/nasj-deploy/provenance-claims, mode: '0700'}
     - {path: /srv/nasj-releases, mode: '0755'}
     - {path: /usr/local/libexec, mode: '0755'}
     - {path: /var/lib/nasj-deploy/staged, mode: '0700'}
@@ -37,6 +38,7 @@
     - {src: deploy.sh, dst: /usr/local/sbin/nasj-deploy}
     - {src: extract-release.py, dst: /usr/local/libexec/nasj-extract-release.py}
     - {src: ssh-command.sh, dst: /usr/local/libexec/nasj-ssh-command}
+    - {src: verify-release-provenance.sh, dst: /usr/local/libexec/nasj-verify-release-provenance}
 
 - name: Install changed helpers under the application deployment lock
   ansible.builtin.shell: |

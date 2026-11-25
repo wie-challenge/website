@@ -3,8 +3,8 @@
 set -Eeuo pipefail
 export PATH=/usr/sbin:/usr/bin:/sbin:/bin
 umask 077
-[[ $# == 2 && "$1" =~ ^[0-9a-f]{40}$ && "$2" =~ ^sha256:[0-9a-f]{64}$ ]] || exit 2
-sha=$1 digest=${2#sha256:}
+[[ ( $# == 2 || ( $# == 3 && $3 == --attested ) ) && "$1" =~ ^[0-9a-f]{40}$ && "$2" =~ ^sha256:[0-9a-f]{64}$ ]] || exit 2
+sha=$1 digest=${2#sha256:} mode=${3:-manual}
 config_dir=/etc/nasj
 state_dir=/var/lib/nasj-deploy
 log_dir=$state_dir/logs
@@ -132,7 +132,7 @@ trap 'exit 143' TERM
 trap 'exit 129' HUP
 # The transport credential alone cannot approve code for execution on this host.
 authorization="$config_dir/releases/$sha"
-if [[ ! -f "$authorization" || -L "$authorization" || $(cat "$authorization") != "sha256:$digest" ]]; then
+if [[ $mode == manual ]] && [[ ! -f "$authorization" || -L "$authorization" || $(cat "$authorization") != "sha256:$digest" ]]; then
   echo 'RELEASE_AUTHORIZATION_REQUIRED'
   exit 1
 fi
@@ -141,6 +141,23 @@ timeout 600 head -c 1073741825 > "$incoming"
 [[ $(stat -c %s "$incoming") -le 1073741824 ]]
 actual=$(sha256sum "$incoming"); actual=${actual%% *}
 [[ "$actual" == "$digest" ]]
+if [[ $mode == --attested ]]; then
+  enabled=$config_dir/enable-attested
+  [[ -f $enabled && ! -L $enabled && $(stat -c '%u:%g:%a' "$enabled") == 0:0:600 ]]
+  verifier=/usr/local/libexec/nasj-verify-release-provenance
+  claims=$state_dir/provenance-claims
+  [[ -f $verifier && ! -L $verifier && $(stat -c '%u:%g:%a' "$verifier") == 0:0:755 ]]
+  [[ -d $claims && ! -L $claims && $(stat -c '%u:%g:%a' "$claims") == 0:0:700 ]]
+  "$verifier" "$incoming" "$sha" "$digest"
+  # Consume the source SHA while holding the canonical lock. A crash, failed
+  # release or rollback never makes that automated authorization reusable.
+  if ! mkdir -m 0700 -- "$claims/$sha"; then
+    echo 'PROVENANCE_REPLAY_REJECTED' >&2
+    exit 1
+  fi
+  printf 'sha256:%s\n' "$digest" > "$claims/$sha/digest"
+  sync -f "$claims"
+fi
 if [[ -e "$release" ]]; then
   [[ -f "$release/.artifact-sha256" && "$(cat "$release/.artifact-sha256")" == "$digest" ]]
 else
