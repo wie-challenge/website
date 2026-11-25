@@ -93,3 +93,9 @@ archive the pending marker only after verification. Investigate migration state 
 when failure occurred during migration.
 
 See [infrastructure qualification](infrastructure-qualification.md) for the audit, Ansible, backup, and cutover procedures.
+
+### Automatic delivery evidence
+
+For an attested production release, record the protected-main commit, CI run
+and attempt, immutable artifact ID and bundle SHA-256. Check the active release
+and public readiness before closing the deployment record.
