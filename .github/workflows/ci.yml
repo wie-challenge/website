@@ -41,10 +41,12 @@ jobs:
     timeout-minutes: 30
     permissions:
       contents: read
+      actions: read
       id-token: write
       attestations: write
     outputs:
       artifact_id: ${{ steps.publish.outputs.artifact-id }}
+      zip_sha256: ${{ steps.publish.outputs.artifact-digest }}
       sha256: ${{ steps.bundle.outputs.sha256 }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -90,6 +92,35 @@ jobs:
           if-no-files-found: error
           retention-days: 7
           compression-level: 0
+      - name: Build signed-binding predicate from immutable upload metadata
+        env:
+          GH_TOKEN: ${{ github.token }}
+          ARTIFACT: ${{ steps.publish.outputs.artifact-id }}
+          ZIP_DIGEST: ${{ steps.publish.outputs.artifact-digest }}
+          BUNDLE_DIGEST: ${{ steps.bundle.outputs.sha256 }}
+        run: |
+          set -euo pipefail
+          [[ "$ARTIFACT" =~ ^[1-9][0-9]*$ && "$ZIP_DIGEST" =~ ^[a-f0-9]{64}$ && "$BUNDLE_DIGEST" =~ ^[a-f0-9]{64}$ ]]
+          timeout 20 gh api "repos/$GITHUB_REPOSITORY/actions/artifacts/$ARTIFACT" |
+            head -c 65537 |
+            jq -e --arg repo "$GITHUB_REPOSITORY" --arg sha "$GITHUB_SHA" \
+              --arg zip "sha256:$ZIP_DIGEST" --arg bundle "$BUNDLE_DIGEST" \
+              --argjson id "$ARTIFACT" --argjson run "$GITHUB_RUN_ID" --argjson attempt "$GITHUB_RUN_ATTEMPT" '
+                select(.id==$id and .workflow_run.id==$run and .workflow_run.head_sha==$sha and
+                       .workflow_run.head_branch=="main" and .expired==false and .digest==$zip and
+                       .name==("production-release-"+($attempt|tostring)) and
+                       .size_in_bytes>0 and .size_in_bytes<=1073741824) |
+                {schema:1, repository:$repo, source_sha:$sha, source_ref:"refs/heads/main",
+                 workflow:".github/workflows/ci.yml", run_id:$run, run_attempt:$attempt,
+                 artifact_id:.id, artifact_name:.name, zip_digest:.digest,
+                 bundle_sha256:$bundle, size_in_bytes:.size_in_bytes}
+              ' > "$RUNNER_TEMP/nasj-artifact-binding.json"
+      - name: Attest immutable artifact binding
+        uses: actions/attest@508db95dd578ae2727ebd6217d5ba78e4fbda05d # v4.2.1
+        with:
+          subject-path: .local/release/release.tar.gz
+          predicate-type: https://github.com/wie-challenge/website/attestations/artifact-binding/v1
+          predicate-path: ${{ runner.temp }}/nasj-artifact-binding.json
   deploy:
     needs: [required, release]
     if: vars.PRODUCTION_DEPLOY_ENABLED == 'true' && github.event_name == 'push' && github.ref == 'refs/heads/main'
@@ -98,4 +129,5 @@ jobs:
     uses: ./.github/workflows/deploy-production.yml
     with:
       artifact_id: ${{ needs.release.outputs.artifact_id }}
+      zip_sha256: ${{ needs.release.outputs.zip_sha256 }}
       sha256: ${{ needs.release.outputs.sha256 }}
