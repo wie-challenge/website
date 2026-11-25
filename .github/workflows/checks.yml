@@ -30,6 +30,7 @@ jobs:
       - run: pnpm lint
       - run: bash scripts/deploy/test-deploy.sh
       - run: python3 scripts/deploy/test-release-provenance.py
+      - run: python3 scripts/deploy/test-delivery-workflow.py
       - run: pnpm typecheck
       - name: Unit, domain, backup and logging tests
         shell: bash
