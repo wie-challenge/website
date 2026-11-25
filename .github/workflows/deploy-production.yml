@@ -52,7 +52,7 @@ jobs:
           ssh -i "$key" -p "$DEPLOY_PORT" -o BatchMode=yes -o IdentitiesOnly=yes \
             -o StrictHostKeyChecking=yes -o "UserKnownHostsFile=$known" \
             -o ConnectTimeout=15 -o ServerAliveInterval=15 -o ServerAliveCountMax=4 \
-            "$DEPLOY_USER@$DEPLOY_HOST" "deploy $RELEASE_SHA sha256:$ARTIFACT_SHA256" < "$RUNNER_TEMP/release/release.tar.gz"
+            "$DEPLOY_USER@$DEPLOY_HOST" "deploy-attested $RELEASE_SHA sha256:$ARTIFACT_SHA256" < "$RUNNER_TEMP/release/release.tar.gz"
       - name: Record deployment result
         if: always()
         env:

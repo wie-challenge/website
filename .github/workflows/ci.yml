@@ -41,6 +41,8 @@ jobs:
     timeout-minutes: 30
     permissions:
       contents: read
+      id-token: write
+      attestations: write
     outputs:
       artifact_id: ${{ steps.publish.outputs.artifact-id }}
       sha256: ${{ steps.bundle.outputs.sha256 }}
@@ -73,6 +75,10 @@ jobs:
         run: python3 scripts/deploy/smoke-release.py .local/release/release.tar.gz
         env:
           POSTGRES_TEST_IMAGE: postgres:16.11-alpine
+      - name: Attest the smoke-tested bundle
+        uses: actions/attest@508db95dd578ae2727ebd6217d5ba78e4fbda05d # v4.2.1
+        with:
+          subject-path: .local/release/release.tar.gz
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         id: publish
         with:
@@ -85,7 +91,7 @@ jobs:
           retention-days: 7
           compression-level: 0
   deploy:
-    needs: release
+    needs: [required, release]
     if: vars.PRODUCTION_DEPLOY_ENABLED == 'true' && github.event_name == 'push' && github.ref == 'refs/heads/main'
     permissions:
       actions: read

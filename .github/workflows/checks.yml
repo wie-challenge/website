@@ -29,6 +29,7 @@ jobs:
       - run: pnpm db:generate
       - run: pnpm lint
       - run: bash scripts/deploy/test-deploy.sh
+      - run: python3 scripts/deploy/test-release-provenance.py
       - run: pnpm typecheck
       - name: Unit, domain, backup and logging tests
         shell: bash

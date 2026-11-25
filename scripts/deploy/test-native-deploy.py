@@ -43,7 +43,7 @@ def archive(extra=None, sha=NEW):
 
 
 def case(
-    failure="", schema="0", approval=False, backup=False, payload=None, success=False
+    failure="", schema="0", approval=False, backup=False, payload=None, success=False, attested=False
 ):
     data = payload if payload is not None else archive()
     digest = hashlib.sha256(data).hexdigest()
@@ -56,6 +56,7 @@ def case(
             "releases/legacy",
             "state",
             "state/logs",
+            "state/provenance-claims",
         ]:
             (root / name).mkdir(parents=True)
         (root / "current").symlink_to(root / "releases/legacy")
@@ -73,6 +74,12 @@ LEGACY_SHA={OLD}
 """)
         (root / "state").chmod(0o700)
         (root / "state/logs").chmod(0o700)
+        (root / "state/provenance-claims").chmod(0o700)
+        if attested:
+            (root / "config/enable-attested").touch(mode=0o600)
+            verifier = root / "verifier"
+            verifier.write_text("#!/bin/sh\nexit 0\n")
+            verifier.chmod(0o755)
         (root / "config").chmod(0o711)
         (root / "config/deploy.conf").chmod(0o600)
         (root / "releases").chmod(0o755)
@@ -139,6 +146,7 @@ exit 0
                 str(HERE / "extract-release.py"),
             )
             .replace("/usr/local/sbin/nasj-deploy", str(helper))
+            .replace("/usr/local/libexec/nasj-verify-release-provenance", str(root / "verifier"))
         )
         source = source.replace(
             "for trusted_path in / /etc /var /var/lib /usr /usr/local /usr/local/libexec /usr/local/sbin;",
@@ -151,6 +159,8 @@ exit 0
         source = source.replace("== 0 &&", f"== {os.getuid()} &&")
         source = source.replace("== 0:0:700", f"== {os.getuid()}:{os.getgid()}:700")
         source = source.replace('[[ $trusted_path != / ]]', f'[[ $trusted_path != "{root}" ]]')
+        source = source.replace("== 0:0:755", f"== {os.getuid()}:{os.getgid()}:755")
+        source = source.replace("== 0:0:600", f"== {os.getuid()}:{os.getgid()}:600")
         (root).chmod(0o755)
         if failure == "insecure-log":
             (root / "state/logs").chmod(0o775)
@@ -169,8 +179,10 @@ exit 0
         lock = (root / "state/deploy.lock").open("w")
         if failure == "concurrent":
             fcntl.flock(lock, fcntl.LOCK_EX)
+        command = ["bash", str(helper), NEW, "sha256:" + supplied_digest]
+        if attested: command.append("--attested")
         result = subprocess.run(
-            ["bash", str(helper), NEW, "sha256:" + supplied_digest],
+            command,
             check=False,
             input=data,
             capture_output=True,
@@ -202,6 +214,24 @@ exit 0
                 )
             else:
                 assert "stop nasj-worker" not in calls
+        if attested:
+            claim = root / "state/provenance-claims" / NEW
+            if failure == "concurrent":
+                assert not claim.exists()
+            else:
+                assert (claim / "digest").read_text() == f"sha256:{digest}\n"
+                replay = subprocess.run(command, input=data, capture_output=True, env=env)
+                if success:
+                    assert replay.returncode == 0 and b"DEPLOY_ALREADY_CURRENT" in replay.stdout
+                else:
+                    assert replay.returncode and b"PROVENANCE_REPLAY_REJECTED" in replay.stdout
+                if failure == "interrupted":
+                    # A human's separately authorized exact-digest recovery can
+                    # retry; it cannot remove the automatic claim.
+                    recovered = subprocess.run(command[:-1], input=data, capture_output=True,
+                                               env={**env, "FAILURE":""})
+                    assert recovered.returncode == 0, recovered.stdout
+                    assert claim.is_dir()
         print(
             "PASS",
             failure
@@ -215,6 +245,13 @@ exit 0
 
 
 case(success=True)
+case(success=True, attested=True)
+case(failure="concurrent", attested=True)
+case(failure="interrupted", attested=True)
+case(failure="worker", attested=True)
+case(failure="public", attested=True)
+case(schema="10", attested=True)
+case(schema="10", approval=True, backup=True, failure="backup", attested=True)
 for fault in [
     "checksum",
     "unauthorized",

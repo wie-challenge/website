@@ -763,3 +763,177 @@ concurrency, signal interruption, unsafe state/log modes, log symlink and
 budget exhaustion cases. Both Ansible inventories passed syntax checks,
 and a full-history Gitleaks scan reported no findings. The correction is in
 draft PR #259; no production mutation or deploy retry was executed.
+
+### Package C retry: deployment and rollback qualified
+
+The exact helper revision `621d387` passed hosted required CI (run
+45507470486). The authorized helper correction installed SHA-256
+`f4867504b4037465a3af8d125a67bb2b266aade662bd42d11a6bbda4c73b1ab1`
+under the deployment lock. The prior helper and checksum are protected at
+`/root/nasj-package-c-helper-rollback.XVuEhK`. The install created root:root
+0700 `/var/lib/nasj-deploy/logs`; it changed neither the shared log tree nor
+the application symlink or service start times. No restart was needed for
+the helper install. Public HTTPS remained ready.
+
+The retry reverified both artifact digests, GitHub artifact 14918288458,
+commit `d63a7aad49c3c8befded53cba334ab5c81477ab5`, all 44 installed
+migration names/checksums, the fresh receipt and matching encrypted archive,
+and the absence of migration approval. The previous receipt was fresh, so
+no new backup ran. A newly written exact-digest authorization was used.
+Restricted SSH returned `DEPLOY_READY`; elapsed time including upload and
+verification was 101.86 seconds. Public probes bracketed the readiness
+interruption at 0.62–1.97 seconds. The candidate symlink, manifest, digest,
+local API liveness and database readiness, web GET, worker status, public
+API and web HTTP 200, and current/previous state all checked out. The three
+root:root 0600 deployment logs were 13, 354, and 83 bytes. No unresolved
+pending marker or migration approval was present.
+
+The authorized application rollback switched to the retained
+`/srv/nasj-releases/legacy-20261124T230059Z` under the deployment lock,
+verified worker status and local/public readiness, and finished in 4.52
+seconds end to end. Public probes bracketed its interruption at 1.84–3.09
+seconds. The candidate is retained as `previous`, the active legacy target is
+recorded by the adopted release and rehearsal marker, and artifact-only
+`current` is absent. No pending marker remains. Retry authorization was
+archived in the protected preflight snapshot; no automatic redeploy is
+authorized. PostgreSQL connectivity passed and no database migration or
+restore over production occurred.
+
+There were 210 public and 49 host samples. Peak sampled CPU busy was 75%,
+steal 1%, and I/O wait 8%; minimum available memory was 2,699 MiB. No failed
+host samples, new matching kernel warnings, or error-priority application
+journal entries were observed. SSH, API, web, worker, PostgreSQL and Nginx
+are active and public HTTPS is ready. Backup and monitoring timers remain
+inactive/disabled; both automation flags are unset.
+
+### Package D proposal — separate approvals
+
+1. Review and authorize repository integration of draft PR #259 after
+   confirming current head and required CI. No production activation is
+   implied by integration. The verified legacy release stays active unless a
+   specific subsequent artifact deployment is authorized.
+2. After separate production approval, enable and start the backup timer
+   using the reviewed Ansible configuration, verify its scheduled firing,
+   the encrypted archive and fresh verified Neon receipt, and inspect resource
+   impact. Then separately activate monitoring, verify the actual timer,
+   successful checks and protected Discord delivery. Disable the relevant
+   timer if qualification fails; preserve all evidence and recovery points.
+3. For CD, review the main-only production Environment and the pinned key,
+   qualify the first GitHub-runner deployment with a reviewed SHA and
+   exact-digest host authorization, and approve flag activation separately.
+   If qualification fails, unset the flag and follow application rollback.
+4. For infrastructure automation, provision the separate main-only protected
+   Environment and dedicated access credentials. Separately authorize flag use
+   for a plan-only dispatch, verify the audit/check output, and require an
+   exact-main successful plan and explicit approval before any apply. Disable
+   the flag if qualification fails.
+
+None of Package D was executed.
+
+### Package D progress
+
+D1 repository integration: PR #259 was verified at
+`621d387c91c2b18bfe9f89717ff6e4b935e863cd`, with the required check green,
+no unresolved review threads, clean merge compatibility and the installed
+FelCloud helper matching its qualified SHA-256. It was marked ready and
+merged through the normal protected process as
+`65ef68340f26f9c90af5f90cefdfe28a92f75751`. The resulting main workflow is
+run 45511080088; D1 is not complete until that run passes. Both timers and
+both automation flags remained off when the merge started.
+
+For D2, the canonical timer runs daily at 02:00 UTC (03:00 Tunisia time)
+with up to 15 minutes of jitter and supports missed calendar events via
+`Persistent=true`. A manual oneshot cannot substitute for a scheduled run.
+The scheduled run must be correlated with the unit journal, encrypted archive
+and matching local/remote evidence before D3 can activate.
+
+D4–D6 were reviewed for planning only. The existing production Environment
+restricts deployments to main. The separate production-infrastructure
+Environment does not yet exist. D4 must use the new merge commit's successful
+main artifact if it qualifies, with independently checked API identity, ZIP and
+bundle digests, strict SSH host-key pinning and an exact host-side authorization.
+No deployment is authorized by this review.
+
+For D5, use GitHub artifact attestations in the trusted release build job
+after the bundle smoke test. Grant OIDC and attestation write permissions only
+to the producer; the delivery job keeps the existing restricted SSH identity
+and has no signing permissions. FelCloud independently verifies the bundle
+digest and attestation, allowlists the repository, protected main ref and
+signing workflow, and checks the required CI result for the matching commit
+and attempt. Reject replay or stale releases and retain the exact-digest
+manual recovery path. The signing trust and delivery trust must stay separate.
+Keep the existing host lock, safe extraction, readiness checks, rollback and
+audit logs. An attested bundle that needs migrations must still satisfy the
+existing explicit migration approval and fresh verified backup gate.
+
+For D6, prepare a main-only protected Environment with separately scoped
+credentials and review of any elevation. Review all forced check-mode
+overrides in the audit, configure and verify path (read-only probes and
+validators), and test against a disposable guest with before/after state
+evidence. Reject unexpected writes, unsafe task overrides and timer/reload
+settings in a plan. Qualify via plan-only dispatch after separate flag
+authorization; keep apply gated by the same-main successful plan and separate
+approval. Do not repurpose the application deployment key.
+
+D1 passed: the exact merge commit `65ef683` passed required CI in run
+45511080088. D2 enabled the canonical production backup timer after the
+mount, Age key pair and verified Neon connection checks. The first listed
+trigger is 2026-11-25 02:05:54 UTC (03:05:54 Tunisia time); there was no prior
+trigger at inspection. Scheduled archive/receipt verification remains pending.
+The monitoring timer is still disabled. Candidate D4 artifact 14975897077
+was identified in that main run; local digest and extraction checks are pending.
+
+#### D4 verified candidate and proposed authorization
+
+GitHub run 45511080088 (main push) passed required CI and release; deploy
+was skipped. Artifact 14975897077 is tied to commit
+`65ef68340f26f9c90af5f90cefdfe28a92f75751`. The downloaded ZIP matched
+`c33ecc07b438480ffabae78699a83a337d28418f51c458ace5b24bb513ba403c`;
+the internal bundle matched
+`33e160c4049e8b6b988c7c0061387cd4832678c96fe83f1aea35feecf9073fa2`.
+Canonical safe extraction validated the full commit. All 44 migrations in
+the extracted artifact matched the live database. This artifact predates
+cryptographic attestations; provenance was checked using GitHub run and
+artifact metadata plus both byte digests. The exact bundle is held privately.
+
+After D2 and D3 pass, obtain separate approval for one hosted-runner
+deployment of those exact bytes. Recheck receipt freshness, live schema,
+readiness, current main and the production Environment's pinned SSH settings.
+The production Environment is main-only; secret entries exist but their
+stored contents cannot be read back for comparison. Validate the pinned
+host key and restricted credential in the approved runner operation.
+Under the host lock, create root-only
+`/etc/nasj/releases/65ef68340f26f9c90af5f90cefdfe28a92f75751` containing
+`sha256:33e160c4049e8b6b988c7c0061387cd4832678c96fe83f1aea35feecf9073fa2`
+with a trailing newline. Do not create a migration approval.
+
+The current workflow has no one-time manual exact-artifact dispatch when
+the global flag is unset. Prepare and review such a main-only dispatch
+using the production Environment, original artifact/run IDs, both digest
+checks and existing production concurrency group; authorize the dispatch
+separately. Do not flip the global CD flag or rerun a build as a shortcut.
+Record live readiness and preserve the retained legacy rollback path.
+
+#### Isolated D5 and D6 work
+
+The isolated D5 branch adds a pinned producer-only attestation step after
+bundle smoke testing and a standalone host verifier. The verifier binds the
+digest, trusted signing workflow, main commit, runner type and matching
+run attempt; it rejects a bundle without an attestation. No live deploy
+helper integration was added. A positive hosted signature test is still
+needed; the verifier requires the producer run to be complete, so automatic
+delivery must use a separate completed-run-triggered workflow rather
+than waiting on its own CI run. Before activation, qualify lock-scoped
+integration, replay behavior and negative signer/run/commit cases.
+
+D6 audit, configure and verify check mode passed in the disposable Ubuntu
+guest (2, 25 and 3 OK respectively, all with zero changes or failures).
+The guest used a synthetic certificate timer and runtime shim. Protected
+configuration hashes, selected modes, the live link and service start
+timestamps were identical before and after. This qualifies the local
+plan path, not the future protected GitHub Environment or runner access.
+No production infrastructure apply was executed.
+
+The production backup timer still has no trigger recorded; first listed
+execution remains 03:05:54 Tunisia time on November 25. D2 and D3 stay
+open and monitoring stays disabled.
