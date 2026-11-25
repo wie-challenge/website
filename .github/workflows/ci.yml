@@ -124,10 +124,108 @@ jobs:
   deploy:
     needs: [required, release]
     if: vars.PRODUCTION_DEPLOY_ENABLED == 'true' && github.event_name == 'push' && github.ref == 'refs/heads/main'
+    concurrency:
+      group: nasj-production
+      cancel-in-progress: false
+    environment: production
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
     permissions:
       actions: read
-    uses: ./.github/workflows/deploy-production.yml
-    with:
-      artifact_id: ${{ needs.release.outputs.artifact_id }}
-      zip_sha256: ${{ needs.release.outputs.zip_sha256 }}
-      sha256: ${{ needs.release.outputs.sha256 }}
+    steps:
+      - name: Validate production SSH configuration
+        env:
+          DEPLOY_HOST: ${{ vars.DEPLOY_HOST }}
+          DEPLOY_PORT: ${{ vars.DEPLOY_PORT }}
+          DEPLOY_USER: ${{ vars.DEPLOY_USER }}
+          DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+          DEPLOY_KNOWN_HOSTS: ${{ secrets.DEPLOY_KNOWN_HOSTS }}
+        run: |
+          set -euo pipefail
+          fail() { printf '::error::%s\n' "$1" >&2; exit 1; }
+          [[ -n "$DEPLOY_SSH_KEY" ]] || fail 'DEPLOY_SSH_KEY is missing'
+          [[ -n "$DEPLOY_KNOWN_HOSTS" ]] || fail 'DEPLOY_KNOWN_HOSTS is missing'
+          [[ "$DEPLOY_HOST" =~ ^[a-zA-Z0-9]([a-zA-Z0-9.-]*[a-zA-Z0-9])?$ && ${#DEPLOY_HOST} -le 253 ]] ||
+            fail 'DEPLOY_HOST is missing or invalid'
+          [[ "$DEPLOY_USER" =~ ^[a-z_][a-z0-9_-]{0,31}$ ]] || fail 'DEPLOY_USER is missing or invalid'
+          [[ "$DEPLOY_PORT" =~ ^[1-9][0-9]{0,4}$ ]] && (( DEPLOY_PORT <= 65535 )) ||
+            fail 'DEPLOY_PORT is missing or invalid'
+          umask 077
+          ssh_dir=$(mktemp -d "$RUNNER_TEMP/nasj-ssh.XXXXXXXX")
+          trap 'rm -rf -- "$ssh_dir"' EXIT
+          printf '%s\n' "$DEPLOY_SSH_KEY" > "$ssh_dir/key"
+          printf '%s\n' "$DEPLOY_KNOWN_HOSTS" > "$ssh_dir/known_hosts"
+          ssh-keygen -y -P '' -f "$ssh_dir/key" </dev/null >/dev/null 2>&1 ||
+            fail 'DEPLOY_SSH_KEY is not a valid unencrypted private key'
+          host_pattern=$DEPLOY_HOST
+          if (( DEPLOY_PORT != 22 )); then host_pattern="[$DEPLOY_HOST]:$DEPLOY_PORT"; fi
+          ssh-keygen -F "$host_pattern" -f "$ssh_dir/known_hosts" > "$ssh_dir/match" 2>/dev/null &&
+            ssh-keygen -l -f "$ssh_dir/match" >/dev/null 2>&1 ||
+            fail 'DEPLOY_KNOWN_HOSTS has no valid pin for DEPLOY_HOST and DEPLOY_PORT'
+          rm -- "$ssh_dir/match"
+          printf 'NASJ_SSH_DIR=%s\n' "$ssh_dir" >> "$GITHUB_ENV"
+          trap - EXIT
+      - name: Fetch and verify exact release ZIP and bundle
+        env:
+          GH_TOKEN: ${{ github.token }}
+          ARTIFACT: ${{ needs.release.outputs.artifact_id }}
+          ZIP_DIGEST: ${{ needs.release.outputs.zip_sha256 }}
+          BUNDLE_DIGEST: ${{ needs.release.outputs.sha256 }}
+        run: |
+          set -euo pipefail
+          umask 077
+          [[ "$ARTIFACT" =~ ^[1-9][0-9]*$ && "$ZIP_DIGEST" =~ ^[a-f0-9]{64}$ && "$BUNDLE_DIGEST" =~ ^[a-f0-9]{64}$ ]]
+          mkdir "$RUNNER_TEMP/release"
+          cd "$RUNNER_TEMP/release"
+          timeout 600 gh api "repos/$GITHUB_REPOSITORY/actions/artifacts/$ARTIFACT/zip" |
+            head -c 1073741825 >archive.zip
+          test "$(stat -c %s archive.zip)" -le 1073741824
+          printf '%s  archive.zip\n' "$ZIP_DIGEST" | sha256sum -c -
+          python3 - <<'PYTHON'
+          import shutil, zipfile
+          with zipfile.ZipFile("archive.zip") as z:
+              entries = z.infolist()
+              if sorted(e.filename for e in entries) != ["release.sha256", "release.tar.gz"]:
+                  raise SystemExit("Invalid ZIP entries")
+              if not (z.getinfo("release.sha256").file_size == 65 and
+                      0 < z.getinfo("release.tar.gz").file_size <= 1073741824):
+                  raise SystemExit("Invalid ZIP sizes")
+              with z.open("release.tar.gz") as src, open("release.tar.gz", "xb") as dst:
+                  shutil.copyfileobj(src, dst)
+              from pathlib import Path
+              Path("release.sha256").write_bytes(z.read("release.sha256"))
+          PYTHON
+          test "$(cat release.sha256)" = "$BUNDLE_DIGEST"
+          printf '%s  release.tar.gz\n' "$BUNDLE_DIGEST" | sha256sum -c -
+      - name: Deploy immutable release over pinned SSH
+        env:
+          DEPLOY_HOST: ${{ vars.DEPLOY_HOST }}
+          DEPLOY_PORT: ${{ vars.DEPLOY_PORT }}
+          DEPLOY_USER: ${{ vars.DEPLOY_USER }}
+          RELEASE_SHA: ${{ github.sha }}
+          ARTIFACT_SHA256: ${{ needs.release.outputs.sha256 }}
+        run: |
+          set -euo pipefail
+          [[ "$RELEASE_SHA" =~ ^[0-9a-f]{40}$ ]]
+          [[ "$ARTIFACT_SHA256" =~ ^[0-9a-f]{64}$ ]]
+          echo "$ARTIFACT_SHA256  $RUNNER_TEMP/release/release.tar.gz" | sha256sum --check --strict
+          key="$NASJ_SSH_DIR/key"
+          known="$NASJ_SSH_DIR/known_hosts"
+          ssh -F /dev/null -i "$key" -p "$DEPLOY_PORT" -o BatchMode=yes -o IdentitiesOnly=yes \
+            -o StrictHostKeyChecking=yes -o "UserKnownHostsFile=$known" -o GlobalKnownHostsFile=/dev/null \
+            -o ConnectTimeout=15 -o ServerAliveInterval=15 -o ServerAliveCountMax=4 \
+            "$DEPLOY_USER@$DEPLOY_HOST" "deploy-attested $RELEASE_SHA sha256:$ARTIFACT_SHA256" < "$RUNNER_TEMP/release/release.tar.gz"
+      - name: Remove temporary SSH credentials
+        if: always()
+        run: |
+          if [[ -n "${NASJ_SSH_DIR:-}" ]]; then rm -rf -- "$NASJ_SSH_DIR"; fi
+      - name: Record deployment result
+        if: always()
+        env:
+          RESULT: ${{ job.status }}
+          RELEASE_SHA: ${{ github.sha }}
+        run: |
+          echo "Production deployment $RELEASE_SHA: $RESULT" >> "$GITHUB_STEP_SUMMARY"
+          if [ "$RESULT" != success ]; then
+            echo '::error::Production deployment failed. Inspect the protected server deployment log and recovery runbook.'
+          fi
