@@ -38,9 +38,29 @@ if cmd[0] == "attestation":
                      "--source-ref":"refs/heads/main", "--source-digest":sha}.items():
         assert cmd[cmd.index(opt)+1] == val
     assert "--deny-self-hosted-runners" in cmd
-    if case in {"unattested", "wrong-signer", "wrong-source"}: sys.exit(1)
-    print(json.dumps([dict(verificationResult=dict(statement=dict(predicate=dict(
-        runDetails=dict(metadata=dict(invocationId=f"https://github.com/{repo}/actions/runs/11/attempts/2"))))))]))
+    invocation=f"https://github.com/{repo}/actions/runs/11/attempts/2"
+    cert=invocation
+    if "--predicate-type" in cmd:
+        if case in {"missing-binding","invalid-binding","untrusted-binding"}: sys.exit(1)
+        pred_type=cmd[cmd.index("--predicate-type")+1]
+        if case=="wrong-type": pred_type="https://example.invalid/wrong"
+        if case=="wrong-binding-invocation": cert=invocation[:-1]+"1"
+        pred=dict(schema=2 if case=="wrong-schema" else 1, repository=repo,
+                  source_sha=sha, source_ref="refs/heads/main", workflow=".github/workflows/ci.yml",
+                  run_id=12 if case=="wrong-binding-run" else 11,
+                  run_attempt=1 if case=="wrong-binding-attempt" else 2,
+                  artifact_id=56 if case=="wrong-artifact" else 55, artifact_name="production-release-2",
+                  zip_digest="sha256:"+"0"*64 if case=="wrong-zip" else os.environ["ZIP"],
+                  bundle_sha256="0"*64 if case=="wrong-binding-digest" else os.environ["DIGEST"],
+                  size_in_bytes=int(os.environ["SIZE"]))
+    else:
+        if case in {"unattested", "wrong-signer", "wrong-source"}: sys.exit(1)
+        pred_type="https://slsa.dev/provenance/v1"
+        pred=dict(runDetails=dict(metadata=dict(invocationId=invocation)))
+    def result(value):
+        return dict(verificationResult=dict(signature=dict(certificate=dict(runInvocationURI=cert)),
+                    statement=dict(predicateType=pred_type,predicate=value)))
+    print(json.dumps([result(pred)]+([result({**pred,"artifact_id":57})] if case=="conflicting" else [])))
 elif cmd[0] == "api":
     target = cmd[1]
     if target.endswith("/git/ref/heads/main"):
@@ -65,13 +85,13 @@ elif cmd[0] == "api":
             jobs.append(dict(name=name,run_id=11,run_attempt=1 if case=="wrong-job-attempt" else 2,
                              status=status,conclusion=conclusion))
         print(json.dumps(dict(jobs=jobs)))
-    elif target.endswith("/runs/11/artifacts"):
-        p=Path(os.environ["ARCHIVE"])
-        print(json.dumps(dict(artifacts=[] if case=="missing-artifact" else [
-            dict(name="production-release-2",id=55,expired=False,
-                 digest="sha256:"+hashlib.sha256(p.read_bytes()).hexdigest())])))
-    elif target.endswith("/artifacts/55/zip"):
-        sys.stdout.buffer.write(Path(os.environ["ARCHIVE"]).read_bytes())
+    elif target.endswith("/artifacts/55"):
+        if case in {"missing-artifact","api-unavailable"}: sys.exit(1)
+        if case=="oversized": print("x"*70000); sys.exit(0)
+        if case=="malformed": print("{not json"); sys.exit(0)
+        print(json.dumps(dict(id=55,name="production-release-2",expired=case=="expired",
+             digest=os.environ["ZIP"],size_in_bytes=int(os.environ["SIZE"]),
+             workflow_run=dict(id=12 if case=="another-run" else 11,head_sha=sha,head_branch="main"))))
     else: sys.exit(1)
 else: sys.exit(1)
 ''')
@@ -79,10 +99,14 @@ else: sys.exit(1)
     cases = ("exact", "in-progress", "modified", "unattested", "wrong-signer", "wrong-source",
              "wrong-repo", "wrong-ref", "stale", "failed-run", "cancelled", "queued",
              "incomplete-required", "incomplete-release", "wrong-attempt", "wrong-job-attempt",
-             "failed-required", "skipped-required", "missing-artifact", "wrong-artifact-bytes")
+             "failed-required", "skipped-required", "missing-artifact", "api-unavailable", "oversized", "malformed", "expired", "another-run",
+             "missing-binding", "invalid-binding", "untrusted-binding", "wrong-type", "wrong-schema",
+             "wrong-binding-invocation", "wrong-binding-run", "wrong-binding-attempt", "wrong-artifact",
+             "wrong-zip", "wrong-binding-digest", "conflicting")
     for case in cases:
         env = dict(os.environ, PATH=f"{d}:{os.environ['PATH']}", CASE=case, SHA=sha,
-                   ARCHIVE=str(wrong_archive if case=="wrong-artifact-bytes" else archive))
+                   ZIP="sha256:"+hashlib.sha256(archive.read_bytes()).hexdigest(),
+                   DIGEST=digest, SIZE=str(archive.stat().st_size))
         r = subprocess.run(["bash", str(verifier), str(bundle), sha,
                             "0"*64 if case=="modified" else digest],
                            env=env, capture_output=True, timeout=15)
