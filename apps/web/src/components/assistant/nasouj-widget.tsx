@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { Send, X } from 'lucide-react';
 import {
   nasoujCopy,
+  nasoujReply,
   nasoujTopics,
   type NasoujLocale,
   type NasoujRole,
@@ -13,7 +14,13 @@ import type { AssistantChat } from '@nasj/contracts';
 import { streamAssistant } from '@/lib/assistant-stream';
 import { nasoujArt } from './nasouj-assets';
 
-type Message = { id: number; from: 'user' | 'nasouj'; text: string; complete?: boolean };
+type Message = {
+  id: number;
+  from: 'user' | 'nasouj';
+  text: string;
+  complete?: boolean;
+  guide?: boolean;
+};
 
 const locales: { id: NasoujLocale; label: string; name: string }[] = [
   { id: 'en', label: 'EN', name: 'English' },
@@ -35,6 +42,7 @@ const feedbackCopy = {
   fr: { note: 'Avis conservé pour cette session', helpful: 'Utile', unhelpful: 'Inutile' },
   ar: { note: 'يبقى التقييم في هذه الجلسة', helpful: 'مفيد', unhelpful: 'غير مفيد' },
 };
+const guideCopy = { en: 'Built-in guide', fr: 'Guide intégré', ar: 'دليل مدمج' };
 const incompleteCopy = { en: 'Incomplete reply', fr: 'Réponse incomplète', ar: 'رد غير مكتمل' };
 const clearCopy = { en: 'Clear conversation', fr: 'Effacer la conversation', ar: 'مسح المحادثة' };
 
@@ -122,8 +130,19 @@ export function NasoujWidget({ role }: { role: NasoujRole }) {
           { role: 'assistant', content: answer.slice(0, 2000) },
         ];
       }
-    } catch {
-      if (!controller.signal.aborted && active.current === controller) setError(errorCopy[locale]);
+    } catch (cause) {
+      if (!controller.signal.aborted && active.current === controller) {
+        if (cause instanceof Error && cause.message === 'ASSISTANT_NOT_CONFIGURED') {
+          const guide = nasoujReply(role, locale, text);
+          setMessages((current) =>
+            current.map((m) =>
+              m.id === id ? { ...m, text: guide, complete: true, guide: true } : m,
+            ),
+          );
+        } else {
+          setError(errorCopy[locale]);
+        }
+      }
     } finally {
       if (active.current === controller) {
         active.current = null;
@@ -204,6 +223,7 @@ export function NasoujWidget({ role }: { role: NasoujRole }) {
         {messages.map((message) => (
           <div key={message.id} className="nasouj-message">
             <p className={`nasouj-bubble nasouj-from-${message.from}`}>{message.text}</p>
+            {message.guide && <small>{guideCopy[locale]}</small>}
             {message.complete === false && state === 'idle' && (
               <small>{incompleteCopy[locale]}</small>
             )}

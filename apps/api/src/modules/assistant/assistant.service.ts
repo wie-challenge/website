@@ -22,7 +22,7 @@ export class AssistantService {
 
   async stream(actor: Actor, chat: AssistantChat, res: Response) {
     if (!this.config.ASSISTANT_AMQP_URL)
-      fail(503, 'ASSISTANT_UNAVAILABLE', 'Nasouj is temporarily unavailable.');
+      fail(503, 'ASSISTANT_NOT_CONFIGURED', 'Live Nasouj replies are not configured.');
     if (this.active.has(actor.id) || this.active.size >= 20)
       fail(429, 'ASSISTANT_BUSY', 'Please wait before starting another conversation.');
     this.active.add(actor.id);

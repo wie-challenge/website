@@ -35,3 +35,20 @@ test('rejects truncated, cross-request, out-of-order, malformed and error stream
   ])
     await assert.rejects(readAssistantStream(stream(events), () => {}));
 });
+
+test('distinguishes an unconfigured assistant from an upstream failure', async () => {
+  await assert.rejects(
+    readAssistantStream(
+      Response.json({ code: 'ASSISTANT_NOT_CONFIGURED' }, { status: 503 }),
+      () => {},
+    ),
+    { message: 'ASSISTANT_NOT_CONFIGURED' },
+  );
+  await assert.rejects(
+    readAssistantStream(
+      Response.json({ code: 'ASSISTANT_UNAVAILABLE' }, { status: 503 }),
+      () => {},
+    ),
+    { message: 'ASSISTANT_UNAVAILABLE' },
+  );
+});

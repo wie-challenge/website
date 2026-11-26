@@ -8,6 +8,20 @@ import { apiFetch } from './api';
 
 export async function readAssistantStream(response: Response, onText: (text: string) => void) {
   if (
+    response.status === 503 &&
+    response.headers.get('content-type')?.startsWith('application/json')
+  ) {
+    const body: unknown = await response.json().catch(() => null);
+    if (
+      body &&
+      typeof body === 'object' &&
+      'code' in body &&
+      body.code === 'ASSISTANT_NOT_CONFIGURED'
+    ) {
+      throw new Error('ASSISTANT_NOT_CONFIGURED');
+    }
+  }
+  if (
     !response.ok ||
     !response.headers.get('content-type')?.startsWith('application/x-ndjson') ||
     !response.body

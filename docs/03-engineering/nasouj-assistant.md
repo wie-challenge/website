@@ -138,3 +138,7 @@ Milestone 2 should curate approved NASJ documents, label implemented/planned/sim
 add a testable retrieval baseline with source provenance and permission filtering, and evaluate
 uncertainty across EN/FR/AR and Tunisian Arabic. Milestone 3 can then add one NestJS-authorized,
 read-only order-status tool with resource and organization isolation tests.
+
+When no broker is configured, the workspace continues to offer its built-in
+guide and labels those replies. Guide replies are excluded from live chat
+history. A configured worker outage still shows an error.
