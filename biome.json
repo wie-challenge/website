@@ -18,6 +18,7 @@
       "!**/generated",
       "!**/next-env.d.ts",
       "!**/.next-e2e",
+      "!**/.next-assistant-test",
       "!**/.next-demo",
       "!**/.next-showroom-e2e"
     ]

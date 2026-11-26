@@ -2730,3 +2730,41 @@
   font-size: 0.75rem;
   font-weight: 700;
 }
+
+.nasouj-message {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+.nasouj-clear {
+  align-self: flex-end;
+  margin: 0.4rem 0.75rem 0;
+  padding: 0.3rem 0.6rem;
+  color: var(--green-deep);
+  font-size: 0.8rem;
+}
+.nasouj-feedback {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  color: var(--ink);
+  font-size: 0.7rem;
+}
+.nasouj-feedback-choice {
+  min-height: 30px;
+  padding: 0.2rem 0.5rem;
+  margin-inline-end: 0.3rem;
+  border: 1px solid var(--line-strong);
+  border-radius: 0.4rem;
+  background: var(--white);
+  color: var(--green-deep);
+  cursor: pointer;
+}
+.nasouj-feedback-choice[aria-pressed="true"] {
+  background: var(--gold);
+}
+.nasouj-error {
+  margin: 0.3rem 0.8rem;
+  color: var(--ink);
+  font-size: 0.85rem;
+}

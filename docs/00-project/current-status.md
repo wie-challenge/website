@@ -95,3 +95,21 @@ pnpm test:integration   # requires Docker
 
 The unit suites are the fastest check. Counts at the time of writing: 244 API unit tests and 27 web
 unit tests. Do not copy those numbers into other documents; run the suites and read the output.
+
+## Nasouj assistant
+
+**PARTIAL** — Milestone 1 adds authenticated streaming chat through RabbitMQ and the separate
+Python worker, with fake and configurable Ollama providers. Existing widget and access policy
+are reused. RAG, citations and authorized live-data tools are **NOT BUILT**. See
+[scope and reproducible validation](../03-engineering/nasouj-assistant.md).
+
+## Production delivery automation
+
+**PARTIAL**: repository CI/CD gates main releases on quality/security, integration, browser
+and build checks, then packages a SHA/checksum bundle for the existing FelCloud systemd services.
+Read-only VPS inventory and GitHub environment variables/secrets are configured. Server adoption,
+restricted account provisioning, off-host backup verification, hosted CI and live rollback remain
+**UNVERIFIED**. Public main requires pull request approval. The aggregate hosted CI check is pending qualification.
+The invitation authorization regression was repaired; main browser coverage passed 58 tests and
+the demo suite passed 15 with one optional recording test skipped. See
+[deployment and recovery](../07-operations/deployment.md).
