@@ -218,3 +218,24 @@ Batch 6 adds a visitor-owned isolated showroom at `/demo`, public `/evidence` me
 Read [the scenario guide](docs/99-archive/historical-audits/demo-scenario-guide.md), [reset runbook](docs/99-archive/historical-audits/demo-reset-runbook.md), [provenance policy](docs/99-archive/historical-audits/evidence-provenance-policy.md) and [migration readiness](docs/99-archive/historical-audits/migration-readiness.md). Existing `demo:setup` deploys migrations to the separate persistent local demo DB and needs separate owner authorization; automated verification uses new disposable containers instead. Do not run `pnpm dev` or `demo:setup` as a read-only migration check.
 
 `pnpm test:e2e` runs normal browser regressions, then a separate isolated demo build and real commercial/reset journey. `pnpm test:e2e:demo` runs just that showroom suite; `pnpm --filter @nasj/api test:demo` runs real HTTP control/reset/isolation scenarios. `pnpm competition:validate` checks the editable [report source](docs/competition/PHASE1_TECHNICAL_REPORT.md) and [video storyboard](docs/competition/PHASE1_VIDEO_STORYBOARD.md); it does not certify an absent PDF/video or competition compliance. Official-format validation was skipped at owner request and remains a submission gate. No verified bank payments, physical stock or live pilot readiness is established by a synthetic showroom.
+
+## Nasouj assistant (opt-in)
+
+Milestone 1 connects the existing widget to an authenticated RabbitMQ/Python streaming worker.
+Set server-only `ASSISTANT_AMQP_URL` to your private broker URL; omit it to leave chat unavailable.
+`ASSISTANT_TIMEOUT_MS` defaults to 60000 (1000–60000). The existing database rate limiter remains
+in use. `NASOUJ_BROKER_PASSWORD` configures the opt-in `docker-compose.assistant.yml` broker.
+Fake and explicitly configured local Ollama providers are supported. RAG and live-data tools
+are deferred. See [setup, contracts, tests and limits](docs/03-engineering/nasouj-assistant.md).
+
+### Production CI/CD
+
+`main` pushes and pull requests run all mandatory checks through `.github/workflows/ci.yml`.
+Successful main releases build and smoke-test one native application bundle, then deploy its
+SHA-256 through the `production` Environment to the existing systemd services. Server
+configuration lives outside releases: `/etc/nasj/runtime.env`, `migration.env`, and `deploy.conf`.
+Environment variables `DEPLOY_HOST`, `DEPLOY_PORT`, `DEPLOY_USER` and Environment secrets
+`DEPLOY_SSH_KEY`, `DEPLOY_KNOWN_HOSTS` configure SSH; no application secrets are stored in GitHub.
+Pending schema changes require per-commit server approval and a verified backup hook.
+See [production setup, activation limits and rollback](docs/07-operations/deployment.md).
+Production/VPS execution remains unverified until operator setup and all CI checks pass.

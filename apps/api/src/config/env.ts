@@ -79,6 +79,14 @@ export const envSchema = z.object({
   SMTP_USER: z.preprocess(optional, z.string().optional()),
   SMTP_PASSWORD: z.preprocess(optional, z.string().optional()),
   EMAIL_FROM: z.string().min(3).default('NASJ <noreply@nasj.local>'),
+  ASSISTANT_AMQP_URL: z.preprocess(
+    optional,
+    z
+      .url()
+      .refine((v) => /^amqps?:\/\//.test(v))
+      .optional(),
+  ),
+  ASSISTANT_TIMEOUT_MS: z.coerce.number().int().min(1000).max(60000).default(60000),
   LOG_LEVEL: z.enum(['silent', 'error', 'warn', 'info', 'debug']).default('info'),
 });
 export function validateEnvironment(values: Record<string, unknown>) {

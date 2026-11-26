@@ -1,4 +1,5 @@
 const exact = new Set([
+  '/api/v1/assistant/chat',
   '/api/v1/me/context',
   '/api/v1/authorization-policies',
   '/api/v1/admin/authorization-policies',

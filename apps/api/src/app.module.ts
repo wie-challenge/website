@@ -1,3 +1,4 @@
+import { AssistantModule } from './modules/assistant/assistant.module.js';
 import { MarketModule } from './modules/market/market.module.js';
 import { SalesModule } from './modules/sales/sales.module.js';
 import { DemoModule } from './modules/demo/demo.module.js';
@@ -30,6 +31,7 @@ export class AppModule {
         PrismaModule,
         SecurityModule.register(config, mock),
         AuthModule,
+        AssistantModule,
         UsersModule,
         OrganizationsModule,
         ArtisansModule,

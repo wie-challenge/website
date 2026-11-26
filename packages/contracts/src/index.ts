@@ -104,3 +104,4 @@ export * from './scenario-finance.js';
 
 export * from './batch12.js';
 export * from './market.js';
+export * from './assistant.js';

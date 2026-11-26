@@ -205,3 +205,11 @@ For procurement-managed orders only, `CommercialOrder.delivered` now means the s
 `GET /api/v1/demo/session` returns no-store visitor control state; normal environments return unavailable without provisioning. `POST /api/v1/demo/start`, `/switch` and `/reset` are enabled only for nonproduction loopback `nasj_demo`. They require the HttpOnly visitor cookie, matching Origin, `X-Demo-CSRF` and `Idempotency-Key`. Start creates a synthetic generation; switch accepts only the fixed six personas (operator aliases production), authenticates through Better Auth and returns no password; reset requires current scenarioId/generation/confirm=true and archives/recreates atomically. Ordinary domain routes still require normal session CSRF and scoped authorization. See [scenario guide](../99-archive/historical-audits/demo-scenario-guide.md) and [reset runbook](../99-archive/historical-audits/demo-reset-runbook.md).
 
 Shared provenance metadata and export rules are defined in `packages/contracts/src/provenance.ts`. No MEASURED/VERIFIED publication authority is configured, so those claims are rejected rather than approved from client labels. Public references are privacy-safe allowlisted methodology anchors. Existing legal, finance, custody and consent states are unchanged.
+
+## Nasouj chat
+
+`POST /api/v1/assistant/chat` uses the global verified-session, MFA, origin/JSON, CSRF and rate
+protections. Input is strict `{language: en|fr|ar, messages: [{role: user|assistant, content}]}`.
+The server resolves personas, generates correlation IDs and streams bounded NDJSON `delta`,
+`done`, or `error` events through a private RabbitMQ worker. No business tools or RAG are
+connected. Missing configuration returns 503. See [the exact contract and limits](../03-engineering/nasouj-assistant.md).

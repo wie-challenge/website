@@ -84,3 +84,5 @@ Historical records are point-in-time. A historical PASS does not mean the curren
 | [Duplicates and obsolete files](documentation-maintenance/DUPLICATE_AND_OBSOLETE_FILES.md) | What is duplicated and why it is retained |
 | [Documentation gaps](documentation-maintenance/DOCUMENTATION_GAPS.md) | What is deliberately not documented |
 | [Inventory](documentation-maintenance/INVENTORY.json) | Machine-readable file list with sizes, hashes and tracked status |
+
+Nasouj: [assistant setup and boundaries](03-engineering/nasouj-assistant.md).

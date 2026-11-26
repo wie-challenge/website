@@ -38,7 +38,8 @@
     "ops:run": "tsx --tsconfig apps/api/tsconfig.json --env-file-if-exists=.env --env-file=.local/operations/schedule.env scripts/run-local-operation.ts",
     "db:status:local": "tsx scripts/inspect-migration-status.ts",
     "competition:validate": "tsx scripts/validate-competition.ts",
-    "verify:clean": "tsx scripts/verify-clean.ts"
+    "verify:clean": "tsx scripts/verify-clean.ts",
+    "test:assistant": "pnpm --filter @nasj/contracts build && tsx --tsconfig apps/api/tsconfig.json --test apps/api/test/assistant.integration.test.ts"
   },
   "devDependencies": {
     "@axe-core/playwright": "4.14.0",
