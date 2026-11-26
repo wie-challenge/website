@@ -1,0 +1,59 @@
+name: NASJ restricted infrastructure plan
+on:
+  workflow_dispatch:
+permissions: {}
+concurrency:
+  group: nasj-production-infrastructure
+  cancel-in-progress: false
+jobs:
+  plan:
+    if: github.repository == 'wie-challenge/website' && github.ref == 'refs/heads/main'
+    environment: production-infrastructure-plan
+    runs-on: ubuntu-24.04
+    timeout-minutes: 4
+    steps:
+      - name: Read fixed production inventory and review expected state
+        env:
+          PLAN_HOST: ${{ vars.INFRA_PLAN_HOST }}
+          PLAN_PORT: ${{ vars.INFRA_PLAN_PORT }}
+          PLAN_KEY: ${{ secrets.INFRA_PLAN_SSH_KEY }}
+          PLAN_KNOWN_HOSTS: ${{ secrets.INFRA_PLAN_KNOWN_HOSTS }}
+        run: |
+          set -euo pipefail
+          umask 077
+          [[ "$PLAN_HOST" =~ ^[a-zA-Z0-9.-]+$ && "$PLAN_PORT" =~ ^[0-9]{1,5}$ ]]
+          d=$(mktemp -d)
+          trap 'rm -f "$d/key" "$d/known_hosts" "$d/facts.json"; rmdir "$d"' EXIT
+          printf '%s\n' "$PLAN_KEY" >"$d/key"
+          printf '%s\n' "$PLAN_KNOWN_HOSTS" >"$d/known_hosts"
+          unset PLAN_KEY PLAN_KNOWN_HOSTS
+          timeout 60 ssh -o BatchMode=yes -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes \
+            -o "UserKnownHostsFile=$d/known_hosts" -o ConnectTimeout=10 -i "$d/key" \
+            -p "$PLAN_PORT" "nasj-infra-plan@$PLAN_HOST" plan >"$d/facts.json"
+          python3 - "$d/facts.json" <<'PY'
+          import json, sys
+          data = json.load(open(sys.argv[1]))
+          assert data["schema"] == 1
+          drift = []
+          for unit in ("nasj-api", "nasj-web", "nasj-worker", "postgresql", "nginx",
+                       "nasj-backup.timer", "nasj-monitor.timer"):
+              if data["units_active"].get(unit) is not True:
+                  drift.append(f"Check inactive unit: {unit}")
+          expected = {"backup_isolated": True, "backup_restrictive_mount": True,
+                      "release_versioned": True, "deployment_pending": False}
+          for key, value in expected.items():
+              if data[key] is not value:
+                  drift.append(f"Review {key}")
+          for path, mode in {
+              "/etc/nasj/deploy.conf": "0600", "/etc/nasj/runtime.env": "0640",
+              "/etc/nasj/migration.env": "0640", "/etc/nasj/backup.identity": "0600",
+              "/etc/nasj/backup-neon.pgpass": "0600", "/etc/nasj/notify.curl": "0600",
+              "/var/lib/nasj-deploy/logs": "0700", "/srv/nasj-backups": "0711",
+          }.items():
+              entry = data["file_metadata"].get(path)
+              if not entry or entry["uid"] != 0 or entry["mode"] != mode or entry["symlink"]:
+                  drift.append(f"Review ownership or mode: {path}")
+          print("Read-only plan: " + (f"{len(drift)} findings" if drift else "no drift in scoped checks"))
+          for item in drift:
+              print("- " + item)
+          PY
