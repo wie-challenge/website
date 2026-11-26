@@ -316,3 +316,10 @@ New inspections 25; revalidated 0; new positives 17; downgrades 0. Current 626/1
 Five groups complete;125new unique inspected,0reinspection credit,65new verified,0downgrades. Current626/1026 inspected;415verified;400uninspected;63epicgates uninspected. Owner acceptance PENDING. New13P2findings G45–G57;no newP0/P1/LOW. Exact25issue dispositions: evidence/checkpoint5/batch-groups18-22-summary.md and.json. CorrectlyDone#137/#140/#141/#144;#145evidencegap;#148openreadyforownerreview. Review/reopen#124/#126/#134/#135/#136/#139/#142/#143. Otherselectedopenissuesnotready.
 
 122successfulAPI scenario executions/59distinctnames;8domainchecks;24unit subset;5browserpassed0failed/skipped/flaky. Focusedcounts notaddedto retainedfull186/27/221/63/17totals. FourHEAD/indexstates,1150sourcehashes,39migrations,1026texts,existingwork/priorfindings/evidence preserved. Externalprivacy/consent/qualifiedpolicy/provider/physical/hardware/pilot/ML/owner gates remain pending. No product/GitHub/canonical/persistentDB/provider/participant/payment action. Stop afterGroup22;propose23–27only.
+
+## NASJ infrastructure closeout, 26 November 2026
+
+- **D5 complete.** Automatic production delivery is enabled and operator-accepted. Hosted run 45713257601 and the qualification report retain the evidence.
+- **D6 open.** PR #263 remains draft and unmerged. Recreate the disposable guest for future qualification, confirm the independent Environment reviewer, and obtain separate approval for the restricted hosted plan. Infrastructure apply remains disabled.
+- **Off-host availability alerting open.** FelCloud-hosted monitoring cannot report complete FelCloud loss. Review an independently hosted availability check separately.
+- **Recovery history and measurement open.** Historical encrypted archives remain on FelCloud. Define off-host history requirements separately from verified Neon database recovery. Capture verifier-only duration and retain continuous readiness measurements during future cutovers.
