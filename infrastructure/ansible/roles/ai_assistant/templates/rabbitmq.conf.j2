@@ -1,0 +1,10 @@
+listeners.tcp.1 = 127.0.0.1:{{ ai_assistant_broker_port }}
+distribution.listener.interface = 127.0.0.1
+distribution.listener.port_range.min = 25672
+distribution.listener.port_range.max = 25672
+vm_memory_high_watermark.absolute = {{ ai_assistant_broker_memory_high }}
+disk_free_limit.absolute = {{ ai_assistant_disk_free_limit }}
+definitions.import_backend = local_filesystem
+definitions.local.path = /etc/rabbitmq/nasj-definitions.json
+log.console = true
+log.file = false

@@ -1,0 +1,10 @@
+---
+ai_assistant_start: false
+ai_assistant_broker_port: 5672
+ai_assistant_broker_memory_high: 480MiB
+ai_assistant_broker_memory_max: 640M
+ai_assistant_worker_memory_max: 256M
+ai_assistant_broker_cpu_quota: "60%"
+ai_assistant_worker_cpu_quota: "40%"
+ai_assistant_disk_free_limit: 4GB
+ai_assistant_provider: fake

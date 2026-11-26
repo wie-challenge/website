@@ -132,7 +132,7 @@ export function NasoujWidget({ role }: { role: NasoujRole }) {
       }
     } catch (cause) {
       if (!controller.signal.aborted && active.current === controller) {
-        if (cause instanceof Error && cause.message === 'ASSISTANT_NOT_CONFIGURED') {
+        if (cause instanceof Error && cause.message === 'ASSISTANT_GUIDE_FALLBACK') {
           const guide = nasoujReply(role, locale, text);
           setMessages((current) =>
             current.map((m) =>

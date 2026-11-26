@@ -37,7 +37,8 @@ export async function openAssistantTransport(url: string, signal: AbortSignal) {
     signal.throwIfAborted();
     const channel = await connection.createConfirmChannel();
     channel.on('error', () => {});
-    await channel.assertQueue(ASSISTANT_QUEUE, queueOptions);
+    const requestQueue = await channel.assertQueue(ASSISTANT_QUEUE, queueOptions);
+    if (requestQueue.consumerCount === 0) throw new Error('No assistant consumer');
     const reply = await channel.assertQueue('', {
       exclusive: true,
       autoDelete: true,
@@ -47,7 +48,7 @@ export async function openAssistantTransport(url: string, signal: AbortSignal) {
       close,
       async start(
         requestId: string,
-        body: unknown,
+        body: { deadline: number },
         event: (event: AssistantEvent) => void,
         failed: () => void,
       ) {
@@ -77,11 +78,14 @@ export async function openAssistantTransport(url: string, signal: AbortSignal) {
           },
           { noAck: true },
         );
+        signal.throwIfAborted();
+        const remaining = body.deadline - Date.now();
+        if (remaining <= 0) throw new Error('Assistant request expired');
         channel.sendToQueue(ASSISTANT_QUEUE, Buffer.from(JSON.stringify(body)), {
           correlationId: requestId,
           replyTo: reply.queue,
           contentType: 'application/json',
-          expiration: '60000',
+          expiration: String(remaining),
           persistent: false,
         });
         await channel.waitForConfirms();

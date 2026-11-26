@@ -1,0 +1,15 @@
+[Service]
+LogNamespace=nasj-ai
+MemoryMax={{ ai_assistant_broker_memory_max }}
+CPUQuota={{ ai_assistant_broker_cpu_quota }}
+Environment="RABBITMQ_SERVER_ADDITIONAL_ERL_ARGS=+S 2:2 +A 4"
+Environment=ERL_EPMD_ADDRESS=127.0.0.1
+LogRateLimitIntervalSec=1min
+LogRateLimitBurst=120
+Environment=RABBITMQ_NODENAME=rabbit@localhost
+Environment=ERL_CRASH_DUMP=/dev/null
+StandardOutput=journal
+StandardError=journal
+LimitCORE=0
+RestartSec=10s
+TimeoutStopSec=30s

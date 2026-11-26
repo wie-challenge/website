@@ -1,0 +1,154 @@
+---
+- name: Validate AI inputs privately
+  ansible.builtin.assert:
+    that:
+      - ai_assistant_provider == 'fake'
+      - ai_assistant_password_hashes.keys() | sort == ['legacy_client', 'legacy_worker', 'website_api', 'website_worker']
+      - ai_assistant_password_hashes.values() | select('match', '^[a-zA-Z0-9+/]{48}$') | list | length == 4
+      - ai_assistant_worker_amqp_url is match('^amqp://website_worker:[^@/?#]+@127[.]0[.]0[.]1:' ~ (ai_assistant_broker_port | string) ~ '/nasj-website$')
+  no_log: true
+
+- name: Ensure the Erlang activation socket is private before package installation
+  ansible.builtin.file:
+    path: /etc/systemd/system/epmd.socket.d
+    owner: root
+    group: root
+    mode: '0755'
+    state: directory
+
+- name: Bind the systemd Erlang socket to loopback
+  ansible.builtin.copy:
+    src: epmd-local.conf
+    dest: /etc/systemd/system/epmd.socket.d/nasj-local.conf
+    owner: root
+    group: root
+    mode: '0644'
+  notify: Rebind Erlang socket
+
+- name: Install broker without starting vendor services
+  ansible.builtin.apt:
+    name:
+      - rabbitmq-server
+      - python3
+      - python3-venv
+    policy_rc_d: 101
+    update_cache: true
+    cache_valid_time: 3600
+
+- name: Create dedicated worker account
+  ansible.builtin.user:
+    name: nasj-ai
+    system: true
+    create_home: false
+    shell: /usr/sbin/nologin
+
+- name: Create restricted configuration and release directories
+  ansible.builtin.file:
+    path: "{{ item.path }}"
+    owner: root
+    group: "{{ item.group }}"
+    mode: "{{ item.mode }}"
+    state: directory
+  loop:
+    - {path: /etc/nasj-ai, group: root, mode: '0700'}
+    - {path: /srv/nasj-ai-releases, group: root, mode: '0755'}
+    - {path: /etc/systemd/system/rabbitmq-server.service.d, group: root, mode: '0755'}
+
+- name: Install broker configuration
+  ansible.builtin.template:
+    src: rabbitmq.conf.j2
+    dest: /etc/rabbitmq/rabbitmq.conf
+    owner: root
+    group: rabbitmq
+    mode: '0640'
+  notify: Restart private broker
+
+- name: Install broker definitions
+  ansible.builtin.template:
+    src: definitions.json.j2
+    dest: /etc/rabbitmq/nasj-definitions.json
+    validate: /usr/bin/python3 -m json.tool %s
+    owner: root
+    group: rabbitmq
+    mode: '0640'
+  no_log: true
+  notify: Restart private broker
+
+- name: Install worker AMQP credential
+  ansible.builtin.copy:
+    content: "{{ ai_assistant_worker_amqp_url }}\n"
+    dest: /etc/nasj-ai/worker.amqp-url
+    owner: root
+    group: root
+    mode: '0600'
+  no_log: true
+  notify: Restart website assistant worker
+
+- name: Configure a size-bounded rotating AI journal
+  ansible.builtin.copy:
+    src: journald-ai.conf
+    dest: /etc/systemd/journald@nasj-ai.conf
+    owner: root
+    group: root
+    mode: '0644'
+  notify:
+    - Restart private broker
+    - Restart website assistant worker
+
+- name: Install resource limits and dedicated worker unit
+  ansible.builtin.template:
+    src: "{{ item.src }}"
+    dest: "{{ item.dest }}"
+    owner: root
+    group: root
+    mode: '0644'
+  loop:
+    - {src: rabbitmq-limits.conf.j2, dest: /etc/systemd/system/rabbitmq-server.service.d/nasj-limits.conf}
+    - {src: nasj-ai-worker.service.j2, dest: /etc/systemd/system/nasj-ai-worker.service}
+  notify:
+    - Restart private broker
+    - Restart website assistant worker
+
+- name: Install broker monitoring program
+  ansible.builtin.copy:
+    src: nasj-ai-monitor.py
+    dest: /usr/local/libexec/nasj-ai-monitor
+    owner: root
+    group: root
+    mode: '0755'
+
+- name: Install broker monitoring units
+  ansible.builtin.copy:
+    src: "{{ item }}"
+    dest: "/etc/systemd/system/{{ item }}"
+    owner: root
+    group: root
+    mode: '0644'
+  loop:
+    - nasj-ai-monitor.service
+    - nasj-ai-monitor.timer
+
+- name: Verify release and monitoring prerequisites before startup
+  ansible.builtin.command:
+    argv: [test, -x, "{{ item }}"]
+  changed_when: false
+  when: ai_assistant_start | bool
+  loop:
+    - /srv/nasj-ai/current/venv/bin/python
+    - /usr/local/libexec/nasj-notify
+
+- name: Apply pending configuration before ensuring service state
+  ansible.builtin.meta: flush_handlers
+  when: ai_assistant_start | bool
+
+- name: Start the private broker, website worker and monitor
+  ansible.builtin.systemd_service:
+    name: "{{ item }}"
+    daemon_reload: true
+    enabled: true
+    state: started
+  when: ai_assistant_start | bool
+  loop:
+    - rabbitmq-server.service
+    - nasj-ai-worker.service
+    - nasj-ai-monitor.timer

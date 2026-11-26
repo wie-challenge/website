@@ -21,6 +21,7 @@ test('authenticated HTTP → RabbitMQ → Python fake worker streams isolated mu
   const database = await disposableDatabase();
   const mail = await captureMail();
   const config = testConfig(database.url, mail.port, {
+    ASSISTANT_LIVE_ENABLED: 'true',
     ASSISTANT_AMQP_URL: process.env.ASSISTANT_AMQP_URL,
     ...(process.env.NASOUJ_TEST_WEB === '1' ? { PUBLIC_APP_URL: 'http://localhost:3112' } : {}),
   });
@@ -130,6 +131,60 @@ test('authenticated HTTP → RabbitMQ → Python fake worker streams isolated mu
         assert.equal(text.includes(b.me.user.id), false);
       }),
     );
+    const broker = config.ASSISTANT_AMQP_URL;
+    config.ASSISTANT_LIVE_ENABLED = false;
+    const disabled = await a.call('/api/v1/assistant/chat', 'POST', input, a.headers);
+    assert.equal(disabled.status, 503);
+    assert.equal((await disabled.json()).code, 'ASSISTANT_NOT_CONFIGURED');
+    config.ASSISTANT_LIVE_ENABLED = true;
+    config.ASSISTANT_AMQP_URL = 'amqp://127.0.0.1:1';
+    const disconnected = await a.call('/api/v1/assistant/chat', 'POST', input, a.headers);
+    assert.equal(disconnected.status, 503);
+    assert.equal((await disconnected.json()).code, 'ASSISTANT_UNAVAILABLE');
+    config.ASSISTANT_AMQP_URL = broker;
+    if (process.env.NASOUJ_TEST_FAULTS === '1') {
+      const fault = (content: string) =>
+        a.call(
+          '/api/v1/assistant/chat',
+          'POST',
+          { ...input, messages: [{ role: 'user', content }] },
+          a.headers,
+        );
+      for (const content of ['synthetic-fail-before', 'synthetic-timeout']) {
+        const result = await fault(content);
+        assert.equal(result.status, 503);
+        assert.equal((await result.json()).code, 'ASSISTANT_UNAVAILABLE');
+      }
+      const partial = await fault('synthetic-fail-after');
+      assert.equal(partial.status, 200);
+      const events = (await partial.text())
+        .trim()
+        .split('\n')
+        .map((line) => assistantEventSchema.parse(JSON.parse(line)));
+      assert.deepEqual(
+        events.map((event) => event.type),
+        ['delta', 'error'],
+      );
+      const cancelling = await fault('synthetic-cancel');
+      assert.equal(cancelling.status, 200);
+      assert.ok(cancelling.body);
+      const reader = cancelling.body.getReader();
+      assert.equal((await reader.read()).done, false);
+      await reader.cancel();
+      let resumed = false;
+      for (let attempt = 0; attempt < 10; attempt++) {
+        const next = await fault('Synthetic follow-up');
+        if (next.status === 200) {
+          assert.match(await next.text(), /"type":"done"/);
+          resumed = true;
+          break;
+        }
+        assert.equal(next.status, 429);
+        await next.arrayBuffer();
+        await new Promise((resolve) => setTimeout(resolve, 75));
+      }
+      assert.ok(resumed, 'Disconnect releases the original user slot');
+    }
     if (process.env.NASOUJ_TEST_WEB === '1') {
       const require = createRequire(new URL('../../web/package.json', import.meta.url));
       const next = spawn(

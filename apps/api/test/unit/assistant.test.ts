@@ -25,6 +25,7 @@ const config = (extra = {}) =>
     PUBLIC_APP_URL: 'http://localhost:3000',
     DATABASE_URL: 'postgresql://unused:unused@localhost/test',
     BETTER_AUTH_SECRET: 'a'.repeat(64),
+    ASSISTANT_LIVE_ENABLED: 'true',
     ASSISTANT_AMQP_URL: 'amqp://unused:unused@localhost',
     ...extra,
   });
@@ -123,7 +124,14 @@ test('parallel users have distinct streams; disconnect releases the per-user slo
   assert.equal(two.chunks.length, 0);
   one.destroyed = true;
   one.emit('close');
-  started[1].emit({ version: 1, requestId: started[1].id, seq: 0, type: 'done', provider: 'fake' });
+  started[1].emit({
+    version: 1,
+    requestId: started[1].id,
+    seq: 0,
+    type: 'delta',
+    text: 'only two',
+  });
+  started[1].emit({ version: 1, requestId: started[1].id, seq: 1, type: 'done', provider: 'fake' });
   await Promise.all([a, b]);
   assert.equal(closed, 2);
   const again = new Output();
@@ -138,6 +146,7 @@ test('out-of-order stream and transport failure produce safe terminal errors', a
     const transport: typeof openAssistantTransport = async () => ({
       close: async () => {},
       start: async (id, _body, emit, fail) => {
+        emit({ version: 1, requestId: id, seq: 0, type: 'delta', text: 'partial' });
         if (mode === 'failure') fail();
         else emit({ version: 1, requestId: id, seq: 9, type: 'delta', text: 'bad' });
       },
@@ -150,7 +159,7 @@ test('out-of-order stream and transport failure produce safe terminal errors', a
     );
     assert.deepEqual(
       out.chunks.map((v) => v.type),
-      ['error'],
+      ['delta', 'error'],
     );
   }
 });
@@ -167,6 +176,14 @@ test('missing broker config and denied identity never open transport', async () 
       chat,
       response(new Output()),
     ),
+  );
+  await assert.rejects(
+    new AssistantService(config({ ASSISTANT_LIVE_ENABLED: 'false' }), access, transport).stream(
+      actor('one'),
+      chat,
+      response(new Output()),
+    ),
+    /Live Nasouj replies are not configured/,
   );
   const denied = {
     context: async () => {
@@ -192,13 +209,16 @@ test('silent worker times out and closes transport', async () => {
     start: async () => {},
   });
   const out = new Output();
-  await new AssistantService(config({ ASSISTANT_TIMEOUT_MS: 1000 }), access, transport).stream(
-    actor('one'),
-    chat,
-    response(out),
+  await assert.rejects(
+    new AssistantService(config({ ASSISTANT_TIMEOUT_MS: 1000 }), access, transport).stream(
+      actor('one'),
+      chat,
+      response(out),
+    ),
+    /temporarily unavailable/,
   );
-  assert.equal(out.chunks[0].type, 'error');
-  assert.equal(out.chunks[0].type === 'error' && out.chunks[0].code, 'ASSISTANT_TIMEOUT');
+  assert.equal(out.headersSent, false);
+  assert.equal(out.chunks.length, 0);
   assert.equal(closed, true);
 });
 

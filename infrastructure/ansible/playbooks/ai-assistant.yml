@@ -1,0 +1,6 @@
+---
+- name: Configure the separately authorized NASJ AI pilot
+  hosts: nasj_ai_pilot
+  become: true
+  roles:
+    - ai_assistant
