@@ -1,0 +1,28 @@
+{
+  "users": [
+{% for name in ['website_api','website_worker','legacy_client','legacy_worker'] %}
+    {"name": {{ name | to_json }}, "password_hash": {{ ai_assistant_password_hashes[name] | to_json }}, "hashing_algorithm":"rabbit_password_hashing_sha256","tags":[]}{% if not loop.last %},{% endif %}
+{% endfor %}
+  ],
+  "vhosts": [{"name":"nasj-website"},{"name":"nasj-existing"}],
+  "permissions": [
+    {"user":"website_api","vhost":"nasj-website","configure":"^(nasouj[.]chat[.]v1|amq[.]gen-.*)$","write":"^amq[.]default$","read":"^amq[.]gen-.*$"},
+    {"user":"website_worker","vhost":"nasj-website","configure":"^nasouj[.]chat[.]v1$","write":"^amq[.]default$","read":"^nasouj[.]chat[.]v1$"},
+    {"user":"legacy_client","vhost":"nasj-existing","configure":"^amq[.]gen-.*$","write":"^amq[.]default$","read":"^amq[.]gen-.*$"},
+    {"user":"legacy_worker","vhost":"nasj-existing","configure":"^nasouj[.](chat[.]requests|dead-letter)$","write":"^(amq[.]default|nasouj[.]chat[.]requests)$","read":"^nasouj[.]chat[.]requests$"}
+  ],
+  "vhost_limits":[
+    {"vhost":"nasj-website","value":{"max-connections":28,"max-queues":28}},
+    {"vhost":"nasj-existing","value":{"max-connections":16,"max-queues":20}}
+  ],
+  "queues":[
+    {"name":"nasouj.chat.v1","vhost":"nasj-website","durable":false,"auto_delete":false,"arguments":{"x-message-ttl":60000,"x-max-length":100,"x-overflow":"reject-publish"}},
+    {"name":"nasouj.chat.requests","vhost":"nasj-existing","durable":true,"auto_delete":false,"arguments":{"x-dead-letter-exchange":"","x-dead-letter-routing-key":"nasouj.dead-letter"}},
+    {"name":"nasouj.dead-letter","vhost":"nasj-existing","durable":true,"auto_delete":false,"arguments":{}}
+  ],
+  "policies":[
+    {"name":"website-request-bytes","vhost":"nasj-website","pattern":"^nasouj[.]chat[.]v1$","apply-to":"queues","priority":0,"definition":{"max-length-bytes":8388608}},
+    {"name":"legacy-requests","vhost":"nasj-existing","pattern":"^nasouj[.]chat[.]requests$","apply-to":"queues","priority":0,"definition":{"message-ttl":60000,"max-length":100,"max-length-bytes":8388608,"overflow":"reject-publish"}},
+    {"name":"legacy-dead-letter","vhost":"nasj-existing","pattern":"^nasouj[.]dead-letter$","apply-to":"queues","priority":0,"definition":{"message-ttl":300000,"max-length":100,"max-length-bytes":8388608}}
+  ]
+}

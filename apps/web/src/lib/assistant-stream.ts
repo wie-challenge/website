@@ -16,9 +16,9 @@ export async function readAssistantStream(response: Response, onText: (text: str
       body &&
       typeof body === 'object' &&
       'code' in body &&
-      body.code === 'ASSISTANT_NOT_CONFIGURED'
+      (body.code === 'ASSISTANT_NOT_CONFIGURED' || body.code === 'ASSISTANT_UNAVAILABLE')
     ) {
-      throw new Error('ASSISTANT_NOT_CONFIGURED');
+      throw new Error('ASSISTANT_GUIDE_FALLBACK');
     }
   }
   if (

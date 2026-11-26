@@ -1,0 +1,38 @@
+[Unit]
+Description=NASJ website assistant worker
+After=rabbitmq-server.service
+Requires=rabbitmq-server.service
+OnFailure=nasj-notify@%n.service
+StartLimitIntervalSec=5min
+StartLimitBurst=5
+
+[Service]
+LogNamespace=nasj-ai
+User=nasj-ai
+Group=nasj-ai
+WorkingDirectory=/srv/nasj-ai/current
+LoadCredential=NASJ_CHAT_AMQP_URL:/etc/nasj-ai/worker.amqp-url
+Environment=NASJ_CHAT_PROVIDER={{ ai_assistant_provider }}
+Environment=PYTHONDONTWRITEBYTECODE=1
+ExecStart=/srv/nasj-ai/current/venv/bin/python -m nasj_ai.assistant_v1.worker
+Restart=on-failure
+RestartSec=10s
+TimeoutStopSec=15s
+MemoryMax={{ ai_assistant_worker_memory_max }}
+CPUQuota={{ ai_assistant_worker_cpu_quota }}
+NoNewPrivileges=yes
+PrivateTmp=yes
+PrivateDevices=yes
+ProtectSystem=strict
+ProtectHome=yes
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
+IPAddressDeny=any
+IPAddressAllow=localhost
+UMask=0077
+LogRateLimitIntervalSec=1min
+LogRateLimitBurst=120
+
+[Install]
+WantedBy=multi-user.target

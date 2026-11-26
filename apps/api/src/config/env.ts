@@ -79,6 +79,7 @@ export const envSchema = z.object({
   SMTP_USER: z.preprocess(optional, z.string().optional()),
   SMTP_PASSWORD: z.preprocess(optional, z.string().optional()),
   EMAIL_FROM: z.string().min(3).default('NASJ <noreply@nasj.local>'),
+  ASSISTANT_LIVE_ENABLED: bool.default(false),
   ASSISTANT_AMQP_URL: z.preprocess(
     optional,
     z

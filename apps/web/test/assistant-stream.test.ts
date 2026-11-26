@@ -36,19 +36,19 @@ test('rejects truncated, cross-request, out-of-order, malformed and error stream
     await assert.rejects(readAssistantStream(stream(events), () => {}));
 });
 
-test('distinguishes an unconfigured assistant from an upstream failure', async () => {
+test('offers the guide only for recognized pre-stream 503 errors', async () => {
   await assert.rejects(
     readAssistantStream(
       Response.json({ code: 'ASSISTANT_NOT_CONFIGURED' }, { status: 503 }),
       () => {},
     ),
-    { message: 'ASSISTANT_NOT_CONFIGURED' },
+    { message: 'ASSISTANT_GUIDE_FALLBACK' },
   );
   await assert.rejects(
     readAssistantStream(
       Response.json({ code: 'ASSISTANT_UNAVAILABLE' }, { status: 503 }),
       () => {},
     ),
-    { message: 'ASSISTANT_UNAVAILABLE' },
+    { message: 'ASSISTANT_GUIDE_FALLBACK' },
   );
 });

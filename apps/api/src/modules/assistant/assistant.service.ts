@@ -21,7 +21,8 @@ export class AssistantService {
   ) {}
 
   async stream(actor: Actor, chat: AssistantChat, res: Response) {
-    if (!this.config.ASSISTANT_AMQP_URL)
+    const broker = this.config.ASSISTANT_AMQP_URL;
+    if (!this.config.ASSISTANT_LIVE_ENABLED || !broker)
       fail(503, 'ASSISTANT_NOT_CONFIGURED', 'Live Nasouj replies are not configured.');
     if (this.active.has(actor.id) || this.active.size >= 20)
       fail(429, 'ASSISTANT_BUSY', 'Please wait before starting another conversation.');
@@ -30,6 +31,8 @@ export class AssistantService {
     let transport: Awaited<ReturnType<typeof openAssistantTransport>> | undefined;
     const disconnected = () => abort.abort();
     const requestId = randomUUID();
+    const deadline = Date.now() + this.config.ASSISTANT_TIMEOUT_MS;
+    let outcome: string = 'disconnected';
     let seq = 0;
     let length = 0;
     let count = 0;
@@ -44,7 +47,8 @@ export class AssistantService {
     };
     const stop = (code: 'ASSISTANT_UNAVAILABLE' | 'ASSISTANT_TIMEOUT') => {
       if (complete) return;
-      send({ version: 1, requestId, seq, type: 'error', code });
+      outcome = code;
+      if (res.headersSent) send({ version: 1, requestId, seq, type: 'error', code });
       complete = true;
       finish();
     };
@@ -58,67 +62,87 @@ export class AssistantService {
     );
     res.once('close', disconnected);
     const timeout = setTimeout(() => {
-      if (res.headersSent) stop('ASSISTANT_TIMEOUT');
+      stop('ASSISTANT_TIMEOUT');
       abort.abort();
     }, this.config.ASSISTANT_TIMEOUT_MS);
     try {
-      const context = await this.access.context(actor);
+      const context = await Promise.race([this.access.context(actor), finished]);
       abort.signal.throwIfAborted();
-      transport = await this.openTransport(this.config.ASSISTANT_AMQP_URL, abort.signal);
+      if (!context) return;
+      const pending = this.openTransport(broker, abort.signal).then(async (opened) => {
+        if (abort.signal.aborted) {
+          await opened.close();
+          return;
+        }
+        transport = opened;
+        return opened;
+      });
+      const opened = await Promise.race([pending, finished]);
       abort.signal.throwIfAborted();
+      if (!opened) return;
       const request = assistantRequestSchema.parse({
         version: 1,
         requestId,
-        deadline: Date.now() + this.config.ASSISTANT_TIMEOUT_MS,
+        deadline,
         personas: context.personas,
         chat,
       });
-      res.status(200).set({
-        'Content-Type': 'application/x-ndjson; charset=utf-8',
-        'Cache-Control': 'no-store, no-transform',
-        'X-Accel-Buffering': 'no',
-      });
-      res.flushHeaders();
-      logger.info(
-        { requestId, access: 'authenticated', personaCount: context.personas.length },
-        'Nasouj access allowed',
-      );
-      await transport.start(
-        requestId,
-        request,
-        (event) => {
-          if (complete) return;
-          if (event.seq !== seq || ++count > 4096) {
-            stop('ASSISTANT_UNAVAILABLE');
-            return;
-          }
-          if (event.type === 'delta') {
-            length += event.text.length;
-            if (length > 16000) {
+      await Promise.race([
+        finished,
+        opened.start(
+          requestId,
+          request,
+          (event) => {
+            if (complete) return;
+            if (event.seq !== seq || ++count > 4096) {
               stop('ASSISTANT_UNAVAILABLE');
               return;
             }
-          }
-          send(event);
-          seq += 1;
-          if (event.type !== 'delta') {
-            complete = true;
-            finish();
-          }
-        },
-        () => stop('ASSISTANT_UNAVAILABLE'),
-      );
+            if (!res.headersSent && event.type !== 'delta') {
+              stop(event.type === 'error' ? event.code : 'ASSISTANT_UNAVAILABLE');
+              return;
+            }
+            if (event.type === 'delta') {
+              length += event.text.length;
+              if (length > 16000) {
+                stop('ASSISTANT_UNAVAILABLE');
+                return;
+              }
+            }
+            if (!res.headersSent) {
+              res.status(200).set({
+                'Content-Type': 'application/x-ndjson; charset=utf-8',
+                'Cache-Control': 'no-store, no-transform',
+                'X-Accel-Buffering': 'no',
+              });
+              res.flushHeaders();
+            }
+            send(event);
+            seq += 1;
+            if (event.type !== 'delta') {
+              outcome = event.type === 'done' ? 'done' : event.code;
+              complete = true;
+              finish();
+            }
+          },
+          () => stop('ASSISTANT_UNAVAILABLE'),
+        ),
+      ]);
       await finished;
+      if (!res.headersSent && !res.destroyed && outcome !== 'disconnected')
+        fail(503, 'ASSISTANT_UNAVAILABLE', 'Nasouj is temporarily unavailable.');
     } catch {
-      if (!res.headersSent && !res.destroyed)
+      if (!abort.signal.aborted && outcome === 'disconnected') outcome = 'ASSISTANT_UNAVAILABLE';
+      if (!res.headersSent && !res.destroyed && outcome !== 'disconnected')
         fail(503, 'ASSISTANT_UNAVAILABLE', 'Nasouj is temporarily unavailable.');
       if (res.headersSent) stop('ASSISTANT_UNAVAILABLE');
     } finally {
       clearTimeout(timeout);
       res.removeListener('close', disconnected);
-      await transport?.close();
       this.active.delete(actor.id);
+      logger.info({ requestId, outcome }, 'Nasouj request finished');
       if (res.headersSent && !res.destroyed && !res.writableEnded) res.end();
+      void transport?.close().catch(() => {});
     }
   }
 }

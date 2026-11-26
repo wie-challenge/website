@@ -142,3 +142,15 @@ read-only order-status tool with resource and organization isolation tests.
 When no broker is configured, the workspace continues to offer its built-in
 guide and labels those replies. Guide replies are excluded from live chat
 history. A configured worker outage still shows an error.
+
+### Live assistant switch
+
+Set `ASSISTANT_LIVE_ENABLED=true` in the protected API runtime environment
+only after a broker and worker are qualified. The default is false even
+when a URL is set. Restart the API after a planned configuration change.
+Disable the switch to return to the labeled built-in guide. The API holds
+response headers until the first accepted delta. A broker or worker
+failure before that point offers the guide. Once text starts, failures
+leave an incomplete reply and discard the turn from conversation history.
+The request deadline begins before authorization and broker connection,
+and the published AMQP message expires after the remaining time.
