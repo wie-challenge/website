@@ -5,14 +5,15 @@ import Link from 'next/link';
 import { Send, X } from 'lucide-react';
 import {
   nasoujCopy,
-  nasoujReply,
   nasoujTopics,
   type NasoujLocale,
   type NasoujRole,
 } from './nasouj-demo-replies';
+import type { AssistantChat } from '@nasj/contracts';
+import { streamAssistant } from '@/lib/assistant-stream';
 import { nasoujArt } from './nasouj-assets';
 
-type Message = { id: number; from: 'user' | 'nasouj'; text: string };
+type Message = { id: number; from: 'user' | 'nasouj'; text: string; complete?: boolean };
 
 const locales: { id: NasoujLocale; label: string; name: string }[] = [
   { id: 'en', label: 'EN', name: 'English' },
@@ -24,8 +25,18 @@ const supportLabel: Record<NasoujLocale, string> = {
   fr: 'Parler à une personne',
   ar: 'التحدث إلى شخص',
 };
-const WORD_DELAY_MS = 45;
-const THINKING_MS = 700;
+const errorCopy: Record<NasoujLocale, string> = {
+  en: 'Nasouj could not complete this reply. Please try again or contact support.',
+  fr: 'Nasouj ne peut pas terminer cette réponse. Réessayez ou contactez le support.',
+  ar: 'تعذر على نسوج إكمال الرد. يرجى المحاولة مجددا أو التواصل مع الدعم.',
+};
+const feedbackCopy = {
+  en: { note: 'Feedback stays in this session', helpful: 'Helpful', unhelpful: 'Unhelpful' },
+  fr: { note: 'Avis conservé pour cette session', helpful: 'Utile', unhelpful: 'Inutile' },
+  ar: { note: 'يبقى التقييم في هذه الجلسة', helpful: 'مفيد', unhelpful: 'غير مفيد' },
+};
+const incompleteCopy = { en: 'Incomplete reply', fr: 'Réponse incomplète', ar: 'رد غير مكتمل' };
+const clearCopy = { en: 'Clear conversation', fr: 'Effacer la conversation', ar: 'مسح المحادثة' };
 
 export function NasoujWidget({ role }: { role: NasoujRole }) {
   const [open, setOpen] = useState(false);
@@ -34,14 +45,17 @@ export function NasoujWidget({ role }: { role: NasoujRole }) {
   const [draft, setDraft] = useState('');
   const [state, setState] = useState<'idle' | 'thinking' | 'answering'>('idle');
   const nextId = useRef(1);
-  const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const active = useRef<AbortController | null>(null);
+  const history = useRef<AssistantChat['messages']>([]);
+  const [error, setError] = useState('');
+  const [feedback, setFeedback] = useState<Record<number, string>>({});
   const log = useRef<HTMLDivElement>(null);
   const launcher = useRef<HTMLButtonElement>(null);
   const input = useRef<HTMLInputElement>(null);
 
   useEffect(
     () => () => {
-      if (timer.current) clearTimeout(timer.current);
+      active.current?.abort();
     },
     [],
   );
@@ -52,33 +66,70 @@ export function NasoujWidget({ role }: { role: NasoujRole }) {
     if (open) input.current?.focus();
   }, [open]);
 
-  function close() {
-    setOpen(false);
-    launcher.current?.focus();
+  function cancel() {
+    active.current?.abort();
+    active.current = null;
+    setState('idle');
   }
-  function ask(question: string) {
+  function close() {
+    cancel();
+    setOpen(false);
+    requestAnimationFrame(() => launcher.current?.focus());
+  }
+  function clear() {
+    cancel();
+    history.current = [];
+    setMessages([]);
+    setFeedback({});
+    setError('');
+    input.current?.focus();
+  }
+  async function ask(question: string) {
     const text = question.trim();
-    if (!text || state !== 'idle') return;
+    if (!text || active.current) return;
+    const controller = new AbortController();
+    active.current = controller;
     setDraft('');
-    setMessages((current) => [...current, { id: nextId.current++, from: 'user', text }]);
-    setState('thinking');
-    const words = nasoujReply(role, locale, text).split(' ');
+    setError('');
+    const userId = nextId.current++;
     const id = nextId.current++;
-    timer.current = setTimeout(() => {
-      setState('answering');
-      setMessages((current) => [...current, { id, from: 'nasouj', text: '' }]);
-      let shown = 0;
-      const step = () => {
-        shown += 1;
-        const partial = words.slice(0, shown).join(' ');
-        setMessages((current) =>
-          current.map((message) => (message.id === id ? { ...message, text: partial } : message)),
-        );
-        if (shown < words.length) timer.current = setTimeout(step, WORD_DELAY_MS);
-        else setState('idle');
-      };
-      step();
-    }, THINKING_MS);
+    setMessages((current) => [
+      ...current,
+      { id: userId, from: 'user', text },
+      { id, from: 'nasouj', text: '', complete: false },
+    ]);
+    setState('thinking');
+    // Only successful turns enter context; discarded/failed partial replies remain display-only.
+    let context = history.current.slice(-8);
+    while (context.reduce((n, m) => n + m.content.length, 0) + text.length > 16000)
+      context = context.slice(2);
+    const request: AssistantChat = {
+      language: locale,
+      messages: [...context, { role: 'user', content: text }],
+    };
+    let answer = '';
+    try {
+      await streamAssistant(request, controller.signal, (delta) => {
+        if (active.current !== controller) return;
+        answer += delta;
+        setState('answering');
+        setMessages((current) => current.map((m) => (m.id === id ? { ...m, text: answer } : m)));
+      });
+      if (active.current === controller) {
+        setMessages((current) => current.map((m) => (m.id === id ? { ...m, complete: true } : m)));
+        history.current = [
+          ...request.messages,
+          { role: 'assistant', content: answer.slice(0, 2000) },
+        ];
+      }
+    } catch {
+      if (!controller.signal.aborted && active.current === controller) setError(errorCopy[locale]);
+    } finally {
+      if (active.current === controller) {
+        active.current = null;
+        setState('idle');
+      }
+    }
   }
   function submit(event: FormEvent) {
     event.preventDefault();
@@ -137,6 +188,9 @@ export function NasoujWidget({ role }: { role: NasoujRole }) {
           <X aria-hidden="true" size={18} />
         </button>
       </header>
+      <button className="nasouj-clear" type="button" onClick={clear}>
+        {clearCopy[locale]}
+      </button>
       <div className="nasouj-log" ref={log} role="log" aria-live="polite" dir={dir} lang={locale}>
         <div className="nasouj-welcome">
           <Image
@@ -148,9 +202,28 @@ export function NasoujWidget({ role }: { role: NasoujRole }) {
           <p className="nasouj-bubble nasouj-from-nasouj">{nasoujCopy.greeting[locale]}</p>
         </div>
         {messages.map((message) => (
-          <p key={message.id} className={`nasouj-bubble nasouj-from-${message.from}`}>
-            {message.text}
-          </p>
+          <div key={message.id} className="nasouj-message">
+            <p className={`nasouj-bubble nasouj-from-${message.from}`}>{message.text}</p>
+            {message.complete === false && state === 'idle' && (
+              <small>{incompleteCopy[locale]}</small>
+            )}
+            {message.from === 'nasouj' && message.complete && state === 'idle' && (
+              <fieldset className="nasouj-feedback">
+                <legend>{feedbackCopy[locale].note}</legend>
+                {[feedbackCopy[locale].helpful, feedbackCopy[locale].unhelpful].map((label) => (
+                  <button
+                    key={label}
+                    className="nasouj-feedback-choice"
+                    type="button"
+                    aria-pressed={feedback[message.id] === label}
+                    onClick={() => setFeedback((current) => ({ ...current, [message.id]: label }))}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </fieldset>
+            )}
+          </div>
         ))}
         {state === 'thinking' && (
           <p className="nasouj-bubble nasouj-from-nasouj nasouj-typing">
@@ -161,6 +234,11 @@ export function NasoujWidget({ role }: { role: NasoujRole }) {
           </p>
         )}
       </div>
+      {error && (
+        <p className="nasouj-error" role="alert" dir={dir} lang={locale}>
+          {error}
+        </p>
+      )}
       <div className="nasouj-suggestions" dir={dir} lang={locale}>
         {nasoujTopics[role].map((topic) => (
           <button

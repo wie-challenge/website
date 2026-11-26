@@ -48,3 +48,17 @@ The role set was consolidated in the NASJ rename; the former `HIRFACARE_OPERATOR
 
 - [Security overview](../06-security-and-governance/security-overview.md)
 - [Transaction integrity](transaction-integrity.md)
+
+## Personnel invitation authority
+
+Association coordinator and internal personnel invitations require current platform-administrator
+access at creation/resend and acceptance. Organization-manager status alone cannot grant these
+personnel roles. Acceptance also rechecks the inviter's active, verified account and the
+organization's approval inside the identity transaction. A rejected attempt leaves the invitation
+pending and creates no membership. Buyer-company invitations retain their scoped organization
+permission checks.
+
+`apps/api/test/roles.scenarios.ts` covers an administrator who is demoted while retaining manager
+membership: creation, resend and acceptance are denied, while a current administrator can still
+invite a coordinator successfully. Organization, identity and tenant-isolation integration cases
+provide the buyer-company controls.

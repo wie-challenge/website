@@ -9,6 +9,43 @@ import { Client } from 'pg';
 import { SMTPServer } from 'smtp-server';
 import { validateEnvironment } from '../src/config/env.js';
 const exec = promisify(execFile);
+// Replay a bounded migration prefix only against an isolated test database.
+export async function deployTestMigrations(url: string, throughMigration: string) {
+  const target = new URL(url);
+  if (
+    target.hostname !== '127.0.0.1' ||
+    !['/foundation_test', '/nasj_demo'].includes(target.pathname)
+  )
+    throw new Error('Migration replay requires an isolated test database');
+  const migrationOptions = {
+    cwd: fileURLToPath(new URL('../', import.meta.url)),
+    env: { ...process.env, DATABASE_URL: url, MIGRATION_DATABASE_URL: url },
+    maxBuffer: 1024 * 1024,
+  };
+  const directory = await mkdtemp(join(tmpdir(), 'nasj-migration-baseline-'));
+  const migrationRoot = fileURLToPath(new URL('../prisma/migrations/', import.meta.url));
+  const configPath = fileURLToPath(
+    new URL(`../.migration-${randomBytes(8).toString('hex')}.config.ts`, import.meta.url),
+  );
+  try {
+    for (const entry of await readdir(migrationRoot)) {
+      if (entry === 'migration_lock.toml' || entry <= throughMigration)
+        await cp(join(migrationRoot, entry), join(directory, entry), { recursive: true });
+    }
+    await writeFile(
+      configPath,
+      `import { defineConfig } from 'prisma/config'; export default defineConfig({schema:'prisma/schema.prisma',migrations:{path:${JSON.stringify(directory)}},datasource:{url:process.env.DATABASE_URL!}});`,
+    );
+    await exec(
+      'pnpm',
+      ['exec', 'prisma', 'migrate', 'deploy', '--config', configPath],
+      migrationOptions,
+    );
+  } finally {
+    await rm(configPath, { force: true });
+    await rm(directory, { recursive: true, force: true });
+  }
+}
 export async function disposableDatabase(
   options: { foundationOnly?: boolean; demo?: boolean; throughMigration?: string } = {},
 ) {
@@ -31,7 +68,7 @@ export async function disposableDatabase(
     `POSTGRES_DB=${databaseName}`,
     '-p',
     '127.0.0.1::5432',
-    'postgres:17.7-alpine',
+    process.env.POSTGRES_TEST_IMAGE ?? 'postgres:17.7-alpine',
   ]);
   const stop = async () => {
     await exec('docker', ['--context', 'default', 'rm', '-f', '--volumes', name]).catch(() => {});
@@ -80,27 +117,7 @@ export async function disposableDatabase(
         migrationOptions,
       );
     } else if (options.throughMigration) {
-      const directory = await mkdtemp(join(tmpdir(), 'nasj-migration-baseline-'));
-      const migrationRoot = fileURLToPath(new URL('../prisma/migrations/', import.meta.url));
-      const configPath = fileURLToPath(new URL(`../.migration-${name}.config.ts`, import.meta.url));
-      try {
-        for (const entry of await readdir(migrationRoot)) {
-          if (entry === 'migration_lock.toml' || entry <= options.throughMigration)
-            await cp(join(migrationRoot, entry), join(directory, entry), { recursive: true });
-        }
-        await writeFile(
-          configPath,
-          `import { defineConfig } from 'prisma/config'; export default defineConfig({schema:'prisma/schema.prisma',migrations:{path:${JSON.stringify(directory)}},datasource:{url:process.env.DATABASE_URL!}});`,
-        );
-        await exec(
-          'pnpm',
-          ['exec', 'prisma', 'migrate', 'deploy', '--config', configPath],
-          migrationOptions,
-        );
-      } finally {
-        await rm(configPath, { force: true });
-        await rm(directory, { recursive: true, force: true });
-      }
+      await deployTestMigrations(url, options.throughMigration);
     } else await exec('pnpm', ['exec', 'prisma', 'migrate', 'deploy'], migrationOptions);
     return { url, stop, containerName: name };
   } catch (error) {

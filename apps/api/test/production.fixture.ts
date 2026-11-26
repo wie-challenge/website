@@ -24,6 +24,8 @@ export async function seedBrowserProductionFixture(url: string, suffix: string) 
       role: 'BUYER' | 'NASJ_OPERATOR' | 'ASSOCIATION_COORDINATOR',
     ) =>
       db.organization.create({
+        // Migration drills reuse this fixture before later organization columns exist.
+        select: { id: true },
         data: {
           name,
           slug: `${suffix}-production-${type.toLowerCase()}`,

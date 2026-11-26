@@ -4,11 +4,14 @@ for (const viewport of [
   { label: 'mobile', width: 360, height: 800 },
   { label: 'desktop', width: 1280, height: 900 },
 ]) {
-  test(`NASJ landing, branding and account menu work on ${viewport.label}`, async ({
+  test(`NASJ landing, branding and account navigation work on ${viewport.label}`, async ({
     page,
     request,
   }) => {
     await page.setViewportSize(viewport);
+    await page.emulateMedia({
+      reducedMotion: viewport.label === 'mobile' ? 'reduce' : 'no-preference',
+    });
     await page.goto('/');
     await expect(page.getByRole('heading', { level: 1 })).toContainText('Meaningful gifts');
     await expect(page.getByRole('link', { name: 'NASJ | نسج', exact: true }).first()).toBeVisible();
@@ -45,17 +48,14 @@ for (const viewport of [
     await page.getByLabel('Password', { exact: true }).fill(password);
     await page.getByRole('button', { name: 'Sign in', exact: true }).click();
     await expect(page).toHaveURL(/settings\/profile/);
-    const trigger = page.getByRole('button', { name: 'Account menu', exact: true });
-    await trigger.focus();
-    await trigger.press('ArrowDown');
-    await expect(page.getByRole('menu', { name: 'Account menu', exact: true })).toBeVisible();
+    const profile = page.getByRole('link', { name: 'Your profile', exact: true });
+    await profile.focus();
+    await expect(profile).toBeFocused();
+    await profile.press('Enter');
+    await expect(page).toHaveURL(/settings\/profile/);
     await expect(
-      page.getByRole('menuitem', { name: 'Account and email', exact: true }),
-    ).toBeFocused();
-    await page.keyboard.press('ArrowDown');
-    await expect(
-      page.getByRole('menuitem', { name: 'Security and two-factor', exact: true }),
-    ).toBeFocused();
+      page.getByRole('heading', { name: 'Personal details', exact: true }),
+    ).toBeVisible();
     result = await new AxeBuilder({ page })
       .withTags(['wcag2a', 'wcag2aa', 'wcag21aa', 'wcag22aa'])
       .analyze();
@@ -64,13 +64,7 @@ for (const viewport of [
       contentType: 'application/json',
     });
     expect(result.violations).toEqual([]);
-    await page.keyboard.press('Escape');
-    await expect(trigger).toBeFocused();
-    await trigger.click();
-    await page.getByRole('menuitem', { name: 'Privacy and your data', exact: true }).click();
-    await expect(page).toHaveURL(/support\/privacy/);
-    await page.getByRole('button', { name: 'Account menu', exact: true }).click();
-    await page.getByRole('menuitem', { name: 'Sign out', exact: true }).click();
+    await page.getByRole('button', { name: 'Sign out', exact: true }).click();
     await expect(page).toHaveURL(/auth\/login/);
     await page.screenshot({ path: `.local/nasj-account-${viewport.label}.png`, fullPage: true });
   });

@@ -20,11 +20,12 @@ async function register(request: APIRequestContext, email: string) {
   ).toBe(200);
 }
 async function login(page: Page, email: string) {
-  await page.goto('/auth/login?next=%2Fcatalog');
+  await page.goto('/auth/login?next=%2Fsettings%2Fprofile');
   await page.getByLabel('Email address', { exact: true }).fill(email);
   await page.getByLabel('Password', { exact: true }).fill(password);
   await page.getByRole('button', { name: 'Sign in', exact: true }).click();
-  await expect(page).toHaveURL(/\/catalog$/);
+  await expect(page).toHaveURL(/\/settings\/profile$/);
+  await page.goto('/product-design');
 }
 async function signout(page: Page) {
   const response = await page.request.post('/api/auth/sign-out', {

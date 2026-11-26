@@ -8,7 +8,7 @@ python="${PYTHON:-python3}"
 mkdir -p reports
 
 "$semgrep" scan --metrics=off --disable-version-check --quiet \
-  --config .semgrep \
+  --config .semgrep --exclude 'apps/api/.migration-*.config.ts' \
   --config p/typescript --config p/nodejs --config p/react --config p/nextjs --config p/owasp-top-ten \
   --json-output=reports/semgrep.json --sarif-output=reports/semgrep.sarif \
   apps packages scripts tests
@@ -27,5 +27,6 @@ read -r total blocking rule_errors <<<"$counts"
 line="Semgrep: $total finding(s), $blocking at ERROR level; $rule_errors rule error(s)"
 echo "$line"
 echo "$line" >>"${GITHUB_STEP_SUMMARY:-/dev/null}"
+[ "$rule_errors" -eq 0 ] || exit 2
 [ "$blocking" -gt 0 ] && exit 99
 exit 0

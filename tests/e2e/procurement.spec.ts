@@ -1,3 +1,4 @@
+import { confirmAction } from './actions';
 import { test, expect, type Page, type APIRequestContext } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
 test.use({ actionTimeout: 15000 });
@@ -150,7 +151,7 @@ for (const viewport of [
     await expect(page.getByAltText('Reference: reference.webp', { exact: true })).toBeVisible();
     await axe(page, `procurement-references-${viewport.name}`);
     await tab(page, 'Details');
-    await page.getByRole('button', { name: 'Submit for review', exact: true }).click();
+    await confirmAction(page, page.getByRole('button', { name: 'Submit for review', exact: true }));
     await expect(page.getByRole('button', { name: 'Submit for review', exact: true })).toHaveCount(
       0,
     );
@@ -264,7 +265,10 @@ for (const viewport of [
           { exact: true },
         )
         .check();
-      await page.getByRole('button', { name: 'Accept quotation v2', exact: true }).click();
+      await confirmAction(
+        page,
+        page.getByRole('button', { name: 'Accept quotation v2', exact: true }),
+      );
       await expect(
         page.getByRole('button', { name: 'Accept quotation v2', exact: true }),
       ).toHaveCount(0);

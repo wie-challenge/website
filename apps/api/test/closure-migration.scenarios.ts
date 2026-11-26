@@ -1,10 +1,7 @@
 import assert from 'node:assert/strict';
-import { execFile } from 'node:child_process';
-import { promisify } from 'node:util';
-import { fileURLToPath } from 'node:url';
 import { PrismaClient } from '@prisma/client';
 import { PrismaPg } from '@prisma/adapter-pg';
-import { disposableDatabase } from './support.js';
+import { disposableDatabase, deployTestMigrations } from './support.js';
 import { runRestoreScenario } from './restore.scenarios.js';
 export async function runClosureMigrationScenarios(
   check: (name: string, fn: () => Promise<void>) => Promise<void>,
@@ -22,6 +19,7 @@ export async function runClosureMigrationScenarios(
     });
     const org = async (type: 'BUYER_BUSINESS' | 'INTERNAL') =>
       db.organization.create({
+        select: { id: true },
         data: {
           name: `Synthetic upgrade ${type}`,
           slug: `upgrade-${type.toLowerCase()}`,
@@ -103,10 +101,7 @@ export async function runClosureMigrationScenarios(
           data: { ...input, status: 'SYNTHETIC_ONLY_READY', blockers: [] },
         }),
       );
-      await promisify(execFile)('pnpm', ['exec', 'prisma', 'migrate', 'deploy'], {
-        cwd: fileURLToPath(new URL('../', import.meta.url)),
-        env: { ...process.env, DATABASE_URL: database.url, MIGRATION_DATABASE_URL: database.url },
-      });
+      await deployTestMigrations(database.url, '20261030010000_synthetic_closure_assessments');
       assert.deepEqual(await rows(), before);
       const migrations = await db.$queryRawUnsafe<{ count: bigint }[]>(
         `SELECT count(*) FROM "_prisma_migrations" WHERE finished_at IS NOT NULL AND rolled_back_at IS NULL`,

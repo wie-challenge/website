@@ -257,7 +257,7 @@ test('Batch 8–11 showroom builds authoritative planning, paid sample and suppo
     expect(
       approved.samples.find((s: { id: string }) => s.id === sample.id).payable.status,
     ).not.toBe('PAID');
-    await page.goto('/catalog');
+    await page.goto('/product-design');
     await expect(page.getByText('SYNTHETIC — Embroidered table runner').first()).toBeVisible();
     await page.goto('/intelligence');
     await expect(

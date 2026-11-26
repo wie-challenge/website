@@ -1,3 +1,4 @@
+import { confirmAction } from './actions';
 import { expect, test, type Page } from '@playwright/test';
 const origin = 'http://127.0.0.1:3100';
 const password = 'Synthetic-commerce-browser-password-2026!';
@@ -114,7 +115,10 @@ test('buyer accepts the exact costed quotation after feasibility review', async 
   await issue
     .getByLabel('Delivery conditions', { exact: true })
     .fill('Synthetic collection at the stated site.');
-  await issue.getByRole('button', { name: 'Issue costed quotation', exact: true }).click();
+  await confirmAction(
+    page,
+    issue.getByRole('button', { name: 'Issue costed quotation', exact: true }),
+  );
   await expect(page.getByRole('heading', { name: 'Quotation v1 · 660.000 TND' })).toBeVisible();
   await login(page, `commercial-buyer-${suffix}@example.com`);
   await page.goto(`/procurement/${fixture.rfqId}`);
@@ -130,7 +134,7 @@ test('buyer accepts the exact costed quotation after feasibility review', async 
     quotes: { id: string; totalTnd: string; termsSha256: string }[];
   };
   await page.getByRole('checkbox', { name: /I approve this exact/ }).check();
-  await page.getByRole('button', { name: 'Accept quotation v1', exact: true }).click();
+  await confirmAction(page, page.getByRole('button', { name: 'Accept quotation v1', exact: true }));
   await expect(page.getByText('ACCEPTED.')).toBeVisible();
   await expect(page.getByRole('heading', { name: 'Quotation v1 · 660.000 TND' })).toBeVisible();
   const me = await page.request.get('/api/v1/me');

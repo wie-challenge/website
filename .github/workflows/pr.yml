@@ -1,29 +1,21 @@
-# Slow checks on pull requests to main (~15 min): integration, e2e, build.
-# Runs on the merge result ("branch merged into main"), and is skipped while the PR is a Draft.
-name: Pull request
+# Reusable integration, browser and build checks; called on PRs and main pushes.
+name: Application verification
 on:
-  pull_request:
-    branches: [main]
-    types: [opened, synchronize, reopened, ready_for_review]
-    # Docs-only PRs don't need the slow tests. checks.yml still runs on every push.
-    paths-ignore:
-      - '**/*.md'
-      - 'docs/**'
-# No token permissions by default; each job asks only for what it needs.
+  workflow_call:
 permissions: {}
-# A newer push to the same PR cancels the older, now outdated run.
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
 jobs:
   integration:
-    if: github.event.pull_request.draft == false
+    strategy:
+      fail-fast: false
+      matrix:
+        postgres: ['postgres:16.11-alpine', 'postgres:17.7-alpine']
     runs-on: ubuntu-24.04
-    timeout-minutes: 10
+    timeout-minutes: 15
     permissions:
       contents: read
     env:
       NEXT_TELEMETRY_DISABLED: '1'
+      POSTGRES_TEST_IMAGE: ${{ matrix.postgres }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -33,11 +25,13 @@ jobs:
           version: 11.3.0
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
-          node-version: '24'
+          node-version: '24.20.0'
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm setup:local
       - run: pnpm db:generate
+      - name: Deployment schema safety against disposable PostgreSQL
+        run: python3 scripts/deploy/test-schema.py
       - name: PostgreSQL integration, replay, outbox and restore drill
         shell: bash
         run: |
@@ -46,13 +40,12 @@ jobs:
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         if: always()
         with:
-          name: integration-evidence
+          name: integration-evidence-${{ strategy.job-index }}
           include-hidden-files: true
           path: .local/e16-integration.log
           retention-days: 3
 
   e2e:
-    if: github.event.pull_request.draft == false
     runs-on: ubuntu-24.04
     timeout-minutes: 25
     permissions:
@@ -68,7 +61,7 @@ jobs:
           version: 11.3.0
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
-          node-version: '24'
+          node-version: '24.20.0'
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm setup:local
@@ -91,7 +84,6 @@ jobs:
           retention-days: 3
 
   build:
-    if: github.event.pull_request.draft == false
     runs-on: ubuntu-24.04
     timeout-minutes: 10
     permissions:
@@ -107,7 +99,7 @@ jobs:
           version: 11.3.0
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
-          node-version: '24'
+          node-version: '24.20.0'
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm setup:local

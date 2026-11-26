@@ -2,12 +2,11 @@ import assert from 'node:assert/strict';
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
 import { createHash, randomUUID } from 'node:crypto';
-import { fileURLToPath } from 'node:url';
 import { mkdtemp, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { Client } from 'pg';
-import { disposableDatabase } from './support.js';
+import { disposableDatabase, deployTestMigrations } from './support.js';
 
 const exec = promisify(execFile);
 const migration = '20261028170000_demo_feedback';
@@ -114,10 +113,7 @@ export async function runDemoFeedbackMigrationScenarios(
       assert.deepEqual(found, []);
     });
 
-    await exec('pnpm', ['exec', 'prisma', 'migrate', 'deploy'], {
-      cwd: fileURLToPath(new URL('../', import.meta.url)),
-      env: { ...process.env, DATABASE_URL: database.url, MIGRATION_DATABASE_URL: database.url },
-    });
+    await deployTestMigrations(database.url, migration);
 
     await check('B14-M02 populated upgrade preserves every pre-existing row hash', async () => {
       assert.deepEqual(await snapshot(), before);
@@ -307,7 +303,7 @@ export async function runDemoFeedbackMigrationScenarios(
         const { readdir, readFile } = await import('node:fs/promises');
         const root = new URL('../prisma/migrations/', import.meta.url);
         const names = (await readdir(root, { withFileTypes: true }))
-          .filter((entry) => entry.isDirectory())
+          .filter((entry) => entry.isDirectory() && entry.name <= migration)
           .map((entry) => entry.name);
         assert.equal(history.length, names.length);
         assert.ok(names.includes(previous), 'historical migrations are preserved');
@@ -345,7 +341,7 @@ export async function runDemoFeedbackMigrationScenarios(
         // Two aggregates were inserted above (the guarded sample and the rollback probe).
         assert.equal(reference.feedback.length, 2);
         assert.equal(reference.events.length, 1);
-        const target = await disposableDatabase();
+        const target = await disposableDatabase({ throughMigration: migration });
         const directory = await mkdtemp(join(tmpdir(), 'nasj-demo-feedback-restore-'));
         try {
           await exec('docker', [

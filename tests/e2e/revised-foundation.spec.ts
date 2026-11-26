@@ -116,15 +116,14 @@ test('coordinator onboards an artisan without login, records declared capacity a
     });
     await coordCtx.request.post('/api/auth/sign-out', { headers: { Origin: origin }, data: {} });
     const page = await coordCtx.newPage();
-    await signIn(page, coordEmail, '/association');
+    await signIn(page, coordEmail, '/association/requests');
+    await page.goto('/association');
     await axe(page, 'association-role-dashboard');
     await page.screenshot({ path: '.local/nasj-role-association-mobile.png', fullPage: true });
     await page.getByRole('button', { name: 'Open navigation', exact: true }).click();
     const drawer = page.getByRole('dialog', { name: 'NASJ navigation', exact: true });
-    await expect(
-      drawer.getByRole('link', { name: 'Assigned artisan registry', exact: true }),
-    ).toBeVisible();
-    await expect(drawer.getByRole('link', { name: 'User accounts', exact: true })).toHaveCount(0);
+    await expect(drawer.getByRole('link', { name: 'Artisanes', exact: true })).toBeVisible();
+    await expect(drawer.getByRole('link', { name: 'Users', exact: true })).toHaveCount(0);
     await expect(
       drawer.getByRole('link', { name: 'Procurement requests', exact: true }),
     ).toHaveCount(0);
@@ -245,20 +244,17 @@ test('buyer and administrator default workspaces are distinct and participant co
     });
     await operator.request.post('/api/auth/sign-out', { headers: { Origin: origin }, data: {} });
     const op = await operator.newPage();
-    await signIn(op, oe, '/operator');
+    await signIn(op, oe, '/nasj/organizations');
+    await op.goto('/operator');
     await expect(
       op.getByRole('heading', { name: 'Synthetic Buyer Company', exact: true }),
     ).toBeVisible();
     const operatorNav = op.getByRole('navigation', { name: 'Account navigation', exact: true });
     await expect(
-      operatorNav.getByRole('link', { name: 'Procurement requests', exact: true }),
+      operatorNav.getByRole('link', { name: /^Companies and associations/ }),
     ).toBeVisible();
-    await expect(operatorNav.getByRole('link', { name: 'User accounts', exact: true })).toHaveCount(
-      0,
-    );
-    await expect(
-      operatorNav.getByRole('link', { name: 'Assigned artisan registry', exact: true }),
-    ).toHaveCount(0);
+    await expect(operatorNav.getByRole('link', { name: 'Users', exact: true })).toHaveCount(0);
+    await expect(operatorNav.getByRole('link', { name: 'Artisanes', exact: true })).toHaveCount(0);
     await axe(op, 'revised-operator-dashboard');
     await op.screenshot({ path: '.local/nasj-role-operator-desktop.png', fullPage: true });
     await op
@@ -269,13 +265,12 @@ test('buyer and administrator default workspaces are distinct and participant co
     await axe(op, 'revised-operator-activity');
     await buyer.request.post('/api/auth/sign-out', { headers: { Origin: origin }, data: {} });
     const bp = await buyer.newPage();
-    await signIn(bp, be, '/buyer');
+    await signIn(bp, be, '/catalog');
+    await bp.goto('/buyer');
     await expect(bp.getByRole('heading', { level: 1 })).toHaveText('Your company workspace');
     const buyerNav = bp.getByRole('navigation', { name: 'Account navigation', exact: true });
-    await expect(
-      buyerNav.getByRole('link', { name: 'Procurement requests', exact: true }),
-    ).toBeVisible();
-    await expect(buyerNav.getByRole('link', { name: 'User accounts', exact: true })).toHaveCount(0);
+    await expect(buyerNav.getByRole('link', { name: 'Catalog', exact: true })).toBeVisible();
+    await expect(buyerNav.getByRole('link', { name: 'Users', exact: true })).toHaveCount(0);
     await axe(bp, 'buyer-role-dashboard');
     await bp.screenshot({ path: '.local/nasj-role-buyer-desktop.png', fullPage: true });
     await bp.goto('/commerce/operator');
@@ -286,15 +281,12 @@ test('buyer and administrator default workspaces are distinct and participant co
     await expect(bp.getByRole('heading', { name: 'Access denied', exact: true })).toBeVisible();
     await admin.request.post('/api/auth/sign-out', { headers: { Origin: origin }, data: {} });
     const ap = await admin.newPage();
-    await signIn(ap, ae, '/admin');
+    await signIn(ap, ae, '/nasj/organizations');
+    await ap.goto('/admin');
     const adminNav = ap.getByRole('navigation', { name: 'Account navigation', exact: true });
-    await expect(adminNav.getByRole('link', { name: 'User accounts', exact: true })).toBeVisible();
-    await expect(
-      adminNav.getByRole('link', { name: 'Organization approvals', exact: true }),
-    ).toBeVisible();
-    await expect(
-      adminNav.getByRole('link', { name: 'Procurement requests', exact: true }),
-    ).toHaveCount(0);
+    await expect(adminNav.getByRole('link', { name: 'Users', exact: true })).toBeVisible();
+    await expect(adminNav.getByRole('link', { name: /^Companies and associations/ })).toBeVisible();
+    await expect(adminNav.getByRole('link', { name: 'Catalog', exact: true })).toHaveCount(0);
     await axe(ap, 'admin-role-dashboard');
     await ap.screenshot({ path: '.local/nasj-role-admin-desktop.png', fullPage: true });
     await ap
