@@ -188,7 +188,62 @@ export class PaymentsService {
     }
   }
 
-  /** Approves a B2C MarketOrder allocation plan (exact millimes, multi-artisan capable). */
+  private async computeB2cAllocation(
+    tx: Db,
+    marketOrderId: string,
+    input: z.infer<typeof C.b2cAllocationPlanSchema>,
+  ) {
+    const order = await tx.marketOrder.findUnique({ where: { id: marketOrderId } });
+    if (!order || order.totalMillimes === null || order.totalMillimes <= 0n) {
+      fail(409, 'PRICED_ORDER_REQUIRED', 'B2C order must have an approved TND price.');
+    }
+    const activeObligation = await tx.paymentObligation.findFirst({
+      where: {
+        marketOrderId,
+        status: { notIn: ['CANCELLED', 'FAILED', 'REFUNDED'] },
+      },
+    });
+    if (activeObligation) {
+      fail(409, 'FINANCIAL_PLAN_LOCKED', 'Cannot change allocation after checkout lock.');
+    }
+    const artisanCount = await tx.artisanProfile.count({
+      where: { id: { in: input.artisans.map((a) => a.artisanId) } },
+    });
+    if (artisanCount !== input.artisans.length) {
+      fail(400, 'INVALID_ARTISANS', 'All artisan profiles must exist and be unique.');
+    }
+    const materialCostMillimes = C.parseTnd(input.materialCostTnd);
+    const otherDirectCostMillimes = C.parseTnd(input.otherDirectCostTnd);
+    let allocation: ReturnType<typeof C.calculateFinancialAllocation>;
+    try {
+      allocation = C.calculateFinancialAllocation({
+        policyVersion: 1,
+        basis: input.basis,
+        customerPriceMillimes: order.totalMillimes,
+        materialCostMillimes,
+        otherDirectCostMillimes,
+        expectedFeeMillimes: C.parseTnd(input.expectedFeeTnd),
+        artisans: input.artisans,
+      });
+    } catch {
+      return fail(
+        400,
+        'INVALID_FINANCIAL_PLAN',
+        'Allocation percentages or costs exceed customer price.',
+      );
+    }
+    const isStandardCatalog =
+      order.kind === 'CATALOG' &&
+      input.basis === 'GROSS' &&
+      materialCostMillimes === 0n &&
+      otherDirectCostMillimes === 0n &&
+      input.artisans.length === 1 &&
+      order.artisanPayMillimes !== null &&
+      allocation.totalCompensationMillimes === order.artisanPayMillimes;
+    return { order, allocation, isStandardCatalog };
+  }
+
+  /** Approves a standard-catalog B2C MarketOrder allocation plan (manual/negotiated overrides require maker-checker). */
   async approveB2cAllocationPlan(
     actor: Actor,
     marketOrderId: string,
@@ -204,41 +259,16 @@ export class PaymentsService {
         { actorId: actor.id, resourceId: marketOrderId, operation: 'b2c.plan.approve', key },
         json(input),
         async () => {
-          const order = await tx.marketOrder.findUnique({ where: { id: marketOrderId } });
-          if (!order || order.totalMillimes === null || order.totalMillimes <= 0n) {
-            fail(409, 'PRICED_ORDER_REQUIRED', 'B2C order must have an approved TND price.');
-          }
-          const activeObligation = await tx.paymentObligation.findFirst({
-            where: {
-              marketOrderId,
-              status: { notIn: ['CANCELLED', 'FAILED', 'REFUNDED'] },
-            },
-          });
-          if (activeObligation) {
-            fail(409, 'FINANCIAL_PLAN_LOCKED', 'Cannot change allocation after checkout lock.');
-          }
-          const artisanCount = await tx.artisanProfile.count({
-            where: { id: { in: input.artisans.map((a) => a.artisanId) } },
-          });
-          if (artisanCount !== input.artisans.length) {
-            fail(400, 'INVALID_ARTISANS', 'All artisan profiles must exist and be unique.');
-          }
-          let allocation: ReturnType<typeof C.calculateFinancialAllocation>;
-          try {
-            allocation = C.calculateFinancialAllocation({
-              policyVersion: 1,
-              basis: input.basis,
-              customerPriceMillimes: order.totalMillimes,
-              materialCostMillimes: C.parseTnd(input.materialCostTnd),
-              otherDirectCostMillimes: C.parseTnd(input.otherDirectCostTnd),
-              expectedFeeMillimes: C.parseTnd(input.expectedFeeTnd),
-              artisans: input.artisans,
-            });
-          } catch {
-            return fail(
-              400,
-              'INVALID_FINANCIAL_PLAN',
-              'Allocation percentages or costs exceed customer price.',
+          const { order, allocation, isStandardCatalog } = await this.computeB2cAllocation(
+            tx,
+            marketOrderId,
+            input,
+          );
+          if (!isStandardCatalog) {
+            fail(
+              409,
+              'MAKER_CHECKER_REQUIRED',
+              'Manually overridden or negotiated B2C compensation requires two-step maker-checker approval.',
             );
           }
 
@@ -267,6 +297,136 @@ export class PaymentsService {
             },
           });
           return json({ id: event.id, status: 'APPROVED', allocation });
+        },
+      );
+    });
+  }
+
+  /** Maker step for manual/negotiated B2C financial allocations. */
+  async draftB2cAllocationPlan(
+    actor: Actor,
+    marketOrderId: string,
+    input: z.infer<typeof C.b2cAllocationPlanSchema>,
+    key?: string,
+  ) {
+    return iamTransaction(this.db, actor, async (tx) => {
+      const internal = await this.internalMembership(tx, actor, 'finance.payable.reconcile');
+      if (!internal) fail(404, 'NOT_FOUND', 'Finance authorization required.');
+      validateIdempotencyKey(key);
+      return replaySafe(
+        tx,
+        { actorId: actor.id, resourceId: marketOrderId, operation: 'b2c.plan.draft', key },
+        json(input),
+        async () => {
+          const { order, allocation } = await this.computeB2cAllocation(tx, marketOrderId, input);
+          const draft = await tx.financeRecordEvent.create({
+            data: {
+              targetId: marketOrderId,
+              targetType: 'B2cFinancialPlanDraft',
+              actorId: actor.id,
+              status: 'DRAFT',
+              reason: input.reason,
+              data: json({
+                marketOrderId,
+                customerPriceMillimes: order.totalMillimes,
+                input,
+                allocation,
+              }),
+            },
+          });
+          await audit(tx, actor, {
+            action: 'finance.b2c-plan.draft',
+            targetType: 'MarketOrder',
+            targetId: marketOrderId,
+            reason: input.reason,
+            after: {
+              draftId: draft.id,
+              totalCompensation: allocation.totalCompensationMillimes.toString(),
+            },
+          });
+          return json({ id: draft.id, status: 'DRAFT', allocation });
+        },
+      );
+    });
+  }
+
+  /** Independent checker approval for drafted B2C financial allocations. */
+  async approveB2cAllocationDraft(
+    actor: Actor,
+    marketOrderId: string,
+    input: z.infer<typeof C.approveB2cDraftSchema>,
+    key?: string,
+  ) {
+    return iamTransaction(this.db, actor, async (tx) => {
+      const internal = await this.internalMembership(tx, actor, 'finance.payout.approve');
+      if (!internal) fail(404, 'NOT_FOUND', 'Finance approval permission required.');
+      validateIdempotencyKey(key);
+      return replaySafe(
+        tx,
+        {
+          actorId: actor.id,
+          resourceId: marketOrderId,
+          operation: 'b2c.plan.approve-draft',
+          key,
+        },
+        json(input),
+        async () => {
+          const draft = await tx.financeRecordEvent.findFirst({
+            where: {
+              id: input.draftId,
+              targetId: marketOrderId,
+              targetType: 'B2cFinancialPlanDraft',
+              status: 'DRAFT',
+            },
+          });
+          if (!draft) fail(404, 'NOT_FOUND', 'B2C financial plan draft not found.');
+          C.assertIndependentApproval(draft.actorId, actor.id);
+          const draftData = draft.data as {
+            customerPriceMillimes?: string;
+            input?: unknown;
+          } | null;
+          const parsedInput = C.b2cAllocationPlanSchema.safeParse(draftData?.input);
+          if (!parsedInput.success) {
+            fail(409, 'INVALID_FINANCIAL_PLAN', 'Stored B2C financial plan draft is invalid.');
+          }
+          const { order, allocation } = await this.computeB2cAllocation(
+            tx,
+            marketOrderId,
+            parsedInput.data,
+          );
+          if (draftData?.customerPriceMillimes !== order.totalMillimes?.toString()) {
+            fail(409, 'FINANCIAL_PLAN_STALE', 'Order price changed after draft creation.');
+          }
+          const approved = await tx.financeRecordEvent.create({
+            data: {
+              targetId: marketOrderId,
+              targetType: 'B2cFinancialPlan',
+              actorId: actor.id,
+              status: 'APPROVED',
+              reason: input.reason,
+              data: json({
+                marketOrderId,
+                customerPriceMillimes: order.totalMillimes,
+                preparedById: draft.actorId,
+                approvedById: actor.id,
+                draftId: draft.id,
+                allocation,
+              }),
+            },
+          });
+          await audit(tx, actor, {
+            action: 'finance.b2c-plan.approve',
+            targetType: 'MarketOrder',
+            targetId: marketOrderId,
+            reason: input.reason,
+            after: {
+              planId: approved.id,
+              draftId: draft.id,
+              preparedById: draft.actorId,
+              approvedById: actor.id,
+            },
+          });
+          return json({ id: approved.id, status: 'APPROVED', allocation });
         },
       );
     });
@@ -705,13 +865,24 @@ export class PaymentsService {
         fail(400, 'INVALID_REDIRECT_URL', 'Redirect URL must remain within PUBLIC_APP_URL.');
       }
 
+      const expectedSeller = this.config.DHMAD_EXPECTED_SELLER_EMAIL;
+      if (provider.name === 'dhmad' && !expectedSeller) {
+        fail(
+          503,
+          'RECIPIENT_NOT_CONFIGURED',
+          'DHMAD_EXPECTED_SELLER_EMAIL must be configured to verify NASJ recipient.',
+        );
+      }
       const targetUserEmail =
         input.targetUserEmail?.toLowerCase() ??
         (sellerActions.includes(input.action)
           ? (obligation.escrow.sellerEmail ??
-            this.config.DHMAD_EXPECTED_SELLER_EMAIL ??
-            'nasj-seller@nasj.local')
+            expectedSeller ??
+            (provider.name === 'mock' ? 'nasj-seller@nasj.local' : ''))
           : obligation.escrow.buyerEmail);
+      if (!targetUserEmail) {
+        fail(409, 'RECIPIENT_NOT_CONFIGURED', 'Seller email could not be established.');
+      }
 
       return { obligation, escrow: obligation.escrow, redirectUrl, targetUserEmail };
     });

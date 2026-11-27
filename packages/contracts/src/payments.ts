@@ -137,6 +137,13 @@ export const b2cAllocationPlanSchema = z
   })
   .strict();
 
+export const approveB2cDraftSchema = z
+  .object({
+    draftId: id,
+    reason,
+  })
+  .strict();
+
 export const simulatePayoutSchema = z
   .object({
     payoutRequestId: id,

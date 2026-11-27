@@ -143,6 +143,8 @@ export function validateEnvironment(values: Record<string, unknown>) {
       throw new Error(
         'DHMAD_API_KEY with sk_sandbox_ prefix is required when PAYMENT_PROVIDER=dhmad.',
       );
+    if (!config.DHMAD_EXPECTED_SELLER_EMAIL)
+      throw new Error('DHMAD_EXPECTED_SELLER_EMAIL is required when PAYMENT_PROVIDER=dhmad.');
   }
   if (config.ARCJET_ENABLED && !config.ARCJET_KEY)
     throw new Error('ARCJET_KEY is required when ARCJET_ENABLED=true.');

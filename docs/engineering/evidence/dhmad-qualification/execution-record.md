@@ -70,3 +70,17 @@
 ### External Blockers
 - **Gate B (`BLOCKED_CREDENTIALS`)**: No `DHMAD_API_KEY` (`sk_sandbox_*`), `DHMAD_WEBHOOK_SECRET`, or associated NASJ developer seller email exists in repository `.env`, GitHub repository secrets, or GitHub environments. Live DHMAD sandbox calls and central-recipient account association remain `BLOCKED` pending credential provisioning.
 - **Felcloud Staging (`BLOCKED_CREDENTIALS`)**: Isolated DHMAD staging deployment (`sandbox-qualification` environment / `.github/workflows/dhmad-sandbox-qualification.yml`) is implemented and awaits staging SSH/DB/DHMAD secrets.
+
+---
+
+## Continuation — Adversarial Review & Live Sandbox Probe (2026-11-27)
+
+- **Adversarial Review Fixes (`f99fe4d`)**: Fixed `feeBearer=BUYER` journal adjustment imbalance, concurrent `createObligationAndEscrow` `P2002` race condition, `DHMAD_EXPECTED_SELLER_EMAIL` validation/quarantine, B2C plan price-drift guard, reconciliation starvation (`lastSyncedAt` asc nulls-first), and added `@nasj/web` unit tests (`payment-escrow-panel.test.ts`).
+- **DHMAD Permissions & Preflight**: Per `docs.dhmad.tn/guides/api-keys.md`, escrows, checkout sessions, identity verifications, and webhooks are active by default on valid keys; `disputes:read` and `disputes:write` are the granular key permissions. Updated `sandbox-preflight.ts` to fail closed if `DHMAD_EXPECTED_SELLER_EMAIL` is missing/mismatched, `missingPermissions` is non-empty, or `GET /v1/escrows?limit=1` fails.
+- **Live Sandbox Probe**:
+  - `sandbox-preflight.ts`: `AUTHENTICATED_SANDBOX_PASS` (`associatedAccountVerified: true`, `escrowReadVerified: true`, `recipientMatches: true`, `permissions: ["disputes:read", "disputes:write"]`, `missingPermissions: []`).
+  - `createEscrow` + `getEscrow` + `cancelEscrow`: **PASS** against `https://sandbox.dhmad.tn/api` (after updating `dhmadEscrowSchema` for real DHMAD `_id` and `sellerBusiness.contactEmail` fields). Confirmed `sellerEmailOnGet` matches NASJ's associated account.
+  - `createIdentityVerification`: **PASS** (`kycStatus: "APPROVED"`, `claimStatus: "PENDING"`).
+  - `createCheckoutSession`: **BLOCKED** (`NO_REDIRECT_URLS_CONFIGURED` in DHMAD developer dashboard).
+- **Routing Isolation**: Verified `https://nasj-platform.ddns.net/` currently serves production (`nginx/1.24.0`, HTTP 200). Sandbox webhooks must target an isolated staging hostname (e.g. `https://staging-dhmad.nasj-platform.ddns.net/api/v1/webhooks/dhmad`), never the production hostname.
+- **B2C Approval Hardening**: Single-step `POST /api/v1/payments/b2c/orders/:id/financial-plan` is now restricted to standard `CATALOG` orders with `GROSS` basis, `0.000` costs, and exact `artisanPayMillimes` match; manual/negotiated overrides require two-step `/draft` + independent `/approve`.

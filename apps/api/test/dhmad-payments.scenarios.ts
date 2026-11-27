@@ -656,7 +656,8 @@ export async function runDhmadPaymentScenarios({
           },
         });
 
-        const b2cPlan = await send(
+        // Manual/negotiated B2C override (materialCostTnd > 0) must be rejected on single-step endpoint
+        const rejectedSingleStep = await send(
           maker,
           `/api/v1/payments/b2c/orders/${b2cOrder.id}/financial-plan`,
           {
@@ -665,8 +666,38 @@ export async function runDhmadPaymentScenarios({
             otherDirectCostTnd: '10.000',
             expectedFeeTnd: '15.000',
             artisans: [{ artisanId: fixture.artisanProfileId, basisPoints: 5000 }],
-            reason: 'B2C 50% artisan share',
+            reason: 'B2C 50% artisan share with custom costs',
           },
+        );
+        assert.equal(rejectedSingleStep.status, 409, JSON.stringify(rejectedSingleStep.body));
+
+        // Two-step maker-checker flow for manual/negotiated B2C override
+        const b2cDraft = await send(
+          maker,
+          `/api/v1/payments/b2c/orders/${b2cOrder.id}/financial-plan/draft`,
+          {
+            basis: 'GROSS',
+            materialCostTnd: '20.000',
+            otherDirectCostTnd: '10.000',
+            expectedFeeTnd: '15.000',
+            artisans: [{ artisanId: fixture.artisanProfileId, basisPoints: 5000 }],
+            reason: 'B2C 50% artisan share with custom costs',
+          },
+        );
+        assert.equal(b2cDraft.status, 201, JSON.stringify(b2cDraft.body));
+        const b2cDraftId = (b2cDraft.body as { id: string }).id;
+
+        const selfApproveB2c = await send(
+          maker,
+          `/api/v1/payments/b2c/orders/${b2cOrder.id}/financial-plan/approve`,
+          { draftId: b2cDraftId, reason: 'Self-approval must fail' },
+        );
+        assert.equal(selfApproveB2c.status, 409);
+
+        const b2cPlan = await send(
+          checker,
+          `/api/v1/payments/b2c/orders/${b2cOrder.id}/financial-plan/approve`,
+          { draftId: b2cDraftId, reason: 'Independent checker approval' },
         );
         assert.equal(b2cPlan.status, 201, JSON.stringify(b2cPlan.body));
 
@@ -808,16 +839,17 @@ export async function runDhmadPaymentScenarios({
             payMillimes: 50_000n,
           },
         });
+        // Standard catalog single-step B2C approval still works when GROSS, 0 costs, and matching artisanPayMillimes
         const concPlan = await send(
           maker,
           `/api/v1/payments/b2c/orders/${b2cOrderConcurrent.id}/financial-plan`,
           {
             basis: 'GROSS',
-            materialCostTnd: '10.000',
-            otherDirectCostTnd: '5.000',
+            materialCostTnd: '0.000',
+            otherDirectCostTnd: '0.000',
             expectedFeeTnd: '5.000',
             artisans: [{ artisanId: fixture.artisanProfileId, basisPoints: 5000 }],
-            reason: 'Concurrent test plan',
+            reason: 'Standard catalog concurrent test plan',
           },
         );
         assert.equal(concPlan.status, 201);
@@ -867,8 +899,8 @@ export async function runDhmadPaymentScenarios({
           `/api/v1/payments/b2c/orders/${b2cDriftOrder.id}/financial-plan`,
           {
             basis: 'GROSS',
-            materialCostTnd: '10.000',
-            otherDirectCostTnd: '5.000',
+            materialCostTnd: '0.000',
+            otherDirectCostTnd: '0.000',
             expectedFeeTnd: '5.000',
             artisans: [{ artisanId: fixture.artisanProfileId, basisPoints: 5000 }],
             reason: 'Drift test plan',

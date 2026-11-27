@@ -183,7 +183,9 @@ export type AccountVerificationResult = {
   developerEmail?: string;
   associatedBalanceAvailableTnd?: string;
   associatedAccountVerified: boolean;
+  escrowReadVerified?: boolean;
   permissions: string[];
+  missingPermissions?: string[];
 };
 
 export interface PaymentProvider {

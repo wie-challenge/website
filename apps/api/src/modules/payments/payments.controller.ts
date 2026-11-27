@@ -33,6 +33,28 @@ export class PaymentsController {
     return this.payments.approveB2cAllocationPlan(actor, id, input, key);
   }
 
+  @Post('b2c/orders/:id/financial-plan/draft')
+  draftB2cPlan(
+    @CurrentUser() actor: Actor,
+    @Param('id', rid) id: string,
+    @Body(new ZodValidationPipe(C.b2cAllocationPlanSchema))
+    input: z.infer<typeof C.b2cAllocationPlanSchema>,
+    @Headers('idempotency-key') key?: string,
+  ) {
+    return this.payments.draftB2cAllocationPlan(actor, id, input, key);
+  }
+
+  @Post('b2c/orders/:id/financial-plan/approve')
+  approveB2cDraft(
+    @CurrentUser() actor: Actor,
+    @Param('id', rid) id: string,
+    @Body(new ZodValidationPipe(C.approveB2cDraftSchema))
+    input: z.infer<typeof C.approveB2cDraftSchema>,
+    @Headers('idempotency-key') key?: string,
+  ) {
+    return this.payments.approveB2cAllocationDraft(actor, id, input, key);
+  }
+
   @Post('obligations')
   createObligation(
     @CurrentUser() actor: Actor,

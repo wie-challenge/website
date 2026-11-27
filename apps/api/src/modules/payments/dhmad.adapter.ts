@@ -19,7 +19,8 @@ import {
 
 const dhmadEscrowSchema = z
   .object({
-    id: z.string().min(1),
+    id: z.string().min(1).optional(),
+    _id: z.string().min(1).optional(),
     title: z.string().default(''),
     amount: z.number().nonnegative(),
     amountTnd: z.number().nonnegative().optional(),
@@ -37,6 +38,11 @@ const dhmadEscrowSchema = z
     cancelledAt: z.string().nullable().optional(),
     seller: z
       .object({ email: z.string().nullable().optional() })
+      .passthrough()
+      .nullable()
+      .optional(),
+    sellerBusiness: z
+      .object({ contactEmail: z.string().nullable().optional() })
       .passthrough()
       .nullable()
       .optional(),
@@ -63,14 +69,16 @@ const dhmadEscrowSchema = z
       .nullable()
       .optional(),
   })
-  .passthrough();
+  .passthrough()
+  .refine((v) => Boolean(v.id ?? v._id), { message: 'Escrow id or _id is required', path: ['id'] });
 
 const dhmadCreateEscrowResponseSchema = z
   .object({
     escrow: dhmadEscrowSchema,
     contract: z
       .object({
-        id: z.string(),
+        id: z.string().optional(),
+        _id: z.string().optional(),
         pdfUrl: z.string().nullable().optional(),
         sellerSigned: z.boolean().optional(),
         buyerSigned: z.boolean().optional(),
@@ -118,7 +126,7 @@ function mapEscrow(
   const buyerFundingMillimes =
     raw.buyerFundingTnd !== undefined ? dhmadNumberToMillimes(raw.buyerFundingTnd) : amountMillimes;
   return {
-    externalEscrowId: raw.id,
+    externalEscrowId: (raw.id ?? raw._id)!,
     title: raw.title,
     mode: raw.mode,
     rawStatus: raw.status,
@@ -132,13 +140,13 @@ function mapEscrow(
       raw.releasedTotalTnd !== undefined ? dhmadNumberToMillimes(raw.releasedTotalTnd) : undefined,
     refundedTotalMillimes:
       raw.refundedTotalTnd !== undefined ? dhmadNumberToMillimes(raw.refundedTotalTnd) : undefined,
-    sellerEmail: raw.seller?.email ?? raw.sellerEmail ?? null,
+    sellerEmail: raw.seller?.email ?? raw.sellerEmail ?? raw.sellerBusiness?.contactEmail ?? null,
     buyerEmail: raw.buyer?.email ?? raw.buyerEmail ?? null,
     deliveredAt: raw.deliveredAt ?? null,
     completionDeadline: raw.completionDeadline ?? null,
     completedAt: raw.completedAt ?? null,
     cancelledAt: raw.cancelledAt ?? null,
-    contractId: contract?.id ?? null,
+    contractId: contract?.id ?? contract?._id ?? null,
     sellerSigned: raw.signatures?.sellerSigned ?? contract?.sellerSigned ?? false,
     buyerSigned: raw.signatures?.buyerSigned ?? contract?.buyerSigned ?? false,
     isFullySigned: raw.signatures?.isFullySigned ?? contract?.isFullySigned ?? false,
@@ -292,6 +300,8 @@ export function normalizeDhmadWebhookPayload(
   }
   return { kind: 'UNHANDLED', webhookId, eventType, timestamp };
 }
+
+export const REQUIRED_DHMAD_PERMISSIONS = ['disputes:read', 'disputes:write'] as const;
 
 export class DhmadSandboxAdapter implements PaymentProvider {
   readonly name = 'dhmad' as const;
@@ -456,6 +466,21 @@ export class DhmadSandboxAdapter implements PaymentProvider {
         'API key must be an active sandbox key.',
       );
     }
+    const missingPermissions = REQUIRED_DHMAD_PERMISSIONS.filter(
+      (perm) => !me.apiKey.permissions.includes(perm),
+    );
+    let escrowReadVerified = false;
+    try {
+      await this.request(
+        'GET',
+        '/v1/escrows?limit=1&role=seller',
+        z.object({ escrows: z.array(z.unknown()) }).passthrough(),
+        { isMutation: false },
+      );
+      escrowReadVerified = true;
+    } catch {
+      escrowReadVerified = false;
+    }
     try {
       const bal = await this.request('GET', '/v1/balance', balanceSchema, { isMutation: false });
       return {
@@ -464,7 +489,9 @@ export class DhmadSandboxAdapter implements PaymentProvider {
         developerEmail: me.developer.email,
         associatedBalanceAvailableTnd: formatTnd(dhmadNumberToMillimes(bal.balance.available)),
         associatedAccountVerified: true,
+        escrowReadVerified,
         permissions: me.apiKey.permissions,
+        missingPermissions,
       };
     } catch (error) {
       if (error instanceof ProviderError && error.category === 'PERMISSION_OR_ASSOCIATION_DENIED') {
@@ -473,7 +500,9 @@ export class DhmadSandboxAdapter implements PaymentProvider {
           environment: 'sandbox',
           developerEmail: me.developer.email,
           associatedAccountVerified: false,
+          escrowReadVerified,
           permissions: me.apiKey.permissions,
+          missingPermissions,
         };
       }
       throw error;

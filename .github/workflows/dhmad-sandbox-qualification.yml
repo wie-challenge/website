@@ -9,6 +9,7 @@ concurrency:
   cancel-in-progress: false
 jobs:
   qualify-sandbox:
+    if: github.ref == 'refs/heads/feat/dhmad-sandbox-integration' || startsWith(github.ref, 'refs/heads/staging/')
     runs-on: ubuntu-24.04
     environment: sandbox-qualification
     timeout-minutes: 15
@@ -41,6 +42,7 @@ jobs:
         env:
           DHMAD_API_KEY: ${{ secrets.DHMAD_SANDBOX_API_KEY }}
           DHMAD_WEBHOOK_SECRET: ${{ secrets.DHMAD_SANDBOX_WEBHOOK_SECRET }}
+          DHMAD_EXPECTED_SELLER_EMAIL: ${{ secrets.DHMAD_EXPECTED_SELLER_EMAIL }}
         run: |
           if [ -z "${DHMAD_API_KEY:-}" ]; then
             echo "BLOCKED_CREDENTIALS: DHMAD_SANDBOX_API_KEY secret is not configured in sandbox-qualification."

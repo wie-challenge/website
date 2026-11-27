@@ -61,6 +61,16 @@ test('env validation blocks live DHMAD keys, real payouts, and production financ
     () =>
       validateEnvironment({
         ...baseEnv,
+        PAYMENTS_ENABLED: 'true',
+        PAYMENT_PROVIDER: 'dhmad',
+        DHMAD_API_KEY: ['sk', 'sandbox', '12345678'].join('_'),
+      }),
+    /DHMAD_EXPECTED_SELLER_EMAIL/,
+  );
+  assert.throws(
+    () =>
+      validateEnvironment({
+        ...baseEnv,
         NODE_ENV: 'production',
         PUBLIC_APP_URL: 'https://nasj.tn',
         REQUIRE_PRIVILEGED_MFA: 'true',
@@ -349,4 +359,34 @@ test('DHMAD webhook verification enforces HMAC-SHA256 and 5-minute replay window
     assert.equal(normalized.escrow.normalizedStatus, 'FUNDS_SECURED');
   }
   assert.equal(mapDhmadEscrowStatus('mystery_status'), 'UNKNOWN');
+});
+
+test('normalizeDhmadWebhookPayload accepts Mongo _id and sellerBusiness.contactEmail', () => {
+  const normalized = normalizeDhmadWebhookPayload(
+    'wh_mongo_1',
+    'escrow.status.updated',
+    new Date(),
+    {
+      data: {
+        escrow: {
+          _id: '6b09526ccf721af3c72d6a12',
+          title: 'NASJ Mongo Shape',
+          amount: 100,
+          amountTnd: 100,
+          currency: 'TND',
+          escrowFee: 5.95,
+          feeBearer: 'seller',
+          buyerFundingTnd: 100,
+          status: 'pending',
+          mode: 'quick',
+          sellerBusiness: { contactEmail: 'kammounaziz12@gmail.com' },
+        },
+      },
+    },
+  );
+  assert.equal(normalized.kind, 'ESCROW_STATUS');
+  if (normalized.kind === 'ESCROW_STATUS') {
+    assert.equal(normalized.escrow.externalEscrowId, '6b09526ccf721af3c72d6a12');
+    assert.equal(normalized.escrow.sellerEmail, 'kammounaziz12@gmail.com');
+  }
 });
