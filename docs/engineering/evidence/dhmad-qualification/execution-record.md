@@ -1,0 +1,72 @@
+# NASJ × DHMAD execution record
+
+## Current state (2026-11-27)
+
+- Phase: Phase 0 baseline and Phase 1 audit, with initial official documentation review.
+- Branch: `feat/dhmad-sandbox-integration`, starting commit `ce26278c4311d26479b75e8df710ee36d2f3762b`.
+- Active qualification: protected; `.qualification.Do1qD0` lock, QEMU guest, and cutover-repeat trial were live at baseline.
+- Completed: repository baseline captured; existing provider-related issue/epic and open PR activity inspected; official DHMAD documentation retrieved; capability matrix drafted. GitHub epic #271 and stories #272–#280 were created; existing provider story #147 was reopened and repurposed as PAY-01.
+- Remaining: full repository/domain audit, authoritative detail-page retrieval, authenticated sandbox credentials/account association, central-recipient and physical-delivery feasibility, backlog reconciliation, implementation, CI, isolated staging, recovery, and mandatory gates.
+- Blocker: no DHMAD-related environment credentials; no authenticated account association. Central NASJ recipient and settlement model unverified.
+- Evidence: `baseline/repository-baseline-2026-11-27.md`, `provider-capabilities-2026-11-27.md`.
+- No implementation commit, deployment, or authenticated provider call has been made. GitHub issue creation through the connector returned 403; the authenticated GitHub CLI succeeded.
+
+## Next executable actions
+
+1. Finish the domain/schema/API/frontend/infra audit and record the concrete extension points.
+2. Reconcile closed #147 and parent #11 without marking acceptance based on code presence; create only non-duplicate backlog items if supported.
+3. Obtain authorized DHMAD sandbox credentials and account association to qualify the central-recipient gate.
+4. Implement provider-independent financial-plan and allocation boundaries only where they preserve existing source-of-truth and synthetic-provenance guards.
+5. Add the provider adapter and authenticated workflows only after exact current API contracts and recipient permissions are confirmed.
+
+## Continuation — 2026-11-27
+
+- The existing qualification lock and QEMU guest remained active when checked. No qualification
+  resource was changed. Branch and baseline commit remain as above; the evidence directory was
+  already untracked. No DHMAD credential variable or DHMAD key configuration was found in the
+  environment or local environment/config files. Account association is not established.
+- Added a provider-independent version-1 allocation calculator and an isolated, network-free mock
+  provider. Allocation is not connected to approval, funding, or payable recognition yet. Mock
+  funding is explicitly `MOCK_SIMULATION` and cannot establish provider behavior.
+- Focused unit logs: `unit-tests/allocation-2026-11-27.log` (3 passed) and
+  `unit-tests/mock-provider-2026-11-27.log` (2 passed). Focused Biome check:
+  `unit-tests/biome-2026-11-27.log`. Base revision is `ce26278c4311d26479b75e8df710ee36d2f3762b`;
+  these results apply to the uncommitted working tree, not a release artifact.
+- Procurement accepts a quote before artisan offers are accepted. Financial approval alone cannot
+  establish artisan consent. The existing payable calculation uses accepted offer unit pay and
+  buyer-accepted pieces; any integration must reconcile those terms with the financial snapshot
+  instead of generating a second payable. Cost estimates can contain artisan labor, so the plan's
+  direct expense inputs must exclude that compensation to avoid double counting.
+
+
+---
+
+## Continuation Execution Record (2026-11-27)
+
+### Branch & Isolation Verification
+- **Branch**: `feat/dhmad-sandbox-integration`
+- **Isolation**: `.qualification.Do1qD0/qualification.flock`, `.worktrees/nasj-deployment-availability`, `main`, and production secrets left untouched.
+
+### Verification Runs Executed After Final Edit
+1. **Static Checks & Builds**:
+   - `pnpm typecheck && pnpm build` -> exited 0 (`@nasj/contracts`, `@nasj/api` with Prisma 7.10.1, `@nasj/web` Next.js 16.4.5 with 77 routes).
+   - `pnpm lint` -> exited 0 (`Checked 533 files in 167ms`, 0 errors; 0 warnings in DHMAD-modified files, 5 pre-existing warnings in unrelated CSS/demo spec).
+2. **Unit Tests (`pnpm test`)**:
+   - `@nasj/api`: 266 passed, 0 failed, 0 skipped.
+   - `@nasj/web`: 31 passed, 0 failed, 0 skipped.
+3. **PostgreSQL Schema & Migration Drift**:
+   - `python3 scripts/deploy/test-schema.py` -> exited 0 (`Real PostgreSQL schema gates passed: empty/pending, applied, extra additive history, failed migration, checksum mismatch.`).
+   - Disposable `prisma migrate diff --from-config-datasource --to-schema prisma/schema.prisma` -> verified zero `[+]` lines after fixing `ON UPDATE CASCADE` on `20261127000100_financial_plan_snapshot/migration.sql`.
+4. **Deployment & Delivery Scripts**:
+   - `bash scripts/deploy/test-deploy.sh` -> exited 0.
+   - `python3 scripts/deploy/test-delivery-workflow.py` -> exited 0 (`Delivery workflow regression checks passed`).
+5. **PostgreSQL Integration Suite (`pnpm test:integration`)**:
+   - `225` scenarios passed, `0` failed, against disposable PostgreSQL 17.7 and local SMTP capture (log captured in `docs/engineering/evidence/dhmad-qualification/integration-tests/integration-2026-11-27.log`).
+   - Includes `PASS PAY B2B: dynamic multi-artisan plan, amendment, escrow lock, delivery guard, webhook settlement & simulated payout` and `PASS PAY B2C, KYC, privacy, fault-injection reconciliation, and DB ledger triggers`.
+6. **Playwright E2E Regression**:
+   - `pnpm exec playwright test tests/e2e/procurement.spec.ts` -> 3 passed, 0 failed.
+   - `pnpm exec playwright test tests/e2e/commerce.spec.ts tests/e2e/commercial.spec.ts` -> 4 passed, 0 failed.
+
+### External Blockers
+- **Gate B (`BLOCKED_CREDENTIALS`)**: No `DHMAD_API_KEY` (`sk_sandbox_*`), `DHMAD_WEBHOOK_SECRET`, or associated NASJ developer seller email exists in repository `.env`, GitHub repository secrets, or GitHub environments. Live DHMAD sandbox calls and central-recipient account association remain `BLOCKED` pending credential provisioning.
+- **Felcloud Staging (`BLOCKED_CREDENTIALS`)**: Isolated DHMAD staging deployment (`sandbox-qualification` environment / `.github/workflows/dhmad-sandbox-qualification.yml`) is implemented and awaits staging SSH/DB/DHMAD secrets.

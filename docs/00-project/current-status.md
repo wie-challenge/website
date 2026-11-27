@@ -42,6 +42,9 @@ These bounded corrections do not grant whole-backlog or external acceptance.
 
 ## Commerce
 
+**DHMAD sandbox payment integration — 27 November 2026: MOCK & SCHEMA QUALIFIED / SANDBOX CREDENTIALS BLOCKED.**
+Financial allocation planning/amendments, central-recipient payment obligations, B2C/B2B escrow & hosted checkout orchestration, durable webhook inbox, double-entry subledger, KYC integration, payout simulation, reconciliation, UI panels, and CI/CD workflows are implemented and verified against PostgreSQL with the deterministic mock provider. Live DHMAD sandbox execution remains `BLOCKED_CREDENTIALS` until `sk_sandbox_*` credentials and account association are supplied; live payments and real payouts remain disabled. See the [execution record](../engineering/evidence/dhmad-qualification/execution-record.md).
+
 | Capability | Status | Code | Test evidence |
 |---|---|---|---|
 | Buyer RFQs, revisions, questions | VERIFIED | `modules/procurement/` | `test/unit/commercial.test.ts` |

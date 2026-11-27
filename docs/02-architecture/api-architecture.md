@@ -196,6 +196,20 @@ Mutations require the Nest session, CSRF, origin check and `Idempotency-Key`. Un
 
 The connected `/api/v1/inventory/*` and `/api/v1/finance/*` contracts, actions, exact quantity rules and permission mapping are documented in [the Batch 5 report](../99-archive/historical-audits/batch5-implementation-2026-10-27.md#e-api-contracts) and [inventory notes](../99-archive/historical-audits/batch5-inventory.md). Every new POST requires a valid `Idempotency-Key`; the existing authenticated session, privileged MFA, origin and CSRF boundary applies. Supported evidence remains synthetic or pending verification. No bank/physical verification promotion endpoint exists.
 
+### Financial plan, DHMAD escrow, webhooks and reconciliation
+
+`POST /api/v1/finance/orders/:id/financial-plan-drafts` and `POST /api/v1/finance/orders/:id/financial-plan-amendments` require the assigned internal `finance.payable.reconcile` permission. `POST /api/v1/finance/orders/:id/financial-plan-drafts/:draftId/approve` requires independent `finance.payout.approve` permission. Amendments are rejected once an active `PaymentObligation` locks the plan.
+
+Payment orchestration under `/api/v1/payments/*` supports:
+- Central-recipient NASJ payment obligations (`POST /api/v1/payments/obligations`, B2C `quick` and B2B `standard` modes; `sellerEmail` omitted so NASJ's associated DHMAD account receives funds).
+- Origin-locked hosted checkout sessions (`POST /api/v1/payments/obligations/:id/checkout-sessions`) and provider verification (`POST /api/v1/payments/checkout-sessions/:id/sync`); browser redirects never mark orders paid.
+- Physical delivery confirmation gating (`POST /api/v1/payments/obligations/:id/deliver`), rejecting requests without verified delivery evidence.
+- Pre-account artisan KYC (`POST /api/v1/payments/artisans/:id/kyc`, `POST /api/v1/payments/kyc/:id/review`) without storing raw ID documents in NASJ.
+- Simulated artisan payouts (`POST /api/v1/payments/payout-simulations`, strictly `SIMULATION` / `REAL_PAYOUTS_ENABLED=false`).
+- Signed durable webhook ingestion (`POST /api/v1/webhooks/dhmad`, HMAC-SHA256 + 5-minute replay check, persisted to `WebhookInboxEvent` before `200 OK`) and bounded reconciliation (`POST /api/v1/payments/reconciliation/run`).
+
+Authenticated DHMAD sandbox calls remain blocked until sandbox credentials (`sk_sandbox_*`) and account association are configured. See [DHMAD payments operations](../07-operations/dhmad-payments-operations.md).
+
 `POST /api/v1/procurement/orders/:id/payables/reconcile` now requires the dedicated scoped `finance.payable.reconcile` permission and a current buyer assignment. `finance.payout.read` authorizes scoped reads only. Compensation/financial projections validate the current internal organization and assignment. Granular permissions can be provisioned through the existing explicit-grant API; platform administration alone grants no business authority.
 
 For procurement-managed orders only, `CommercialOrder.delivered` now means the sum of **buyer-accepted pieces** and is updated in the same transaction as confirmation. Migration 080000 backfills those totals while preserving non-procurement synthetic totals and every historical order state. Managed orders reject legacy commerce DELIVERED, BUYER_ACCEPTED, SETTLED and CLOSED actions, preventing synthetic settlement from bypassing the finance gate. Closure assessment stores an immutable actor/time/checklist/ledger snapshot; required bank/payout/tax and unsettled-obligation blockers prevent successful closure.
