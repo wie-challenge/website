@@ -1,6 +1,7 @@
 'use client';
 import { useState } from 'react';
 import { apiFetch } from '@/lib/api';
+import { type OfferLanguage, offerDirection, offerLanguage } from '@/lib/offer-language';
 import {
   ActionForm,
   Input,
@@ -10,6 +11,80 @@ import {
   text,
   useResource,
 } from './workspace-ui';
+
+const paymentCopy: Record<
+  OfferLanguage,
+  {
+    langLabel: string;
+    escrowHeading: string;
+    escrowNotice: string;
+    artisanHeading: string;
+    artisanNotice: string;
+    allocationsHeading: string;
+    payablesHeading: string;
+    kycNotStarted: string;
+  }
+> = {
+  en: {
+    langLabel: 'Language',
+    escrowHeading: 'Escrow and checkout (Sandbox only)',
+    escrowNotice:
+      'Sandbox mode: All escrow operations use synthetic or sandbox test credentials. No real money or live bank transfers occur. Buyers pay NASJ centrally; NASJ manages artisan compensation separately.',
+    artisanHeading: 'Identity verification (KYC) and your earnings',
+    artisanNotice:
+      'Earnings and payouts shown here are request-specific payables and sandbox payout simulations—never a withdrawable wallet or live bank transfer.',
+    allocationsHeading: 'Your assigned compensation allocations',
+    payablesHeading: 'Recognized payables and simulated payouts',
+    kycNotStarted: 'KYC Status: Not started.',
+  },
+  fr: {
+    langLabel: 'Langue',
+    escrowHeading: 'Séquestre et paiement (Bac à sable uniquement)',
+    escrowNotice:
+      'Mode bac à sable : toutes les opérations de séquestre utilisent des identifiants de test. Aucun transfert réel n’a lieu. Les acheteurs paient NASJ de manière centralisée ; NASJ gère séparément la rémunération des artisans.',
+    artisanHeading: 'Vérification d’identité (KYC) et vos revenus',
+    artisanNotice:
+      'Les montants affichés sont des créances par commande et des simulations de paiement en bac à sable, jamais un portefeuille retirable ni un virement bancaire réel.',
+    allocationsHeading: 'Vos allocations de rémunération attribuées',
+    payablesHeading: 'Créances reconnues et paiements simulés',
+    kycNotStarted: 'Statut KYC : Non démarré.',
+  },
+  ar: {
+    langLabel: 'اللغة',
+    escrowHeading: 'الضمان والدفع (بيئة الاختبار فقط)',
+    escrowNotice:
+      'وضع الاختبار: جميع عمليات الضمان تستخدم بيانات اختبار تجريبية دون أي تحويلات مالية حقيقية. يدفع المشتري لمنصة نسج مركزياً، وتدير نسج مستحقات الحرفيين بشكل منفصل.',
+    artisanHeading: 'التحقق من الهوية (KYC) ومستحقاتك',
+    artisanNotice:
+      'المبالغ المعروضة هنا هي مستحقات خاصة بكل طلب ومحاكاة دفع تجريبية وليست محفظة قابلة للسحب أو تحويلاً بنكياً حقيقياً.',
+    allocationsHeading: 'حصص التعويض المخصصة لك',
+    payablesHeading: 'المستحقات المعتمدة وعمليات الدفع المحاكاة',
+    kycNotStarted: 'حالة التحقق (KYC): لم يبدأ بعد.',
+  },
+};
+
+function PaymentLocaleSelect({
+  language,
+  onChange,
+}: {
+  language: OfferLanguage;
+  onChange: (value: OfferLanguage) => void;
+}) {
+  return (
+    <label className="field" style={{ maxWidth: '12rem' }}>
+      <span>{paymentCopy[language].langLabel}</span>
+      <select
+        aria-label="Payment panel language"
+        value={language}
+        onChange={(event) => onChange(offerLanguage(event.target.value))}
+      >
+        <option value="en">English</option>
+        <option value="fr">Français</option>
+        <option value="ar">العربية</option>
+      </select>
+    </label>
+  );
+}
 
 const payRoot = '/api/v1/payments';
 const finRoot = '/api/v1/finance';
@@ -101,14 +176,21 @@ export function OrderEscrowPanel({
     `${payRoot}/orders/${channel}/${orderId}/obligations`,
   );
   const [redirectReturnPath] = useState(channel === 'B2C' ? `/orders/${orderId}` : '/procurement');
+  const [language, setLanguage] = useState<OfferLanguage>('en');
+  const copy = paymentCopy[language];
 
   return (
-    <section className="panel" aria-label="Escrow and payment">
-      <h3>Escrow and checkout (Sandbox only)</h3>
+    <section
+      className="panel"
+      aria-label="Escrow and payment"
+      lang={language}
+      dir={offerDirection(language)}
+    >
+      <PaymentLocaleSelect language={language} onChange={setLanguage} />
+      <h3>{copy.escrowHeading}</h3>
       <p>
-        <strong>Sandbox mode:</strong> All escrow operations use synthetic or sandbox test
-        credentials. No real money or live bank transfers occur. Buyers pay NASJ centrally; NASJ
-        manages artisan compensation separately.
+        <strong>{copy.escrowNotice.split(':')[0]}:</strong>
+        {copy.escrowNotice.slice(copy.escrowNotice.indexOf(':') + 1)}
       </p>
       <ResourceState {...obligations} retry={obligations.reload} />
       {obligations.data?.map((ob) => (
@@ -468,13 +550,19 @@ export function ArtisanFinancePanel({ artisanProfileId }: { artisanProfileId: st
     }[];
   }>(`${payRoot}/artisan/me`);
 
+  const [language, setLanguage] = useState<OfferLanguage>('en');
+  const copy = paymentCopy[language];
+
   return (
-    <section className="panel wide" id="kyc-and-earnings">
-      <h2>Identity verification (KYC) and your earnings</h2>
-      <p>
-        Earnings and payouts shown here are request-specific payables and sandbox payout
-        simulations—never a withdrawable wallet or live bank transfer.
-      </p>
+    <section
+      className="panel wide"
+      id="kyc-and-earnings"
+      lang={language}
+      dir={offerDirection(language)}
+    >
+      <PaymentLocaleSelect language={language} onChange={setLanguage} />
+      <h2>{copy.artisanHeading}</h2>
+      <p>{copy.artisanNotice}</p>
       <ResourceState {...finance} retry={finance.reload} />
       {finance.data?.kyc ? (
         <p>
@@ -482,7 +570,7 @@ export function ArtisanFinancePanel({ artisanProfileId }: { artisanProfileId: st
           {humanize(finance.data.kyc.provenance)} · Email: {finance.data.kyc.email})
         </p>
       ) : (
-        <p>KYC Status: Not started.</p>
+        <p>{copy.kycNotStarted}</p>
       )}
       <ActionForm
         label="Initiate pre-account DHMAD KYC"
@@ -501,7 +589,7 @@ export function ArtisanFinancePanel({ artisanProfileId }: { artisanProfileId: st
           identity verification through DHMAD.
         </label>
       </ActionForm>
-      <h3>Your assigned compensation allocations</h3>
+      <h3>{copy.allocationsHeading}</h3>
       {finance.data?.allocations.length ? (
         <ul>
           {finance.data.allocations.map((a) => (
@@ -515,7 +603,7 @@ export function ArtisanFinancePanel({ artisanProfileId }: { artisanProfileId: st
       ) : (
         <p>No assigned payment allocations yet.</p>
       )}
-      <h3>Recognized payables and simulated payouts</h3>
+      <h3>{copy.payablesHeading}</h3>
       {finance.data?.payables.map((p) => (
         <p key={p.id}>
           Payable {p.id}: {p.amountTnd} TND · {humanize(p.status)}
