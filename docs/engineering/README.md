@@ -14,6 +14,7 @@ use [Current status](../00-project/current-status.md); for dated reports, use
 | Folder | Contents |
 |---|---|
 | [evidence/](evidence/) | Per-batch execution evidence: unit and integration logs, browser captures, migration and restore drills |
+| [production-deployment-2026-11-27/](evidence/production-deployment-2026-11-27/README.md) | Verified production release, migration backup and postflight |
 | [audits/](audits/) | Independent audit evidence for batches 8–12 |
 | [batch8-11-completion/](batch8-11-completion/) | Completion evidence for batches 8–11: story acceptance, integration, migration execution |
 | [batch12-remediation/](batch12-remediation/) | Batch 12 financial remediation evidence |

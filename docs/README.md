@@ -67,6 +67,7 @@ operate or audit it.
 | [Archive index](99-archive/README.md) | All historical audits and batch reports |
 | [Competition package](competition/PHASE1_TECHNICAL_REPORT.md) | Frozen submission artefacts |
 | [Engineering evidence](engineering/README.md) | Surviving raw logs and artefacts, by batch |
+| [Production deployment record — 2026-11-27](engineering/evidence/production-deployment-2026-11-27/README.md) | Verified production release, migration backup and postflight |
 
 Historical records are point-in-time. A historical PASS does not mean the current commit passes.
 
