@@ -510,12 +510,13 @@ export class DhmadSandboxAdapter implements PaymentProvider {
   }
 
   async createEscrow(input: CreateEscrowRequest): Promise<EscrowRecord> {
-    // Omitting sellerEmail ensures NASJ's associated DHMAD account is the escrow seller/recipient.
+    // Pass NASJ's verified sellerEmail when configured so DHMAD binds the KYC-verified seller user.
     const body: Record<string, unknown> = {
       title: input.title,
       amount: millimesToDhmadNumber(input.amountMillimes),
       currency: input.currency,
       buyerEmail: input.buyerEmail,
+      ...(input.sellerEmail ? { sellerEmail: input.sellerEmail } : {}),
       mode: input.mode,
       feeBearer: input.feeBearer === 'BUYER' ? 'buyer' : 'seller',
       completionPolicy: {

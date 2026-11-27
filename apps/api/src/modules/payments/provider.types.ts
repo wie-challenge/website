@@ -39,6 +39,7 @@ export type CreateEscrowRequest = {
   amountMillimes: bigint;
   currency: 'TND';
   buyerEmail: string;
+  sellerEmail?: string;
   mode: 'quick' | 'standard';
   feeBearer: FeeBearer;
   reviewHours: number;

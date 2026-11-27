@@ -676,11 +676,14 @@ export class PaymentsService {
         amountMillimes: prepared.obligation.amountMillimes,
         currency: 'TND',
         buyerEmail: prepared.escrow.buyerEmail,
+        sellerEmail: this.config.DHMAD_EXPECTED_SELLER_EMAIL,
         mode: prepared.escrow.mode as 'quick' | 'standard',
         feeBearer: prepared.obligation.feeBearer as C.FeeBearer,
         reviewHours: prepared.escrow.reviewHours,
         contractTerms: prepared.contractTerms,
-        autoSignSeller: prepared.escrow.mode === 'standard',
+        autoSignSeller:
+          prepared.escrow.mode === 'standard' &&
+          (this.config.NODE_ENV === 'test' || this.config.DHMAD_AUTO_SIGN_SELLER),
       });
 
       // Step 3a: Persist provider identifiers & exact buyer funding amount.

@@ -108,6 +108,7 @@ export const envSchema = z.object({
       .optional(),
   ),
   DHMAD_CHECKOUT_RETURN_URL: z.preprocess(optional, z.url().optional()),
+  DHMAD_AUTO_SIGN_SELLER: bool.default(false),
   PAYMENT_B2C_REVIEW_HOURS: z.coerce.number().int().min(24).max(336).default(72),
   PAYMENT_B2B_REVIEW_HOURS: z.coerce.number().int().min(24).max(336).default(168),
   PAYMENT_RECONCILIATION_ENABLED: bool.default(false),
