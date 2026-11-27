@@ -371,7 +371,7 @@ export class DhmadSandboxAdapter implements PaymentProvider {
           ...(options.headers ?? {}),
         },
         body: options.body !== undefined ? JSON.stringify(options.body) : undefined,
-        signal: AbortSignal.timeout(this.options.timeoutMs ?? 15000),
+        signal: AbortSignal.timeout(this.options.timeoutMs ?? 30000),
       });
     } catch (error) {
       const category = options.isMutation ? 'AMBIGUOUS_TIMEOUT' : 'RETRYABLE_READ';
@@ -571,8 +571,12 @@ export class DhmadSandboxAdapter implements PaymentProvider {
         .object({
           contract: z
             .object({
-              id: z.string(),
-              escrow: z.string(),
+              id: z.string().optional(),
+              _id: z.string().optional(),
+              escrow: z.union([
+                z.string(),
+                z.object({ id: z.string().optional(), _id: z.string().optional() }).passthrough(),
+              ]),
               terms: z.string(),
               language: z.string().default('en'),
               pdfUrl: z.string().nullable().optional(),
@@ -580,14 +584,22 @@ export class DhmadSandboxAdapter implements PaymentProvider {
               buyerSignature: z.unknown().nullable().optional(),
               isFullySigned: z.boolean().default(false),
             })
-            .passthrough(),
+            .passthrough()
+            .refine((v) => Boolean(v.id ?? v._id), {
+              message: 'Contract id or _id is required',
+              path: ['id'],
+            }),
         })
         .passthrough(),
       { isMutation: false },
     );
+    const escrowId =
+      typeof res.contract.escrow === 'string'
+        ? res.contract.escrow
+        : (res.contract.escrow.id ?? res.contract.escrow._id ?? externalEscrowId);
     return {
-      contractId: res.contract.id,
-      escrowId: res.contract.escrow,
+      contractId: (res.contract.id ?? res.contract._id)!,
+      escrowId,
       terms: res.contract.terms,
       language: res.contract.language,
       pdfUrl: res.contract.pdfUrl ?? null,
