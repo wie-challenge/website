@@ -84,3 +84,22 @@
   - `createCheckoutSession`: **BLOCKED** (`NO_REDIRECT_URLS_CONFIGURED` in DHMAD developer dashboard).
 - **Routing Isolation**: Verified `https://nasj-platform.ddns.net/` currently serves production (`nginx/1.24.0`, HTTP 200). Sandbox webhooks must target an isolated staging hostname (e.g. `https://staging-dhmad.nasj-platform.ddns.net/api/v1/webhooks/dhmad`), never the production hostname.
 - **B2C Approval Hardening**: Single-step `POST /api/v1/payments/b2c/orders/:id/financial-plan` is now restricted to standard `CATALOG` orders with `GROSS` basis, `0.000` costs, and exact `artisanPayMillimes` match; manual/negotiated overrides require two-step `/draft` + independent `/approve`.
+
+
+---
+
+## Live Authenticated End-to-End Qualification via Isolated `ngrok` Stack (`fc96e0b`)
+
+- **Isolated Environment**: Docker PostgreSQL `nasj-dhmad-sandbox-pg` (`127.0.0.1:5433`, `nasj_dhmad_sandbox`), API (`127.0.0.1:3002`), Next.js (`127.0.0.1:3003`), worker (`--watch`), allowlist proxy (`127.0.0.1:3004`, blocking `/metrics` and `/api/v1/admin/*` with `403`), and `ngrok` HTTPS tunnel (`https://primal-landed-magnify.ngrok-free.dev`).
+- **Live B2C Lifecycle (`AUTHENTICATED_SANDBOX_PASS`)**:
+  - Order `cmwyx7vuj0000u4e4g84e1foi` (`25.000 TND`), Obligation `ef42cbd2316747e7b46cff59`, DHMAD Escrow `6b096ec2cf721af3c72d7c2b` (`sellerEmail: kammounaziz12@gmail.com`, `buyerEmail: info.nasj.app@gmail.com`).
+  - Completed `accept_pay` checkout → signed `escrow.status.updated` webhook (`595e00cb-60d8-40d1-9826-ece5e78ba0ba`, `signatureVerified: true`) → `FUNDS_SECURED`.
+  - Verified `409 DELIVERY_EVIDENCE_REQUIRED` before physical `DELIVERED` milestone → marked `DELIVERED` → `POST /deliver` succeeded (`AWAITING_DELIVERY_ACCEPTANCE`, 72h deadline `2026-11-30T11:54:31.214Z`, signed webhook `d67acafb-42da-4f50-ae48-4af86941c2b5`).
+  - Completed buyer `complete` checkout → signed webhook `1e49070f-fa6d-4873-9dab-909e2fc8dac4` → `SETTLED` (`releasedToNasj: 23512` millimes, `actualFee: 1488` millimes), `reconciliation/run` `MATCHED`.
+- **Live B2B Multi-Artisan Lifecycle (`AUTHENTICATED_SANDBOX_PASS`)**:
+  - Order `cmwyw0die0013q9e4cjfhtuda` (`2,000.000 TND`), maker-checker `FinancialPlanSnapshot` rev 2 (Artisan A `30%`, Artisan B `25%`), Obligation `6525e3dc37dc46c69bd7353d`, DHMAD `standard` Escrow `6b09708dcf721af3c72d80b5` with generated contract PDF.
+  - Completed interactive seller + buyer `sign_contract` sessions (`isFullySigned: true`), `accept_pay` (`2,000.000 TND`), signed webhook (`ae884f7f-0729-494f-a182-8adb98587d4c`) → `FUNDS_SECURED`.
+  - Verified `409` delivery guard before `DeliveryReport` → created `Shipment` + `DeliveryReport` → `POST /deliver` succeeded (`168h` deadline `2026-12-04T12:04:27.746Z`) → buyer `complete` → `SETTLED` (`releasedToNasj: 1881000` millimes, `actualFee: 119000` millimes), `reconciliation/run` `MATCHED`.
+  - Recognized multi-artisan payables (`600.000 TND` + `500.000 TND`), maker-checker `PayoutRequest` approvals, `payout-simulations` (`201`, `isSimulated: true`), duplicate payout blocked (`409`), and global `trial-balance` `balanced: true` (`9275.000 TND`).
+- **Financial Backup & Restore Drill**: Populated `pg_dump` → `pg_restore` into `nasj_dhmad_restore_test` preserved all 9 payment/ledger/audit tables (`snapshots: 2, obligations: 4, escrows: 4, batches: 11, entries: 24, webhooks: 9, reconRuns: 14, payables: 2, simulations: 2`) in `4129 ms`.
+- **Outstanding External Gates**: GitHub `sandbox-qualification` environment secrets + hosted CI run, permanent isolated Felcloud staging deployment, and `jq` installation for `test-release-provenance.py`.
