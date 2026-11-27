@@ -22,6 +22,7 @@ DHMAD_ENVIRONMENT=sandbox
 DHMAD_BASE_URL=https://sandbox.dhmad.tn/api
 DHMAD_API_KEY=sk_sandbox_...
 DHMAD_WEBHOOK_SECRET=...
+DHMAD_EXPECTED_SELLER_EMAIL=...
 PAYMENT_B2C_REVIEW_HOURS=72
 PAYMENT_B2B_REVIEW_HOURS=168
 PAYMENT_RECONCILIATION_ENABLED=true
@@ -30,25 +31,37 @@ REAL_PAYOUTS_ENABLED=false
 ```
 
 In the DHMAD developer dashboard (`https://developer.dhmad.tn`), verify:
-1. Developer account is associated with NASJ's sandbox user account (`https://sandbox.dhmad.tn`).
-2. `PUBLIC_APP_URL` callback URLs are allowlisted under Allowed Redirect URLs.
-3. Webhook endpoint `POST <staging-origin>/api/v1/webhooks/dhmad` is registered and subscribed to `escrow.*`, `contract.signed`, `dispute.*`, and `identity.verification.*`.
-4. Signature is configured for B2B `autoSign: true`.
+1. Developer account is associated with NASJ's sandbox user account (`https://sandbox.dhmad.tn`) matching `DHMAD_EXPECTED_SELLER_EMAIL`.
+2. `PUBLIC_APP_URL` callback URLs (`/orders`, `/procurement`) are allowlisted under **Settings → Allowed Redirect URLs**.
+3. Webhook endpoint `POST <staging-origin>/api/v1/webhooks/dhmad` (never the production hostname `nasj-platform.ddns.net`) is registered and subscribed to `escrow.status.updated`, `escrow.updated`, `escrow.cancellation.requested`, `escrow.cancellation.accepted`, `escrow.cancellation.rejected`, `escrow.delivery.rejected`, `escrow.funds.added`, `escrow.funds.refunded`, `contract.signed`, `dispute.*`, and `identity.verification.*`.
+4. Seller signature is configured and `apiAutoSignEnabled` is enabled for B2B `autoSign: true` (or seller signs via `sign_contract` checkout session).
 
-## 3. Incident & Operational Runbooks
+## 3. Incident, Inspection & Operational Runbooks
 
+**Operator Inspection Endpoints**:
+- Pending operations / obligation state: `GET /api/v1/payments/obligations/:id`, `GET /api/v1/payments/orders/:channel/:id/obligations`
+- Webhook processing backlog & quarantined events: `GET /api/v1/payments/webhooks/inbox?status=QUARANTINED`
+- Reconciliation runs & discrepancies: `GET /api/v1/payments/reconciliation/runs`, `GET /api/v1/payments/reconciliation/discrepancies`
+- Subledger trial balance: `GET /api/v1/payments/ledger/trial-balance`
+- Artisan payables & simulated payouts: `GET /api/v1/finance/orders/:id/records`, `GET /api/v1/payments/artisan/me`
+
+**Incident Playbooks**:
 - **Failed checkout**: Check `CheckoutSession` status and call `POST /api/v1/payments/checkout-sessions/:id/sync`. Never mark an order paid from a redirect URL alone.
-- **Ambiguous escrow creation (`AMBIGUOUS_QUARANTINED`)**: Do NOT blindly retry `POST /api/v1/escrows`. Run `POST /api/v1/payments/reconciliation/run` to scan `GET /api/v1/escrows` by `externalReference` (`nasj_<obligationId>`) and attach `externalEscrowId` if created.
+- **Missing redirect configuration (`NO_REDIRECT_URLS_CONFIGURED`)**: Add the exact `<staging-origin>/orders` and `<staging-origin>/procurement` URLs under **Allowed Redirect URLs** in the DHMAD Developer Dashboard and retry session creation.
+- **Incorrect recipient (`RECIPIENT_MISMATCH` / `RECIPIENT_NOT_CONFIGURED`)**: Obligation is quarantined (`DISCREPANCY_QUARANTINED`). Verify `DHMAD_EXPECTED_SELLER_EMAIL` matches `GET /v1/me` developer email and `escrow.sellerBusiness.contactEmail`; do not settle or pay out until resolved.
+- **Provider timeout (`AMBIGUOUS_TIMEOUT`) / Ambiguous escrow creation (`AMBIGUOUS_QUARANTINED`)**: Do NOT blindly retry `POST /api/v1/escrows`. Run `POST /api/v1/payments/reconciliation/run` to scan `GET /api/v1/escrows` by `externalReference` (`nasj_<obligationId>`) and attach `externalEscrowId` if created.
 - **Missing webhook**: Trigger `POST /api/v1/payments/reconciliation/run` to fetch authoritative state from DHMAD `GET /api/v1/escrows/:id` and post any missing balanced journal entries.
 - **Invalid or forged webhook**: Rejected at `POST /api/v1/webhooks/dhmad` with `401` (HMAC-SHA256 mismatch or `X-Webhook-Timestamp` outside ±5 minutes). Inspect logs by `requestId`; secrets are redacted automatically.
 - **Quarantined webhook event**: Inspect `GET /api/v1/payments/webhooks/inbox?status=QUARANTINED`, resolve root cause (e.g., missing escrow recovered via reconciliation), then replay via `POST /api/v1/payments/webhooks/inbox/:id/replay`.
 - **Provider outage / 429 rate limits**: Reads and reconciliation stop cleanly on `429` (`X-RateLimit-Reset`) and `5xx`; core NASJ order, production, and logistics workflows continue unaffected.
-- **Settlement mismatch / unexpected recipient / amount mismatch**: Marked `DISCREPANCY_QUARANTINED` with a `ReconciliationDiscrepancy` row (`CRITICAL`/`HIGH`). Investigate against DHMAD dashboard before calling `POST /api/v1/payments/reconciliation/discrepancies/:id/resolve`.
+- **Settlement mismatch / financial discrepancy**: Marked `DISCREPANCY_QUARANTINED` with a `ReconciliationDiscrepancy` row (`CRITICAL`/`HIGH`). Investigate against DHMAD dashboard before calling `POST /api/v1/payments/reconciliation/discrepancies/:id/resolve`.
 - **Refund or dispute**: Disputes freeze obligation in `DISPUTED` and block payouts on affected batches. Respond via `POST /api/v1/payments/disputes/:id/reply`. Refunds post `DR REFUND_LIABILITY / CR ESCROW_HELD`; artisan payables are not erased silently and require authorized `FinancialAdjustment` review.
 - **Failed payout simulation**: Review `PayoutRequest` and `ArtisanPayoutSimulation` status; never issue a second payout while an active/paid simulation exists.
-- **Worker crash recovery**: `WebhookInboxEvent` rows use PostgreSQL `FOR UPDATE SKIP LOCKED` and lease expiry recovery (`leaseExpiresAt`). Restarting `pnpm worker --watch` automatically resumes unprocessed/expired events.
-- **Database backup & restore**: Standard encrypted `pnpm ops:backup` (`pg_dump`) preserves all payment, webhook inbox, and ledger tables. After restoring into an isolated DB, run `POST /api/v1/payments/reconciliation/run` to sync external DHMAD sandbox state (never recreate already-created provider escrows).
+- **Worker crash recovery**: `WebhookInboxEvent` rows use PostgreSQL `FOR UPDATE SKIP LOCKED` and lease expiry recovery (`leaseExpiresAt`). Restarting `apps/api/dist/jobs/main.js --watch` automatically resumes unprocessed/expired events.
+- **Database backup & restore**: Standard `pg_dump` preserves all payment, webhook inbox, and ledger tables. After restoring into an isolated DB, run `POST /api/v1/payments/reconciliation/run` to sync external DHMAD sandbox state (never recreate already-created provider escrows).
+- **Staging rollback**: Stop the staging API/worker, restore the pre-deploy `pg_dump` snapshot to the isolated staging DB, check out the previous qualified commit SHA, run `prisma migrate deploy` only if additive, restart staging API/worker, and run `reconciliation/run`.
 - **Credential rotation**: Rotate `DHMAD_API_KEY` (`sk_sandbox_*`) and `DHMAD_WEBHOOK_SECRET` in secret management, restart API + worker, and verify `GET /api/v1/payments/provider/status`.
+- **Security incidents**: Revoke compromised `sk_sandbox_*` keys in DHMAD dashboard immediately, rotate `DHMAD_WEBHOOK_SECRET` and `BETTER_AUTH_SECRET`, inspect `AuditEvent` and `WebhookInboxEvent` for anomalous `requestId`/`correlationId` entries, and keep `PAYMENTS_ENABLED=false` in production.
 
 ## 4. Pre-Live Commercial & Legal Gates
 
