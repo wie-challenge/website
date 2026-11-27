@@ -102,3 +102,6 @@ and public readiness before closing the deployment record.
 
 Record the SSH credential preflight result and the previous release target
 when qualifying a change to automatic delivery.
+
+The 27 November 2026 production release and its migration backup/postflight
+evidence are recorded in [the deployment evidence record](../engineering/evidence/production-deployment-2026-11-27/README.md).
