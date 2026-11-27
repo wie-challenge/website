@@ -9,6 +9,7 @@ import type {
   MarketWomanView,
 } from '@nasj/contracts';
 import { apiFetch } from '@/lib/api';
+import { OrderEscrowPanel } from '../payment-escrow-panel';
 import { Button } from '../ui/button';
 import { Input, ResourceState, Select, Workspace, text, useResource } from '../workspace-ui';
 import {
@@ -536,6 +537,13 @@ export function OrderDetail({ id }: { id: string }) {
           {(personas.includes('NASJ_FINANCE') || admin) && (
             <FinanceSteps order={data} reload={order.reload} />
           )}
+          {(audience === 'company' || personas.includes('NASJ_FINANCE') || admin) && (
+            <OrderEscrowPanel
+              channel="B2C"
+              orderId={data.id}
+              isFinance={personas.includes('NASJ_FINANCE') || admin}
+            />
+          )}
           {audience !== 'nasj' && (
             <RateOrder order={data} reload={order.reload} audience={audience} />
           )}
@@ -721,6 +729,13 @@ export function OrderDetail({ id }: { id: string }) {
                     />
                   ))}
               </section>
+              {audience !== 'association' && data.totals && (
+                <OrderEscrowPanel
+                  channel="B2C"
+                  orderId={data.id}
+                  isFinance={personas.includes('NASJ_FINANCE') || admin}
+                />
+              )}
               {data.associationDelivery && audience !== 'company' && (
                 <DeliveryCard title="Delivery to NASJ" delivery={data.associationDelivery} />
               )}

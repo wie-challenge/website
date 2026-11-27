@@ -48,4 +48,20 @@ Docker. It applies each `migration.sql` verbatim, as `migrate deploy` would.
 `DeliveryReport_provenance_check` and `deposit_unverified` exist to make false financial and delivery
 claims unrepresentable. Relaxing one to make a test pass is fabricating evidence.
 
+## Financial plan snapshot and DHMAD payment infrastructure
+
+Migration `20261127000100_financial_plan_snapshot` adds append-only approved plan revisions linked
+to a procurement acceptance (`FinancialPlanSnapshot`).
+
+Migration `20261127010000_dhmad_payments_infrastructure` adds:
+- `PaymentObligation` and `ProviderEscrow` (single active obligation per B2C or B2B order via partial unique indexes; `recipientRole = 'NASJ_ASSOCIATED_ACCOUNT'` check).
+- `ProviderOperation` and `CheckoutSession` (idempotent outbound mutation tracking and ambiguous-timeout quarantine).
+- `ArtisanIdentityVerification` and `ProviderDispute`.
+- `WebhookInboxEvent` (unique `(provider, environment, webhookId)` deduplication and worker lease recovery).
+- `JournalBatch` and `JournalEntry` (append-only triggers + `DEFERRABLE INITIALLY DEFERRED` constraint trigger enforcing `SUM(DEBIT) = SUM(CREDIT)`).
+- `ArtisanPayoutSimulation` (`isSimulated = true` and `mode = 'SIMULATION'` enforced at DB level).
+- `ReconciliationRun` and `ReconciliationDiscrepancy`.
+
+Existing synthetic tables (`SimulatedSettlement`, `BuyerDepositRecord`, `PayoutExecutionRecord`) retain their `SYNTHETIC` / `bankVerified = false` constraints unchanged. None of these migrations have been applied to production.
+
 See [Database architecture](../02-architecture/database-architecture.md).

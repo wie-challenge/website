@@ -1,6 +1,7 @@
 'use client';
 import { Pagination } from './governance';
 import { CapacityWorkspace } from './capacity-workspace';
+import { ArtisanFinancePanel } from './payment-escrow-panel';
 import Link from 'next/link';
 import { useState } from 'react';
 import type {
@@ -208,6 +209,7 @@ export function ArtisanWorkspace({ artisanId }: { artisanId?: string }) {
                 <section className="panel wide" id="delegations">
                   <Delegations key={associationVersion} path={path} />
                 </section>
+                <ArtisanFinancePanel artisanProfileId={profile.id} />
               </>
             )}
           </>

@@ -8,6 +8,43 @@ const rid = new ZodValidationPipe(C.resourceIdSchema);
 @Controller('api/v1/finance')
 export class FinanceController {
   constructor(@Inject(FinanceService) private readonly service: FinanceService) {}
+  @Get('orders/:id/financial-plans') financialPlans(
+    @CurrentUser() actor: Actor,
+    @Param('id', rid) id: string,
+  ) {
+    return this.service.listFinancialPlans(actor, id);
+  }
+  @Post('orders/:id/financial-plan-drafts') draftPlan(
+    @CurrentUser() actor: Actor,
+    @Param('id', rid) id: string,
+    @Body(new ZodValidationPipe(C.financialPlanDraftSchema)) input: z.infer<
+      typeof C.financialPlanDraftSchema
+    >,
+    @Headers('idempotency-key') key?: string,
+  ) {
+    return this.service.draftFinancialPlan(actor, id, input, key);
+  }
+  @Post('orders/:id/financial-plan-amendments') amendPlan(
+    @CurrentUser() actor: Actor,
+    @Param('id', rid) id: string,
+    @Body(new ZodValidationPipe(C.financialPlanDraftSchema)) input: z.infer<
+      typeof C.financialPlanDraftSchema
+    >,
+    @Headers('idempotency-key') key?: string,
+  ) {
+    return this.service.draftFinancialPlanAmendment(actor, id, input, key);
+  }
+  @Post('orders/:id/financial-plan-drafts/:draftId/approve') approvePlan(
+    @CurrentUser() actor: Actor,
+    @Param('id', rid) id: string,
+    @Param('draftId', rid) draftId: string,
+    @Body(new ZodValidationPipe(C.financeReasonSchema)) input: z.infer<
+      typeof C.financeReasonSchema
+    >,
+    @Headers('idempotency-key') key?: string,
+  ) {
+    return this.service.approveFinancialPlan(actor, id, draftId, input, key);
+  }
   @Post('rfqs/:id/review') rfqReview(
     @CurrentUser() a: Actor,
     @Param('id', rid) id: string,

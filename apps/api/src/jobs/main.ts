@@ -5,6 +5,8 @@ import { dispatchBatch, outboxStatus } from './outbox.js';
 import { dispatchNotifications } from './notifications.js';
 import { rebuildAnalyticsBatch } from './commerce-consumer.js';
 import { logger } from '../common/logging.js';
+import { PaymentProviderRegistry } from '../modules/payments/provider.factory.js';
+import { processWebhookInboxBatch } from '../modules/payments/webhooks.service.js';
 const args = process.argv.slice(2);
 const mode = args[0] ?? '--once';
 if (
@@ -43,7 +45,11 @@ try {
     });
     logger.info({ count: result.count }, 'Failed outbox event requeued by operator');
   } else {
+    const providerRegistry = new PaymentProviderRegistry(config);
     do {
+      if (config.PAYMENTS_ENABLED) {
+        await processWebhookInboxBatch(db, providerRegistry.getProvider());
+      }
       await dispatchBatch(db);
       await dispatchNotifications(db, config);
       if (mode === '--watch' && !stopping)

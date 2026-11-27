@@ -1,5 +1,10 @@
 'use client';
 import { FinancialAnalysis, RfqFinanceReview } from './financial-analysis';
+import {
+  FinancialPlanPanel,
+  OrderEscrowPanel,
+  PaymentsOperationsPanel,
+} from './payment-escrow-panel';
 import { useState } from 'react';
 import Link from 'next/link';
 import { apiFetch } from '@/lib/api';
@@ -110,6 +115,7 @@ export function FinanceWorkspace() {
         <Input name="orderId" label="Commercial order reference" required />
       </ActionForm>
       <RfqFinanceReview />
+      <PaymentsOperationsPanel />
       {orderId ? (
         <OrderFinance key={orderId} orderId={orderId} />
       ) : (
@@ -142,6 +148,18 @@ export function OrderFinance({ orderId }: { orderId: string }) {
             Buyer-accepted delivery: {data.delivered ?? 'Awaiting reconciliation'} pieces. Expected
             buyer amount: {data.expectedTnd} TND.
           </p>
+          <OrderEscrowPanel
+            channel="B2B"
+            orderId={orderId}
+            isFinance={allowed('finance.payable.reconcile')}
+          />
+          {(allowed('finance.payable.reconcile') || allowed('finance.payout.approve')) && (
+            <FinancialPlanPanel
+              orderId={orderId}
+              canDraft={allowed('finance.payable.reconcile')}
+              canApprove={allowed('finance.payout.approve')}
+            />
+          )}
           <h3>Buyer deposits</h3>
           {!data.deposits.length && <p>No buyer deposits reported.</p>}
           {data.deposits.map((deposit) => (
@@ -285,6 +303,33 @@ export function OrderFinance({ orderId }: { orderId: string }) {
                     <p>This records an external claim. It cannot create a verified payment.</p>
                   </ActionForm>
                 )}
+              {['APPROVED'].includes(payout.status) && allowed('finance.payout.execute') && (
+                <ActionForm
+                  label="Execute simulated artisan payout (Sandbox only)"
+                  onSuccess={resource.reload}
+                  action={(form) =>
+                    apiFetch('/api/v1/payments/payout-simulations', {
+                      method: 'POST',
+                      idempotencyKey: crypto.randomUUID(),
+                      body: {
+                        payoutRequestId: payout.id,
+                        reference: text(form, 'reference'),
+                        outcome: text(form, 'outcome'),
+                        reason: text(form, 'reason'),
+                      },
+                    })
+                  }
+                >
+                  <Input name="reference" label="Simulation reference" required />
+                  <Select
+                    name="outcome"
+                    label="Simulation outcome"
+                    options={['PAID', 'ON_HOLD', 'FAILED']}
+                  />
+                  <Input name="reason" label="Simulation note" required />
+                  <p>Visibly marked SIMULATED. Never initiates real money transfers.</p>
+                </ActionForm>
+              )}
               {payout.executions?.map((execution) => (
                 <p key={execution.id}>
                   Execution {execution.amountTnd} TND · {humanize(execution.status)} ·{' '}

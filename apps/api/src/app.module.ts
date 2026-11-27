@@ -12,6 +12,7 @@ import { CommerceModule } from './modules/commerce/commerce.module.js';
 import { OrganizationsModule } from './modules/organizations/organizations.module.js';
 import { ArtisansModule } from './modules/artisans/artisans.module.js';
 import { GovernanceModule } from './modules/governance/governance.module.js';
+import { PaymentsModule } from './modules/payments/payments.module.js';
 import { Module, type DynamicModule } from '@nestjs/common';
 import type { ArcjetNest } from '@arcjet/nest';
 import { ConfigModule } from './config/config.module.js';
@@ -45,6 +46,7 @@ export class AppModule {
         IntelligenceModule,
         CollaborationModule,
         MarketModule,
+        PaymentsModule,
         DemoModule,
       ],
       controllers: [HealthController],
