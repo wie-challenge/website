@@ -753,6 +753,141 @@ export async function runDhmadPaymentScenarios({
         });
         assert.equal(forged.status, 401);
 
+        // Verify feeBearer=BUYER funding adjustment keeps CUSTOMER_RECEIVABLE balanced once funded
+        const b2cObligationId = list[0].id;
+        const fundSess = await send(
+          buyer,
+          `/api/v1/payments/obligations/${b2cObligationId}/checkout-sessions`,
+          { action: 'accept_pay', redirectPath: '/orders' },
+        );
+        assert.equal(fundSess.status, 201, JSON.stringify(fundSess.body));
+        mock.simulateSessionCompletion(
+          (fundSess.body as { externalSessionId: string }).externalSessionId,
+        );
+        const fundSync = await send(
+          buyer,
+          `/api/v1/payments/checkout-sessions/${(fundSess.body as { id: string }).id}/sync`,
+          {},
+        );
+        assert.equal(fundSync.status, 201, JSON.stringify(fundSync.body));
+        const b2cDetails = await maker.client.request(
+          `/api/v1/payments/obligations/${b2cObligationId}`,
+        );
+        assert.equal(b2cDetails.status, 200);
+        const b2cAccounts = (
+          b2cDetails.body as {
+            ledger: { accounts: { accountCode: string; debitTnd: string; creditTnd: string }[] };
+          }
+        ).ledger.accounts;
+        const custReceivable = b2cAccounts.find((a) => a.accountCode === 'CUSTOMER_RECEIVABLE');
+        assert.ok(custReceivable);
+        assert.equal(
+          custReceivable.debitTnd,
+          custReceivable.creditTnd,
+          `CUSTOMER_RECEIVABLE must net to 0 after funding, got debit=${custReceivable.debitTnd} credit=${custReceivable.creditTnd}`,
+        );
+
+        // Concurrent checkout requests for the same B2C order must not fail with 500
+        const b2cOrderConcurrent = await db.marketOrder.create({
+          data: {
+            buyerOrgId: fixture.buyerOrganizationId,
+            kind: 'CATALOG',
+            status: 'DELIVERED',
+            title: 'B2C Concurrent Bowl',
+            quantity: 1,
+            totalMillimes: 100_000n,
+            artisanPayMillimes: 50_000n,
+            createdById: buyer.me.user.id,
+          },
+        });
+        await db.marketOrderArtisan.create({
+          data: {
+            orderId: b2cOrderConcurrent.id,
+            artisanProfileId: fixture.artisanProfileId,
+            recordedById: maker.me.user.id,
+            payMillimes: 50_000n,
+          },
+        });
+        const concPlan = await send(
+          maker,
+          `/api/v1/payments/b2c/orders/${b2cOrderConcurrent.id}/financial-plan`,
+          {
+            basis: 'GROSS',
+            materialCostTnd: '10.000',
+            otherDirectCostTnd: '5.000',
+            expectedFeeTnd: '5.000',
+            artisans: [{ artisanId: fixture.artisanProfileId, basisPoints: 5000 }],
+            reason: 'Concurrent test plan',
+          },
+        );
+        assert.equal(concPlan.status, 201);
+        const [concA, concB] = await Promise.all([
+          send(buyer, '/api/v1/payments/obligations', {
+            channel: 'B2C',
+            orderId: b2cOrderConcurrent.id,
+            buyerEmail: 'pay-buyer@example.com',
+            feeBearer: 'SELLER',
+            reason: 'Concurrent checkout A',
+          }),
+          send(buyer, '/api/v1/payments/obligations', {
+            channel: 'B2C',
+            orderId: b2cOrderConcurrent.id,
+            buyerEmail: 'pay-buyer@example.com',
+            feeBearer: 'SELLER',
+            reason: 'Concurrent checkout B',
+          }),
+        ]);
+        assert.equal(concA.status, 201, JSON.stringify(concA.body));
+        assert.equal(concB.status, 201, JSON.stringify(concB.body));
+        assert.equal((concA.body as { id: string }).id, (concB.body as { id: string }).id);
+
+        // B2C price drift after plan approval must block checkout with 409 FINANCIAL_PLAN_STALE
+        const b2cDriftOrder = await db.marketOrder.create({
+          data: {
+            buyerOrgId: fixture.buyerOrganizationId,
+            kind: 'CATALOG',
+            status: 'DELIVERED',
+            title: 'B2C Drift Bowl',
+            quantity: 1,
+            totalMillimes: 200_000n,
+            artisanPayMillimes: 100_000n,
+            createdById: buyer.me.user.id,
+          },
+        });
+        await db.marketOrderArtisan.create({
+          data: {
+            orderId: b2cDriftOrder.id,
+            artisanProfileId: fixture.artisanProfileId,
+            recordedById: maker.me.user.id,
+            payMillimes: 100_000n,
+          },
+        });
+        const driftPlan = await send(
+          maker,
+          `/api/v1/payments/b2c/orders/${b2cDriftOrder.id}/financial-plan`,
+          {
+            basis: 'GROSS',
+            materialCostTnd: '10.000',
+            otherDirectCostTnd: '5.000',
+            expectedFeeTnd: '5.000',
+            artisans: [{ artisanId: fixture.artisanProfileId, basisPoints: 5000 }],
+            reason: 'Drift test plan',
+          },
+        );
+        assert.equal(driftPlan.status, 201);
+        await db.marketOrder.update({
+          where: { id: b2cDriftOrder.id },
+          data: { totalMillimes: 250_000n },
+        });
+        const driftCheckout = await send(buyer, '/api/v1/payments/obligations', {
+          channel: 'B2C',
+          orderId: b2cDriftOrder.id,
+          buyerEmail: 'pay-buyer@example.com',
+          feeBearer: 'SELLER',
+          reason: 'Should fail on stale B2C plan',
+        });
+        assert.equal(driftCheckout.status, 409, JSON.stringify(driftCheckout.body));
+
         // Verify PostgreSQL append-only & deferred balance triggers on JournalBatch/JournalEntry
         const anyEntry = await db.journalEntry.findFirstOrThrow();
         await assert.rejects(

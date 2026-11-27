@@ -3,6 +3,7 @@ import { Inject, Injectable } from '@nestjs/common';
 import * as C from '@nasj/contracts';
 import { fail } from '../../common/errors.js';
 import type { Actor } from '../../common/identity.js';
+import { APP_CONFIG, type AppConfig } from '../../config/env.js';
 import { PrismaService } from '../../database/prisma.service.js';
 import { iamTransaction, type Db } from '../foundation/transaction.js';
 import { getTrialBalance } from './ledger.service.js';
@@ -14,6 +15,7 @@ import { applyEscrowSnapshot, emitPaymentOutboxEvent } from './state-transitions
 export class ReconciliationService {
   constructor(
     @Inject(PrismaService) private readonly db: PrismaService,
+    @Inject(APP_CONFIG) private readonly config: AppConfig,
     @Inject(PaymentProviderRegistry) private readonly registry: PaymentProviderRegistry,
   ) {}
 
@@ -130,7 +132,7 @@ export class ReconciliationService {
       }
     }
 
-    // 2. Reconcile active and recently settled escrows (bounded batch).
+    // 2. Reconcile active and recently settled escrows (stalest/unsynced first, bounded batch).
     const escrows = await this.db.providerEscrow.findMany({
       where: {
         provider: provider.name,
@@ -138,7 +140,7 @@ export class ReconciliationService {
         externalEscrowId: { not: null },
       },
       include: { obligation: true },
-      orderBy: { updatedAt: 'desc' },
+      orderBy: [{ lastSyncedAt: { sort: 'asc', nulls: 'first' } }, { updatedAt: 'asc' }],
       take: Math.min(limit, 50),
     });
 
@@ -173,15 +175,16 @@ export class ReconciliationService {
             details: { expected: escrow.obligation.currency, actual: remote.currency },
           });
         }
+        const expectedSeller = escrow.sellerEmail ?? this.config.DHMAD_EXPECTED_SELLER_EMAIL;
         if (
-          escrow.sellerEmail &&
+          expectedSeller &&
           remote.sellerEmail &&
-          remote.sellerEmail.toLowerCase() !== escrow.sellerEmail.toLowerCase()
+          remote.sellerEmail.toLowerCase() !== expectedSeller.toLowerCase()
         ) {
           issues.push({
             kind: 'RECIPIENT_MISMATCH',
             severity: 'CRITICAL',
-            details: { expected: escrow.sellerEmail, actual: remote.sellerEmail },
+            details: { expected: expectedSeller, actual: remote.sellerEmail },
           });
         }
         if (

@@ -359,7 +359,17 @@ export class PaymentsService {
             'Approved NASJ financial allocation is required before customer checkout.',
           );
         }
-        const planData = b2cPlan.data as { allocation?: Record<string, unknown> };
+        const planData = b2cPlan.data as {
+          customerPriceMillimes?: string;
+          allocation?: Record<string, unknown>;
+        };
+        if (planData.customerPriceMillimes !== order.totalMillimes.toString()) {
+          fail(
+            409,
+            'FINANCIAL_PLAN_STALE',
+            'B2C financial plan no longer matches the current order total.',
+          );
+        }
         amountMillimes = order.totalMillimes;
         allocationSnapshot = planData.allocation ?? {};
         defaultTitle = order.title;
@@ -388,24 +398,43 @@ export class PaymentsService {
           ? this.config.PAYMENT_B2C_REVIEW_HOURS
           : this.config.PAYMENT_B2B_REVIEW_HOURS;
 
-      const obligation = await tx.paymentObligation.create({
-        data: {
-          id: obligationId,
-          channel: input.channel,
-          commercialOrderId: input.channel === 'B2B' ? input.orderId : null,
-          marketOrderId: input.channel === 'B2C' ? input.orderId : null,
-          buyerOrganizationId,
-          financialPlanSnapshotId,
-          allocationSnapshot: json(allocationSnapshot),
-          currency: 'TND',
-          amountMillimes,
-          feeBearer: input.feeBearer,
-          expectedFeeMillimes,
-          buyerFundingMillimes,
-          status: 'AWAITING_PAYMENT',
-          createdById: actor.id,
-        },
-      });
+      let obligation: Awaited<ReturnType<typeof tx.paymentObligation.create>>;
+      try {
+        obligation = await tx.paymentObligation.create({
+          data: {
+            id: obligationId,
+            channel: input.channel,
+            commercialOrderId: input.channel === 'B2B' ? input.orderId : null,
+            marketOrderId: input.channel === 'B2C' ? input.orderId : null,
+            buyerOrganizationId,
+            financialPlanSnapshotId,
+            allocationSnapshot: json(allocationSnapshot),
+            currency: 'TND',
+            amountMillimes,
+            feeBearer: input.feeBearer,
+            expectedFeeMillimes,
+            buyerFundingMillimes,
+            status: 'AWAITING_PAYMENT',
+            createdById: actor.id,
+          },
+        });
+      } catch (error) {
+        if (error && typeof error === 'object' && 'code' in error && error.code === 'P2002') {
+          const raced = await tx.paymentObligation.findFirst({
+            where: {
+              ...(input.channel === 'B2B'
+                ? { commercialOrderId: input.orderId }
+                : { marketOrderId: input.orderId }),
+              status: { notIn: ['CANCELLED', 'FAILED', 'REFUNDED'] },
+            },
+            include: { escrow: { include: { sessions: true } } },
+          });
+          if (raced) {
+            return { alreadyExists: true as const, obligation: raced };
+          }
+        }
+        throw error;
+      }
 
       const escrow = await tx.providerEscrow.create({
         data: {
@@ -523,13 +552,56 @@ export class PaymentsService {
             lastSyncedAt: new Date(),
           },
         });
+        const expectedSeller = this.config.DHMAD_EXPECTED_SELLER_EMAIL;
+        if (
+          expectedSeller &&
+          remote.sellerEmail &&
+          remote.sellerEmail.toLowerCase() !== expectedSeller
+        ) {
+          await tx.paymentObligation.update({
+            where: { id: prepared.obligation.id },
+            data: { reconciliationStatus: 'DISCREPANCY_QUARANTINED' },
+          });
+          throw new ProviderError(
+            'PERMISSION_OR_ASSOCIATION_DENIED',
+            'RECIPIENT_MISMATCH',
+            'Escrow seller email does not match configured NASJ recipient.',
+          );
+        }
         if (remote.buyerFundingMillimes !== prepared.obligation.buyerFundingMillimes) {
+          const delta = remote.buyerFundingMillimes - prepared.obligation.buyerFundingMillimes;
           await tx.paymentObligation.update({
             where: { id: prepared.obligation.id },
             data: {
               expectedFeeMillimes: remote.escrowFeeMillimes,
               buyerFundingMillimes: remote.buyerFundingMillimes,
             },
+          });
+          await postJournalBatch(tx, {
+            obligationId: prepared.obligation.id,
+            sourceType: 'PaymentObligation',
+            sourceId: prepared.obligation.id,
+            idempotencyKey: `obligation:funding-adjusted:${prepared.obligation.id}`,
+            description: 'Buyer funding obligation adjusted to provider fee quote',
+            provenance: provider.provenance,
+            lines:
+              delta > 0n
+                ? [
+                    { accountCode: 'CUSTOMER_RECEIVABLE', side: 'DEBIT', amountMillimes: delta },
+                    {
+                      accountCode: 'NASJ_CONTRIBUTION_RESERVE',
+                      side: 'CREDIT',
+                      amountMillimes: delta,
+                    },
+                  ]
+                : [
+                    {
+                      accountCode: 'NASJ_CONTRIBUTION_RESERVE',
+                      side: 'DEBIT',
+                      amountMillimes: -delta,
+                    },
+                    { accountCode: 'CUSTOMER_RECEIVABLE', side: 'CREDIT', amountMillimes: -delta },
+                  ],
           });
         }
         await emitPaymentOutboxEvent(tx, {
@@ -636,7 +708,9 @@ export class PaymentsService {
       const targetUserEmail =
         input.targetUserEmail?.toLowerCase() ??
         (sellerActions.includes(input.action)
-          ? (obligation.escrow.sellerEmail ?? 'nasj-seller@nasj.local')
+          ? (obligation.escrow.sellerEmail ??
+            this.config.DHMAD_EXPECTED_SELLER_EMAIL ??
+            'nasj-seller@nasj.local')
           : obligation.escrow.buyerEmail);
 
       return { obligation, escrow: obligation.escrow, redirectUrl, targetUserEmail };

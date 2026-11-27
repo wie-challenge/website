@@ -46,6 +46,21 @@ test('env validation blocks live DHMAD keys, real payouts, and production financ
     () =>
       validateEnvironment({
         ...baseEnv,
+        DHMAD_EXPECTED_SELLER_EMAIL: 'not-an-email',
+      }),
+    /DHMAD_EXPECTED_SELLER_EMAIL/,
+  );
+  assert.equal(
+    validateEnvironment({
+      ...baseEnv,
+      DHMAD_EXPECTED_SELLER_EMAIL: 'NASJ-Seller@Example.com',
+    }).DHMAD_EXPECTED_SELLER_EMAIL,
+    'nasj-seller@example.com',
+  );
+  assert.throws(
+    () =>
+      validateEnvironment({
+        ...baseEnv,
         NODE_ENV: 'production',
         PUBLIC_APP_URL: 'https://nasj.tn',
         REQUIRE_PRIVILEGED_MFA: 'true',

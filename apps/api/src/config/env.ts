@@ -100,6 +100,13 @@ export const envSchema = z.object({
   ),
   DHMAD_API_KEY: z.preprocess(optional, z.string().min(8).optional()),
   DHMAD_WEBHOOK_SECRET: z.preprocess(optional, z.string().min(16).optional()),
+  DHMAD_EXPECTED_SELLER_EMAIL: z.preprocess(
+    optional,
+    z
+      .email()
+      .transform((v) => v.toLowerCase())
+      .optional(),
+  ),
   DHMAD_CHECKOUT_RETURN_URL: z.preprocess(optional, z.url().optional()),
   PAYMENT_B2C_REVIEW_HOURS: z.coerce.number().int().min(24).max(336).default(72),
   PAYMENT_B2B_REVIEW_HOURS: z.coerce.number().int().min(24).max(336).default(168),
