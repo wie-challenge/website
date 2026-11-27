@@ -54,6 +54,7 @@ import { findCatalogExample, projectBuyerCatalog } from './catalog.js';
 import { projectCapacity } from '../artisans/capacity.js';
 import { requireCurrentEligibility } from '../procurement/eligibility-guard.js';
 import { activity, revision } from '../procurement/records.js';
+import { guardOfferFinancialPlan } from './financial-plan-guard.js';
 
 type Order = Prisma.CommercialOrderGetPayload<{
   include: { rfq: true; offers: true; batches: true; payments: true };
@@ -669,6 +670,7 @@ export class CommerceService {
           );
         }
         if (input.next === 'ACCEPTED') {
+          await guardOfferFinancialPlan(tx, row);
           const capacity = await tx.capacityDeclaration.findUniqueOrThrow({
             where: { id: row.capacityDeclarationId },
           });

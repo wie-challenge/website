@@ -76,7 +76,12 @@ export async function createApp(options: { config?: AppConfig; arcjet?: ArcjetNe
     });
     next();
   });
-  const ordinaryJson = express.json({ limit: '32kb' });
+  const ordinaryJson = express.json({
+    limit: '32kb',
+    verify: (req, _res, buf) => {
+      (req as Request & { rawBody?: string }).rawBody = buf.toString('utf8');
+    },
+  });
   const attachmentJson = express.json({ limit: '384kb' });
   const marketFileJson = express.json({ limit: '6mb' });
   app.use((req: Request, res: Response, next: NextFunction) =>
@@ -90,8 +95,10 @@ export async function createApp(options: { config?: AppConfig; arcjet?: ArcjetNe
   );
   app.use((req: Request, _res: Response, next: NextFunction) => {
     try {
+      const isSignedWebhook = req.method === 'POST' && req.path === '/api/v1/webhooks/dhmad';
       if (
         !['GET', 'HEAD', 'OPTIONS'].includes(req.method) &&
+        !isSignedWebhook &&
         (req.headers.origin !== config.PUBLIC_APP_URL || !req.is('application/json'))
       )
         fail(

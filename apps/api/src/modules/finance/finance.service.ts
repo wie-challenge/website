@@ -38,6 +38,367 @@ const view = <T extends { amountMillimes: bigint }>(row: T) => {
 @Injectable()
 export class FinanceService {
   constructor(@Inject(PrismaService) private readonly db: PrismaService) {}
+  private async planCalculation(
+    tx: Db,
+    orderId: string,
+    input: z.infer<typeof C.financialPlanDraftSchema>,
+  ) {
+    const acceptance = await tx.procurementAcceptance.findUnique({
+      where: { orderId },
+      include: { quote: { include: { costEstimate: true } } },
+    });
+    const quote = acceptance?.quote;
+    const cost = quote?.costEstimate;
+    if (
+      !acceptance ||
+      !quote ||
+      !cost ||
+      cost.status !== 'APPROVED' ||
+      cost.incomplete ||
+      cost.currency !== 'TND' ||
+      !quote.termsSha256
+    )
+      fail(409, 'COSTED_ACCEPTANCE_REQUIRED', 'An accepted, costed TND quotation is required.');
+    const lines = z
+      .array(z.object({ category: z.enum(C.costCategories), amountTnd: z.string() }).passthrough())
+      .safeParse(cost.components);
+    if (
+      !lines.success ||
+      new Set(lines.data.map((v) => v.category)).size !== lines.data.length ||
+      !lines.data.some((v) => v.category === 'MATERIALS')
+    )
+      fail(
+        409,
+        'INVALID_COST_SNAPSHOT',
+        'The accepted cost snapshot cannot be used for a financial plan.',
+      );
+    const profiles = await tx.artisanProfile.count({
+      where: { id: { in: input.artisans.map((v) => v.artisanId) } },
+    });
+    if (profiles !== input.artisans.length)
+      fail(400, 'INVALID_ARTISANS', 'Artisan profiles must exist and be unique.');
+    try {
+      let materials = 0n,
+        other = 0n;
+      for (const line of lines.data) {
+        const value = C.parseTnd(line.amountTnd);
+        if (line.category === 'MATERIALS') materials = C.addTnd(materials, value);
+        else if (line.category !== 'ARTISAN_LABOR' && line.category !== 'PLATFORM_FEE')
+          other = C.addTnd(other, value);
+      }
+      const allocation = C.calculateFinancialAllocation({
+        policyVersion: 1,
+        basis: input.basis,
+        customerPriceMillimes: quote.totalMillimes,
+        materialCostMillimes: materials,
+        otherDirectCostMillimes: other,
+        expectedFeeMillimes: C.parseTnd(input.expectedFeeTnd),
+        artisans: input.artisans,
+      });
+      return { acceptance, quote, materials, other, allocation };
+    } catch {
+      return fail(
+        400,
+        'INVALID_FINANCIAL_PLAN',
+        'The allocation or cost amounts are invalid or exceed available funds.',
+      );
+    }
+  }
+  async listFinancialPlans(actor: Actor, orderId: string) {
+    return iamTransaction(this.db, actor, async (tx) => {
+      const a = await this.access(tx, actor, orderId);
+      if (!a.finance) fail(404, 'NOT_FOUND', 'Scoped finance access required.');
+      const acceptance = await tx.procurementAcceptance.findUnique({ where: { orderId } });
+      const [snapshots, drafts, activeObligation] = await Promise.all([
+        acceptance
+          ? tx.financialPlanSnapshot.findMany({
+              where: { acceptanceId: acceptance.id },
+              orderBy: { revision: 'desc' },
+            })
+          : [],
+        tx.financeRecordEvent.findMany({
+          where: { orderId, targetType: 'FinancialPlanDraft' },
+          orderBy: { createdAt: 'desc' },
+          take: 20,
+        }),
+        tx.paymentObligation.findFirst({
+          where: {
+            commercialOrderId: orderId,
+            status: { notIn: ['CANCELLED', 'FAILED', 'REFUNDED'] },
+          },
+          select: { id: true, status: true, lockedAt: true },
+        }),
+      ]);
+      return json({
+        locked: Boolean(activeObligation),
+        activeObligation,
+        snapshots,
+        drafts,
+      });
+    });
+  }
+  async draftFinancialPlanAmendment(
+    actor: Actor,
+    orderId: string,
+    input: z.infer<typeof C.financialPlanDraftSchema>,
+    key?: string,
+  ) {
+    return iamTransaction(this.db, actor, async (tx) => {
+      await this.access(tx, actor, orderId, 'finance.payable.reconcile');
+      return this.command(tx, actor, orderId, 'financial-plan.amend', key, input, async () => {
+        const p = await this.planCalculation(tx, orderId, input);
+        const latest = await tx.financialPlanSnapshot.findFirst({
+          where: { acceptanceId: p.acceptance.id },
+          orderBy: { revision: 'desc' },
+        });
+        if (!latest)
+          fail(
+            409,
+            'INITIAL_PLAN_REQUIRED',
+            'Approve an initial financial plan before drafting an amendment.',
+          );
+        const activeObligation = await tx.paymentObligation.findFirst({
+          where: {
+            commercialOrderId: orderId,
+            status: { notIn: ['CANCELLED', 'FAILED', 'REFUNDED'] },
+          },
+        });
+        if (activeObligation)
+          fail(
+            409,
+            'FINANCIAL_PLAN_LOCKED',
+            'Cannot amend financial allocations while an active payment obligation exists.',
+          );
+        const data = json({
+          input,
+          acceptanceId: p.acceptance.id,
+          quoteId: p.quote.id,
+          termsSha256: p.quote.termsSha256,
+          allocation: p.allocation,
+          isAmendment: true,
+          previousSnapshotId: latest.id,
+          targetRevision: latest.revision + 1,
+        });
+        const draft = await tx.financeRecordEvent.create({
+          data: {
+            orderId,
+            targetId: orderId,
+            targetType: 'FinancialPlanDraft',
+            actorId: actor.id,
+            status: 'DRAFT',
+            reason: input.reason,
+            data,
+          },
+        });
+        await audit(tx, actor, {
+          action: 'finance.financial-plan.amend_draft',
+          targetType: 'FinanceRecordEvent',
+          targetId: draft.id,
+          reason: input.reason,
+          after: { orderId, acceptanceId: p.acceptance.id, targetRevision: latest.revision + 1 },
+        });
+        return json({
+          id: draft.id,
+          status: 'DRAFT',
+          revision: latest.revision + 1,
+          allocation: p.allocation,
+        });
+      });
+    });
+  }
+  async draftFinancialPlan(
+    actor: Actor,
+    orderId: string,
+    input: z.infer<typeof C.financialPlanDraftSchema>,
+    key?: string,
+  ) {
+    return iamTransaction(this.db, actor, async (tx) => {
+      await this.access(tx, actor, orderId, 'finance.payable.reconcile');
+      return this.command(tx, actor, orderId, 'financial-plan.draft', key, input, async () => {
+        const p = await this.planCalculation(tx, orderId, input);
+        if (await tx.financialPlanSnapshot.count({ where: { acceptanceId: p.acceptance.id } }))
+          fail(
+            409,
+            'AMENDMENT_UNAVAILABLE',
+            'Financial plan amendment requires an authorized amendment workflow.',
+          );
+        const data = json({
+          input,
+          acceptanceId: p.acceptance.id,
+          quoteId: p.quote.id,
+          termsSha256: p.quote.termsSha256,
+          allocation: p.allocation,
+        });
+        const draft = await tx.financeRecordEvent.create({
+          data: {
+            orderId,
+            targetId: orderId,
+            targetType: 'FinancialPlanDraft',
+            actorId: actor.id,
+            status: 'DRAFT',
+            reason: input.reason,
+            data,
+          },
+        });
+        await audit(tx, actor, {
+          action: 'finance.financial-plan.draft',
+          targetType: 'FinanceRecordEvent',
+          targetId: draft.id,
+          reason: input.reason,
+          after: { orderId, acceptanceId: p.acceptance.id },
+        });
+        return json({ id: draft.id, status: 'DRAFT', allocation: p.allocation });
+      });
+    });
+  }
+  async approveFinancialPlan(
+    actor: Actor,
+    orderId: string,
+    draftId: string,
+    input: z.infer<typeof C.financeReasonSchema>,
+    key?: string,
+  ) {
+    return iamTransaction(this.db, actor, async (tx) => {
+      await this.access(tx, actor, orderId, 'finance.payout.approve');
+      return this.command(
+        tx,
+        actor,
+        orderId,
+        'financial-plan.approve',
+        key,
+        { draftId, ...input },
+        async () => {
+          const draft = await tx.financeRecordEvent.findFirst({
+            where: { id: draftId, orderId, targetType: 'FinancialPlanDraft', status: 'DRAFT' },
+          });
+          if (!draft) fail(404, 'NOT_FOUND', 'Financial plan draft not found.');
+          C.assertIndependentApproval(draft.actorId, actor.id);
+          const data = draft.data as {
+            input?: unknown;
+            acceptanceId?: unknown;
+            quoteId?: unknown;
+            termsSha256?: unknown;
+            allocation?: unknown;
+            isAmendment?: boolean;
+            previousSnapshotId?: string;
+            targetRevision?: number;
+          } | null;
+          const parsed = C.financialPlanDraftSchema.safeParse(data?.input);
+          if (!parsed.success)
+            fail(409, 'INVALID_FINANCIAL_PLAN', 'Stored financial plan is invalid.');
+          const p = await this.planCalculation(tx, orderId, parsed.data);
+          const acceptedOffers = await tx.commercialOffer.findMany({
+            where: { orderId, status: 'ACCEPTED' },
+            select: { artisanProfileId: true, quantity: true, unitPayMillimes: true },
+          });
+          const acceptedByArtisan = new Map<string, bigint>();
+          for (const offer of acceptedOffers) {
+            const previous = acceptedByArtisan.get(offer.artisanProfileId) ?? 0n;
+            acceptedByArtisan.set(
+              offer.artisanProfileId,
+              previous + offer.unitPayMillimes * BigInt(offer.quantity),
+            );
+          }
+          for (const [artisanId, acceptedAmount] of acceptedByArtisan) {
+            if (
+              p.allocation.artisans.find((a) => a.artisanId === artisanId)?.amountMillimes !==
+              acceptedAmount
+            )
+              fail(
+                409,
+                'ACCEPTED_OFFER_MISMATCH',
+                'The plan must match each accepted artisan offer.',
+              );
+          }
+          if (
+            data?.acceptanceId !== p.acceptance.id ||
+            data.quoteId !== p.quote.id ||
+            data.termsSha256 !== p.quote.termsSha256 ||
+            evidenceHash(data.allocation) !== evidenceHash(json(p.allocation))
+          )
+            fail(
+              409,
+              'FINANCIAL_PLAN_STALE',
+              'The financial plan no longer matches its accepted quotation or costs.',
+            );
+          const latestSnapshot = await tx.financialPlanSnapshot.findFirst({
+            where: { acceptanceId: p.acceptance.id },
+            orderBy: { revision: 'desc' },
+          });
+          if (!data.isAmendment && latestSnapshot)
+            fail(
+              409,
+              'AMENDMENT_UNAVAILABLE',
+              'Financial plan amendment requires an authorized amendment workflow.',
+            );
+          if (data.isAmendment) {
+            if (!latestSnapshot || latestSnapshot.id !== data.previousSnapshotId) {
+              fail(
+                409,
+                'FINANCIAL_PLAN_STALE',
+                'Amendment no longer targets the latest financial plan snapshot.',
+              );
+            }
+            const activeObligation = await tx.paymentObligation.findFirst({
+              where: {
+                commercialOrderId: orderId,
+                status: { notIn: ['CANCELLED', 'FAILED', 'REFUNDED'] },
+              },
+            });
+            if (activeObligation)
+              fail(
+                409,
+                'FINANCIAL_PLAN_LOCKED',
+                'Cannot approve amendment while an active payment obligation exists.',
+              );
+          }
+          const revisionNumber =
+            data.isAmendment && latestSnapshot ? latestSnapshot.revision + 1 : 1;
+          const row = await tx.financialPlanSnapshot.create({
+            data: {
+              acceptanceId: p.acceptance.id,
+              revision: revisionNumber,
+              previousId: data.isAmendment && latestSnapshot ? latestSnapshot.id : null,
+              preparedById: draft.actorId,
+              approvedById: actor.id,
+              customerPriceMillimes: p.quote.totalMillimes,
+              currency: 'TND',
+              policyVersion: 1,
+              calculationBase: p.allocation.basis,
+              baseMillimes: p.allocation.baseMillimes,
+              materialCostMillimes: p.materials,
+              otherDirectCostMillimes: p.other,
+              processingFeeMillimes: p.allocation.expectedFeeMillimes,
+              contributionMillimes: p.allocation.remainingContributionMillimes,
+              allocations: json(
+                p.allocation.artisans.map((a) => ({
+                  artisanProfileId: a.artisanId,
+                  basisPoints: a.basisPoints,
+                  amountMillimes: a.amountMillimes,
+                })),
+              ),
+              approvalReason: input.reason,
+            },
+          });
+          await audit(tx, actor, {
+            action: 'finance.financial-plan.approve',
+            targetType: 'FinancialPlanSnapshot',
+            targetId: row.id,
+            reason: input.reason,
+            after: { orderId, draftId, revision: revisionNumber },
+          });
+          return json({
+            id: row.id,
+            revision: revisionNumber,
+            status: 'APPROVED',
+            allocation: p.allocation,
+            fundingConfirmed: false,
+            artisanAccepted: false,
+          });
+        },
+      );
+    });
+  }
   private async access(tx: Db, actor: Actor, orderId: string, permission?: C.Permission) {
     const order = await tx.commercialOrder.findUnique({
       where: { id: orderId },

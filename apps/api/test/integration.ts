@@ -1,5 +1,7 @@
 import { runClosureMigrationScenarios } from './closure-migration.scenarios.js';
+import { runDhmadPaymentScenarios } from './dhmad-payments.scenarios.js';
 import { runFinanceClosureScenarios } from './finance-closure.scenarios.js';
+import { runFinancialPlanScenarios } from './financial-plan.scenarios.js';
 import { runSecurityScenarios } from './security.scenarios.js';
 import { runOrderFeedbackScenarios } from './order-feedback.scenarios.js';
 import { runFeedbackMigrationScenarios } from './feedback-migration.scenarios.js';
@@ -558,6 +560,8 @@ try {
     await runSecurityScenarios({ databaseUrl: database.url, smtpPort: mail.port, check });
     await runCommerceScenarios({ db, register, check, config });
     await runFinanceClosureScenarios({ db, register, check });
+    await runFinancialPlanScenarios({ db, register, check });
+    await runDhmadPaymentScenarios({ databaseUrl: database.url, smtpPort: mail.port, check });
     await runClosureMigrationScenarios(check);
     await runCapacityScenarios({ db, register, check });
     await runDirectoryScenarios({ db, register, check });

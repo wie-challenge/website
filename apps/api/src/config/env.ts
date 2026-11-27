@@ -88,6 +88,24 @@ export const envSchema = z.object({
   ),
   ASSISTANT_TIMEOUT_MS: z.coerce.number().int().min(1000).max(60000).default(60000),
   LOG_LEVEL: z.enum(['silent', 'error', 'warn', 'info', 'debug']).default('info'),
+  PAYMENTS_ENABLED: bool.default(false),
+  PAYMENT_PROVIDER: z.enum(['mock', 'dhmad']).default('mock'),
+  DHMAD_ENVIRONMENT: z.enum(['sandbox']).default('sandbox'),
+  DHMAD_BASE_URL: z.preprocess(
+    optional,
+    z
+      .url()
+      .refine((v) => /^https?:\/\//.test(v))
+      .optional(),
+  ),
+  DHMAD_API_KEY: z.preprocess(optional, z.string().min(8).optional()),
+  DHMAD_WEBHOOK_SECRET: z.preprocess(optional, z.string().min(16).optional()),
+  DHMAD_CHECKOUT_RETURN_URL: z.preprocess(optional, z.url().optional()),
+  PAYMENT_B2C_REVIEW_HOURS: z.coerce.number().int().min(24).max(336).default(72),
+  PAYMENT_B2B_REVIEW_HOURS: z.coerce.number().int().min(24).max(336).default(168),
+  PAYMENT_RECONCILIATION_ENABLED: bool.default(false),
+  ARTISAN_PAYOUT_MODE: z.enum(['simulation']).default('simulation'),
+  REAL_PAYOUTS_ENABLED: bool.default(false),
 });
 export function validateEnvironment(values: Record<string, unknown>) {
   const parsed = envSchema.safeParse(values);
@@ -96,6 +114,29 @@ export function validateEnvironment(values: Record<string, unknown>) {
       `Invalid environment fields: ${parsed.error.issues.map((issue) => issue.path.join('.')).join(', ')}`,
     );
   const config = parsed.data;
+  if (config.REAL_PAYOUTS_ENABLED)
+    throw new Error('REAL_PAYOUTS_ENABLED must remain false; real artisan payouts are disabled.');
+  if (config.DHMAD_API_KEY?.startsWith('sk_live_'))
+    throw new Error('Live DHMAD API keys (sk_live_) are forbidden in sandbox-only integration.');
+  if (config.DHMAD_BASE_URL) {
+    const base = new URL(config.DHMAD_BASE_URL);
+    const isSandbox = base.origin === 'https://sandbox.dhmad.tn';
+    const isLocalTest =
+      config.NODE_ENV === 'test' && ['127.0.0.1', 'localhost', '[::1]'].includes(base.hostname);
+    if (!isSandbox && !isLocalTest)
+      throw new Error('DHMAD_BASE_URL must target https://sandbox.dhmad.tn (or loopback in test).');
+  }
+  if (config.DHMAD_CHECKOUT_RETURN_URL) {
+    const returnUrl = new URL(config.DHMAD_CHECKOUT_RETURN_URL);
+    if (returnUrl.origin !== config.PUBLIC_APP_URL)
+      throw new Error('DHMAD_CHECKOUT_RETURN_URL must share the PUBLIC_APP_URL origin.');
+  }
+  if (config.PAYMENTS_ENABLED && config.PAYMENT_PROVIDER === 'dhmad') {
+    if (!config.DHMAD_API_KEY?.startsWith('sk_sandbox_'))
+      throw new Error(
+        'DHMAD_API_KEY with sk_sandbox_ prefix is required when PAYMENT_PROVIDER=dhmad.',
+      );
+  }
   if (config.ARCJET_ENABLED && !config.ARCJET_KEY)
     throw new Error('ARCJET_KEY is required when ARCJET_ENABLED=true.');
   if (
@@ -110,6 +151,10 @@ export function validateEnvironment(values: Record<string, unknown>) {
       'Demo mode requires the isolated nasj_demo database and nonproduction environment.',
     );
   if (config.NODE_ENV === 'production') {
+    if (config.PAYMENTS_ENABLED)
+      throw new Error(
+        'Production financial execution is disabled until a separate activation mission.',
+      );
     if (new URL(config.DATABASE_URL).pathname === '/nasj_demo')
       throw new Error('Production cannot use the synthetic showroom database.');
     if (!config.REQUIRE_PRIVILEGED_MFA)
