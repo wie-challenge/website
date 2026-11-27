@@ -96,6 +96,8 @@ export * from './logistics.js';
 export * from './inventory.js';
 
 export * from './finance.js';
+export * from './financial-allocation.js';
+export * from './payments.js';
 
 export * from './provenance.js';
 export * from './demo.js';

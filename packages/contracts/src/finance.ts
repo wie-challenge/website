@@ -5,6 +5,17 @@ import { requireRule } from './commerce/domain.js';
 const id = z.string().regex(/^[a-zA-Z0-9_-]{1,128}$/);
 const reason = z.string().trim().min(2).max(2000);
 const amount = tndSchema.refine((value) => parseTnd(value) > 0n, 'Amount must be positive.');
+export const financialPlanDraftSchema = z
+  .object({
+    basis: z.enum(['GROSS', 'AFTER_MATERIALS', 'AFTER_DIRECT_COSTS']),
+    expectedFeeTnd: tndSchema,
+    artisans: z
+      .array(z.object({ artisanId: id, basisPoints: z.number().int().min(0).max(10000) }).strict())
+      .min(1)
+      .max(100),
+    reason,
+  })
+  .strict();
 export const depositRecordSchema = z
   .object({
     amountTnd: amount,

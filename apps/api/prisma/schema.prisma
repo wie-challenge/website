@@ -18,6 +18,15 @@ enum AccountStatus {
 }
 
 model User {
+  financialPlansPrepared FinancialPlanSnapshot[] @relation("FinancialPlanPreparer")
+  financialPlansApproved FinancialPlanSnapshot[] @relation("FinancialPlanApprover")
+  paymentObligationsCreated PaymentObligation[] @relation("ObligationCreator")
+  checkoutSessionsCreated   CheckoutSession[]   @relation("CheckoutSessionCreator")
+  kycConsentsRecorded       ArtisanIdentityVerification[] @relation("KycConsentActor")
+  kycReviewsPerformed       ArtisanIdentityVerification[] @relation("KycReviewer")
+  payoutSimulationsExecuted ArtisanPayoutSimulation[] @relation("PayoutSimulationExecutor")
+  reconciliationRuns        ReconciliationRun[] @relation("ReconciliationRunner")
+  discrepanciesResolved     ReconciliationDiscrepancy[] @relation("DiscrepancyResolver")
  recordedContractualDates ContractualDueDate[]
  prospectRevisions ProspectRevision[]
  proposalRevisions PilotProposalRevision[]
@@ -330,6 +339,7 @@ model Organization {
   sampleApprovals            BuyerSampleApproval[]   @relation("SampleApprovalBuyer")
   discussions        OrderDiscussion[]
   supportTickets     SupportTicket[]
+  paymentObligations PaymentObligation[]
 }
 
 model OrganizationMember {
@@ -421,6 +431,9 @@ model ArtisanProfile {
   availabilityPauses AvailabilityPause[]
   samplePayables        SamplePayable[]
   timeRecords           ProductionTimeRecord[]
+  identityVerifications ArtisanIdentityVerification[]
+  journalEntries        JournalEntry[]
+  payoutSimulations     ArtisanPayoutSimulation[]
 }
 
 model CraftSkill {
@@ -742,6 +755,7 @@ model CommercialOrder {
   productSpecificationRevisionId String?
   productSpecificationRevision   ProductSpecificationRevision? @relation(fields: [productSpecificationRevisionId], references: [id], onDelete: Restrict)
   buyerFeedback      BuyerOrderFeedback[] @relation("BuyerFeedbackOrder")
+  paymentObligations PaymentObligation[]
   @@index([productSpecificationRevisionId])
 }
 
@@ -1452,6 +1466,37 @@ model ProcurementAcceptance {
   actor     User             @relation("QuoteSignatory", fields: [actorId], references: [id], onDelete: Restrict)
   snapshot  Json
   createdAt DateTime         @default(now())
+  financialSnapshots FinancialPlanSnapshot[]
+}
+
+// Approved versions are append-only. Allocation amounts use integer millime strings in JSON.
+model FinancialPlanSnapshot {
+  id                     String                 @id @default(cuid())
+  acceptanceId           String
+  acceptance             ProcurementAcceptance  @relation(fields: [acceptanceId], references: [id], onDelete: Restrict)
+  revision               Int
+  previousId             String?                @unique
+  previous               FinancialPlanSnapshot? @relation("FinancialPlanRevisions", fields: [previousId], references: [id], onDelete: Restrict)
+  next                   FinancialPlanSnapshot? @relation("FinancialPlanRevisions")
+  preparedById           String
+  preparedBy             User                   @relation("FinancialPlanPreparer", fields: [preparedById], references: [id], onDelete: Restrict)
+  approvedById           String
+  approvedBy             User                   @relation("FinancialPlanApprover", fields: [approvedById], references: [id], onDelete: Restrict)
+  customerPriceMillimes  BigInt
+  currency               String                 @default("TND")
+  policyVersion          Int
+  calculationBase        String
+  baseMillimes           BigInt
+  materialCostMillimes   BigInt
+  otherDirectCostMillimes BigInt
+  processingFeeMillimes  BigInt
+  contributionMillimes   BigInt
+  allocations            Json
+  approvalReason         String
+  createdAt              DateTime               @default(now())
+  paymentObligations     PaymentObligation[]
+
+  @@unique([acceptanceId, revision])
 }
 
 model ApprovedProductVersion {
@@ -1874,6 +1919,7 @@ model PayoutRequest {
   payableId String
   payable ArtisanPayable @relation(fields: [payableId], references: [id], onDelete: Restrict, onUpdate: Cascade)
   executions PayoutExecutionRecord[]
+  simulations ArtisanPayoutSimulation[]
   amountMillimes BigInt
   payableSnapshotMillimes BigInt
   requesterId String
@@ -2864,6 +2910,7 @@ model MarketOrder {
   events             MarketOrderEvent[]
   women              MarketOrderArtisan[]
   ratings            MarketOrderRating[]
+  paymentObligations PaymentObligation[]
 
   @@index([buyerOrgId, createdAt])
   @@index([associationId, status])
@@ -2960,4 +3007,290 @@ model MarketNotification {
   createdAt DateTime  @default(now())
 
   @@index([userId, createdAt])
+}
+
+model PaymentObligation {
+  id                     String                 @id @default(cuid())
+  channel                String
+  commercialOrderId      String?
+  commercialOrder        CommercialOrder?       @relation(fields: [commercialOrderId], references: [id], onDelete: Restrict)
+  marketOrderId          String?
+  marketOrder            MarketOrder?           @relation(fields: [marketOrderId], references: [id], onDelete: Restrict)
+  buyerOrganizationId    String
+  buyerOrganization      Organization           @relation(fields: [buyerOrganizationId], references: [id], onDelete: Restrict)
+  financialPlanSnapshotId String?
+  financialPlanSnapshot  FinancialPlanSnapshot? @relation(fields: [financialPlanSnapshotId], references: [id], onDelete: Restrict)
+  allocationSnapshot     Json
+  currency               String                 @default("TND")
+  amountMillimes         BigInt
+  feeBearer              String                 @default("SELLER")
+  expectedFeeMillimes    BigInt                 @default(0)
+  buyerFundingMillimes   BigInt
+  releasedToNasjMillimes BigInt                 @default(0)
+  actualFeeMillimes      BigInt                 @default(0)
+  refundedMillimes       BigInt                 @default(0)
+  status                 String                 @default("AWAITING_PAYMENT")
+  reconciliationStatus   String                 @default("UNRECONCILED")
+  lockedAt               DateTime               @default(now())
+  settledAt              DateTime?
+  createdById            String
+  createdBy              User                   @relation("ObligationCreator", fields: [createdById], references: [id], onDelete: Restrict)
+  createdAt              DateTime               @default(now())
+  updatedAt              DateTime               @updatedAt
+  escrow                 ProviderEscrow?
+  operations             ProviderOperation[]
+  disputes               ProviderDispute[]
+  journalBatches         JournalBatch[]
+  discrepancies          ReconciliationDiscrepancy[]
+
+  @@index([commercialOrderId])
+  @@index([marketOrderId])
+  @@index([buyerOrganizationId, status])
+  @@index([status, reconciliationStatus])
+}
+
+model ProviderEscrow {
+  id                   String            @id @default(cuid())
+  obligationId         String            @unique
+  obligation           PaymentObligation @relation(fields: [obligationId], references: [id], onDelete: Restrict)
+  provider             String
+  environment          String
+  externalEscrowId     String?
+  externalReference    String
+  mode                 String
+  recipientRole        String            @default("NASJ_ASSOCIATED_ACCOUNT")
+  buyerEmail           String
+  sellerEmail          String?
+  status               String            @default("AWAITING_PAYMENT")
+  providerStatus       String            @default("pending")
+  amountMillimes       BigInt
+  buyerFundingMillimes BigInt
+  providerFeeMillimes  BigInt            @default(0)
+  reviewHours          Int
+  deliveredAt          DateTime?
+  completionDeadline   DateTime?
+  contractId           String?
+  contractTermsSha256  String?
+  sellerSigned         Boolean           @default(false)
+  buyerSigned          Boolean           @default(false)
+  isFullySigned        Boolean           @default(false)
+  contractPdfUrl       String?
+  provenance           String
+  lastSyncedAt         DateTime?
+  createdAt            DateTime          @default(now())
+  updatedAt            DateTime          @updatedAt
+  sessions             CheckoutSession[]
+  disputes             ProviderDispute[]
+
+  @@unique([provider, environment, externalReference])
+  @@index([externalEscrowId])
+  @@index([status, lastSyncedAt])
+}
+
+model ProviderOperation {
+  id              String            @id @default(cuid())
+  obligationId    String
+  obligation      PaymentObligation @relation(fields: [obligationId], references: [id], onDelete: Restrict)
+  operationType   String
+  idempotencyKey  String
+  status          String            @default("PENDING")
+  requestSummary  Json
+  responseSummary Json?
+  errorCode       String?
+  attemptCount    Int               @default(1)
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+
+  @@unique([operationType, idempotencyKey])
+  @@index([obligationId, createdAt])
+}
+
+model CheckoutSession {
+  id                String         @id @default(cuid())
+  escrowId          String
+  escrow            ProviderEscrow @relation(fields: [escrowId], references: [id], onDelete: Restrict)
+  provider          String
+  environment       String
+  action            String
+  targetUserEmail   String
+  externalSessionId String?
+  checkoutUrl       String?
+  redirectUrl       String
+  status            String         @default("PENDING")
+  expiresAt         DateTime?
+  completedAt       DateTime?
+  createdById       String
+  createdBy         User           @relation("CheckoutSessionCreator", fields: [createdById], references: [id], onDelete: Restrict)
+  createdAt         DateTime       @default(now())
+  updatedAt         DateTime       @updatedAt
+
+  @@index([escrowId, createdAt])
+  @@index([externalSessionId])
+}
+
+model ArtisanIdentityVerification {
+  id                     String         @id @default(cuid())
+  artisanProfileId       String
+  artisanProfile         ArtisanProfile @relation(fields: [artisanProfileId], references: [id], onDelete: Restrict)
+  provider               String
+  environment            String
+  externalVerificationId String
+  email                  String
+  consentRecordedAt      DateTime
+  consentActorId         String
+  consentActor           User           @relation("KycConsentActor", fields: [consentActorId], references: [id], onDelete: Restrict)
+  kycStatus              String         @default("PENDING")
+  claimStatus            String         @default("PENDING")
+  needsAdminReview       Boolean        @default(false)
+  linkedUserId           String?
+  provenance             String
+  adminReviewedById      String?
+  adminReviewedBy        User?          @relation("KycReviewer", fields: [adminReviewedById], references: [id], onDelete: Restrict)
+  adminReviewNote        String?
+  adminReviewedAt        DateTime?
+  createdAt              DateTime       @default(now())
+  updatedAt              DateTime       @updatedAt
+
+  @@unique([provider, environment, externalVerificationId])
+  @@index([artisanProfileId, createdAt])
+}
+
+model ProviderDispute {
+  id                String            @id @default(cuid())
+  obligationId      String
+  obligation        PaymentObligation @relation(fields: [obligationId], references: [id], onDelete: Restrict)
+  escrowId          String
+  escrow            ProviderEscrow    @relation(fields: [escrowId], references: [id], onDelete: Restrict)
+  provider          String
+  environment       String
+  externalDisputeId String?
+  ticketNumber      String?
+  kind              String            @default("escrow_dispute")
+  status            String            @default("OPEN")
+  outcome           String?
+  reason            String
+  openedAt          DateTime          @default(now())
+  deadlineAt        DateTime?
+  closedAt          DateTime?
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
+
+  @@index([obligationId, status])
+  @@index([externalDisputeId])
+}
+
+model WebhookInboxEvent {
+  id                String    @id @default(cuid())
+  provider          String
+  environment       String
+  webhookId         String
+  eventType         String
+  eventTimestamp    DateTime
+  signatureVerified Boolean
+  payload           Json
+  status            String    @default("RECEIVED")
+  attempts          Int       @default(0)
+  nextAttemptAt     DateTime  @default(now())
+  leaseExpiresAt    DateTime?
+  lastErrorCode     String?
+  lastErrorMessage  String?
+  processedAt       DateTime?
+  createdAt         DateTime  @default(now())
+
+  @@unique([provider, environment, webhookId])
+  @@index([status, nextAttemptAt])
+}
+
+// Append-only double-entry subledger. Every committed batch must balance (SUM(DEBIT) = SUM(CREDIT)).
+model JournalBatch {
+  id                 String            @id @default(cuid())
+  obligationId       String?
+  obligation         PaymentObligation? @relation(fields: [obligationId], references: [id], onDelete: Restrict)
+  payoutSimulationId String?
+  sourceType         String
+  sourceId           String
+  idempotencyKey     String            @unique
+  description        String
+  provenance         String
+  createdAt          DateTime          @default(now())
+  entries            JournalEntry[]
+
+  @@index([obligationId, createdAt])
+  @@index([sourceType, sourceId])
+}
+
+model JournalEntry {
+  id               String          @id @default(cuid())
+  batchId          String
+  batch            JournalBatch    @relation(fields: [batchId], references: [id], onDelete: Restrict)
+  accountCode      String
+  side             String
+  amountMillimes   BigInt
+  currency         String          @default("TND")
+  artisanProfileId String?
+  artisanProfile   ArtisanProfile? @relation(fields: [artisanProfileId], references: [id], onDelete: Restrict)
+  createdAt        DateTime        @default(now())
+
+  @@index([batchId])
+  @@index([accountCode, createdAt])
+  @@index([artisanProfileId, createdAt])
+}
+
+model ArtisanPayoutSimulation {
+  id               String         @id @default(cuid())
+  payoutRequestId  String
+  payoutRequest    PayoutRequest  @relation(fields: [payoutRequestId], references: [id], onDelete: Restrict)
+  artisanProfileId String
+  artisanProfile   ArtisanProfile @relation(fields: [artisanProfileId], references: [id], onDelete: Restrict)
+  amountMillimes   BigInt
+  currency         String         @default("TND")
+  mode             String         @default("SIMULATION")
+  isSimulated      Boolean        @default(true)
+  provenance       String         @default("SIMULATED_SANDBOX_ONLY")
+  reference        String         @unique
+  status           String         @default("PAYOUT_SCHEDULED")
+  reason           String
+  executedById     String
+  executedBy       User           @relation("PayoutSimulationExecutor", fields: [executedById], references: [id], onDelete: Restrict)
+  executedAt       DateTime       @default(now())
+  createdAt        DateTime       @default(now())
+
+  @@index([payoutRequestId])
+  @@index([artisanProfileId, createdAt])
+}
+
+model ReconciliationRun {
+  id              String                      @id @default(cuid())
+  provider        String
+  environment     String
+  triggeredById   String?
+  triggeredBy     User?                       @relation("ReconciliationRunner", fields: [triggeredById], references: [id], onDelete: Restrict)
+  status          String                      @default("COMPLETED")
+  checkedCount    Int                         @default(0)
+  matchedCount    Int                         @default(0)
+  discrepancyCount Int                        @default(0)
+  summary         Json?
+  startedAt       DateTime                    @default(now())
+  completedAt     DateTime?
+  discrepancies   ReconciliationDiscrepancy[]
+}
+
+model ReconciliationDiscrepancy {
+  id           String            @id @default(cuid())
+  runId        String
+  run          ReconciliationRun @relation(fields: [runId], references: [id], onDelete: Restrict)
+  obligationId String?
+  obligation   PaymentObligation? @relation(fields: [obligationId], references: [id], onDelete: Restrict)
+  kind         String
+  severity     String            @default("HIGH")
+  status       String            @default("OPEN")
+  details      Json
+  resolvedById String?
+  resolvedBy   User?             @relation("DiscrepancyResolver", fields: [resolvedById], references: [id], onDelete: Restrict)
+  resolutionNote String?
+  resolvedAt   DateTime?
+  createdAt    DateTime          @default(now())
+
+  @@index([status, createdAt])
+  @@index([obligationId])
 }
