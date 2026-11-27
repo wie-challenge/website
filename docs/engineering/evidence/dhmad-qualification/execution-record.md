@@ -107,3 +107,41 @@
   - `ef42cbd2316747e7b46cff59` (`B2C`, `SETTLED`, `25000` millimes, `releasedToNasjMillimes: 23512`, `actualFeeMillimes: 1488`, `MATCHED`) was created on separate order `Sandbox B2C Tapestry Cushion` (`cmwyx7vuj0000u4e4g84e1foi`, `25.000 TND`) *after* `fc96e0b`; `allocationSnapshot` matches `25000` gross (`5000` bps = `12500`, `expectedFeeMillimes: 1488`, `remainingContributionMillimes: 11012`), reconciling `23512 + 1488 = 25000`, with 3 real DHMAD webhooks (`signatureVerified: true`).
 - **Felcloud Host Capacity Assessment (`197.5.133.46`, read-only)**: `2` vCPU cores, `3914 MB` RAM (`2849 MB` available, `0` swap), `77G` disk (`17G` used, `61G` / `78%` free), currently running production services (`nasj-api.service`, `nasj-web.service`, `nasj-worker.service`). `staging-dhmad.nasj-platform.ddns.net` has no DNS record yet.
 - **Outstanding External Gates**: GitHub `sandbox-qualification` environment + secrets + hosted `DHMAD Sandbox Qualification` run, authorized permanent isolated Felcloud staging deployment, and `jq` installation for local `test-release-provenance.py` execution.
+
+---
+
+## Continuation — Remediation, UI Qualification, Hosted CI & Option A Staging Prep (`cae9fc4` → `544a00f`)
+
+- **Hosted CI & Release Provenance**:
+  - `cae9fc4` pinned `upload-artifact` SHA in `dhmad-sandbox-qualification.yml` and allowlisted synthetic test fixture keys in `.gitleaksignore`.
+  - `Checks` workflow run `46004219664` on commit `544a00f` **PASSED** all 5 jobs (`quality`, `workflow-lint`, `sast`, `audit`, `secrets-new`) without triggering production deployment (`ci.yml` is `main`-only).
+  - Local `python3 scripts/deploy/test-release-provenance.py`: **PASSED** (`38/38` scenarios with `/usr/bin/jq`).
+- **#272 (PAY-09) Browser UI Qualification (`544a00f`)**:
+  - Added FR/AR RTL localization to `payment-escrow-panel.tsx` (`paymentCopy`, `PaymentLocaleSelect`, `offerLanguage`/`offerDirection`).
+  - `tests/e2e/dhmad-payment-ui.spec.ts` **PASSED** (`3/3` Playwright Chromium tests): buyer B2C/B2B tenant isolation, artisan KYC/compensation/payout isolation (`/artisan/profile`), admin/finance trial balance & webhook console (`/operator/finance`), FR/AR RTL (`dir="rtl"`), Axe-core WCAG AA (`0` violations), and mobile `390×844` (`0` horizontal overflow). Story `#272` closed.
+- **B2B Processing-Fee Variance Verification (`6525e3dc37dc46c69bd7353d`)**:
+  - Immutable `FinancialPlanSnapshot` (`cmwyw0dmx000im0e4ne0jb597`, rev 2) unchanged (`expectedFeeMillimes: 100000` / `100.000 TND`).
+  - Actual DHMAD fee `119000` millimes (`119.000 TND` = 100 TND HT + 19% TVA) recorded in `actualFeeMillimes` and journal batch `cmwyxs73z000fhfe4mkcpxcuh` (`DEBIT NASJ_SETTLED_CLEARING 1881000` + `DEBIT PROVIDER_FEES_EXPENSE 119000` = `CREDIT ESCROW_HELD 2000000`).
+  - Actual remaining contribution: `2000000 - 1100000 - 200000 - 119000 = 581000` millimes (`581.000 TND`).
+- **Stranded 50.000 TND B2C Obligation Incident (`3f46b8fbb5b440d9b9cdbb8c`)**:
+  - Verified via `GET /v1/escrows` on `https://sandbox.dhmad.tn/api` that DHMAD escrow `6b09693ccf721af3c72d7412` (`Sandbox B2C Ceramic Bowl [nasj_3f46b8fbb5b440d9b9cdbb8c]`) remains `paid` (`FUNDS_SECURED`, `reconciliationStatus: MATCHED`) and is not visible in the KYC-verified seller dashboard (`kammounaziz12@gmail.com`) due to the pre-`fc96e0b` unlinked `sellerBusiness` identity. (Separate probe `6b096e40cf721af3c72d7b50` `NASJ SellerEmail Probe` is `cancelled`.)
+  - Seller-side API actions (`cancel_escrow`, `refund_funds`) fail with `CHECKOUT_TARGET_NOT_SELLER` / `CANCEL_ESCROW_SELLER_ONLY`; buyer `request_cancellation` session `771e18a7-a5f6-4824-ae04-42a6dd64d5f5` expired `pending`.
+  - **Incident Disposition**: Obligation preserved (`FUNDS_SECURED`, `MATCHED`, not deleted/abandoned). Requires **DHMAD Support action** to administratively cancel/refund sandbox escrow `6b09693ccf721af3c72d7412`.
+- **Representative Felcloud Capacity Headroom & Abort Thresholds (`197.5.133.46`)**:
+  - Measured under 10-concurrent read load (`30` requests across `/api/health/ready`, `/`, `/catalog` in `4.70s`, `30/30` HTTP `200`, avg `1.270s`, max `2.351s`): CPU stayed `99–100%` idle (`us: 0-1%`, `sy: 0%`, `wa: 0%`), `2846 MB` / `3914 MB` RAM available (`0` swap), `61G` disk free (`22%` used), PostgreSQL `7/100` connections.
+  - **Abort Thresholds**: CPU > `80%` sustained, available RAM < `500 MB`, I/O wait > `10%` sustained, or production `/api/health/ready` latency > `2×` baseline / non-`200`.
+  - **AI-P2 Qualification Lock**: Verified `.qualification.Do1qD0` is local-only; Felcloud production services (`nasj-api`, `nasj-web`, `nasj-worker` under `/srv/nasj`) are untouched and isolated from `nasj-staging-*`.
+- **Option A Isolated Staging Provisioned (`197.5.133.46`)**:
+  - Dedicated Linux user `nasj-staging` (`/srv/nasj-staging`, `/var/log/nasj-staging`, `/etc/nasj/staging.env` mode `600`).
+  - Dedicated PostgreSQL role `nasj_staging` (`CONNECTION LIMIT 15`) and database `nasj_dhmad_staging` (`46/46` Prisma migrations applied).
+  - Off-host packaged release `544a00f6ca5593f7eba9ac3692d8917c7a0d08eb` (`release.tar.gz`, SHA-256 `58068f2d60a225cc0d30ce5b433ad5bc8e75090ae56de8e64f6c1cd1f613081c`) extracted to `/srv/nasj-staging/releases/544a00f6...` with atomic symlink `/srv/nasj-staging/current`.
+  - Resource-bounded systemd services: `nasj-staging-api.service` (`127.0.0.1:3005`, `MemoryMax=512M`, `CPUQuota=50%`, `IOWeight=50`), `nasj-staging-web.service` (`127.0.0.1:3004`, `MemoryMax=384M`, `CPUQuota=30%`, `IOWeight=50`), `nasj-staging-worker.service` (`MemoryMax=256M`, `CPUQuota=20%`, `IOWeight=50`, PG-backed jobs/outbox).
+  - Nginx vhost `/etc/nginx/sites-available/nasj-staging` enabled (`nginx -t` pass): `Host: nasj-staging.ddns.net` routes `/api/` → `3005` (`HTTP 200 {"status":"ready"}`) and `/` → `3004` (`HTTP 200`).
+  - Restart recovery verified (`systemctl restart nasj-staging-*` → all 3 `active`, `200`, `2476 MB` RAM available, `nasj_dhmad_staging` `2` PG connections; production `https://nasj-platform.ddns.net/api/health/ready` remained `200`).
+  - **Staging URLs (ready for Certbot TLS & DHMAD developer config once DNS resolves)**:
+    - Redirect URL: `https://nasj-staging.ddns.net/orders`
+    - Webhook URL: `https://nasj-staging.ddns.net/api/v1/payments/webhooks/dhmad`
+- **Remaining External Blockers**:
+  1. DNS `A` record for `nasj-staging.ddns.net` → `197.5.133.46` (currently unresolved; blocks Certbot TLS issuance, DHMAD redirect/webhook migration, and authenticated staging lifecycle validation).
+  2. GitHub `sandbox-qualification` environment + secrets (`DHMAD_SANDBOX_API_KEY`, `DHMAD_SANDBOX_WEBHOOK_SECRET`, `DHMAD_EXPECTED_SELLER_EMAIL`) for `dhmad-sandbox-qualification.yml`.
+  3. DHMAD Support cancellation/refund of stranded sandbox escrow `6b09693ccf721af3c72d7412`.
