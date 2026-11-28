@@ -537,13 +537,6 @@ export function OrderDetail({ id }: { id: string }) {
           {(personas.includes('NASJ_FINANCE') || admin) && (
             <FinanceSteps order={data} reload={order.reload} />
           )}
-          {(audience === 'company' || personas.includes('NASJ_FINANCE') || admin) && (
-            <OrderEscrowPanel
-              channel="B2C"
-              orderId={data.id}
-              isFinance={personas.includes('NASJ_FINANCE') || admin}
-            />
-          )}
           {audience !== 'nasj' && (
             <RateOrder order={data} reload={order.reload} audience={audience} />
           )}
